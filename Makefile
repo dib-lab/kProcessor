@@ -164,9 +164,7 @@ distclean: clean
 
 # Show help.
 help:
-	@echo "Pear's Generic Makefile for C/C++ Projects"
-	@echo 'Copyright (C) 2016 Pear <service AT pear DOT hk>'
-	@echo 'Copyright (C) 2007, 2008 whyglinux <whyglinux AT hotmail DOT com>'
+	@echo "Kprocessor Makefile"
 	@echo
 	@echo 'Usage: make [TARGET]'
 	@echo 'TARGETS:'
@@ -180,7 +178,6 @@ help:
 	@echo '  show      show variables (for debug use only).'
 	@echo '  help      print this message.'
 	@echo
-	@echo 'Report bugs to <whyglinux AT gmail DOT com>.'
 
 # Show variables (for debug use only.)
 show:
@@ -200,3 +197,7 @@ show:
 
 ## End of the Makefile ##  Suggestions are welcome  ## All rights reserved ##
 #############################################################################
+
+## Thanks Pear, kevin1078 , and whyglinux for the Makefile template ##
+## https://github.com/Cheedoong/MakefileTemplate                    ##
+######################################################################
