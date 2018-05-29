@@ -39,7 +39,7 @@ int main(int argc, char *argv[])
     }
 
     int ret = 0;
-    if (string(argv[1])== "count")  ret =KmerCounter_main(argc,argv);
+    if (string(argv[1])== "count")  ret =KmerCounter_main(argc-1,argv+1);
     else if (string(argv[1])== "--version" ) {
       cout<<"This is Kprocessor version "<<KprocessorVersion()<<" developed by Mostafa Shokrof <mostafa.shokrof@gmail.com>\n";
     }
