@@ -3,6 +3,7 @@
 #include "CLI11.hpp"
 #include <vector>
 #include <stdint.h>
+#include "KmerCounter/KmerCounter.hpp"
 using namespace std;
 
 
@@ -13,8 +14,9 @@ int KmerCounter_main(int argc, char *argv[]){
   uint64_t nslots;
   uint64_t fixed_size_counter=1;
   double accuracy=1;
-  uint64_t noThreads=1;
+  int noThreads=1;
   uint64_t maxMemory=0;
+  int k;
 
 
 
@@ -25,6 +27,7 @@ int KmerCounter_main(int argc, char *argv[]){
   app.add_option("-o,--output", outputMQF,
    "Output MQF filename")->required()->group("I/O");
 
+  app.add_option("-k,--kmer-length",k,"kmer length")->required()->group("MQF Options");
   app.add_option("-s,--no-slots",nslots,"Number of slots in MQF. Should be of power of two")->group("MQF Options");
   app.add_option("-f,--fixed-size-counter",fixed_size_counter,
   "Number of bits in Fixed-size counter size in MQF. Default 1")->group("MQF Options");
@@ -40,6 +43,8 @@ int KmerCounter_main(int argc, char *argv[]){
 
 
   CLI11_PARSE(app, argc, argv);
+
+  load_into_MQF(input_files[0],k,noThreads);
 
   return 0;
 }
