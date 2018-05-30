@@ -5,10 +5,12 @@ CXX	= g++
 
 
 
-INCLUDE	=
-CPPFLAGS	= -Wall -Wextra -std=c++11
+INCLUDE	= -IThirdParty/seqan/include
+CPPFLAGS	= -Wall -Wextra -std=c++14
 LDFLAGS	=
 
+
+SEQAN_FLAGS= -DSEQAN_HAS_ZLIB=1 -DSEQAN_HAS_BZIP2=1 -Wl,--whole-archive -lpthread -Wl,--no-whole-archive
 # The directories in which source files reside.
 # If not specified, all subdirectories of the current directory will be added recursively.
 SRCDIRS	:=
