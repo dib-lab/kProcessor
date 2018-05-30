@@ -1,15 +1,17 @@
 #include "KmerCounter.hpp"
 #include <iostream>
 #include "kmer.h"
+#include <fstream>
 
 #include <seqan/seq_io.h>
 #include "../HashUtils/hashutil.h"
 
+#include <gqf.h>
 using namespace std;
 using namespace seqan;
 
 
-void load_into_MQF(string sequenceFilename,int ksize, int noThreads){
+void loadIntoMQF(string sequenceFilename,int ksize,int noThreads,QF * memoryMQF){
   SeqFileIn seqFileIn(sequenceFilename.c_str());
   CharString id;
   Dna5String read;
@@ -30,8 +32,8 @@ void load_into_MQF(string sequenceFilename,int ksize, int noThreads){
       uint8_t curr = kmer::map_base(read[i]);
       if (curr > DNA_MAP::G) {
         // 'N' is encountered
-      //  read = read.substr(i+1, length(read));
-      continue;
+        //  read = read.substr(i+1, length(read));
+        continue;
         //goto start_read;
       }
       first = first | curr;
@@ -48,7 +50,8 @@ void load_into_MQF(string sequenceFilename,int ksize, int noThreads){
     else
     item = first_rev;
     item = HashUtil::hash_64(item, BITMASK(2*ksize));
-    cout<<item<<endl;
+
+    qf_insert(memoryMQF,item,1);
 
     uint64_t next = (first << 2) & BITMASK(2*ksize);
     uint64_t next_rev = first_rev >> 2;
@@ -73,7 +76,7 @@ void load_into_MQF(string sequenceFilename,int ksize, int noThreads){
 
 
       item = HashUtil::hash_64(item, BITMASK(2*ksize));
-      cout<<item<<endl;
+      qf_insert(memoryMQF,item,1);
 
       next = (next << 2) & BITMASK(2*ksize);
       next_rev = next_rev >> 2;
@@ -82,4 +85,16 @@ void load_into_MQF(string sequenceFilename,int ksize, int noThreads){
 
   }
 
+}
+
+void dumpMQF(QF * MQF,int ksize,std::string outputFilename){
+  ofstream output(outputFilename.c_str());
+  QFi qfi;
+  qf_iterator(MQF, &qfi, 0);
+  do {
+    uint64_t key, value, count;
+    qfi_get(&qfi, &key, &value, &count);
+    string kmer=int_to_str(HashUtil::hash_64i(key,BITMASK(2*ksize)),ksize);
+    output<<kmer<<"\t"<<count<<endl;
+  } while(!qfi_next(&qfi));
 }

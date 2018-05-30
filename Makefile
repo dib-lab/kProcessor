@@ -5,7 +5,7 @@ CXX	= g++
 
 
 
-INCLUDE	= -IThirdParty/seqan/include
+INCLUDE	= -IThirdParty/seqan/include -IMQF
 CPPFLAGS	= -Wall -Wextra -std=c++14
 LDFLAGS	=
 
@@ -13,7 +13,7 @@ LDFLAGS	=
 SEQAN_FLAGS= -DSEQAN_HAS_ZLIB=1 -DSEQAN_HAS_BZIP2=1 -Wl,--whole-archive -lpthread -Wl,--no-whole-archive
 # The directories in which source files reside.
 # If not specified, all subdirectories of the current directory will be added recursively.
-SRCDIRS	:=
+SRCDIRS	:= ./ HashUtils/ KmerCounter/
 UNAME_S  := $(shell uname -s)
 
 #Actually $(INCLUDE) is included in $(CPPFLAGS).
@@ -51,8 +51,10 @@ SOURCES = $(foreach d,$(SRCDIRS),$(wildcard $(addprefix $(d)/*,$(SRCEXTS))))
 HEADERS = $(foreach d,$(SRCDIRS),$(wildcard $(addprefix $(d)/*,$(HDREXTS))))
 SRC_CXX = $(filter-out %.c,$(SOURCES))
 OBJS    = $(addsuffix .o, $(basename $(SOURCES)))
+OBJS += MQF/libgqf.so
 #DEPS    = $(OBJS:%.o=%.d) #replace %.d with .%.d (hide dependency files)
 DEPS    = $(foreach f, $(OBJS), $(addprefix $(dir $(f))., $(patsubst %.o, %.d, $(notdir $(f)))))
+
 
 ## Define some useful variables.
 DEP_OPT = $(shell if `$(CC) --version | grep -i "GCC" >/dev/null`; then \
@@ -68,8 +70,12 @@ LINK.cxx    = $(CXX) $(EXTRA_CFLAGS) $(CXXFLAGS) $(CPPFLAGS) $(LDFLAGS)
 # Delete the default suffixes
 .SUFFIXES:
 
+
+
 all: $(PROGRAM)
 
+MQF/libgqf.so:
+	cd MQF && make libgqf
 # Rules for creating dependency files (.d).
 #------------------------------------------
 
