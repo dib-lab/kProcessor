@@ -3,6 +3,7 @@
 #include "kmer.h"
 
 #include <seqan/seq_io.h>
+#include "../HashUtils/hashutil.h"
 
 using namespace std;
 using namespace seqan;
@@ -46,8 +47,8 @@ void load_into_MQF(string sequenceFilename,int ksize, int noThreads){
     item = first;
     else
     item = first_rev;
-
-    cout<<int_to_str(item,ksize)<<endl;
+    item = HashUtil::hash_64(item, BITMASK(2*ksize));
+    cout<<item<<endl;
 
     uint64_t next = (first << 2) & BITMASK(2*ksize);
     uint64_t next_rev = first_rev >> 2;
@@ -70,7 +71,9 @@ void load_into_MQF(string sequenceFilename,int ksize, int noThreads){
       else
       item = next_rev;
 
-      cout<<int_to_str(item,ksize)<<endl;
+
+      item = HashUtil::hash_64(item, BITMASK(2*ksize));
+      cout<<item<<endl;
 
       next = (next << 2) & BITMASK(2*ksize);
       next_rev = next_rev >> 2;
