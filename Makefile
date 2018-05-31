@@ -164,10 +164,12 @@ endif
 TESTS = tests/testsMain.o tests/testKmerCounter.o
 test: $(OBJS) $(TESTS)
 	$(LINK.cxx) $(EXTRA_LDFLAGS)  $^ $(LDFLAGS) -o $@
+	rm -f tests/testData/tmp*
 
 
 clean:
 	$(RM) $(OBJS) $(PROGRAM) $(PROGRAM).exe $(TESTS)
+	rm -f tests/testData/tmp*
 	cd MQF && make clean
 
 distclean: clean

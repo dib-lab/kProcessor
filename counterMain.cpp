@@ -1,6 +1,6 @@
 #include <iostream>
 #include <string>
-#include "CLI11.hpp"
+#include "ThirdParty/CLI11.hpp"
 #include <vector>
 #include <stdint.h>
 #include <gqf.h>

@@ -1,4 +1,4 @@
-#include "../catch.hpp"
+#include "../ThirdParty/catch.hpp"
 #include "../KmerCounter/KmerCounter.hpp"
 #include <gqf.h>
 #include <stdint.h>
@@ -23,7 +23,7 @@ TEST_CASE( "loadIntoMQF", "[KmerCounter]" ) {
     };
     int argc=11;
 
-    
+
     KmerCounter_main(argc, argv);
 
     map<string,int> gold;
