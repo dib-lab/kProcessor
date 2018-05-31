@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <gqf.h>
 #include "KmerCounter/KmerCounter.hpp"
+#include "Utils/utils.hpp"
 
 using namespace std;
 
@@ -48,6 +49,7 @@ int KmerCounter_main(int argc, char *argv[]){
 
 
   CLI11_PARSE(app, argc, argv);
+
   QF qf;
   qf_init(&qf, nslots, 2*k+15, 0,fixed_size_counter, true, "", 2038074761);
   loadIntoMQF(input_files[0],k,noThreads,&qf);

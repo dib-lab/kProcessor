@@ -13,8 +13,9 @@ LDFLAGS	=
 SEQAN_FLAGS= -DSEQAN_HAS_ZLIB=1 -DSEQAN_HAS_BZIP2=1 -Wl,--whole-archive -lpthread -Wl,--no-whole-archive
 # The directories in which source files reside.
 # If not specified, all subdirectories of the current directory will be added recursively.
-SRCDIRS	:= ./ HashUtils/ KmerCounter/
+SRCDIRS	:=  HashUtils/ KmerCounter/
 UNAME_S  := $(shell uname -s)
+
 
 #Actually $(INCLUDE) is included in $(CPPFLAGS).
 CPPFLAGS      += $(INCLUDE)
@@ -51,7 +52,7 @@ SOURCES = $(foreach d,$(SRCDIRS),$(wildcard $(addprefix $(d)/*,$(SRCEXTS))))
 HEADERS = $(foreach d,$(SRCDIRS),$(wildcard $(addprefix $(d)/*,$(HDREXTS))))
 SRC_CXX = $(filter-out %.c,$(SOURCES))
 OBJS    = $(addsuffix .o, $(basename $(SOURCES)))
-OBJS += MQF/libgqf.so
+OBJS += MQF/libgqf.so counterMain.o
 #DEPS    = $(OBJS:%.o=%.d) #replace %.d with .%.d (hide dependency files)
 DEPS    = $(foreach f, $(OBJS), $(addprefix $(dir $(f))., $(patsubst %.o, %.d, $(notdir $(f)))))
 
@@ -150,13 +151,8 @@ ctags: $(HEADERS) $(SOURCES)
 # Rules for generating the executable.
 #-------------------------------------
 $(PROGRAM):$(OBJS)
-ifeq ($(SRC_CXX),)              # C program
-	$(LINK.c)   $(OBJS) $(EXTRA_LDFLAGS) -o $@
+	$(LINK.cxx) $(OBJS) main.o $(EXTRA_LDFLAGS) -o $@
 	@echo Type ./$@ to execute the program.
-else                            # C++ program
-	$(LINK.cxx) $(OBJS) $(EXTRA_LDFLAGS) -o $@
-	@echo Type ./$@ to execute the program.
-endif
 
 ifndef NODEP
 ifneq ($(DEPS),)
@@ -164,11 +160,22 @@ ifneq ($(DEPS),)
 endif
 endif
 
+
+TESTS = tests/testsMain.o tests/testKmerCounter.o
+test: $(TESTS) $(OBJS)
+	$(LINK.cxx) $(EXTRA_LDFLAGS)  $^ $(LDFLAGS) -o $@
+
+
 clean:
-	$(RM) $(OBJS) $(PROGRAM) $(PROGRAM).exe
+	$(RM) $(OBJS) $(PROGRAM) $(PROGRAM).exe $(TESTS)
+	cd MQF && make clean
 
 distclean: clean
 	$(RM) $(DEPS) TAGS
+
+
+
+
 
 # Show help.
 help:
