@@ -1,0 +1,21 @@
+language: cpp
+sudo: required
+dist: trusty
+compiler:
+- g++
+os:
+- linux
+
+
+before_install:
+  - sudo apt-get -qq update
+  - sudo apt-get install -y make automake autotools-dev
+script:
+  - make test
+  - ./test
+branches:
+  only:
+  - master
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
