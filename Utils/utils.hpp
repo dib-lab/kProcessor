@@ -18,7 +18,7 @@ void removeReadsWithN(std::string inputFilename,std::string outputFilename)
   {
     bool hasN=false;
     readRecord(id, readT,quals, seqFileIn);
-    for(int i=0;i<readT.size();i++)
+    for(uint64_t i=0;i<readT.size();i++)
     {
       if(readT[i]=='N')
       {

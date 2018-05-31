@@ -6,7 +6,7 @@ CXX	= g++
 
 
 INCLUDE	= -IThirdParty/seqan/include -IMQF
-CPPFLAGS	= -Wall -Wextra -std=c++14
+CPPFLAGS	= -Wall -Wextra -std=c++14 -fPIC
 LDFLAGS	=
 
 
@@ -162,7 +162,7 @@ endif
 
 
 TESTS = tests/testsMain.o tests/testKmerCounter.o
-test: $(TESTS) $(OBJS)
+test: $(OBJS) $(TESTS)
 	$(LINK.cxx) $(EXTRA_LDFLAGS)  $^ $(LDFLAGS) -o $@
 
 

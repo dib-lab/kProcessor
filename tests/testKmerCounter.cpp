@@ -9,17 +9,22 @@
 #include <seqan/seq_io.h>
 #include <iostream>
 using namespace std;
+void KmerCounter_main(int argc, char *argv[]);
+
+
 TEST_CASE( "loadIntoMQF", "[KmerCounter]" ) {
-    string testfilename="tests/testData/test.noN.fastq";
-    string tmpOutput="tests/testData/tmp.test.noN.count";
-    int k=15;
-    int noThreads=1;
-    QF qf;
-    uint64_t nslots=32768;
-    uint64_t fixed_size_counter=1;
-    qf_init(&qf, nslots, 2*k+15, 0,fixed_size_counter, true, "", 2038074761);
-    loadIntoMQF(testfilename, k, noThreads,&qf);
-    dumpMQF(&qf,k,tmpOutput);
+    char* argv[]={
+      (char*)"count",
+      (char*)"-i", (char*)"tests/testData/test.noN.fastq",
+      (char*)"-k", (char*)"15",
+      (char*)"-o", (char*)"tests/testData/tmp.test.noN.mqf",
+      (char*)"-s", (char*)"32768",
+      (char*)"-u", (char*)"tests/testData/tmp.test.noN.count"
+    };
+    int argc=11;
+
+    
+    KmerCounter_main(argc, argv);
 
     map<string,int> gold;
     ifstream goldFile("tests/testData/test.noN.dsk.txt");
@@ -30,7 +35,7 @@ TEST_CASE( "loadIntoMQF", "[KmerCounter]" ) {
       gold.insert(make_pair(kmer,count));
       tmp++;
     }
-    ifstream result(tmpOutput.c_str());
+    ifstream result("tests/testData/tmp.test.noN.count");
     int resultKmerNumber=0;
     while(result>>kmer>>count)
     {

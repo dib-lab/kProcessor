@@ -22,9 +22,6 @@ int KmerCounter_main(int argc, char *argv[]){
   uint64_t maxMemory=0;
   int k;
 
-
-
-
   app.add_option("-i,--input", input_files,
    "Sequence Files to count. can be fasta,fastq or BAM")->required()
   ->check(CLI::ExistingFile)->group("I/O");
@@ -52,7 +49,9 @@ int KmerCounter_main(int argc, char *argv[]){
 
   QF qf;
   qf_init(&qf, nslots, 2*k+15, 0,fixed_size_counter, true, "", 2038074761);
-  loadIntoMQF(input_files[0],k,noThreads,&qf);
+
+  for(auto file: input_files)
+    loadIntoMQF(file,k,noThreads,&qf);
 
   if(outputKmers!=""){
     dumpMQF(&qf,k,outputKmers);
