@@ -7,6 +7,7 @@
 #include "KmerCounter/KmerCounter.hpp"
 #include "KmerCounter/kmer.h"
 #include "Utils/utils.hpp"
+#include <cmath>
 
 using namespace std;
 
@@ -18,7 +19,7 @@ int KmerCounter_main(int argc, char *argv[]){
   string outputKmers="";
   uint64_t nslots=32768;
   uint64_t fixed_size_counter=1;
-  double accuracy=1;
+  double fpr=0;
   int noThreads=1;
   uint64_t maxMemory=0;
   int k;
@@ -35,8 +36,8 @@ int KmerCounter_main(int argc, char *argv[]){
   app.add_option("-s,--no-slots",nslots,"Number of slots in MQF. Should be of power of two")->group("MQF Options");
   app.add_option("-f,--fixed-size-counter",fixed_size_counter,
   "Number of bits in Fixed-size counter size in MQF. Default 1")->group("MQF Options");
-  app.add_option("-a,--accuracy",accuracy,
-  "Accuracy of MQF. use 1 for exact counting and less than 1 for probalistic counting. Default 1")
+  app.add_option("-r,--fpr",fpr,
+  "False Positive Rate of MQF. use 0 for exact counting and less than 1 for probalistic counting. Default 0")
   ->group("MQF Options");
 
   app.add_option("-t,--threads", noThreads,
@@ -48,21 +49,42 @@ int KmerCounter_main(int argc, char *argv[]){
 
   CLI11_PARSE(app, argc, argv);
 
+  Hasher* hasher;
+  uint64_t qbits=(uint64_t)log2((double)nslots);
+  uint64_t num_hashbits;
+  if(fpr==0){
+    hasher=new IntegerHasher(BITMASK(2*k));
+    num_hashbits=qbits+2*k;
+  }
+  else if(fpr<1){
+    hasher=new MumurHasher(2038074761);
+    num_hashbits=qbits-(uint64_t)(log2(fpr))+1;
+  }
+  else{
+    cerr<<"False positive rate should be less than one"<<endl;
+    return 1;
+  }
+
   QF qf;
-  qf_init(&qf, nslots, 2*k+15, 0,fixed_size_counter, true, "", 2038074761);
+  qf_init(&qf, nslots, num_hashbits, 0,fixed_size_counter, true, "", 2038074761);
 
-  IntegerHasher Ihasher(BITMASK(2*k));
-  Ihasher.hash(10);
   for(auto file: input_files)
-    loadIntoMQF(file,k,noThreads,&Ihasher,&qf);
+    loadIntoMQF(file,k,noThreads,hasher,&qf);
 
-  
+
   if(outputKmers!=""){
+    if(fpr==0){
     dumpMQF(&qf,k,outputKmers);
+    }
+    else{
+      cerr<<"dump mqf in text format is not supported for inexact counting"<<endl;
+    }
+
   }
   qf_serialize(&qf,outputMQF.c_str());
 
-
+  delete hasher;
+  qf_destroy(&qf);
 
   return 0;
 }
