@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <gqf.h>
 #include "KmerCounter/KmerCounter.hpp"
+#include "KmerCounter/kmer.h"
 #include "Utils/utils.hpp"
 
 using namespace std;
@@ -50,9 +51,12 @@ int KmerCounter_main(int argc, char *argv[]){
   QF qf;
   qf_init(&qf, nslots, 2*k+15, 0,fixed_size_counter, true, "", 2038074761);
 
+  IntegerHasher Ihasher(BITMASK(2*k));
+  Ihasher.hash(10);
   for(auto file: input_files)
-    loadIntoMQF(file,k,noThreads,&qf);
+    loadIntoMQF(file,k,noThreads,&Ihasher,&qf);
 
+  
   if(outputKmers!=""){
     dumpMQF(&qf,k,outputKmers);
   }

@@ -6,14 +6,15 @@ CXX	= g++
 
 
 INCLUDE	= -IThirdParty/seqan/include -IMQF
-CPPFLAGS	= -Wall -Wextra -std=c++14 -fPIC
-LDFLAGS	=
+CPPFLAGS	= -Wall -Wextra -std=c++14 -fPIC -fopenmp -W -Wall -pedantic
+LDFLAGS	= -lrt -lpthread -lbz2 -lz
 
 
-SEQAN_FLAGS= -DSEQAN_HAS_ZLIB=1 -DSEQAN_HAS_BZIP2=1 -Wl,--whole-archive -lpthread -Wl,--no-whole-archive
+SEQAN_FLAGS= -DSEQAN_HAS_ZLIB=1 -DSEQAN_HAS_BZIP2=1  -DSEQAN_HAS_OPENMP=1 -Wl,--whole-archive -Wl,--no-whole-archive
+CPPFLAGS += $(SEQAN_FLAGS)
 # The directories in which source files reside.
 # If not specified, all subdirectories of the current directory will be added recursively.
-SRCDIRS	:=  HashUtils/ KmerCounter/
+SRCDIRS	:=  KmerCounter/ HashUtils/
 UNAME_S  := $(shell uname -s)
 
 
@@ -51,8 +52,9 @@ endif
 SOURCES = $(foreach d,$(SRCDIRS),$(wildcard $(addprefix $(d)/*,$(SRCEXTS))))
 HEADERS = $(foreach d,$(SRCDIRS),$(wildcard $(addprefix $(d)/*,$(HDREXTS))))
 SRC_CXX = $(filter-out %.c,$(SOURCES))
-OBJS    = $(addsuffix .o, $(basename $(SOURCES)))
-OBJS += MQF/libgqf.so counterMain.o
+OBJS	= counterMain.o
+OBJS    += $(addsuffix .o, $(basename $(SOURCES)))
+OBJS += MQF/libgqf.so
 #DEPS    = $(OBJS:%.o=%.d) #replace %.d with .%.d (hide dependency files)
 DEPS    = $(foreach f, $(OBJS), $(addprefix $(dir $(f))., $(patsubst %.o, %.d, $(notdir $(f)))))
 
@@ -151,7 +153,7 @@ ctags: $(HEADERS) $(SOURCES)
 # Rules for generating the executable.
 #-------------------------------------
 $(PROGRAM):$(OBJS)
-	$(LINK.cxx) $(OBJS) main.o $(EXTRA_LDFLAGS) -o $@
+	$(LINK.cxx)  main.o $(OBJS) $(EXTRA_LDFLAGS) $(LDFLAGS) -o $@
 	@echo Type ./$@ to execute the program.
 
 ifndef NODEP

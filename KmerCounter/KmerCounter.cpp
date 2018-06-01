@@ -11,7 +11,7 @@ using namespace std;
 using namespace seqan;
 
 
-void loadIntoMQF(string sequenceFilename,int ksize,int noThreads,QF * memoryMQF){
+void loadIntoMQF(string sequenceFilename,int ksize,int noThreads, Hasher *hasher,QF * memoryMQF){
   SeqFileIn seqFileIn(sequenceFilename.c_str());
   CharString id;
   Dna5String read;
@@ -49,8 +49,7 @@ void loadIntoMQF(string sequenceFilename,int ksize,int noThreads,QF * memoryMQF)
     item = first;
     else
     item = first_rev;
-    item = HashUtil::hash_64(item, BITMASK(2*ksize));
-
+    item = hasher->hash(item)%memoryMQF->metadata->range;
     qf_insert(memoryMQF,item,1);
 
     uint64_t next = (first << 2) & BITMASK(2*ksize);
@@ -75,7 +74,7 @@ void loadIntoMQF(string sequenceFilename,int ksize,int noThreads,QF * memoryMQF)
       item = next_rev;
 
 
-      item = HashUtil::hash_64(item, BITMASK(2*ksize));
+      item = hasher->hash(item)%memoryMQF->metadata->range;
       qf_insert(memoryMQF,item,1);
 
       next = (next << 2) & BITMASK(2*ksize);
@@ -88,13 +87,14 @@ void loadIntoMQF(string sequenceFilename,int ksize,int noThreads,QF * memoryMQF)
 }
 
 void dumpMQF(QF * MQF,int ksize,std::string outputFilename){
+  IntegerHasher Ihasher(BITMASK(2*ksize));
   ofstream output(outputFilename.c_str());
   QFi qfi;
   qf_iterator(MQF, &qfi, 0);
   do {
     uint64_t key, value, count;
     qfi_get(&qfi, &key, &value, &count);
-    string kmer=int_to_str(HashUtil::hash_64i(key,BITMASK(2*ksize)),ksize);
+    string kmer=kmer::int_to_str(Ihasher.Ihash(key),ksize);
     output<<kmer<<"\t"<<count<<endl;
   } while(!qfi_next(&qfi));
 }
