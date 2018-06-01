@@ -19,8 +19,8 @@
  */
 
 #include "hashutil.h"
-
-
+#include <iostream>
+using namespace std;
 	//-----------------------------------------------------------------------------
 	// MurmurHash2, 64-bit versions, by Austin Appleby
 
@@ -30,8 +30,10 @@
 
 	// 64-bit hash for 64-bit platforms
 
-	uint64_t HashUtil::MurmurHash64A ( const void * key, int len, unsigned int seed )
+	uint64_t MumurHasher::hash(uint64_t Ikey)
 	{
+		void * key=(void *)&Ikey;
+		int len=sizeof(Ikey);
 		const uint64_t m = 0xc6a4a7935bd1e995;
 		const int r = 47;
 
@@ -74,58 +76,58 @@
 	}
 
 
-	// 64-bit hash for 32-bit platforms
-
-	uint64_t HashUtil::MurmurHash64B ( const void * key, int len, unsigned int seed )
-	{
-		const unsigned int m = 0x5bd1e995;
-		const int r = 24;
-
-		unsigned int h1 = seed ^ len;
-		unsigned int h2 = 0;
-
-		const unsigned int * data = (const unsigned int *)key;
-
-		while(len >= 8)
-		{
-			unsigned int k1 = *data++;
-			k1 *= m; k1 ^= k1 >> r; k1 *= m;
-			h1 *= m; h1 ^= k1;
-			len -= 4;
-
-			unsigned int k2 = *data++;
-			k2 *= m; k2 ^= k2 >> r; k2 *= m;
-			h2 *= m; h2 ^= k2;
-			len -= 4;
-		}
-
-		if(len >= 4)
-		{
-			unsigned int k1 = *data++;
-			k1 *= m; k1 ^= k1 >> r; k1 *= m;
-			h1 *= m; h1 ^= k1;
-			len -= 4;
-		}
-
-		switch(len)
-		{
-			case 3: h2 ^= ((unsigned char*)data)[2] << 16;
-			case 2: h2 ^= ((unsigned char*)data)[1] << 8;
-			case 1: h2 ^= ((unsigned char*)data)[0];
-							h2 *= m;
-		};
-
-		h1 ^= h2 >> 18; h1 *= m;
-		h2 ^= h1 >> 22; h2 *= m;
-		h1 ^= h2 >> 17; h1 *= m;
-		h2 ^= h1 >> 19; h2 *= m;
-
-		uint64_t h = h1;
-
-		h = (h << 32) | h2;
-
-		return h;
-	}
+	// // 64-bit hash for 32-bit platforms
+  //
+	// uint64_t HashUtil::MurmurHash64B ( const void * key, int len, unsigned int seed )
+	// {
+	// 	const unsigned int m = 0x5bd1e995;
+	// 	const int r = 24;
+  //
+	// 	unsigned int h1 = seed ^ len;
+	// 	unsigned int h2 = 0;
+  //
+	// 	const unsigned int * data = (const unsigned int *)key;
+  //
+	// 	while(len >= 8)
+	// 	{
+	// 		unsigned int k1 = *data++;
+	// 		k1 *= m; k1 ^= k1 >> r; k1 *= m;
+	// 		h1 *= m; h1 ^= k1;
+	// 		len -= 4;
+  //
+	// 		unsigned int k2 = *data++;
+	// 		k2 *= m; k2 ^= k2 >> r; k2 *= m;
+	// 		h2 *= m; h2 ^= k2;
+	// 		len -= 4;
+	// 	}
+  //
+	// 	if(len >= 4)
+	// 	{
+	// 		unsigned int k1 = *data++;
+	// 		k1 *= m; k1 ^= k1 >> r; k1 *= m;
+	// 		h1 *= m; h1 ^= k1;
+	// 		len -= 4;
+	// 	}
+  //
+	// 	switch(len)
+	// 	{
+	// 		case 3: h2 ^= ((unsigned char*)data)[2] << 16;
+	// 		case 2: h2 ^= ((unsigned char*)data)[1] << 8;
+	// 		case 1: h2 ^= ((unsigned char*)data)[0];
+	// 						h2 *= m;
+	// 	};
+  //
+	// 	h1 ^= h2 >> 18; h1 *= m;
+	// 	h2 ^= h1 >> 22; h2 *= m;
+	// 	h1 ^= h2 >> 17; h1 *= m;
+	// 	h2 ^= h1 >> 19; h2 *= m;
+  //
+	// 	uint64_t h = h1;
+  //
+	// 	h = (h << 32) | h2;
+  //
+	// 	return h;
+	// }
 
 
 	/*
@@ -140,7 +142,7 @@
 	// Thomas Wang's integer hash functions. See
 	// <https://gist.github.com/lh3/59882d6b96166dfc3d8d> for a snapshot.
 
-	uint64_t HashUtil::hash_64(uint64_t key, uint64_t mask)
+	uint64_t IntegerHasher::hash(uint64_t key)
 	{
 		key = (~key + (key << 21)) & mask; // key = (key << 21) - key - 1;
 		key = key ^ key >> 24;
@@ -154,7 +156,7 @@
 
 	// The inversion of hash_64(). Modified from
 	// <https://naml.us/blog/tag/invertible>
-	uint64_t HashUtil::hash_64i(uint64_t key, uint64_t mask)
+	uint64_t IntegerHasher::Ihash(uint64_t key)
 	{
 		uint64_t tmp;
 
