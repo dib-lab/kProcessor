@@ -19,9 +19,10 @@ TEST_CASE( "loadIntoMQF", "[KmerCounter]" ) {
       (char*)"-k", (char*)"15",
       (char*)"-o", (char*)"tests/testData/tmp.test.noN.mqf",
       (char*)"-s", (char*)"32768",
+      (char*)"-t", (char*)"4",
       (char*)"-u", (char*)"tests/testData/tmp.test.noN.count"
     };
-    int argc=11;
+    int argc=13;
 
 
     KmerCounter_main(argc, argv);
