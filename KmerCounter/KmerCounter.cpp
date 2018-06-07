@@ -5,6 +5,8 @@
 
 #include <seqan/seq_io.h>
 #include "../HashUtils/hashutil.h"
+#include <seqan/parallel.h>
+
 #include <omp.h>
 
 #include <gqf.h>
@@ -48,24 +50,25 @@ static inline void insertToLevels(uint64_t item,QF* local,QF* main)
 
 
 void loadIntoMQF(string sequenceFilename,int ksize,int noThreads, Hasher *hasher,QF * memoryMQF){
-  cout<<noThreads<<endl;
   SeqFileIn seqFileIn(sequenceFilename.c_str());
   StringSet<CharString> ids;
   StringSet<Dna5String> reads;
   omp_set_num_threads(noThreads);
   QF* localMQF;
-  #pragma omp parallel private(ids,reads,localMQF) shared(seqFileIn)
+  bool moreWork=true;
+  #pragma omp parallel private(ids,reads,localMQF) shared(seqFileIn,moreWork)
   {
     localMQF= new QF();
     qf_init(localMQF, (1ULL << QBITS_LOCAL_QF), memoryMQF->metadata->key_bits,
     0,memoryMQF->metadata->fixed_counter_size, true,"", 2038074761);
 
 
-    while(!atEnd(seqFileIn))
+    while(moreWork)
     {
-      #pragma omp critical
+      SEQAN_OMP_PRAGMA(critical)
       {
         seqan::readRecords(ids, reads, seqFileIn,10000);
+        moreWork=!atEnd(seqFileIn);
       }
 
       for(auto read:reads){
