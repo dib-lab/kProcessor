@@ -6,6 +6,7 @@ using namespace std;
 #define KPROCESSOR_VERSION "0.1"
 
 int KmerCounter_main(int argc, char *argv[]);
+int estimateMemory_main(int argc, char *argv[]);
 
 string KprocessorVersion()
 {
@@ -24,6 +25,7 @@ static void usage()
 "Commands:\n"<<
 "  -- Counter\n"<<
 "     count          count kmers in seqeunces file \n";
+"     estimate       estimate the memory requirements for kmer counting\n";
 }
 
 int main(int argc, char *argv[])
@@ -40,11 +42,13 @@ int main(int argc, char *argv[])
 
     int ret = 0;
     if (string(argv[1])== "count")  ret =KmerCounter_main(argc-1,argv+1);
+    else if (string(argv[1])== "estimate")  ret =estimateMemory_main(argc-1,argv+1);
     else if (string(argv[1])== "--version" ) {
       cout<<"This is Kprocessor version "<<KprocessorVersion()<<" developed by Mostafa Shokrof <mostafa.shokrof@gmail.com>\n";
     }
     else {
       cout<<"[main] unrecognized command "<< argv[1]<<endl;
+      usage();
         return 1;
     }
     return ret;

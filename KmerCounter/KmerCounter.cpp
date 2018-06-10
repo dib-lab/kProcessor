@@ -6,8 +6,9 @@
 #include <seqan/seq_io.h>
 #include "../HashUtils/hashutil.h"
 #include <seqan/parallel.h>
-
+#include <limits>
 #include <omp.h>
+#include <stdexcept>
 
 #include <gqf.h>
 using namespace std;
@@ -72,6 +73,7 @@ void loadIntoMQF(string sequenceFilename,int ksize,int noThreads, Hasher *hasher
       }
 
       for(auto read:reads){
+start_read:
         if(length(read)<ksize)
         {
           continue;
@@ -86,9 +88,11 @@ void loadIntoMQF(string sequenceFilename,int ksize,int noThreads, Hasher *hasher
           uint8_t curr = kmer::map_base(read[i]);
           if (curr > DNA_MAP::G) {
             // 'N' is encountered
-            //    read = read.substr(i+1, length(read));
-            continue;
-            //goto start_read;
+            //read = read.substr(i+1, length(read));
+
+            erase(read,0,i+1);
+            //continue;
+            goto start_read;
           }
           first = first | curr;
           first = first << 2;
@@ -102,6 +106,7 @@ void loadIntoMQF(string sequenceFilename,int ksize,int noThreads, Hasher *hasher
         else
         item = first_rev;
         item = hasher->hash(item)%memoryMQF->metadata->range;
+
         insertToLevels(item,localMQF,memoryMQF);
 
         uint64_t next = (first << 2) & BITMASK(2*ksize);
@@ -113,8 +118,12 @@ void loadIntoMQF(string sequenceFilename,int ksize,int noThreads, Hasher *hasher
           uint8_t curr = kmer::map_base(read[i]);
           if (curr > DNA_MAP::G) {
             // 'N' is encountered
-            continue;
+            //continue;
             //read = read.substr(i+1, length(read));
+
+            erase(read,0,i+1);
+
+            goto start_read;
           }
           next |= curr;
           uint64_t tmp = kmer::reverse_complement_base(curr);
@@ -128,13 +137,13 @@ void loadIntoMQF(string sequenceFilename,int ksize,int noThreads, Hasher *hasher
 
           item = hasher->hash(item)%memoryMQF->metadata->range;
           insertToLevels(item,localMQF,memoryMQF);
-
           next = (next << 2) & BITMASK(2*ksize);
           next_rev = next_rev >> 2;
         }
       }
 
     }
+
     dump_local_qf_to_main(localMQF,memoryMQF);
     qf_destroy(localMQF);
   }
@@ -152,4 +161,89 @@ void dumpMQF(QF * MQF,int ksize,std::string outputFilename){
     string kmer=kmer::int_to_str(Ihasher.Ihash(key),ksize);
     output<<kmer<<"\t"<<count<<endl;
   } while(!qfi_next(&qfi));
+}
+
+bool isEnough(vector<uint64_t> histogram,uint64_t noSlots,uint64_t fixedSizeCounter,uint64_t slotSize)
+{
+  noSlots=(uint64_t)((double)noSlots*0.95);
+  for(uint64_t i=1;i<1000;i++)
+  {
+    uint64_t usedSlots=1;
+    if(i>((1ULL)<<fixedSizeCounter)-1)
+    {
+      uint64_t nSlots2=0;
+      uint64_t capacity;
+      do{
+        nSlots2++;
+        capacity=((1ULL)<<(nSlots2*slotSize+fixedSizeCounter))-1;
+      }while(i>capacity);
+      usedSlots+=nSlots2;
+    }
+    if(noSlots>=(usedSlots*histogram[i]))
+    {
+      noSlots-=(usedSlots*histogram[i]);
+    }
+    else
+    {
+      return false;
+    }
+
+  }
+  return true;
+}
+void estimateMemRequirement(std::string ntcardFilename,
+   uint64_t slotSize,uint64_t tagSize,
+   uint64_t *res_noSlots,uint64_t *res_fixedSizeCounter, uint64_t *res_slotSize
+   , uint64_t *res_memory)
+{
+  uint64_t noDistinctKmers=0,totalNumKmers=0;
+  vector<uint64_t> histogram(1000,0);
+  ifstream ntcardFile(ntcardFilename);
+  string f;
+  uint64_t count;
+  while(ntcardFile>>f>>count)
+  {
+    if(count==numeric_limits<uint64_t>::max())
+      continue;
+    if(f=="F0")
+      noDistinctKmers=count;
+    else if(f=="F1")
+      totalNumKmers=count;
+    else{
+      f=f.substr(1,f.size());
+      int n=atoi(f.c_str());
+      histogram[n]=count;
+    }
+  }
+  *res_memory=numeric_limits<uint64_t>::max();
+  for(int i=8;i<64;i++)
+  {
+    uint64_t noSlots=(1ULL)<<i;
+    bool moreWork=false;
+    for(uint64_t slotSize2=slotSize;slotSize2<slotSize+2;slotSize2++){
+      for(uint64_t fixedSizeCounter=1;fixedSizeCounter<slotSize;fixedSizeCounter++)
+      {
+        if(isEnough(histogram,noSlots,fixedSizeCounter,slotSize2))
+        {
+          uint64_t tmpMem=((noSlots/8000)*(fixedSizeCounter+slotSize2+tagSize));
+          if(*res_memory>tmpMem)
+          {
+            *res_memory=tmpMem;
+            *res_fixedSizeCounter=fixedSizeCounter;
+            *res_noSlots=noSlots;
+            *res_slotSize=slotSize2;
+            moreWork=true;
+          }
+        }
+      }
+    }
+    if(!moreWork && *res_memory!=numeric_limits<uint64_t>::max())
+      break;
+  }
+  if(*res_memory==numeric_limits<uint64_t>::max())
+  {
+    throw std::overflow_error("Data limits exceeds MQF capabilities(> uint64). Check if ntcard file is corrupted");
+  }
+
+
 }

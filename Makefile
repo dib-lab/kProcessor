@@ -52,7 +52,7 @@ endif
 SOURCES = $(foreach d,$(SRCDIRS),$(wildcard $(addprefix $(d)/*,$(SRCEXTS))))
 HEADERS = $(foreach d,$(SRCDIRS),$(wildcard $(addprefix $(d)/*,$(HDREXTS))))
 SRC_CXX = $(filter-out %.c,$(SOURCES))
-OBJS	= counterMain.o
+OBJS	= counterMain.o estimateMemoryMain.o
 OBJS    += $(addsuffix .o, $(basename $(SOURCES)))
 OBJS += MQF/libgqf.so
 #DEPS    = $(OBJS:%.o=%.d) #replace %.d with .%.d (hide dependency files)
@@ -152,7 +152,7 @@ ctags: $(HEADERS) $(SOURCES)
 
 # Rules for generating the executable.
 #-------------------------------------
-$(PROGRAM):$(OBJS)
+$(PROGRAM):$(OBJS) main.o
 	$(LINK.cxx)  main.o $(OBJS) $(EXTRA_LDFLAGS) $(LDFLAGS) -o $@
 	@echo Type ./$@ to execute the program.
 
