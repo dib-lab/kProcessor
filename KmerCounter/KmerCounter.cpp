@@ -41,7 +41,7 @@ static inline void insertToLevels(uint64_t item,QF* local,QF* main)
 				qf_insert(local, item%local->metadata->range, 1,
 									false, false);
 				// check of the load factor of the local QF is more than 50%
-				if (qf_space(local)>95) {
+				if (qf_space(local)>80) {
 					dump_local_qf_to_main(local,main);
 				}
 			}
@@ -57,19 +57,21 @@ void loadIntoMQF(string sequenceFilename,int ksize,int noThreads, Hasher *hasher
   omp_set_num_threads(noThreads);
   QF* localMQF;
   bool moreWork=true;
-  #pragma omp parallel private(ids,reads,localMQF) shared(seqFileIn,moreWork)
+  uint64_t numReads=0;
+  #pragma omp parallel private(ids,reads,localMQF) shared(seqFileIn,moreWork,numReads)
   {
     localMQF= new QF();
     qf_init(localMQF, (1ULL << QBITS_LOCAL_QF), memoryMQF->metadata->key_bits,
     0,memoryMQF->metadata->fixed_counter_size, true,"", 2038074761);
-
-
     while(moreWork)
     {
       SEQAN_OMP_PRAGMA(critical)
       {
+        clear(reads);
+        clear(ids);
         seqan::readRecords(ids, reads, seqFileIn,10000);
         moreWork=!atEnd(seqFileIn);
+        numReads+=10000;
       }
 
       for(auto read:reads){
@@ -106,7 +108,6 @@ start_read:
         else
         item = first_rev;
         item = hasher->hash(item)%memoryMQF->metadata->range;
-
         insertToLevels(item,localMQF,memoryMQF);
 
         uint64_t next = (first << 2) & BITMASK(2*ksize);
@@ -165,6 +166,10 @@ void dumpMQF(QF * MQF,int ksize,std::string outputFilename){
 
 bool isEnough(vector<uint64_t> histogram,uint64_t noSlots,uint64_t fixedSizeCounter,uint64_t slotSize)
 {
+  cout<<"noSlots= "<<noSlots<<endl
+      <<"fcounter= "<<fixedSizeCounter<<endl
+      <<"slot size= "<<slotSize<<endl;
+
   noSlots=(uint64_t)((double)noSlots*0.95);
   for(uint64_t i=1;i<1000;i++)
   {
@@ -172,23 +177,27 @@ bool isEnough(vector<uint64_t> histogram,uint64_t noSlots,uint64_t fixedSizeCoun
     if(i>((1ULL)<<fixedSizeCounter)-1)
     {
       uint64_t nSlots2=0;
-      uint64_t capacity;
+      __uint128_t capacity;
       do{
         nSlots2++;
-        capacity=((1ULL)<<(nSlots2*slotSize+fixedSizeCounter))-1;
-      }while(i>capacity);
+        capacity=((__uint128_t)(1ULL)<<(nSlots2*slotSize+fixedSizeCounter))-1;
+      //  cout<<"slots num "<<nSlots2<<" "<<capacity<<endl;
+    }while((__uint128_t)i>capacity);
       usedSlots+=nSlots2;
     }
+    cout<<"i= "<<i<<"->"<<usedSlots<<" * "<<histogram[i]<<endl;
     if(noSlots>=(usedSlots*histogram[i]))
     {
       noSlots-=(usedSlots*histogram[i]);
     }
     else
     {
+      cout<<"failed"<<endl<<endl;
       return false;
     }
 
   }
+  cout<<"success"<<endl<<endl;
   return true;
 }
 void estimateMemRequirement(std::string ntcardFilename,
@@ -219,6 +228,8 @@ void estimateMemRequirement(std::string ntcardFilename,
   for(int i=8;i<64;i++)
   {
     uint64_t noSlots=(1ULL)<<i;
+    if(noSlots<noDistinctKmers)
+      continue;
     bool moreWork=false;
     for(uint64_t slotSize2=slotSize;slotSize2<slotSize+2;slotSize2++){
       for(uint64_t fixedSizeCounter=1;fixedSizeCounter<slotSize;fixedSizeCounter++)

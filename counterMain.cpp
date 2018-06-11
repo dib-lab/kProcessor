@@ -54,7 +54,7 @@ int KmerCounter_main(int argc, char *argv[]){
   uint64_t num_hashbits;
   if(fpr==0){
     hasher=new IntegerHasher(BITMASK(2*k));
-    num_hashbits=qbits+2*k;
+    num_hashbits=2*k;
   }
   else if(fpr<1){
     hasher=new MumurHasher(2038074761);
@@ -64,7 +64,6 @@ int KmerCounter_main(int argc, char *argv[]){
     cerr<<"False positive rate should be less than one"<<endl;
     return 1;
   }
-
   QF qf;
   qf_init(&qf, nslots, num_hashbits, 0,fixed_size_counter, true, "", 2038074761);
 

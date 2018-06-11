@@ -1612,7 +1612,7 @@ static inline bool insert(QF *qf, __uint128_t hash, uint64_t count, bool lock=fa
 	uint64_t hash_bucket_index        = hash >> qf->metadata->key_remainder_bits;
 	uint64_t hash_bucket_block_offset = hash_bucket_index % SLOTS_PER_BLOCK;
 	/*uint64_t hash_bucket_lock_offset  = hash_bucket_index % NUM_SLOTS_TO_LOCK;*/
-	//printf("index= %lu remainder= %lu count=%lu\n",hash_bucket_index,hash_remainder,count);
+
 	if(hash_bucket_index > qf->metadata->xnslots){
 		throw std::out_of_range("Insert is called with hash index out of range");
 	}
@@ -1843,7 +1843,6 @@ void qf_init(QF *qf, uint64_t nslots, uint64_t key_bits, uint64_t tag_bits,uint6
 //printf("bits per slot =%lu,key remainder bits =%lu, fixed counter =%lu, tag_bits=%lu\n",
 //bits_per_slot,key_remainder_bits,fixed_counter_size,tag_bits );
 size = nblocks * (sizeof(qfblock) + (8 * bits_per_slot )) ;
-
 qf->mem = (qfmem *)calloc(sizeof(qfmem), 1);
 
 	if (mem) {
