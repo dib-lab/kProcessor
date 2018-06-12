@@ -107,6 +107,7 @@ start_read:
         item = first;
         else
         item = first_rev;
+
         item = hasher->hash(item)%memoryMQF->metadata->range;
         insertToLevels(item,localMQF,memoryMQF);
 
@@ -160,7 +161,7 @@ void dumpMQF(QF * MQF,int ksize,std::string outputFilename){
     uint64_t key, value, count;
     qfi_get(&qfi, &key, &value, &count);
     string kmer=kmer::int_to_str(Ihasher.Ihash(key),ksize);
-    output<<kmer<<"\t"<<count<<endl;
+    output<<kmer<<" "<<count<<endl;
   } while(!qfi_next(&qfi));
 }
 

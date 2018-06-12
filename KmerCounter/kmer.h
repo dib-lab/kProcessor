@@ -24,8 +24,8 @@
 #include <stdio.h>
 #include <string>
 
-enum DNA_MAP {C, A, T, G};  // A=1, C=0, T=2, G=3
-
+enum DNA_MAP {A, C, T, G};  // A=1, C=0, T=2, G=3
+static uint8_t DNA_REVERSE[]={2,3,0,1};
 #define BITMASK(nbits) ((nbits) == 64 ? 0xffffffffffffffff : (1ULL << (nbits)) \
 												- 1ULL)
 using namespace std;
@@ -76,7 +76,7 @@ inline uint8_t kmer::map_base(char base)
 
 
 /* Return the reverse complement of a base */
-inline int kmer::reverse_complement_base(int x) { return 3 - x; }
+inline int kmer::reverse_complement_base(int x) { return DNA_REVERSE[x]; }
 
 
 /* Compare the kmer and its reverse complement and return the result
@@ -85,7 +85,7 @@ inline int kmer::reverse_complement_base(int x) { return 3 - x; }
 * */
 inline bool kmer::compare_kmers(uint64_t kmer, uint64_t kmer_rev)
 {
-	return kmer >= kmer_rev;
+	return kmer <= kmer_rev;
 }
 
 
