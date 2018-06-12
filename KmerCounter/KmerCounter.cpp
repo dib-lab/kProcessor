@@ -9,6 +9,7 @@
 #include <limits>
 #include <omp.h>
 #include <stdexcept>
+#include <math.h>
 
 #include <gqf.h>
 using namespace std;
@@ -167,9 +168,9 @@ void dumpMQF(QF * MQF,int ksize,std::string outputFilename){
 
 bool isEnough(vector<uint64_t> histogram,uint64_t noSlots,uint64_t fixedSizeCounter,uint64_t slotSize)
 {
-  cout<<"noSlots= "<<noSlots<<endl
-      <<"fcounter= "<<fixedSizeCounter<<endl
-      <<"slot size= "<<slotSize<<endl;
+  // cout<<"noSlots= "<<noSlots<<endl
+  //     <<"fcounter= "<<fixedSizeCounter<<endl
+  //     <<"slot size= "<<slotSize<<endl;
 
   noSlots=(uint64_t)((double)noSlots*0.95);
   for(uint64_t i=1;i<1000;i++)
@@ -186,20 +187,31 @@ bool isEnough(vector<uint64_t> histogram,uint64_t noSlots,uint64_t fixedSizeCoun
     }while((__uint128_t)i>capacity);
       usedSlots+=nSlots2;
     }
-    cout<<"i= "<<i<<"->"<<usedSlots<<" * "<<histogram[i]<<endl;
+    //cout<<"i= "<<i<<"->"<<usedSlots<<" * "<<histogram[i]<<endl;
     if(noSlots>=(usedSlots*histogram[i]))
     {
       noSlots-=(usedSlots*histogram[i]);
     }
     else
     {
-      cout<<"failed"<<endl<<endl;
+    //  cout<<"failed"<<endl<<endl;
       return false;
     }
 
   }
-  cout<<"success"<<endl<<endl;
+  //cout<<"success"<<endl<<endl;
   return true;
+}
+
+inline uint64_t estimateMemory(uint64_t nslots,uint64_t slotSize, uint64_t fcounter, uint64_t tagSize)
+{
+  uint64_t SLOTS_PER_BLOCK=64;
+  uint64_t xnslots = nslots + 10*sqrt((double)nslots);
+	uint64_t nblocks = (xnslots + SLOTS_PER_BLOCK - 1) / SLOTS_PER_BLOCK;
+  uint64_t blocksize=17;
+  slotSize-=log2((double)nslots);
+  return ((nblocks)*(blocksize+8*(slotSize+fcounter+tagSize)))/1024;
+
 }
 void estimateMemRequirement(std::string ntcardFilename,
    uint64_t slotSize,uint64_t tagSize,
@@ -237,7 +249,7 @@ void estimateMemRequirement(std::string ntcardFilename,
       {
         if(isEnough(histogram,noSlots,fixedSizeCounter,slotSize2))
         {
-          uint64_t tmpMem=((noSlots/8000)*(fixedSizeCounter+slotSize2+tagSize));
+          uint64_t tmpMem=estimateMemory(noSlots,slotSize2,fixedSizeCounter,tagSize);
           if(*res_memory>tmpMem)
           {
             *res_memory=tmpMem;
@@ -245,6 +257,9 @@ void estimateMemRequirement(std::string ntcardFilename,
             *res_noSlots=noSlots;
             *res_slotSize=slotSize2;
             moreWork=true;
+          }
+          else{
+            break;
           }
         }
       }
