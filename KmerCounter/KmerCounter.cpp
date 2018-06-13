@@ -16,24 +16,6 @@ using namespace std;
 using namespace seqan;
 #define QBITS_LOCAL_QF 16
 
-/* dump the contents of a local QF into the main QF */
-static inline void dump_local_qf_to_main(QF* local, QF* main )
-{
-  #pragma omp critical
-  {
-    QFi local_cfi;
-    if (qf_iterator(local, &local_cfi, 0)) {
-      do {
-        uint64_t key = 0, value = 0, count = 0;
-        qfi_get(&local_cfi, &key, &value, &count);
-        //qf_spin_lock((int*)&main_qf_lock,true);
-        //main_qf_lock=false;
-        qf_insert(main, key, count, true, true);
-      } while (!qfi_next(&local_cfi));
-      qf_reset(local);
-    }
-  }
-}
 
 static inline void insertToLevels(uint64_t item,QF* local,QF* main)
 {
@@ -42,8 +24,13 @@ static inline void insertToLevels(uint64_t item,QF* local,QF* main)
 				qf_insert(local, item%local->metadata->range, 1,
 									false, false);
 				// check of the load factor of the local QF is more than 50%
-				if (qf_space(local)>80) {
-					dump_local_qf_to_main(local,main);
+				if (qf_space(local)>90) {
+          #pragma omp critical
+          {
+            qf_migrate(local,main);
+            qf_reset(local);
+          }
+					//dump_local_qf_to_main(local,main);
 				}
 			}
 
@@ -147,7 +134,11 @@ start_read:
 
     }
 
-    dump_local_qf_to_main(localMQF,memoryMQF);
+    //dump_local_qf_to_main(localMQF,memoryMQF);
+    #pragma omp critical
+    {
+      qf_migrate(localMQF,memoryMQF);
+    }
     qf_destroy(localMQF);
   }
 

@@ -7,6 +7,9 @@
 #include <map>
 #include <vector>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /* Can be
 	0 (choose size at run-time),
@@ -29,6 +32,7 @@
 
 	typedef struct quotient_filter_mem {
 		int fd;
+		volatile int general_lock;
 		volatile int metadata_lock;
 		volatile int *locks;
 		wait_time_data *wait_times;
@@ -262,6 +266,13 @@
 
 	bool qf_equals(QF *qfa, QF *qfb);
 
+	bool qf_general_lock(QF* qf, bool spin);
+	void qf_general_unlock(QF* qf);
 
+	void qf_migrate(QF* source, QF* destination);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* QF_H */
