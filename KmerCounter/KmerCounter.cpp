@@ -161,12 +161,13 @@ bool isEnough(vector<uint64_t> histogram,uint64_t noSlots,uint64_t fixedSizeCoun
 {
   // cout<<"noSlots= "<<noSlots<<endl
   //     <<"fcounter= "<<fixedSizeCounter<<endl
-  //     <<"slot size= "<<slotSize<<endl;
+  //     <<"slot size= "<<numHashBits<<endl;
 
   noSlots=(uint64_t)((double)noSlots*0.95);
   for(uint64_t i=1;i<1000;i++)
   {
     uint64_t usedSlots=1;
+
     if(i>((1ULL)<<fixedSizeCounter)-1)
     {
       uint64_t nSlots2=0;
@@ -200,14 +201,13 @@ inline uint64_t estimateMemory(uint64_t nslots,uint64_t slotSize, uint64_t fcoun
   uint64_t xnslots = nslots + 10*sqrt((double)nslots);
 	uint64_t nblocks = (xnslots + SLOTS_PER_BLOCK - 1) / SLOTS_PER_BLOCK;
   uint64_t blocksize=17;
-  slotSize-=log2((double)nslots);
+
   return ((nblocks)*(blocksize+8*(slotSize+fcounter+tagSize)))/1024;
 
 }
 void estimateMemRequirement(std::string ntcardFilename,
-   uint64_t slotSize,uint64_t tagSize,
-   uint64_t *res_noSlots,uint64_t *res_fixedSizeCounter, uint64_t *res_slotSize
-   , uint64_t *res_memory)
+  uint64_t numHashBits,uint64_t tagSize,
+  uint64_t *res_noSlots,uint64_t *res_fixedSizeCounter, uint64_t *res_memory)
 {
   uint64_t noDistinctKmers=0,totalNumKmers=0;
   vector<uint64_t> histogram(1000,0);
@@ -233,30 +233,29 @@ void estimateMemRequirement(std::string ntcardFilename,
   {
     uint64_t noSlots=(1ULL)<<i;
     if(noSlots<noDistinctKmers)
-      continue;
+    continue;
     bool moreWork=false;
-    for(uint64_t slotSize2=slotSize;slotSize2<slotSize+2;slotSize2++){
-      for(uint64_t fixedSizeCounter=1;fixedSizeCounter<slotSize;fixedSizeCounter++)
+    uint64_t slotSize=numHashBits-log2((double)noSlots);
+    for(uint64_t fixedSizeCounter=1;fixedSizeCounter<slotSize;fixedSizeCounter++)
+    {
+      if(isEnough(histogram,noSlots,fixedSizeCounter,slotSize))
       {
-        if(isEnough(histogram,noSlots,fixedSizeCounter,slotSize2))
+        uint64_t tmpMem=estimateMemory(noSlots,slotSize,fixedSizeCounter,tagSize);
+        if(*res_memory>tmpMem)
         {
-          uint64_t tmpMem=estimateMemory(noSlots,slotSize2,fixedSizeCounter,tagSize);
-          if(*res_memory>tmpMem)
-          {
-            *res_memory=tmpMem;
-            *res_fixedSizeCounter=fixedSizeCounter;
-            *res_noSlots=noSlots;
-            *res_slotSize=slotSize2;
-            moreWork=true;
-          }
-          else{
-            break;
-          }
+          *res_memory=tmpMem;
+          *res_fixedSizeCounter=fixedSizeCounter;
+          *res_noSlots=noSlots;
+          moreWork=true;
+        }
+        else{
+          break;
         }
       }
+
     }
     if(!moreWork && *res_memory!=numeric_limits<uint64_t>::max())
-      break;
+    break;
   }
   if(*res_memory==numeric_limits<uint64_t>::max())
   {

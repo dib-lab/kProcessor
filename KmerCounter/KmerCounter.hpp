@@ -11,7 +11,7 @@ void loadIntoMQF(std::string sequenceFilename, int k,int noThreads,Hasher *hashe
 void dumpMQF(QF * memoryMQF,int ksize,std::string outputFilename);
 
 void estimateMemRequirement(std::string ntcardFilename,
-   uint64_t slotSize,uint64_t tagSize,
-   uint64_t *res_noSlots,uint64_t *res_fixedSizeCounter, uint64_t *res_slotSize
+   uint64_t numHashBits,uint64_t tagSize,
+   uint64_t *res_noSlots,uint64_t *res_fixedSizeCounter
    , uint64_t *res_memory);
 #endif
