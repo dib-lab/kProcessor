@@ -27,7 +27,7 @@ int dump_main(int argc, char *argv[]){
   CLI11_PARSE(app, argc, argv);
 
   QF qf;
-  qf_deserialize(&qf,input_file.c_str());
+  qf_read(&qf,input_file.c_str());
 
   dumpMQF(&qf,k,outputKmers);
   return 0;

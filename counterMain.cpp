@@ -23,6 +23,7 @@ int KmerCounter_main(int argc, char *argv[]){
   int noThreads=1;
   uint64_t maxMemory=0;
   int k;
+  string ntcardFile="";
 
   app.add_option("-i,--input", input_files,
    "Sequence Files to count. can be fasta,fastq or BAM")->required()
@@ -33,12 +34,16 @@ int KmerCounter_main(int argc, char *argv[]){
     "Output in the format of Kmer\tCount. Available only in Exact Counting")->group("I/O");
 
   app.add_option("-k,--kmer-length",k,"kmer length")->required()->group("MQF Options");
-  app.add_option("-s,--no-slots",nslots,"Number of slots in MQF. Should be of power of two")->group("MQF Options");
+  app.add_option("-s,--nu-slots",nslots,"Number of slots in MQF. Should be of power of two")->group("MQF Options");
   app.add_option("-f,--fixed-size-counter",fixed_size_counter,
   "Number of bits in Fixed-size counter size in MQF. Default 1")->group("MQF Options");
   app.add_option("-r,--fpr",fpr,
-  "False Positive Rate of MQF. use 0 for exact counting and less than 1 for probalistic counting. Default 0")
-  ->group("MQF Options");
+  "False Positive Rate of MQF. use 0 for exact counting and less than 1 for probalistic counting. Default 0")->group("MQF Options");
+
+
+  app.add_option("-n,--ntcard", ntcardFile,"Ntcard file to help estimation of number of slots and fixed size counter")
+  ->check(CLI::ExistingFile)->group("MQF Options");
+
 
   app.add_option("-t,--threads", noThreads,
    "Number of threads used in kmer counting. Default 1")->group("Misc");
@@ -50,7 +55,6 @@ int KmerCounter_main(int argc, char *argv[]){
   CLI11_PARSE(app, argc, argv);
 
   Hasher* hasher;
-  uint64_t qbits=(uint64_t)log2((double)nslots);
   uint64_t num_hashbits;
   if(fpr==0){
     hasher=new IntegerHasher(BITMASK(2*k));
@@ -58,12 +62,29 @@ int KmerCounter_main(int argc, char *argv[]){
   }
   else if(fpr<1){
     hasher=new MumurHasher(2038074761);
-    num_hashbits=qbits-(uint64_t)(log2(fpr))+1;
+    num_hashbits=-(uint64_t)(log2(fpr))+1;
   }
   else{
     cerr<<"False positive rate should be less than one"<<endl;
     return 1;
   }
+
+  uint64_t requiredMem=0,tagSize=0;
+  if(ntcardFile != "")
+  {
+    estimateMemRequirement(ntcardFile,
+        num_hashbits, tagSize,
+       &nslots, &fixed_size_counter, &requiredMem);
+  // cout<<"Number Slots = "<<nslots<<endl
+  //          <<"Fixed size counters= "<<fixed_size_counter<<endl
+  //          <<"Memory= "<<requiredMem<<"KB"<<endl;
+  }
+  uint64_t qbits=(uint64_t)log2((double)nslots);
+  if(fpr>0)
+    num_hashbits+=qbits;
+
+
+
   QF qf;
   qf_init(&qf, nslots, num_hashbits, 0,fixed_size_counter, true, "", 2038074761);
 

@@ -41,11 +41,10 @@ int estimateMemory_main(int argc, char *argv[]){
 
   estimateMemRequirement(input_files[0],
       slotSize, tagSize,
-     &res_noSlots, &res_fixedSizeCounter, &res_slotSize, &res_memory);
+     &res_noSlots, &res_fixedSizeCounter, &res_memory);
 
   cout<<"Number Slots = "<<res_noSlots<<endl
       <<"Fixed size counters= "<<res_fixedSizeCounter<<endl
-      <<"Slot Size= "<<res_slotSize<<endl
       <<"Memory= "<<res_memory<<"KB"<<endl;
   return 0;
 }
