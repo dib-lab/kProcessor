@@ -80,31 +80,52 @@ int KmerCounter_main(int argc, char *argv[]){
   //          <<"Memory= "<<requiredMem<<"KB"<<endl;
   }
   uint64_t qbits=(uint64_t)log2((double)nslots);
+
   if(fpr>0)
     num_hashbits+=qbits;
 
+  requiredMem=estimateMemory(nslots,num_hashbits,fixed_size_counter,0);
+  QF memqf,*diskqf=NULL,*mainqf=&memqf;
+  if(maxMemory!=0){
+    if(requiredMem>maxMemory){
+      diskqf=new QF();
+      qf_init(diskqf, nslots, num_hashbits, 0,fixed_size_counter, false, outputMQF.c_str(), 2038074761);
+      while(requiredMem>maxMemory)
+      {
+        nslots/=2;
+        requiredMem=estimateMemory(nslots,num_hashbits,fixed_size_counter,0);
+      }
+      mainqf=diskqf;
+    }
+  }
 
 
-  QF qf;
-  qf_init(&qf, nslots, num_hashbits, 0,fixed_size_counter, true, "", 2038074761);
+
+  qf_init(&memqf, nslots, num_hashbits, 0,fixed_size_counter, true, "", 2038074761);
 
   for(auto file: input_files)
-    loadIntoMQF(file,k,noThreads,hasher,&qf);
+    loadIntoMQF(file,k,noThreads,hasher,&memqf,diskqf);
 
 
   if(outputKmers!=""){
     if(fpr==0){
-    dumpMQF(&qf,k,outputKmers);
+    dumpMQF(mainqf,k,outputKmers);
     }
     else{
       cerr<<"dump mqf in text format is not supported for inexact counting"<<endl;
     }
 
   }
-  qf_serialize(&qf,outputMQF.c_str());
+  if(diskqf==NULL)
+    qf_serialize(&memqf,outputMQF.c_str());
 
   delete hasher;
-  qf_destroy(&qf);
+  qf_destroy(&memqf);
+  if(diskqf!=NULL){
+    qf_destroy(diskqf);
+    delete diskqf;
+  }
+  //delete mainqf;
 
   return 0;
 }

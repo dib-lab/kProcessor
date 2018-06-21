@@ -17,7 +17,7 @@ using namespace seqan;
 #define QBITS_LOCAL_QF 16
 
 
-static inline void insertToLevels(uint64_t item,QF* local,QF* main)
+static inline void insertToLevels(uint64_t item,QF* local,QF* main,QF * diskMQF=NULL)
 {
   if(!qf_insert(main, item%main->metadata->range, 1,
 										 true, false)) {
@@ -25,20 +25,44 @@ static inline void insertToLevels(uint64_t item,QF* local,QF* main)
 									false, false);
 				// check of the load factor of the local QF is more than 50%
 				if (qf_space(local)>90) {
-          #pragma omp critical
+          SEQAN_OMP_PRAGMA(critical)
           {
-            qf_migrate(local,main);
-            qf_reset(local);
+            if(main->metadata->noccupied_slots+local->metadata->noccupied_slots
+                        < main->metadata->maximum_occupied_slots){
+                          qf_migrate(local,main);
+                        }
+            else if(diskMQF!=NULL){
+              qf_general_lock(main,true);
+              qf_migrate(main,diskMQF);
+              qf_reset(main);
+              qf_general_unlock(main);
+              qf_migrate(local,main);
+            }
+            else{
+              throw overflow_error("memory MQF doesn't have enough space");
+            }
+
           }
-					//dump_local_qf_to_main(local,main);
+          qf_reset(local);
 				}
 			}
-
-
+      else{
+        if (qf_space(main)>90) {
+          SEQAN_OMP_PRAGMA(critical)
+          {
+            if (qf_space(main)>90) {
+              qf_general_lock(main,true);
+              qf_migrate(main,diskMQF);
+              qf_reset(main);
+              qf_general_unlock(main);
+            }
+          }
+        }
+      }
 }
 
 
-void loadIntoMQF(string sequenceFilename,int ksize,int noThreads, Hasher *hasher,QF * memoryMQF){
+void loadIntoMQF(string sequenceFilename,int ksize,int noThreads, Hasher *hasher,QF * memoryMQF,QF * diskMQF){
   SeqFileIn seqFileIn(sequenceFilename.c_str());
   StringSet<CharString> ids;
   StringSet<Dna5String> reads;
@@ -97,7 +121,7 @@ start_read:
         item = first_rev;
 
         item = hasher->hash(item)%memoryMQF->metadata->range;
-        insertToLevels(item,localMQF,memoryMQF);
+        insertToLevels(item,localMQF,memoryMQF,diskMQF);
 
         uint64_t next = (first << 2) & BITMASK(2*ksize);
         uint64_t next_rev = first_rev >> 2;
@@ -126,20 +150,21 @@ start_read:
 
 
           item = hasher->hash(item)%memoryMQF->metadata->range;
-          insertToLevels(item,localMQF,memoryMQF);
+          insertToLevels(item,localMQF,memoryMQF,diskMQF);
           next = (next << 2) & BITMASK(2*ksize);
           next_rev = next_rev >> 2;
         }
       }
 
     }
-
-    //dump_local_qf_to_main(localMQF,memoryMQF);
     #pragma omp critical
     {
       qf_migrate(localMQF,memoryMQF);
     }
     qf_destroy(localMQF);
+  }
+  if(diskMQF!=NULL){
+    qf_migrate(memoryMQF,diskMQF);
   }
 
 }
@@ -153,7 +178,7 @@ void dumpMQF(QF * MQF,int ksize,std::string outputFilename){
     uint64_t key, value, count;
     qfi_get(&qfi, &key, &value, &count);
     string kmer=kmer::int_to_str(Ihasher.Ihash(key),ksize);
-    output<<kmer<<" "<<count<<endl;
+    output<<kmer<<" "<<count<<"\n";
   } while(!qfi_next(&qfi));
 }
 
@@ -195,16 +220,7 @@ bool isEnough(vector<uint64_t> histogram,uint64_t noSlots,uint64_t fixedSizeCoun
   return true;
 }
 
-inline uint64_t estimateMemory(uint64_t nslots,uint64_t slotSize, uint64_t fcounter, uint64_t tagSize)
-{
-  uint64_t SLOTS_PER_BLOCK=64;
-  uint64_t xnslots = nslots + 10*sqrt((double)nslots);
-	uint64_t nblocks = (xnslots + SLOTS_PER_BLOCK - 1) / SLOTS_PER_BLOCK;
-  uint64_t blocksize=17;
 
-  return ((nblocks)*(blocksize+8*(slotSize+fcounter+tagSize)))/1024;
-
-}
 void estimateMemRequirement(std::string ntcardFilename,
   uint64_t numHashBits,uint64_t tagSize,
   uint64_t *res_noSlots,uint64_t *res_fixedSizeCounter, uint64_t *res_memory)
