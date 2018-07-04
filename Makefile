@@ -54,7 +54,7 @@ HEADERS = $(foreach d,$(SRCDIRS),$(wildcard $(addprefix $(d)/*,$(HDREXTS))))
 SRC_CXX = $(filter-out %.c,$(SOURCES))
 OBJS	= counterMain.o estimateMemoryMain.o dumpMain.o
 OBJS    += $(addsuffix .o, $(basename $(SOURCES)))
-OBJS += MQF/libgqf.so
+OBJS += MQF/gqf.o MQF/utils.o
 #DEPS    = $(OBJS:%.o=%.d) #replace %.d with .%.d (hide dependency files)
 DEPS    = $(foreach f, $(OBJS), $(addprefix $(dir $(f))., $(patsubst %.o, %.d, $(notdir $(f)))))
 
@@ -77,8 +77,10 @@ LINK.cxx    = $(CXX) $(EXTRA_CFLAGS) $(CXXFLAGS) $(CPPFLAGS) $(LDFLAGS)
 
 all: $(PROGRAM)
 
-MQF/libgqf.so:
+MQF/gqf.o:
 	cd MQF && make libgqf
+MQF/utils.o:
+		cd MQF && make libgqf
 # Rules for creating dependency files (.d).
 #------------------------------------------
 
