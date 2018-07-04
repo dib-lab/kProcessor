@@ -21,7 +21,8 @@ static void usage()
 
     cout<<
 "\n"
-"This is Kprocessor version "<<KprocessorVersion()<<" developed by Mostafa Shokrof <mostafa.shokrof@gmail.com>\n"
+"This is Kprocessor version "<<KprocessorVersion()
+<<" developed by Mostafa Shokrof <mostafa.shokrof@gmail.com> and Tamer Mansour(UC Davis)<drtamermansour@gmail.com>\n"
 <<"Usage:   kprocessor <command> [options]\n"<<
 "\n"<<
 "Commands:\n"<<
