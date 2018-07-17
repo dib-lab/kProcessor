@@ -51,10 +51,14 @@ static inline void insertToLevels(uint64_t item,QF* local,QF* main,QF * diskMQF=
           SEQAN_OMP_PRAGMA(critical)
           {
             if (qf_space(main)>90) {
-              qf_general_lock(main,true);
-              qf_migrate(main,diskMQF);
-              qf_reset(main);
-              qf_general_unlock(main);
+              if(diskMQF!=NULL){
+                qf_general_lock(main,true);
+                qf_migrate(main,diskMQF);
+                qf_reset(main);
+                qf_general_unlock(main);
+              }else{
+                throw overflow_error("memory MQF doesn't have enough space");
+              }
             }
           }
         }
