@@ -1,7 +1,7 @@
 PROGRAM	= Kprocessor
 
-CC	= gcc
-CXX	= g++
+CC	= gcc-6
+CXX	= g++-6
 
 
 

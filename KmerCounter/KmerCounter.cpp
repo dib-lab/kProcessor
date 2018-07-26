@@ -14,7 +14,7 @@
 #include <gqf.h>
 using namespace std;
 using namespace seqan;
-#define QBITS_LOCAL_QF 16
+#define QBITS_LOCAL_QF 20
 
 
 static inline void insertToLevels(uint64_t item,QF* local,QF* main,QF * diskMQF=NULL)
@@ -25,7 +25,7 @@ static inline void insertToLevels(uint64_t item,QF* local,QF* main,QF * diskMQF=
 									false, false);
 				// check of the load factor of the local QF is more than 50%
 				if (qf_space(local)>90) {
-          SEQAN_OMP_PRAGMA(critical)
+
           {
             if(main->metadata->noccupied_slots+local->metadata->noccupied_slots
                         < main->metadata->maximum_occupied_slots){
@@ -48,7 +48,7 @@ static inline void insertToLevels(uint64_t item,QF* local,QF* main,QF * diskMQF=
 			}
       else{
         if (qf_space(main)>90) {
-          SEQAN_OMP_PRAGMA(critical)
+
           {
             if (qf_space(main)>90) {
               qf_general_lock(main,true);
@@ -81,7 +81,7 @@ void loadIntoMQF(string sequenceFilename,int ksize,int noThreads, Hasher *hasher
       {
         clear(reads);
         clear(ids);
-        seqan::readRecords(ids, reads, seqFileIn,10000);
+        seqan::readRecords(ids, reads, seqFileIn,1000);
         moreWork=!atEnd(seqFileIn);
         numReads+=10000;
       }
