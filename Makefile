@@ -14,7 +14,7 @@ SEQAN_FLAGS= -DSEQAN_HAS_ZLIB=1 -DSEQAN_HAS_BZIP2=1  -DSEQAN_HAS_OPENMP=1 -Wl,--
 CPPFLAGS += $(SEQAN_FLAGS)
 # The directories in which source files reside.
 # If not specified, all subdirectories of the current directory will be added recursively.
-SRCDIRS	:=  KmerCounter/ HashUtils/
+SRCDIRS	:=  KmerCounter/ HashUtils/ KmerDecoder/
 UNAME_S  := $(shell uname -s)
 
 
@@ -32,8 +32,15 @@ HDREXTS = .h .H .hh .hpp .HPP .h++ .hxx .hp
 
 # The pre-processor and compiler options.
 # Users can override those variables from the command line.
+ifdef D
+CFLAGS  = -g
+CXXFLAGS= -g
+MQFDEBUG= D=1
+else
 CFLAGS  = -O3
 CXXFLAGS= -Ofast
+MQFDEBUG=
+endif
 
 # The command used to delete file.
 RM     = rm -f
@@ -78,9 +85,9 @@ LINK.cxx    = $(CXX) $(EXTRA_CFLAGS) $(CXXFLAGS) $(CPPFLAGS) $(LDFLAGS)
 all: $(PROGRAM)
 
 MQF/gqf.o:
-	cd MQF && make libgqf
+	cd MQF && make libgqf $(MQFDEBUG)
 MQF/utils.o:
-		cd MQF && make libgqf
+		cd MQF && make libgqf $(MQFDEBUG)
 # Rules for creating dependency files (.d).
 #------------------------------------------
 

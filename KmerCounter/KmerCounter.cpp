@@ -6,6 +6,7 @@
 #include <seqan/seq_io.h>
 #include "../HashUtils/hashutil.h"
 #include <seqan/parallel.h>
+#include "../KmerDecoder/FastqReader.hpp"
 #include <limits>
 #include <omp.h>
 #include <stdexcept>
@@ -25,18 +26,20 @@ static inline void insertToLevels(uint64_t item,QF* local,QF* main,QF * diskMQF=
 									false, false);
 				// check of the load factor of the local QF is more than 50%
 				if (qf_space(local)>90) {
-          SEQAN_OMP_PRAGMA(critical)
+
           {
             if(main->metadata->noccupied_slots+local->metadata->noccupied_slots
                         < main->metadata->maximum_occupied_slots){
                           qf_migrate(local,main);
                         }
             else if(diskMQF!=NULL){
-              qf_general_lock(main,true);
-              qf_migrate(main,diskMQF);
-              qf_reset(main);
-              qf_general_unlock(main);
-              qf_migrate(local,main);
+              SEQAN_OMP_PRAGMA(critical){
+                qf_general_lock(main,true);
+                qf_migrate(main,diskMQF);
+                qf_reset(main);
+                qf_general_unlock(main);
+                qf_migrate(local,main);
+            }
             }
             else{
               throw overflow_error("memory MQF doesn't have enough space");
@@ -67,32 +70,32 @@ static inline void insertToLevels(uint64_t item,QF* local,QF* main,QF * diskMQF=
 
 
 void loadIntoMQF(string sequenceFilename,int ksize,int noThreads, Hasher *hasher,QF * memoryMQF,QF * diskMQF){
-  SeqFileIn seqFileIn(sequenceFilename.c_str());
-  StringSet<CharString> ids;
-  StringSet<Dna5String> reads;
+  FastqReader reader(sequenceFilename);
   omp_set_num_threads(noThreads);
   QF* localMQF;
   bool moreWork=true;
   uint64_t numReads=0;
-  #pragma omp parallel private(ids,reads,localMQF) shared(seqFileIn,moreWork,numReads)
+  vector<pair<string,string> > reads;
+  string read,tag;
+  #pragma omp parallel private(reads,localMQF,read,tag) shared(reader,moreWork,numReads)
   {
     localMQF= new QF();
+    reads=vector<pair<string,string> >(100000);
     qf_init(localMQF, (1ULL << QBITS_LOCAL_QF), memoryMQF->metadata->key_bits,
     0,memoryMQF->metadata->fixed_counter_size, true,"", 2038074761);
     while(moreWork)
     {
       SEQAN_OMP_PRAGMA(critical)
       {
-        clear(reads);
-        clear(ids);
-        seqan::readRecords(ids, reads, seqFileIn,10000);
-        moreWork=!atEnd(seqFileIn);
+        reader.readNSeq(&reads,10000);
         numReads+=10000;
+        moreWork=!reader.isEOF();
       }
 
-      for(auto read:reads){
+      for(int j=0;j<10000;j++){
+        read=reads[j].first;
 start_read:
-        if(length(read)<ksize)
+        if(read.size()<ksize)
         {
           continue;
         }
@@ -106,9 +109,9 @@ start_read:
           uint8_t curr = kmer::map_base(read[i]);
           if (curr > DNA_MAP::G) {
             // 'N' is encountered
-            //read = read.substr(i+1, length(read));
 
-            erase(read,0,i+1);
+            read=read.substr(i+1, read.length());
+
             //continue;
             goto start_read;
           }
@@ -138,8 +141,8 @@ start_read:
             // 'N' is encountered
             //continue;
             //read = read.substr(i+1, length(read));
-
-            erase(read,0,i+1);
+            read=read.substr(i+1, read.length());
+            //erase(read,0,i+1);
 
             goto start_read;
           }
@@ -192,7 +195,7 @@ bool isEnough(vector<uint64_t> histogram,uint64_t noSlots,uint64_t fixedSizeCoun
   //     <<"fcounter= "<<fixedSizeCounter<<endl
   //     <<"slot size= "<<numHashBits<<endl;
 
-  noSlots=(uint64_t)((double)noSlots*0.95);
+  noSlots=(uint64_t)((double)noSlots*0.90);
   for(uint64_t i=1;i<1000;i++)
   {
     uint64_t usedSlots=1;
