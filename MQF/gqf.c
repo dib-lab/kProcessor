@@ -262,6 +262,7 @@ static void modify_metadata(QF *cf, uint64_t *metadata, int cnt)
 #else
 	//qf_spin_lock(&cf->mem->metadata_lock, true);
 #endif
+	#pragma omp atomic
 	*metadata = *metadata + cnt;
 //	qf_spin_unlock(&cf->mem->metadata_lock);
 	return;
