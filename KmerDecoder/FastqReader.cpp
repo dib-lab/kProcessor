@@ -20,10 +20,11 @@ void FastqReader::readNSeq(vector<pair<string,string> >* res, uint64_t N){
   seqan::StringSet<seqan::CharString> ids;
   seqan::StringSet<seqan::CharString> reads;
   seqan::readRecords(ids, reads, *seqIn,N);
+  res->clear();
   //cout<<string((char*)toCString(reads[0]))<<endl;
   uint64_t i=0;
   for(auto read:reads){
-    (*res)[i++]=make_pair(string((char*)toCString(read)),"");
+    res->push_back(make_pair(string((char*)toCString(read)),""));
   }
 }
 
