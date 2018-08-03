@@ -97,7 +97,7 @@ static inline void insertToLevels(uint64_t item,QF* local,QF* main,QF * diskMQF=
     {
       uint64_t threadBits=LOG2(noThreads);
       uint64_t totalBits=LOG2(memoryMQF->metadata->range);
-      int threadId= omp_get_thread_num();
+      uint64_t threadId= omp_get_thread_num();
       uint64_t item;
       if(threadId==noThreads-1)//parser thread
       {
@@ -146,8 +146,9 @@ static inline void insertToLevels(uint64_t item,QF* local,QF* main,QF * diskMQF=
             // 3)
             uint64_t workerID = item >> (totalBits-threadBits);
             uint64_t newItem = item & BITMASK(totalBits-threadBits);
-
+            //cout<<"item = "<<item<<" workerID= "<<workerID<<" new item= "<<newItem<<endl;
             kmersBuffer[workerID]->push(newItem);
+
 
             //insertToLevels(item,localMQF,memoryMQF,diskMQF);
 
@@ -192,7 +193,7 @@ static inline void insertToLevels(uint64_t item,QF* local,QF* main,QF * diskMQF=
           moreWork=tmp;
         }
       }
-
+      else{
 
       localMQF= new QF();
       reads=vector<pair<string,string> >(100000);
@@ -210,36 +211,44 @@ static inline void insertToLevels(uint64_t item,QF* local,QF* main,QF * diskMQF=
           std::this_thread::sleep_for(std::chrono::milliseconds(5));
         }
       }
-      // #pragma omp barrier
-      // while(kmersBuffer[threadId]->pop(item))
-      //   {
-      //     qf_insert(localMQF, item, 1,false, false);
-      //   }
+    }
+    #pragma omp barrier
+
 
 
 
         if(noThreads==1)
         {
+          while(kmersBuffer[threadId]->pop(item))
+            {
+              qf_insert(localMQF, item, 1,false, false);
+            }
           qf_migrate(localMQF,memoryMQF);
         }
         else{
           QFi source_i;
 
           if(threadId!=noThreads-1){
+            // while(kmersBuffer[threadId]->pop(item))
+            //   {
+            //     qf_insert(localMQF, item, 1,false, false);
+            //   }
           if (qf_iterator(localMQF, &source_i, 0)) {
             do {
               uint64_t key = 0, value = 0, count = 0;
               qfi_get(&source_i, &key, &value, &count);
-
+            //  cout<<"workerID ="<<threadId<<" key= "<<key;
               key=key|(threadId<<(totalBits-threadBits));
+            //  cout<<" new Key = "<<key<<endl;
 
               qf_insert(memoryMQF, key, count, true, true);
             } while (!qfi_next(&source_i));
           }
+          qf_destroy(localMQF);
         }
         }
 
-        qf_destroy(localMQF);
+
       }
       if(diskMQF!=NULL){
         qf_migrate(memoryMQF,diskMQF);
