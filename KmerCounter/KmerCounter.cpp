@@ -15,10 +15,12 @@
 #include <boost/lockfree/spsc_queue.hpp>
 #include <chrono>
 #include <thread>
+#include"../ThirdParty/spsc.hpp"
 
 #include <gqf.h>
 using namespace std;
 using namespace seqan;
+#define numElementsInBuffer 1000000
 #define QBITS_LOCAL_QF 16
 #define LOG2(X) ((unsigned) (8*sizeof (unsigned long long) - __builtin_clzll((X)) - 1))
 uint64_t bitmaskLookup2[]={0,1, 3, 7, 15, 31, 63, 127, 255, 511, 1023,
@@ -83,10 +85,17 @@ static inline void insertToLevels(uint64_t item,QF* local,QF* main,QF * diskMQF=
   void loadIntoMQF(string sequenceFilename,int ksize,int noThreads, Hasher *hasher,QF * memoryMQF,QF * diskMQF){
     FastqReader reader(sequenceFilename);
     omp_set_num_threads(noThreads);
-    boost::lockfree::spsc_queue<uint64_t>** kmersBuffer;
-    kmersBuffer=new boost::lockfree::spsc_queue<uint64_t>*[noThreads];
+    const int numBuffers=500;
+
+    boost::lockfree::queue<uint64_t*> freeBuffers(numBuffers);
+    for(int i=0;i<numBuffers;i++)
+      freeBuffers.push(new uint64_t[numElementsInBuffer]);
+
+
+    SpScLockFreeQueue<pair<uint64_t*,int>,1000>** kmersBuffer;
+    kmersBuffer=new SpScLockFreeQueue<pair<uint64_t*,int>,1000>*[noThreads];
     for(int i=0;i<noThreads;i++)
-    kmersBuffer[i]=new boost::lockfree::spsc_queue<uint64_t>(10000000);
+      kmersBuffer[i]=new SpScLockFreeQueue<pair<uint64_t*,int>,1000>();
 
     QF* localMQF;
     bool moreWork=true;
@@ -99,13 +108,22 @@ static inline void insertToLevels(uint64_t item,QF* local,QF* main,QF * diskMQF=
       uint64_t totalBits=LOG2(memoryMQF->metadata->range);
       uint64_t threadId= omp_get_thread_num();
       uint64_t item;
+
       if(threadId==noThreads-1)//parser thread
       {
+        int bufferTops[noThreads];
+        uint64_t* buffers[noThreads];
+        for(int i=0;i<noThreads;i++){
+          bufferTops[i]=0;
+          freeBuffers.pop(buffers[i]);
+        }
+        uint64_t kmerscount=0;
+        reads=vector<pair<string,string> >(100000);
         while(moreWork)
         {
           reader.readNSeq(&reads,10000);
           numReads+=10000;
-
+          //std::cout << numReads << endl;
           for(int j=0;j<reads.size();j++){
             read=reads[j].first;
             start_read:
@@ -145,9 +163,17 @@ static inline void insertToLevels(uint64_t item,QF* local,QF* main,QF * diskMQF=
             // 2) push to the queue
             // 3)
             uint64_t workerID = item >> (totalBits-threadBits);
-            uint64_t newItem = item & BITMASK(totalBits-threadBits);
+            //uint64_t newItem = item & BITMASK(totalBits-threadBits);
             //cout<<"item = "<<item<<" workerID= "<<workerID<<" new item= "<<newItem<<endl;
-            kmersBuffer[workerID]->push(newItem);
+            kmerscount++;
+            buffers[workerID][bufferTops[workerID]++]=item;
+            if(bufferTops[workerID]==numElementsInBuffer)
+            {
+              while(!kmersBuffer[workerID]->push(make_pair(buffers[workerID],bufferTops[workerID])));
+              bufferTops[workerID]=0;
+              while(!freeBuffers.pop(buffers[workerID]));
+            }
+            //kmersBuffer[workerID]->push(newItem);
 
 
             //insertToLevels(item,localMQF,memoryMQF,diskMQF);
@@ -181,72 +207,114 @@ static inline void insertToLevels(uint64_t item,QF* local,QF* main,QF * diskMQF=
               item = hasher->hash(item)%memoryMQF->metadata->range;
               //insertToLevels(item,localMQF,memoryMQF,diskMQF);
               workerID = item >> (totalBits-threadBits);
-              newItem = item & BITMASK(totalBits-threadBits);
+              //newItem = item & BITMASK(totalBits-threadBits);
+              kmerscount++;
+              buffers[workerID][bufferTops[workerID]++]=item;
 
-              kmersBuffer[workerID]->push(newItem);
+              if(bufferTops[workerID]==numElementsInBuffer)
+              {
+        //        cout<<"here"<<endl;
+                  while(!kmersBuffer[workerID]->push(make_pair(buffers[workerID],bufferTops[workerID])));
+                  bufferTops[workerID]=0;
+                  while(!freeBuffers.pop(buffers[workerID]));
+              }
+            //  kmersBuffer[workerID]->push(newItem);
 
               next = (next << 2) & BITMASK(2*ksize);
               next_rev = next_rev >> 2;
             }
           }
+
           bool tmp=!reader.isEOF();
+          if(!tmp){
+            for(int i=0;i<noThreads-1;i++)
+            {
+                while(!kmersBuffer[i]->push(make_pair(buffers[i],bufferTops[i])));
+            }
+            cout<<"reader count = "<<kmerscount<<endl;
+          }
           moreWork=tmp;
+
         }
+
       }
       else{
 
       localMQF= new QF();
-      reads=vector<pair<string,string> >(100000);
-      qf_init(localMQF, memoryMQF->metadata->nslots/(noThreads-1) , memoryMQF->metadata->key_bits,
+      uint64_t  kmerscount=0;
+      qf_init(localMQF, (1ULL<<QBITS_LOCAL_QF) , memoryMQF->metadata->key_bits,
         0,memoryMQF->metadata->fixed_counter_size, true,"", 2038074761);
-
+      uint64_t *local_buffer;
+      int top=0;
+      pair<uint64_t*,int> buffer_pair;
       while(moreWork)
       {
-        if(kmersBuffer[threadId]->pop(item))
+        if(kmersBuffer[threadId]->pop(buffer_pair))
         {
-          qf_insert(localMQF, item, 1,false, false);
+          local_buffer=buffer_pair.first;
+          for(int i=0;i<buffer_pair.second;i++){
+          //  uint64_t tmp=local_buffer[i];
+          //  tmp++;
+          kmerscount++;
+          insertToLevels(local_buffer[i],localMQF,memoryMQF,diskMQF);
+            //qf_insert(localMQF, local_buffer[i], 1,false, false);
+          }
+    //      cout<<"thread no "<<threadId<<" -> "<<kmersBuffer[threadId]->size()<<endl;
+          while(!freeBuffers.push(local_buffer));
         }
         else
         {
           std::this_thread::sleep_for(std::chrono::milliseconds(5));
         }
       }
-    }
-    #pragma omp barrier
-
-
-
-
-        if(noThreads==1)
+      //cout<<"finsh first loop"<<kmersBuffer[threadId]->size()<<endl;
+      while(kmersBuffer[threadId]->pop(buffer_pair))
         {
-          while(kmersBuffer[threadId]->pop(item))
-            {
-              qf_insert(localMQF, item, 1,false, false);
-            }
-          qf_migrate(localMQF,memoryMQF);
-        }
-        else{
-          QFi source_i;
-
-          if(threadId!=noThreads-1){
-            // while(kmersBuffer[threadId]->pop(item))
-            //   {
-            //     qf_insert(localMQF, item, 1,false, false);
-            //   }
-          if (qf_iterator(localMQF, &source_i, 0)) {
-            do {
-              uint64_t key = 0, value = 0, count = 0;
-              qfi_get(&source_i, &key, &value, &count);
-            //  cout<<"workerID ="<<threadId<<" key= "<<key;
-              key=key|(threadId<<(totalBits-threadBits));
-            //  cout<<" new Key = "<<key<<endl;
-
-              qf_insert(memoryMQF, key, count, true, true);
-            } while (!qfi_next(&source_i));
+          local_buffer=buffer_pair.first;
+          for(int i=0;i<buffer_pair.second;i++){
+            insertToLevels(local_buffer[i],localMQF,memoryMQF,diskMQF);
+            kmerscount++;
           }
-          qf_destroy(localMQF);
+            //qf_insert(localMQF, local_buffer[i], 1,false, false);
         }
-        }
+        qf_migrate(localMQF,memoryMQF);
+        qf_destroy(localMQF);
+        cout<<"worker "<<threadId<<" count "<<kmerscount<<endl;
+
+    }
+#pragma omp barrier
+
+
+        // if(noThreads==1)
+        // {
+        //   // while(kmersBuffer[threadId]->pop(item))
+        //   //   {
+        //   //     qf_insert(localMQF, item, 1,false, false);
+        //   //   }
+        //   // qf_migrate(localMQF,memoryMQF);
+        // }
+        // else{
+        //   QFi source_i;
+        //
+        //   if(threadId!=noThreads-1){
+        //     // while(kmersBuffer[threadId]->pop(item))
+        //     //   {
+        //     //     qf_insert(localMQF, item, 1,false, false);
+        //     //   }
+        //   if (qf_iterator(localMQF, &source_i, 0)) {
+        //     do {
+        //       uint64_t key = 0, value = 0, count = 0;
+        //       qfi_get(&source_i, &key, &value, &count);
+        //     //  cout<<"workerID ="<<threadId<<" key= "<<key;
+        //       key=key|(threadId<<(totalBits-threadBits));
+        //     //  cout<<" new Key = "<<key<<endl;
+        //
+        //       qf_insert(memoryMQF, key, count, true, true);
+        //     } while (!qfi_next(&source_i));
+        //   }
+        //   qf_destroy(localMQF);
+        // }
+        // }
 
 
       }
@@ -265,7 +333,7 @@ static inline void insertToLevels(uint64_t item,QF* local,QF* main,QF * diskMQF=
         uint64_t key, value, count;
         qfi_get(&qfi, &key, &value, &count);
         string kmer=kmer::int_to_str(Ihasher.Ihash(key),ksize);
-        output<<kmer<<" "<<count<<"\n";
+        output<<kmer<<" "<<count<<" "<<key<<"\n";
       } while(!qfi_next(&qfi));
     }
 
