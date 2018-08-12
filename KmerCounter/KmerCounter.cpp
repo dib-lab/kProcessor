@@ -333,7 +333,7 @@ static inline void insertToLevels(uint64_t item,QF* local,QF* main,QF * diskMQF=
         uint64_t key, value, count;
         qfi_get(&qfi, &key, &value, &count);
         string kmer=kmer::int_to_str(Ihasher.Ihash(key),ksize);
-        output<<kmer<<" "<<count<<" "<<key<<"\n";
+        output<<kmer<<" "<<count<<"\n";
       } while(!qfi_next(&qfi));
     }
 
