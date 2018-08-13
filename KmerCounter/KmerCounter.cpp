@@ -70,7 +70,7 @@ static inline void insertToLevels(uint64_t item,QF* local,QF* main,QF * diskMQF=
 
 
 void loadIntoMQF(string sequenceFilename,int ksize,int noThreads, Hasher *hasher,QF * memoryMQF,QF * diskMQF){
-  FastqReader reader(sequenceFilename);
+  FastqReaderSqueker reader(sequenceFilename);
   omp_set_num_threads(noThreads);
   QF* localMQF;
   bool moreWork=true;
