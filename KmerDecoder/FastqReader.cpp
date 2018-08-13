@@ -1,6 +1,7 @@
 #include "FastqReader.hpp"
 #include <seqan/seq_io.h>
 #include <vector>
+#include <deque>
 #include <utility>
 
 FastqReader::FastqReader(string path){
@@ -14,7 +15,7 @@ pair<string,string> FastqReader::readSeq(){
   return make_pair(" "," ");
 }
 
-void FastqReader::readNSeq(vector<pair<string,string> >* res, uint64_t N){
+void FastqReader::readNSeq(deque<pair<string,string> >* res, uint64_t N){
   if(N==0)
     N=chunkSize;
   seqan::StringSet<seqan::CharString> ids;
@@ -63,7 +64,7 @@ bool skip_next_eol(char *part, int64_t &pos, int64_t max_pos)
 
 	return true;
 }
-void FastqReaderSqueker::parseReads(vector<pair<string,string> >* res)
+void FastqReaderSqueker::parseReads(deque<pair<string,string> >* res)
 {
   auto fs = fp->part;
   auto fe = fp->part;
@@ -85,7 +86,7 @@ void FastqReaderSqueker::parseReads(vector<pair<string,string> >* res)
   }
 }
 
-void FastqReaderSqueker::readNSeq(vector<pair<string,string> >* res, uint64_t N){
+void FastqReaderSqueker::readNSeq(deque<pair<string,string> >* res, uint64_t N){
 
 
   if(N==0)

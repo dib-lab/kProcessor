@@ -11,7 +11,7 @@
 #include <omp.h>
 #include <stdexcept>
 #include <math.h>
-
+#include <deque>
 #include <gqf.h>
 using namespace std;
 using namespace seqan;
@@ -75,12 +75,12 @@ void loadIntoMQF(string sequenceFilename,int ksize,int noThreads, Hasher *hasher
   QF* localMQF;
   bool moreWork=true;
   uint64_t numReads=0;
-  vector<pair<string,string> > reads;
+  deque<pair<string,string> > reads;
   string read,tag;
   #pragma omp parallel private(reads,localMQF,read,tag) shared(reader,moreWork,numReads)
   {
     localMQF= new QF();
-    reads=vector<pair<string,string> >(100000);
+    reads=deque<pair<string,string> >(100000);
     qf_init(localMQF, (1ULL << QBITS_LOCAL_QF), memoryMQF->metadata->key_bits,
     0,memoryMQF->metadata->fixed_counter_size, true,"", 2038074761);
     while(moreWork)

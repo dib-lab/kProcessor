@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <vector>
+#include <deque>
 #include <utility>
 #include <string>
 using namespace std;
@@ -12,6 +13,6 @@ public:
   KmerDecoder(){
   };
   pair<string,string> readSeq();
-  void readNSeq(vector<pair<string,string> > *res,uint64_t N=0);
+  void readNSeq(deque<pair<string,string> > *res,uint64_t N=0);
   bool isEOF();
 };
