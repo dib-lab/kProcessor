@@ -28,6 +28,7 @@ class FastqReaderSqueker: KmerDecoder{
 private:
     FILE *seqIn;
     file_pointer* fp;
+    char* part;
     void parseReads(deque<pair<string,string> >* res);
 public:
   FastqReaderSqueker(string path);

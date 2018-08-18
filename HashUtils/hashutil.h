@@ -30,12 +30,14 @@
 class Hasher{
 public:
 	virtual uint64_t hash(uint64_t key){return 0;};
+	virtual Hasher* clone(){return this;};
 };
 class MumurHasher: public Hasher{
 private:
 	uint64_t seed;
 public:
 	MumurHasher(uint64_t Iseed){seed=Iseed;}
+	Hasher* clone() { return new MumurHasher(seed);}
 	uint64_t hash(uint64_t key);
 };
 
@@ -44,6 +46,7 @@ private:
 	uint64_t mask;
 public:
 	IntegerHasher(uint64_t Imask){mask=Imask;}
+	Hasher* clone() { return new IntegerHasher(mask);}
 	uint64_t hash(uint64_t key);
 	uint64_t Ihash(uint64_t key);
 };

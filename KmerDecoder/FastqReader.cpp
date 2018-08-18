@@ -40,6 +40,8 @@ FastqReaderSqueker::FastqReaderSqueker(string path){
   uint32_t OVERHEAD_SIZE = 65535;
   fp=new file_pointer;
   fp->part_buffer = new char[OVERHEAD_SIZE];
+  uint64_t part_size = 1ULL << 23;
+  part = (char *)malloc((part_size + OVERHEAD_SIZE)*sizeof(char));
 }
 
 pair<string,string> FastqReaderSqueker::readSeq(){
@@ -100,7 +102,6 @@ void FastqReaderSqueker::readNSeq(deque<pair<string,string> >* res, uint64_t N){
   uint32_t OVERHEAD_SIZE = 65535;
   uint64_t part_size = 1ULL << 23;
   res->clear();
-  char *part = (char *)malloc((part_size + OVERHEAD_SIZE)*sizeof(char));
   memcpy(part, part_buffer, part_filled);
   if(isEOF())
     return;
