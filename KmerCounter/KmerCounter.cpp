@@ -11,12 +11,18 @@
 #include <omp.h>
 #include <stdexcept>
 #include <math.h>
+#include <boost/lockfree/queue.hpp>
+#include <boost/lockfree/spsc_queue.hpp>
 #include <deque>
 #include <gqf.h>
+
+#include <boost/fusion/support/pair.hpp>
+#include <boost/fusion/include/pair.hpp>
 using namespace std;
 using namespace seqan;
 #define QBITS_LOCAL_QF 16
-
+#define numElementsInBuffer 1000000
+#define LOG2(X) ((unsigned) (8*sizeof (unsigned long long) - __builtin_clzll((X)) - 1))
 
 static inline void insertToLevels(uint64_t item,QF* local,QF* main,QF * diskMQF=NULL)
 {
@@ -68,6 +74,27 @@ static inline void insertToLevels(uint64_t item,QF* local,QF* main,QF * diskMQF=
       }
 }
 
+class bufferPair
+{
+public:
+  uint64_t* buff;
+  int length;
+
+    bufferPair(){
+      buff=0;
+      length=0;
+    }
+    bufferPair(const bufferPair& rhs) { buff=rhs.buff;
+      length=rhs.length;
+     }
+     bufferPair(uint64_t* inbuff,int inlength) {
+       buff=inbuff;
+       length=inlength;
+      }
+    //Implicitly defined destructor for itself and all member variables
+    //Implicitly defined operator= for itself and all member variables
+
+};
 
 void loadIntoMQF(string sequenceFilename,int ksize,int noThreads, Hasher *hasher,QF * memoryMQF,QF * diskMQF){
   FastqReaderSqueker reader(sequenceFilename);
@@ -77,13 +104,41 @@ void loadIntoMQF(string sequenceFilename,int ksize,int noThreads, Hasher *hasher
   uint64_t numReads=0;
   deque<pair<string,string> > reads;
   string read,tag;
+  const int numBuffers=noThreads*noThreads*3;
+  int threadsToJoin=0;
+
+  boost::lockfree::queue<uint64_t*> freeBuffers(numBuffers);
+  for(int i=0;i<numBuffers;i++)
+    freeBuffers.push(new uint64_t[numElementsInBuffer]);
+
+  boost::lockfree::queue<bufferPair >** kmersBuffer;
+  kmersBuffer=new boost::lockfree::queue<bufferPair >*[noThreads];
+  for(int i=0;i<noThreads;i++)
+    kmersBuffer[i]=new boost::lockfree::queue<bufferPair >(noThreads*4);
+
 #pragma omp parallel private(reads,localMQF,read,tag) shared(reader,moreWork,numReads)  firstprivate(ksize,noThreads,memoryMQF,diskMQF)
   {
+    int threadNum=omp_get_thread_num();
+    uint64_t threadBits=LOG2(noThreads);
+    uint64_t totalBits=LOG2(memoryMQF->metadata->range);
+
+    uint64_t workerID;
     auto localHasher=hasher->clone();
     localMQF= new QF();
+
     reads=deque<pair<string,string> >(15000);
     qf_init(localMQF, (1ULL << QBITS_LOCAL_QF), memoryMQF->metadata->key_bits,
     0,memoryMQF->metadata->fixed_counter_size, true,"", 2038074761);
+    bufferPair tmp_buffer;
+    int bufferTops[noThreads];
+    uint64_t* buffers[noThreads];
+    for(int i=0;i<noThreads;i++){
+      bufferTops[i]=0;
+      freeBuffers.pop(buffers[i]);
+    }
+
+
+
     while(moreWork)
     {
       SEQAN_OMP_PRAGMA(critical)
@@ -92,9 +147,16 @@ void loadIntoMQF(string sequenceFilename,int ksize,int noThreads, Hasher *hasher
         numReads+=15000;
         bool tmp=!reader.isEOF();
         moreWork=tmp;
+        //cout<<threadNum<<" was here"<<endl;
       }
 
       for(int j=0;j<reads.size();j++){
+
+        while(kmersBuffer[threadNum]->pop(tmp_buffer))
+        {
+          for(int i=0;i<tmp_buffer.length;i++)
+            insertToLevels(tmp_buffer.buff[i],localMQF,memoryMQF,diskMQF);
+        }
         read=reads[j].first;
 start_read:
         if(read.size()<ksize)
@@ -130,7 +192,19 @@ start_read:
         item = first_rev;
 
         item = localHasher->hash(item)%memoryMQF->metadata->range;
-        insertToLevels(item,localMQF,memoryMQF,diskMQF);
+        workerID = item >> (totalBits-threadBits);
+        if(workerID==threadNum){
+             insertToLevels(item,localMQF,memoryMQF,diskMQF);
+        }else{
+            buffers[workerID][bufferTops[workerID]++]=item;
+            if(bufferTops[workerID]==numElementsInBuffer)
+             {
+               while(!kmersBuffer[workerID]->push(bufferPair(buffers[workerID],bufferTops[workerID])));
+               bufferTops[workerID]=0;
+               while(!freeBuffers.pop(buffers[workerID]));
+             }
+           }
+        //insertToLevels(item,localMQF,memoryMQF,diskMQF);
 
         uint64_t next = (first << 2) & BITMASK(2*ksize);
         uint64_t next_rev = first_rev >> 2;
@@ -159,15 +233,49 @@ start_read:
 
 
           item = localHasher->hash(item)%memoryMQF->metadata->range;
-          insertToLevels(item,localMQF,memoryMQF,diskMQF);
+          workerID = item >> (totalBits-threadBits);
+          if(workerID==threadNum){
+               insertToLevels(item,localMQF,memoryMQF,diskMQF);
+          }else{
+              buffers[workerID][bufferTops[workerID]++]=item;
+              if(bufferTops[workerID]==numElementsInBuffer)
+               {
+                 while(!kmersBuffer[workerID]->push(bufferPair(buffers[workerID],bufferTops[workerID])));
+                 bufferTops[workerID]=0;
+                 while(!freeBuffers.pop(buffers[workerID]));
+               }
+          }
+          //insertToLevels(item,localMQF,memoryMQF,diskMQF);
           next = (next << 2) & BITMASK(2*ksize);
           next_rev = next_rev >> 2;
         }
       }
 
     }
+    cout<<threadNum<<"about to finish"<<endl;
+    #pragma omp atomic
+      threadsToJoin++;
+    while(threadsToJoin<noThreads)
+      {
+        while(kmersBuffer[threadNum]->pop(tmp_buffer))
+        {
+          for(int i=0;i<tmp_buffer.length;i++)
+            insertToLevels(tmp_buffer.buff[i],localMQF,memoryMQF,diskMQF);
+        }
+      }
+    #pragma omp barier
+    for(int i=0;i<noThreads;i++){
+      kmersBuffer[i]->push(bufferPair(buffers[i],bufferTops[i]));
+    }
+    #pragma omp barier
     //    #pragma omp critical
     {
+      while(kmersBuffer[threadNum]->pop(tmp_buffer))
+      {
+        for(int i=0;i<tmp_buffer.length;i++)
+          insertToLevels(tmp_buffer.buff[i],localMQF,memoryMQF,diskMQF);
+      }
+
       qf_migrate(localMQF,memoryMQF);
     }
     qf_destroy(localMQF);
