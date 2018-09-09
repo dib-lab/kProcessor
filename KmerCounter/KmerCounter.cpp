@@ -11,7 +11,7 @@
 #include <omp.h>
 #include <stdexcept>
 #include <math.h>
-
+#include <deque>
 #include <gqf.h>
 using namespace std;
 using namespace seqan;
@@ -20,12 +20,12 @@ using namespace seqan;
 
 static inline void insertToLevels(uint64_t item,QF* local,QF* main,QF * diskMQF=NULL)
 {
-  if(!qf_insert(main, item%main->metadata->range, 1,
+  if(!qf_insert(main, item, 1,
 										 true, false)) {
-				qf_insert(local, item%local->metadata->range, 1,
+				qf_insert(local, item, 1,
 									false, false);
 				// check of the load factor of the local QF is more than 50%
-				if (qf_space(local)>90) {
+				if (qf_space(local)>50) {
 
           {
             if(main->metadata->noccupied_slots+local->metadata->noccupied_slots
@@ -70,25 +70,26 @@ static inline void insertToLevels(uint64_t item,QF* local,QF* main,QF * diskMQF=
 
 
 void loadIntoMQF(string sequenceFilename,int ksize,int noThreads, Hasher *hasher,QF * memoryMQF,QF * diskMQF){
-  FastqReader reader(sequenceFilename);
+  FastqReaderSqueker reader(sequenceFilename);
   omp_set_num_threads(noThreads);
   QF* localMQF;
   bool moreWork=true;
   uint64_t numReads=0;
-  vector<pair<string,string> > reads;
+  deque<pair<string,string> > reads;
   string read,tag;
-  #pragma omp parallel private(reads,localMQF,read,tag) shared(reader,moreWork,numReads)
+#pragma omp parallel private(reads,localMQF,read,tag) shared(reader,moreWork,numReads)  firstprivate(ksize,noThreads,memoryMQF,diskMQF)
   {
+    auto localHasher=hasher->clone();
     localMQF= new QF();
-    reads=vector<pair<string,string> >(100000);
+    reads=deque<pair<string,string> >(15000);
     qf_init(localMQF, (1ULL << QBITS_LOCAL_QF), memoryMQF->metadata->key_bits,
     0,memoryMQF->metadata->fixed_counter_size, true,"", 2038074761);
     while(moreWork)
     {
       SEQAN_OMP_PRAGMA(critical)
       {
-        reader.readNSeq(&reads,10000);
-        numReads+=10000;
+        reader.readNSeq(&reads,15000);
+        numReads+=15000;
         bool tmp=!reader.isEOF();
         moreWork=tmp;
       }
@@ -128,7 +129,7 @@ start_read:
         else
         item = first_rev;
 
-        item = hasher->hash(item)%memoryMQF->metadata->range;
+        item = localHasher->hash(item)%memoryMQF->metadata->range;
         insertToLevels(item,localMQF,memoryMQF,diskMQF);
 
         uint64_t next = (first << 2) & BITMASK(2*ksize);
@@ -157,7 +158,7 @@ start_read:
           item = next_rev;
 
 
-          item = hasher->hash(item)%memoryMQF->metadata->range;
+          item = localHasher->hash(item)%memoryMQF->metadata->range;
           insertToLevels(item,localMQF,memoryMQF,diskMQF);
           next = (next << 2) & BITMASK(2*ksize);
           next_rev = next_rev >> 2;
@@ -165,7 +166,7 @@ start_read:
       }
 
     }
-    #pragma omp critical
+    //    #pragma omp critical
     {
       qf_migrate(localMQF,memoryMQF);
     }

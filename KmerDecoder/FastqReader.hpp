@@ -1,5 +1,6 @@
 #include "KmerDecoder.hpp"
 #include <vector>
+#include <deque>
 #include <seqan/seq_io.h>
 #include <utility>
 using namespace std;
@@ -11,7 +12,7 @@ private:
 public:
   FastqReader(string path);
   pair<string,string> readSeq();
-  void readNSeq(vector<pair<string,string> >* res,uint64_t N=0);
+  void readNSeq(deque<pair<string,string> >* res,uint64_t N=0);
   bool isEOF();
 };
 
@@ -27,10 +28,11 @@ class FastqReaderSqueker: KmerDecoder{
 private:
     FILE *seqIn;
     file_pointer* fp;
-    void parseReads(vector<pair<string,string> >* res);
+    char* part;
+    void parseReads(deque<pair<string,string> >* res);
 public:
   FastqReaderSqueker(string path);
   pair<string,string> readSeq();
-  void readNSeq(vector<pair<string,string> >* res,uint64_t N=0);
+  void readNSeq(deque<pair<string,string> >* res,uint64_t N=0);
   bool isEOF();
 };
