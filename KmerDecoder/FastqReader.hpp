@@ -34,5 +34,6 @@ public:
   FastqReaderSqueker(string path);
   pair<string,string> readSeq();
   void readNSeq(deque<pair<string,string> >* res,uint64_t N=0);
+  void readChunk(char* chunk, uint64_t* chunk_size);
   bool isEOF();
 };

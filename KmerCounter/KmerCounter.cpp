@@ -76,9 +76,15 @@ void loadIntoMQF(string sequenceFilename,int ksize,int noThreads, Hasher *hasher
   bool moreWork=true;
   uint64_t numReads=0;
   deque<pair<string,string> > reads;
+
+
   string read,tag;
 #pragma omp parallel private(reads,localMQF,read,tag) shared(reader,moreWork,numReads)  firstprivate(ksize,noThreads,memoryMQF,diskMQF)
   {
+    uint32_t OVERHEAD_SIZE = 65535;
+    uint64_t part_size = 1ULL << 23;
+    char* chunk= (char *)malloc((part_size + OVERHEAD_SIZE)*sizeof(char));
+    uint64_t chunkSize;
     auto localHasher=hasher->clone();
     localMQF= new QF();
     reads=deque<pair<string,string> >(15000);
@@ -88,14 +94,21 @@ void loadIntoMQF(string sequenceFilename,int ksize,int noThreads, Hasher *hasher
     {
       SEQAN_OMP_PRAGMA(critical)
       {
-        reader.readNSeq(&reads,15000);
-        numReads+=15000;
+        //reader.readNSeq(&reads,15000);
+        //numReads+=15000;
+        reader.readChunk(chunk,&chunkSize);
         bool tmp=!reader.isEOF();
         moreWork=tmp;
       }
+      auto fs = chunk;
+      auto fe = chunk;
+      auto end = chunk + chunkSize;
+      while (fs && fs!=end){
+        fs = static_cast<char*>(memchr(fs, '\n', end-fs)); // ignore the first line
+        fs++; // increment the pointer
 
-      for(int j=0;j<reads.size();j++){
-        read=reads[j].first;
+        fe = static_cast<char*>(memchr(fs, '\n', end-fs)); // read the read
+        read=string(fs, fe-fs);
 start_read:
         if(read.size()<ksize)
         {
@@ -163,6 +176,11 @@ start_read:
           next = (next << 2) & BITMASK(2*ksize);
           next_rev = next_rev >> 2;
         }
+        fs = ++fe;		// increment the pointer
+        fs = static_cast<char*>(memchr(fs, '\n', end-fs)); // ignore one line
+        fs++; // increment the pointer
+        fs = static_cast<char*>(memchr(fs, '\n', end-fs)); // ignore one more line
+        fs++; // increment the pointer
       }
 
     }

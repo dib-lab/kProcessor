@@ -162,6 +162,77 @@ void FastqReaderSqueker::readNSeq(deque<pair<string,string> >* res, uint64_t N){
       part_filled = total_filled - _size;
       parseReads(res);
 }
+void FastqReaderSqueker::readChunk(char* chunk, uint64_t* chunk_size){
+
+  uint64_t readID=0;
+  //char *& _part = chunk;
+  //uint64_t& _size = chunk_size;
+  char*& part_buffer = (fp->part_buffer);
+  uint64_t& part_filled = fp->part_filled;
+
+  uint32_t OVERHEAD_SIZE = 65535;
+  uint64_t part_size = 1ULL << 23;
+  memcpy(chunk, part_buffer, part_filled);
+  *chunk_size=part_filled;
+  if(isEOF())
+    return;
+  uint64_t readed = 0;
+  readed = fread(chunk+part_filled, 1, part_size, seqIn);
+  int64_t total_filled = part_filled + readed;
+  int64_t i;
+  if(part_filled >= OVERHEAD_SIZE)
+  {
+    cout << "Error: Wrong input file!\n";
+    exit(EXIT_FAILURE);
+  }
+  if(isEOF())
+  {
+    //_part = part;
+    *chunk_size = total_filled;
+    part = NULL;
+  //  parseReads(res);
+    return;
+  }
+  // Looking for a FASTQ record at the end of the area
+  {
+    int64_t line_start[9];
+    int32_t j;
+    i = total_filled - OVERHEAD_SIZE / 2;
+    for(j = 0; j < 9; ++j)
+    {
+      if(!skip_next_eol(chunk, i, total_filled))
+      break;
+      line_start[j] = i;
+    }
+//    _part = part;
+    if(j < 9)
+    *chunk_size = 0;
+    else
+    {
+      int k;
+      for(k = 0; k < 4; ++k)
+      {
+        if(chunk[line_start[k]+0] == '@' && chunk[line_start[k+2]+0] == '+')
+        {
+          if(chunk[line_start[k+2]+1] == '\n' || chunk[line_start[k+2]+1] == '\r')
+          break;
+          if(line_start[k+1]-line_start[k] == line_start[k+3]-line_start[k+2] &&
+            memcmp(chunk+line_start[k]+1, chunk+line_start[k+2]+1,
+              line_start[k+3]-line_start[k+2]-1) == 0)
+              break;
+            }
+          }
+          if(k == 4)
+          *chunk_size = 0;
+          else
+          *chunk_size = line_start[k];
+        }
+      }
+
+      copy(chunk+*chunk_size, chunk+total_filled, part_buffer);
+      part_filled = total_filled - *chunk_size;
+      //parseReads(res);
+}
 
 
 bool FastqReaderSqueker::isEOF(){
