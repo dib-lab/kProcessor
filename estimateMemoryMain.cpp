@@ -44,6 +44,7 @@ int estimateMemory_main(int argc, char *argv[]){
      &res_noSlots, &res_fixedSizeCounter, &res_memory);
 
   cout<<"Number Slots = "<<res_noSlots<<endl
+      <<"Q = "<<log2((double)res_noSlots)<<endl
       <<"Fixed size counters= "<<res_fixedSizeCounter<<endl
       <<"Memory= "<<res_memory<<"KB"<<endl;
   return 0;
