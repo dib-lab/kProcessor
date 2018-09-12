@@ -59,7 +59,7 @@ endif
 SOURCES = $(foreach d,$(SRCDIRS),$(wildcard $(addprefix $(d)/*,$(SRCEXTS))))
 HEADERS = $(foreach d,$(SRCDIRS),$(wildcard $(addprefix $(d)/*,$(HDREXTS))))
 SRC_CXX = $(filter-out %.c,$(SOURCES))
-OBJS	= counterMain.o estimateMemoryMain.o dumpMain.o
+OBJS	= counterMain.o estimateMemoryMain.o dumpMain.o playground.o
 OBJS    += $(addsuffix .o, $(basename $(SOURCES)))
 OBJS += MQF/gqf.o MQF/utils.o
 #DEPS    = $(OBJS:%.o=%.d) #replace %.d with .%.d (hide dependency files)
