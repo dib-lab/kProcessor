@@ -112,6 +112,11 @@ void loadIntoMQF(string sequenceFilename,int ksize,int noThreads, Hasher *hasher
 start_read:
         if(read.size()<ksize)
         {
+	  fs = ++fe;		// increment the pointer
+	  fs = static_cast<char*>(memchr(fs, '\n', end-fs)); // ignore one line
+	  fs++; // increment the pointer
+	  fs = static_cast<char*>(memchr(fs, '\n', end-fs)); // ignore one more line
+	  fs++; // increment the pointer
           continue;
         }
 
