@@ -25,7 +25,7 @@ int playground_main(int argc, char *argv[]){
   QF qf;
   qf_read(&qf,input_file.c_str());
   double res=(double)qf.metadata->noccupied_slots/(double)qf.metadata->xnslots;
-  cout<<res<<endl;
+  cout<<qf_space(&qf)<<endl;
 
   return 0;
 }

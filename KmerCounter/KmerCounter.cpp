@@ -42,7 +42,7 @@ static inline void insertToLevels(uint64_t item,QF* local,QF* main,QF * diskMQF=
             }
             }
             else{
-              throw overflow_error("memory MQF doesn't have enough space");
+              throw overflow_error("memory MQF doesn't have enough space to migrate");
             }
 
           }
