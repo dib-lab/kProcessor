@@ -6,7 +6,8 @@ ifdef D
 	OPT=
 else
 	DEBUG=
-	OPT=-Ofast
+	OPT=-O3
+	#OPT= -O3 -no-prec-div -ansi-alias
 endif
 
 ifdef NH
@@ -19,11 +20,11 @@ ifdef P
 	PROFILE=-pg -no-pie # for bug in gprof.
 endif
 
-CXX = g++ -std=c++11
-CC = g++ -std=c++11
-LD= g++ -std=c++11
+CXX = g++
+CC = g++
+LD= g++
 
-CXXFLAGS =  -fPIC -Wall $(DEBUG) $(PROFILE) $(OPT) $(ARCH) -m64 -I. -Wno-unused-result -Wno-strict-aliasing -Wno-unused-function -fopenmp
+CXXFLAGS =   -std=c++11 -fPIC -Wall $(DEBUG) $(PROFILE) $(OPT) $(ARCH) -m64 -I. -Wno-unused-result -Wno-strict-aliasing -Wno-unused-function -fopenmp
 
 LDFLAGS = $(DEBUG) $(PROFILE) $(OPT)
 

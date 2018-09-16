@@ -1,12 +1,13 @@
 PROGRAM	= Kprocessor
 
-CC	= gcc
+CC	= g++
 CXX	= g++
 
 
 
 INCLUDE	= -IThirdParty/seqan/include -IMQF
-CPPFLAGS	= -Wall -Wextra -std=c++14 -fPIC -fopenmp -W -Wall -pedantic
+#INCLUDE	=  -IMQF
+CPPFLAGS	= -std=c++14 -Wall -Wextra  -fPIC -fopenmp -W -Wall -pedantic
 LDFLAGS	= -lrt -lpthread -lbz2 -lz
 
 
@@ -39,6 +40,7 @@ MQFDEBUG= D=1
 else
 CFLAGS  = -O3
 CXXFLAGS= -Ofast
+#CXXFLAGS= -O3 -no-prec-div -ansi-alias
 MQFDEBUG=
 endif
 
@@ -179,7 +181,7 @@ test: $(OBJS) $(TESTS)
 
 
 clean:
-	$(RM) $(OBJS) $(PROGRAM) $(PROGRAM).exe $(TESTS)
+	$(RM) $(OBJS) $(PROGRAM) $(PROGRAM).exe $(TESTS) main.o
 	rm -f tests/testData/tmp*
 	cd MQF && make clean
 

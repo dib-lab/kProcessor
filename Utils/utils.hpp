@@ -3,9 +3,9 @@
 #include <stdint.h>
 #include <string>
 #include <gqf.h>
-#include <seqan/seq_io.h>
+//#include <seqan/seq_io.h>
 
-using namespace seqan;
+//using namespace seqan;
 // void removeReadsWithN(std::string inputFilename,std::string outputFilename)
 // {
 //   SeqFileIn seqFileIn(inputFilename.c_str());

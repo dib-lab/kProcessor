@@ -13,11 +13,13 @@
 #include <math.h>
 #include <deque>
 #include <gqf.h>
+#include <stdio.h>
+#include <string.h>
 using namespace std;
-using namespace seqan;
+//using namespace seqan;
 #define QBITS_LOCAL_QF 16
 
-const uint64_t maxLocal=(uint64_t)((double)(1ULL<<16)*0.9);
+const uint64_t maxLocal=(uint64_t)((double)(1ULL<<16)*0.5);
 
 
 static inline void insertToLevels2(uint64_t item,QF* local,QF* main,uint64_t *local_capacity)
@@ -32,7 +34,7 @@ static inline void insertToLevels2(uint64_t item,QF* local,QF* main,uint64_t *lo
     }
   }
 }
-
+//
 static inline void insertToLevels(uint64_t item,QF* local,QF* main,QF * diskMQF=NULL)
 {
   if(!qf_insert(main, item, 1,true, false)) {
@@ -84,6 +86,7 @@ static inline void insertToLevels(uint64_t item,QF* local,QF* main,QF * diskMQF=
 
 
 void loadIntoMQF(string sequenceFilename,int ksize,int noThreads, Hasher *hasher,QF * memoryMQF,QF * diskMQF){
+
   FastqReaderSqueker reader(sequenceFilename);
   omp_set_num_threads(noThreads);
   QF* localMQF;
@@ -107,7 +110,7 @@ void loadIntoMQF(string sequenceFilename,int ksize,int noThreads, Hasher *hasher
     0,memoryMQF->metadata->fixed_counter_size, true,"", 2038074761);
     while(moreWork)
     {
-      SEQAN_OMP_PRAGMA(critical)
+      #pragma omp critical
       {
         //reader.readNSeq(&reads,15000);
         //numReads+=15000;
@@ -163,12 +166,12 @@ start_read:
         item = first_rev;
 
         item = localHasher->hash(item)%memoryMQF->metadata->range;
-        insertToLevels2(item,localMQF,memoryMQF,&local_capacity);
-
+        //insertToLevels2(item,localMQF,memoryMQF,&local_capacity);
+        insertToLevels(item,localMQF,memoryMQF,diskMQF);
         uint64_t next = (first << 2) & BITMASK(2*ksize);
         uint64_t next_rev = first_rev >> 2;
 
-        for(uint32_t i=ksize; i<length(read); i++) {
+        for(uint32_t i=ksize; i<(read.size()); i++) {
           //next kmers
           //cout << "K: " << read.substr(i-K+1,K) << endl;
           uint8_t curr = kmer::map_base(read[i]);
@@ -192,7 +195,8 @@ start_read:
 
 
           item = localHasher->hash(item)%memoryMQF->metadata->range;
-          insertToLevels2(item,localMQF,memoryMQF,&local_capacity);
+          insertToLevels(item,localMQF,memoryMQF,diskMQF);
+          //insertToLevels2(item,localMQF,memoryMQF,&local_capacity);
           next = (next << 2) & BITMASK(2*ksize);
           next_rev = next_rev >> 2;
         }
@@ -268,7 +272,7 @@ bool isEnough(vector<uint64_t> histogram,uint64_t noSlots,uint64_t fixedSizeCoun
 }
 
 
-void estimateMemRequirement(std::string ntcardFilename,
+void estimateMemRequirement_2Structures(std::string ntcardFilename,
   uint64_t numHashBits,uint64_t tagSize,
   uint64_t *res_noSlots,uint64_t *res_fixedSizeCounter, uint64_t *res_memory)
 {
@@ -332,6 +336,65 @@ void estimateMemRequirement(std::string ntcardFilename,
     break;
   }
   *res_memory+=estimateMemory((1ULL<<singletonsQbits),numHashBits-singletonsQbits,1,tagSize);
+  if(*res_memory==numeric_limits<uint64_t>::max())
+  {
+    throw std::overflow_error("Data limits exceeds MQF capabilities(> uint64). Check if ntcard file is corrupted");
+  }
+
+
+}
+void estimateMemRequirement(std::string ntcardFilename,
+  uint64_t numHashBits,uint64_t tagSize,
+  uint64_t *res_noSlots,uint64_t *res_fixedSizeCounter, uint64_t *res_memory)
+{
+  uint64_t noDistinctKmers=0,totalNumKmers=0;
+  vector<uint64_t> histogram(1000,0);
+  ifstream ntcardFile(ntcardFilename);
+  string f;
+  uint64_t count;
+  while(ntcardFile>>f>>count)
+  {
+    if(count==numeric_limits<uint64_t>::max())
+      continue;
+    if(f=="F0")
+      noDistinctKmers=count;
+    else if(f=="F1")
+      totalNumKmers=count;
+    else{
+      f=f.substr(1,f.size());
+      int n=atoi(f.c_str());
+      histogram[n]=count;
+    }
+  }
+  *res_memory=numeric_limits<uint64_t>::max();
+  for(int i=8;i<64;i++)
+  {
+    uint64_t noSlots=(1ULL)<<i;
+    if(noSlots<noDistinctKmers)
+    continue;
+    bool moreWork=false;
+    uint64_t slotSize=numHashBits-log2((double)noSlots);
+    for(uint64_t fixedSizeCounter=1;fixedSizeCounter<slotSize;fixedSizeCounter++)
+    {
+      if(isEnough(histogram,noSlots,fixedSizeCounter,slotSize))
+      {
+        uint64_t tmpMem=estimateMemory(noSlots,slotSize,fixedSizeCounter,tagSize);
+        if(*res_memory>tmpMem)
+        {
+          *res_memory=tmpMem;
+          *res_fixedSizeCounter=fixedSizeCounter;
+          *res_noSlots=noSlots;
+          moreWork=true;
+        }
+        else{
+          break;
+        }
+      }
+
+    }
+    if(!moreWork && *res_memory!=numeric_limits<uint64_t>::max())
+    break;
+  }
   if(*res_memory==numeric_limits<uint64_t>::max())
   {
     throw std::overflow_error("Data limits exceeds MQF capabilities(> uint64). Check if ntcard file is corrupted");
