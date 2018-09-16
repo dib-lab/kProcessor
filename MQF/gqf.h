@@ -268,6 +268,7 @@ extern "C" {
 
 	bool qf_general_lock(QF* qf, bool spin);
 	void qf_general_unlock(QF* qf);
+        uint64_t slotsUsedInCounting(QF* qf);
 
 	void qf_migrate(QF* source, QF* destination);
 

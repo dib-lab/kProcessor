@@ -17,11 +17,25 @@ using namespace std;
 using namespace seqan;
 #define QBITS_LOCAL_QF 16
 
+const uint64_t maxLocal=(uint64_t)((double)(1ULL<<16)*0.9);
+
+
+static inline void insertToLevels2(uint64_t item,QF* local,QF* main,uint64_t *local_capacity)
+{
+  if(!qf_insert(main, item, 1,true, false)) {
+    qf_insert(local, item, 1,false, false);
+    *local_capacity++;
+    if (*local_capacity>maxLocal) {
+      qf_migrate(local,main);
+      *local_capacity=0;
+      qf_reset(local);
+    }
+  }
+}
 
 static inline void insertToLevels(uint64_t item,QF* local,QF* main,QF * diskMQF=NULL)
 {
-  if(!qf_insert(main, item, 1,
-										 true, false)) {
+  if(!qf_insert(main, item, 1,true, false)) {
 				qf_insert(local, item, 1,
 									false, false);
 				// check of the load factor of the local QF is more than 50%
@@ -87,6 +101,7 @@ void loadIntoMQF(string sequenceFilename,int ksize,int noThreads, Hasher *hasher
     uint64_t chunkSize;
     auto localHasher=hasher->clone();
     localMQF= new QF();
+    uint64_t local_capacity=0;
     reads=deque<pair<string,string> >(15000);
     qf_init(localMQF, (1ULL << QBITS_LOCAL_QF), memoryMQF->metadata->key_bits,
     0,memoryMQF->metadata->fixed_counter_size, true,"", 2038074761);
@@ -148,7 +163,7 @@ start_read:
         item = first_rev;
 
         item = localHasher->hash(item)%memoryMQF->metadata->range;
-        insertToLevels(item,localMQF,memoryMQF,diskMQF);
+        insertToLevels2(item,localMQF,memoryMQF,&local_capacity);
 
         uint64_t next = (first << 2) & BITMASK(2*ksize);
         uint64_t next_rev = first_rev >> 2;
@@ -177,7 +192,7 @@ start_read:
 
 
           item = localHasher->hash(item)%memoryMQF->metadata->range;
-          insertToLevels(item,localMQF,memoryMQF,diskMQF);
+          insertToLevels2(item,localMQF,memoryMQF,&local_capacity);
           next = (next << 2) & BITMASK(2*ksize);
           next_rev = next_rev >> 2;
         }
@@ -262,6 +277,7 @@ void estimateMemRequirement(std::string ntcardFilename,
   ifstream ntcardFile(ntcardFilename);
   string f;
   uint64_t count;
+  uint64_t singletons;
   while(ntcardFile>>f>>count)
   {
     if(count==numeric_limits<uint64_t>::max())
@@ -270,12 +286,22 @@ void estimateMemRequirement(std::string ntcardFilename,
       noDistinctKmers=count;
     else if(f=="F1")
       totalNumKmers=count;
+    else if(f=="f1"){
+      singletons=count;
+    }
+      //else if(f=="f2")
+      //cout<<"two "<<count<<endl;
     else{
       f=f.substr(1,f.size());
       int n=atoi(f.c_str());
       histogram[n]=count;
     }
   }
+
+  noDistinctKmers-=singletons;
+
+  uint64_t singletonsQbits=(uint64_t)log2((double)singletons)+1ULL;
+  cout<<"Singletons q bits = "<< singletonsQbits<<endl;
   *res_memory=numeric_limits<uint64_t>::max();
   for(int i=8;i<64;i++)
   {
@@ -305,6 +331,7 @@ void estimateMemRequirement(std::string ntcardFilename,
     if(!moreWork && *res_memory!=numeric_limits<uint64_t>::max())
     break;
   }
+  *res_memory+=estimateMemory((1ULL<<singletonsQbits),numHashBits-singletonsQbits,1,tagSize);
   if(*res_memory==numeric_limits<uint64_t>::max())
   {
     throw std::overflow_error("Data limits exceeds MQF capabilities(> uint64). Check if ntcard file is corrupted");

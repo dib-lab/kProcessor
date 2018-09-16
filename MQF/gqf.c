@@ -262,7 +262,8 @@ static void modify_metadata(QF *cf, uint64_t *metadata, int cnt)
 #else
 	//qf_spin_lock(&cf->mem->metadata_lock, true);
 #endif
-	#pragma omp atomic
+
+	//	#pragma omp atomic
 	*metadata = *metadata + cnt;
 //	qf_spin_unlock(&cf->mem->metadata_lock);
 	return;
@@ -2998,9 +2999,26 @@ int qf_space(QF *qf)
 {
   uint64_t noccupied_slots;
 
-  #pragma omp atomic read
+  //  #pragma omp atomic read
   noccupied_slots=qf->metadata->noccupied_slots;
   return (int)(((double)noccupied_slots/(double)qf->metadata->xnslots)* 100.0);
+}
+
+uint64_t slotsUsedInCounting(QF* qf){
+  QFi *qfi=new QFi();
+  qf_iterator(qf,qfi,0);
+  //qfi_next(qfi);
+  uint64_t current_remainder,current_count;
+  uint64_t res=0;
+  uint64_t distictItems=0;
+  while(!qfi_end(qfi)){
+    uint64_t end=decode_counter(qfi->qf, qfi->current, &current_remainder, &current_count);
+    uint64_t usedSlots=end-qfi->current;
+    res+=usedSlots+1;
+    distictItems+=1;
+    qfi_next(qfi);
+  }
+  return res;
 }
 
 
