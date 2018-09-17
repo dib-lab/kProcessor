@@ -4,20 +4,13 @@ sudo: required
 matrix:
   include:
     - os: linux
-      compiler: gcc-4.9
+      compiler: gcc-7
       addons:
         apt:
           sources: ['ubuntu-toolchain-r-test', 'george-edison55-precise-backports']
-          packages: ['g++-4.9', 'cmake', 'cmake-data', 'zlib1g-dev', 'libbz2-dev', 'libboost-dev', 'python', 'python-nose', 'python-jinja2', 'python-pip']
-      install: export CXX="g++-4.9" CC="gcc-4.9"
+          packages: ['g++-7', 'cmake', 'cmake-data', 'zlib1g-dev', 'libbz2-dev', 'libboost-dev', 'python', 'python-nose', 'python-jinja2', 'python-pip']
+      install: export CXX="g++-7" CC="gcc-7"
 
-    - os: linux
-      compiler: gcc-5
-      addons:
-        apt:
-          sources: ['ubuntu-toolchain-r-test', 'george-edison55-precise-backports']
-          packages: ['g++-5', 'cmake', 'cmake-data', 'zlib1g-dev', 'libbz2-dev', 'libboost-dev', 'python', 'python-nose', 'python-jinja2', 'python-pip']
-      install: export CXX="g++-5" CC="gcc-5"
 
 
 
