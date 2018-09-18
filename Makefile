@@ -58,7 +58,7 @@ endif
 SOURCES = $(foreach d,$(SRCDIRS),$(wildcard $(addprefix $(d)/*,$(SRCEXTS))))
 HEADERS = $(foreach d,$(SRCDIRS),$(wildcard $(addprefix $(d)/*,$(HDREXTS))))
 SRC_CXX = $(filter-out %.c,$(SOURCES))
-OBJS	= counterMain.o estimateMemoryMain.o dumpMain.o
+OBJS	= counterMain.o estimateMemoryMain.o dumpMain.o kDataFrame.o
 OBJS    += $(addsuffix .o, $(basename $(SOURCES)))
 OBJS += MQF/gqf.o MQF/utils.o
 #DEPS    = $(OBJS:%.o=%.d) #replace %.d with .%.d (hide dependency files)
@@ -171,7 +171,7 @@ endif
 endif
 
 
-TESTS = tests/testsMain.o tests/testKmerCounter.o
+TESTS = tests/testsMain.o tests/testKmerCounter.o tests/testkDataFrame.o
 test: $(OBJS) $(TESTS)
 	$(LINK.cxx) $(EXTRA_LDFLAGS)  $^ $(LDFLAGS) -o $@
 	rm -f tests/testData/tmp*
