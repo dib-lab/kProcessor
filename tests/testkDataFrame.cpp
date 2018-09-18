@@ -10,6 +10,7 @@
 #include <iostream>
 #include "../kDataFrame.hpp"
 #include "../KmerDecoder/FastqReader.hpp"
+#include <algorithm>
 using namespace std;
 
 
@@ -177,6 +178,57 @@ TEST_CASE( "save and load" ) {
 
 
 
-  
+
+
+}
+
+
+
+TEST_CASE( "indexing" ) {
+
+    int kSize=31;
+
+    FastqReader reader("tests/testData/test.fastq");
+    deque<pair<string,string> > sequences;
+    while(!reader.isEOF())
+    {
+      reader.readNSeq(&sequences);
+    }
+    string kmer;
+    vector<kDataFrameMQF*> frames;
+    for(auto seqPair:sequences){
+        string seq=seqPair.first;
+        std::vector<uint64_t> countHistogram(2);
+        countHistogram[0]=seq.size()*3;
+        countHistogram[1]=seq.size()*3;
+        kDataFrameMQF* curr=new kDataFrameMQF(kSize,20,2,0,0);
+        frames.push_back(curr);
+        for(int i=0;i<seq.size()-kSize;i++)
+        {
+          kmer=seq.substr(i,kSize);
+          curr->incrementCounter(kmer,1);
+        }
+    }
+
+    kDataFrameMQF* indexFrame=kDataFrameMQF::index(frames);
+    std::map<uint64_t, std::vector<int> > * legend=indexFrame->get_legend();
+
+
+    // auto it2=indexFrame->begin();
+    // while(!it2.isEnd()){
+    //   cout<<(*it2).kmerHash<<" "<<(*it2).tag<<endl;
+    //   it2++;
+    // }
+    for(int j=0;j<sequences.size();j++){
+      string seq=sequences[j].first;
+      for(int i=0;i<seq.size()-kSize;i++)
+      {
+        kmer=seq.substr(i,kSize);
+        uint64_t tag=indexFrame->getTag(kmer);
+        auto colors=legend->find(tag)->second;
+        auto colorIt=find(colors.begin(),colors.end(),j);
+        REQUIRE(colorIt!=colors.end());
+      }
+    }
 
 }

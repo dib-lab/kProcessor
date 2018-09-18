@@ -89,11 +89,25 @@ public:
 class kDataFrameMQF: public kDataFrame{
 private:
   QF* mqf;
-
+  static bool isEnough(vector<uint64_t> histogram,uint64_t noSlots,uint64_t fixedSizeCounter,uint64_t slotSize);
 public:
   kDataFrameMQF();
-  kDataFrameMQF(uint64_t ksize,uint8_t q,uint8_t fixedCounterSize,uint8_t tagSize,double falsePositiveRate);
+  kDataFrameMQF(uint64_t ksize,uint8_t q,uint8_t fixedCounterSize,uint8_t tagSize
+    ,double falsePositiveRate);
   kDataFrameMQF(QF* mqf,uint64_t ksize,double falsePositiveRate);
+  //count histogram is array where count of kmers repeated n times is found at index n. index 0 holds number of distinct kmers.
+  kDataFrameMQF(uint64_t ksize,vector<uint64_t> countHistogram,uint8_t tagSize
+    ,double falsePositiveRate);
+
+  static uint64_t estimateMemory(uint64_t nslots,uint64_t slotSize,
+    uint64_t fcounter, uint64_t tagSize);
+
+
+  static void estimateParameters(vector<uint64_t> countHistogram,
+    uint64_t numHashBits,uint64_t tagSize,
+  uint64_t *res_noSlots,uint64_t *res_fixedSizeCounter, uint64_t *res_memory);
+
+
   bool setCounter(string kmer,uint64_t count);
   bool incrementCounter(string kmer,uint64_t count);
   uint64_t getCounter(string kmer);
@@ -111,4 +125,10 @@ public:
   static kDataFrame* load(string filePath);
 
   kDataFrameIterator begin();
+
+  static kDataFrameMQF* index(vector<kDataFrameMQF*> kframes);
+
+  std::map<uint64_t, std::vector<int> > * get_legend(){
+    return mqf->metadata->tags_map;
+  }
 };
