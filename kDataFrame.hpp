@@ -65,6 +65,9 @@ public:
   kDataFrame();
   kDataFrame(double falsePositiveRate,uint8_t kSize);
 
+  virtual ~kDataFrame(){
+
+  }
   uint64_t hashKmer(string kmer);
   virtual bool setCounter(string kmer,uint64_t count)=0;
   virtual bool incrementCounter(string kmer,uint64_t count)=0;
@@ -98,7 +101,10 @@ public:
   //count histogram is array where count of kmers repeated n times is found at index n. index 0 holds number of distinct kmers.
   kDataFrameMQF(uint64_t ksize,vector<uint64_t> countHistogram,uint8_t tagSize
     ,double falsePositiveRate);
-
+  ~kDataFrameMQF(){
+    qf_destroy(mqf);
+    delete mqf;
+  }
   static uint64_t estimateMemory(uint64_t nslots,uint64_t slotSize,
     uint64_t fcounter, uint64_t tagSize);
 
