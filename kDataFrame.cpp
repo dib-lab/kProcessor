@@ -249,7 +249,7 @@ kDataFrameMQF* kDataFrameMQF::index(vector<kDataFrameMQF*> kframes){
   countHistogram[0]=targetOccupiedSlots;
   countHistogram[1]=targetOccupiedSlots;
 
-  kDataFrameMQF *res= new kDataFrameMQF(kframes[0]->kSize,24,2,24,0);
+  kDataFrameMQF *res= new kDataFrameMQF(kframes[0]->kSize,24,2,15,0);
   QF* qf_arr[kframes.size()];
   for(int i=0;i<kframes.size();i++){
     qf_arr[i]=kframes[i]->mqf;
