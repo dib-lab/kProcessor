@@ -4,6 +4,7 @@
 #include <fstream>
 #include <math.h>
 #include <limits>
+#include "KmerCounter/KmerCounter.hpp"
 using namespace std;
 
 kDataFrameMQFIterator::kDataFrameMQFIterator(QF* mqf)
@@ -41,7 +42,15 @@ kDataFrame::kDataFrame(double falsePositiveRate,uint8_t k_size){
 }
 
 uint64_t kDataFrame::hashKmer(string kmer){
-  return hashFunctions[0]->hash(kmer::str_to_int(kmer));
+  uint64_t kmerI=kmer::str_to_int(kmer);
+  uint64_t kmerIR=kmer::reverse_complement(kmerI,kSize);
+  uint64_t item;
+  if (kmer::compare_kmers(kmerI, kmerIR))
+    item = kmerI;
+  else
+    item = kmerIR;
+
+  return hashFunctions[0]->hash(item);
 }
 kDataFrame* kDataFrame::load(string filePath){
   return kDataFrameMQF::load(filePath);
@@ -256,4 +265,8 @@ kDataFrameMQF* kDataFrameMQF::index(vector<kDataFrameMQF*> kframes){
   }
   qf_invertable_merge(qf_arr,kframes.size(),res->mqf);
   return res;
+}
+
+void kDataFrameMQF::loadIntoFastq(std::string sequenceFilename,int noThreads){
+  loadIntoMQF(sequenceFilename,kSize,noThreads,hashFunctions[0],mqf);
 }
