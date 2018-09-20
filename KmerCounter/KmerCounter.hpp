@@ -18,7 +18,7 @@ void estimateMemRequirement(std::string ntcardFilename,
 
 void estimateMemRequirement_2Structures(std::string ntcardFilename,
       uint64_t numHashBits,uint64_t tagSize,
-      uint64_t *res_noSlots,uint64_t *res_fixedSizeCounter
+      uint64_t *res_SingleQ,uint64_t *res_noSlots,uint64_t *res_fixedSizeCounter
       , uint64_t *res_memory);
 
 inline uint64_t estimateMemory(uint64_t nslots,uint64_t slotSize, uint64_t fcounter, uint64_t tagSize)

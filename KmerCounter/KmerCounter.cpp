@@ -274,7 +274,7 @@ bool isEnough(vector<uint64_t> histogram,uint64_t noSlots,uint64_t fixedSizeCoun
 
 void estimateMemRequirement_2Structures(std::string ntcardFilename,
   uint64_t numHashBits,uint64_t tagSize,
-  uint64_t *res_noSlots,uint64_t *res_fixedSizeCounter, uint64_t *res_memory)
+  uint64_t *res_SingleQ,uint64_t *res_noSlots,uint64_t *res_fixedSizeCounter, uint64_t *res_memory)
 {
   uint64_t noDistinctKmers=0,totalNumKmers=0;
   vector<uint64_t> histogram(1000,0);
@@ -305,7 +305,7 @@ void estimateMemRequirement_2Structures(std::string ntcardFilename,
   noDistinctKmers-=singletons;
 
   uint64_t singletonsQbits=(uint64_t)log2((double)singletons)+1ULL;
-  cout<<"Singletons q bits = "<< singletonsQbits<<endl;
+  *res_SingleQ=singletonsQbits;
   *res_memory=numeric_limits<uint64_t>::max();
   for(int i=8;i<64;i++)
   {
