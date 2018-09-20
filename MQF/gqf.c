@@ -2996,9 +2996,11 @@ uint64_t qf_magnitude(QF *qf)
 
 int qf_space(QF *qf)
 {
-		return (int)(((double)qf->metadata->noccupied_slots/
-								 (double)qf->metadata->xnslots
-							 )* 100.0);
+  uint64_t noccupied_slots;
+
+  #pragma omp atomic read
+  noccupied_slots=qf->metadata->noccupied_slots;
+  return (int)(((double)noccupied_slots/(double)qf->metadata->xnslots)* 100.0);
 }
 
 
