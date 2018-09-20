@@ -134,7 +134,14 @@ public:
 
   static kDataFrameMQF* index(vector<kDataFrameMQF*> kframes);
 
+  void loadIntoFastq(string sequenceFilename,int noThreads);
+
+
   std::map<uint64_t, std::vector<int> > * get_legend(){
     return mqf->metadata->tags_map;
   }
+
+  void set_legend(std::map<uint64_t, std::vector<int> > * t){
+      mqf->metadata->tags_map=t;
+    }
 };
