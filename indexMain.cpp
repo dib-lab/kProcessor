@@ -11,6 +11,7 @@
 #include <map>
 #include <seqan/seq_io.h>
 #include "kDataFrame.hpp"
+#include<algorithm>
 using namespace std;
 
 
@@ -25,9 +26,9 @@ int index_main(int argc, char *argv[]){
    "Fasta file containing the sequences to create the cDBG.")->required()
   ->check(CLI::ExistingFile);
 
-  app.add_option("-n,--names", input_file,
+  app.add_option("-n,--names", names_fileName,
    "TSV file of two columns: fasta sequences header and group name. If not supplied the sequence header is used as the group name. ")
-  ->check(CLI::ExistingFile);
+  ->required()->check(CLI::ExistingFile);
 
   app.add_option("-k,--kmer-length",kSize,"kmer length")->required();
 
@@ -38,13 +39,28 @@ int index_main(int argc, char *argv[]){
 CLI11_PARSE(app, argc, argv);
   map<string,string> namesMap;
 
-  if(names_fileName!=""){
-    ifstream namesFile(names_fileName.c_str());
-    string seqName,groupName;
-    while(namesFile>>seqName>>groupName){
-      namesMap.insert(make_pair(seqName,groupName));
+  map<string,uint64_t> tagsMap;
+  map<string,uint64_t> groupNameMap;
+  std::map<uint64_t, std::vector<int> >  *legend=new std::map<uint64_t, std::vector<int> >();
+  uint64_t readID=0,groupID=1;
+  ifstream namesFile(names_fileName.c_str());
+  string seqName,groupName;
+
+  while(namesFile>>seqName>>groupName){
+    namesMap.insert(make_pair(seqName,groupName));
+    auto it=groupNameMap.find(groupName);
+    if(it==groupNameMap.end())
+    {
+      groupNameMap.insert(make_pair(groupName,groupID));
+      tagsMap.insert(make_pair(to_string(groupID),groupID));
+      vector<int> tmp;
+      tmp.clear();
+      tmp.push_back(groupID);
+      legend->insert(make_pair(groupID,tmp));
+      groupID++;
     }
   }
+
 
   omp_set_num_threads(numThreads);
   seqan::SeqFileIn seqIn(input_file.c_str());
@@ -55,83 +71,105 @@ CLI11_PARSE(app, argc, argv);
   vector<kDataFrameMQF*> frames;
   int currIndex=0;
   string kmer;
+  kDataFrameMQF* frame=new kDataFrameMQF(kSize,27,2,20,0);
+  //frame->loadIntoFastq(input_file,numThreads);
+
+  uint64_t lastTag=0;
+  readID=0;
+
   while(!atEnd(seqIn)){
     clear(reads);
     clear(ids);
-    seqan::readRecords(ids, reads, seqIn,chunkSize);
-    if(names_fileName==""){
-      for(auto id:ids){
-        string tmp=string((char*)seqan::toCString(id));
-        namesMap.insert(make_pair(tmp,tmp));
-      }
-    }
-    vector<kDataFrameMQF*> framesBuffer(chunkSize);
 
-    #pragma omp parallel for private(kmer) firstprivate(kSize)
+    seqan::readRecords(ids, reads, seqIn,chunkSize);
+
+    map<uint64_t,uint64_t> convertMap;
+
+
     for(int j=0;j<length(reads);j++)
     {
-      kDataFrameMQF* frame=new kDataFrameMQF(kSize,15,2,0,0);
+      string readName=string((char*)seqan::toCString(ids[j]));
+
+      auto it=namesMap.find(readName);
+      if(it==namesMap.end())
+      {
+        cout<<"read "<<readName<<"dont have group. Please check the group names file."<<endl;
+      }
+      string groupName=it->second;
+
+      uint64_t readTag=groupNameMap.find(groupName)->second;
+
       string seq=string((char*)seqan::toCString(reads[j]));
+      if(seq.size()<kSize)
+        continue;
+      convertMap.clear();
+      convertMap.insert(make_pair(0,readTag));
+      convertMap.insert(make_pair(readTag,readTag));
+  //    cout<<readName<<"   "<<seq.size()<<endl;
       for(int i=0;i<seq.size()-kSize;i++)
       {
         kmer=seq.substr(i,kSize);
+      //  cout<<i<<" "<<kmer<<" "<<frame->getCounter(kmer)<<endl;
         frame->incrementCounter(kmer,1);
+        uint64_t currentTag=frame->getTag(kmer);
+
+        auto itc=convertMap.find(currentTag);
+        if(itc==convertMap.end())
+        {
+          vector<int> colors=legend->find(currentTag)->second;
+          auto tmpiT=find(colors.begin(),colors.end(),readTag);
+          if(tmpiT==colors.end()){
+            colors.push_back(readTag);
+            sort(colors.begin(),colors.end());
+          }
+
+          string colorsString=to_string(colors[0]);
+          for(int k=1;k<colors.size();k++)
+          {
+            colorsString+=";"+to_string(colors[k]);
+          }
+
+          auto itTag=tagsMap.find(colorsString);
+          if(itTag==tagsMap.end())
+          {
+            tagsMap.insert(make_pair(colorsString,groupID));
+            legend->insert(make_pair(groupID,colors));
+
+            itTag=tagsMap.find(colorsString);
+            groupID++;
+          }
+          uint64_t newColor=itTag->second;
+          convertMap.insert(make_pair(currentTag,newColor));
+          itc=convertMap.find(currentTag);
+        }
+
+
+        frame->setTag(kmer,itc->second);
+
       }
-      framesBuffer[j]=frame;
-    }
-    for(int j=0;j<length(reads);j++)
-    {
-      frames.push_back(framesBuffer[j]);
+      readID+=1;
+
     }
   }
-  cout<<"Loaded Sequences= "<<frames.size()<<endl;
-  vector<kDataFrameMQF*> tmpFrames;
-  // while(frames.size()>1)
-  // {
-  //   tmpFrames.clear();
-  //   cout<<"Curr size= "<<frames.size()<<endl;
-  //   #pragma omp parallel for ordered
-  //   for(int i=0;i<frames.size()-1;i+=2)
-  //   {
-  //     vector<kDataFrameMQF*> localFrames;
-  //     localFrames.clear();
-  //     localFrames.push_back(frames[i]);
-  //     localFrames.push_back(frames[i+1]);
-  //     if(i==frames.size()-3&&frames.size()%2==1)
-  //       localFrames.push_back(frames[i+2]);
-  //
-  //     kDataFrameMQF* subRes=kDataFrameMQF::index(localFrames);
-  //
-  //     for(auto a: localFrames){
-  //       delete a;
-  //     }
-  //     #pragma omp ordered
-  //     {
-  //       tmpFrames.push_back(subRes);
-  //     }
-  //   }
-  //   frames=tmpFrames;
-  //   cout<<frames.size()<<endl;
-  // }
-  kDataFrameMQF* indexFrame2=kDataFrameMQF::index(frames);
-//  kDataFrameMQF* indexFrame2=frames[0];
-  string filePath="tests/testData/tmp.kDataFrame";
-  indexFrame2->save(filePath);
-  kDataFrameMQF* indexFrame=(kDataFrameMQF*)kDataFrame::load(filePath);
-  std::map<uint64_t, std::vector<int> > * legend=indexFrame->get_legend();
+  cout<<"Loaded Sequences= "<<readID<<endl;
+  //kDataFrameMQF* indexFrame2=frame;
+  //string filePath="tests/testData/tmp.kDataFrame";
+  //indexFrame2->save(filePath);
+  //kDataFrameMQF* indexFrame=(kDataFrameMQF*)kDataFrame::load(filePath);
+  kDataFrameMQF* indexFrame=frame;
 
 
 
   cout<<"Number of Groups= "<<legend->size()<<endl;
-  auto it=legend->begin();
-  while(it!=legend->end())
-  {
-    cout<<"map "<<it->first<<" ->  ";
-    for(auto a:it->second)
-      cout<<a<<" ";
-    cout<<endl;
-    it++;
-  }
+  // auto it=legend->begin();
+  // while(it!=legend->end())
+  // {
+  //   cout<<"map "<<it->first<<" ->  ";
+  //   for(auto a:it->second)
+  //     cout<<a<<" ";
+  //   cout<<endl;
+  //   it++;
+  // }
   // auto it2=indexFrame->begin();
   // while(!it2.isEnd()){
   //   cout<<(*it2).kmerHash<<" "<<(*it2).count<<endl;
@@ -140,28 +178,64 @@ CLI11_PARSE(app, argc, argv);
 
   seqan::SeqFileIn seqIn2(input_file.c_str());
   int readCount=0;
+  int correct=0,wrong=0;
   while(!atEnd(seqIn2)){
     clear(reads);
     clear(ids);
     seqan::readRecords(ids, reads, seqIn2,chunkSize);
     for(int j=0;j<length(reads);j++){
+      string readName=string((char*)seqan::toCString(ids[j]));
+
+      auto it=namesMap.find(readName);
+      if(it==namesMap.end())
+      {
+        cout<<"read "<<readName<<"dont have group. Please check the group names file."<<endl;
+      }
+      string groupName=it->second;
+
+      uint64_t readTag=groupNameMap.find(groupName)->second;
+      //cout<<groupName<<"-> "<<readTag<<endl;
       string seq=string((char*)seqan::toCString(reads[j]));
+      if(seq.size()<kSize)
+        continue;
       for(int i=0;i<seq.size()-kSize;i++)
       {
         kmer=seq.substr(i,kSize);
+
         uint64_t tag=indexFrame->getTag(kmer);
-        //cout<<tag<<endl;
-        auto colors=legend->find(tag)->second;
-        auto colorIt=find(colors.begin(),colors.end(),j+readCount);
-        if(colorIt==colors.end()){
-          cout<<"Failed"<<endl;
-          return -1;
+      //  cout<<">>"<<tag<<endl;
+        auto colors=legend->find(tag);
+        if(colors==legend->end())
+        {
+          wrong++;
+          cout<<"Colors not found "<<kmer<<" "<<tag<<endl;
+
+        }
+        else{
+          auto colorIt=colors->second.end();
+          colorIt=find(colors->second.begin(),colors->second.end(),readTag);
+          if(colorIt==colors->second.end()){
+      //      cout<<"Failed"<<endl;
+            cout<<"Found colors dont include the read target "<<kmer<<" readTag = "<<readTag<<endl;
+            cout<<"Tag= "<<tag<<endl;
+            for(auto a:colors->second){
+              cout<<a<<" ";
+            }
+            cout<<endl;
+            wrong++;
+      //    return -1;
+          }
+          else{
+            correct++;
+          }
         }
       }
     }
     readCount+=length(reads);
   }
   cout<<"Tested "<<readCount<<endl;
+  cout<<"Correct "<<correct<<endl;
+  cout<<"Wrong "<<wrong<<endl;
 
 
 
