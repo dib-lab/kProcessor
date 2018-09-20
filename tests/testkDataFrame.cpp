@@ -18,64 +18,66 @@ TEST_CASE( "load fasta and query" ) {
 
     map<uint64_t,int> gold;
     int kSize=31;
-    kDataFrameMQF kframe(kSize,20,2,2,0);
-    FastqReader reader("tests/testData/test.fastq");
-    deque<pair<string,string> > sequences;
-    while(!reader.isEOF())
-    {
-      reader.readNSeq(&sequences);
-    }
-    string kmer;
-    for(auto seqPair:sequences){
+    vector<kDataFrameMQF*> kframes;
+    kframes.push_back(new kDataFrameMQF(kSize,20,2,2,0));
+    for(auto kframe: kframes){
+      FastqReader reader("tests/testData/test.fastq");
+      deque<pair<string,string> > sequences;
+      while(!reader.isEOF())
+      {
+        reader.readNSeq(&sequences);
+      }
+      string kmer;
+      for(auto seqPair:sequences){
 
-        string seq=seqPair.first;
-        for(int i=0;i<seq.size()-kSize;i++)
-        {
-          kmer=seq.substr(i,kSize);
-          kframe.incrementCounter(kmer,1);
-          uint64_t kmerHash=kframe.hashKmer(kmer);
-          auto goldIT=gold.find(kmerHash);
-          if(goldIT==gold.end())
-            gold.insert(make_pair(kmerHash,1));
-          else{
-            goldIT->second++;
+          string seq=seqPair.first;
+          for(int i=0;i<seq.size()-kSize;i++)
+          {
+            kmer=seq.substr(i,kSize);
+            kframe->incrementCounter(kmer,1);
+            uint64_t kmerHash=kframe->hashKmer(kmer);
+            auto goldIT=gold.find(kmerHash);
+            if(goldIT==gold.end())
+              gold.insert(make_pair(kmerHash,1));
+            else{
+              goldIT->second++;
+            }
           }
-        }
+      }
+      
+      for(auto seqPair:sequences){
+
+          string seq=seqPair.first;
+          for(int i=0;i<seq.size()-kSize;i++)
+          {
+            kmer=seq.substr(i,kSize);
+            uint64_t kmerHash=kframe->hashKmer(kmer);
+            auto goldIT=gold.find(kmerHash);
+            REQUIRE(goldIT->second==kframe->getCounter(kmer));
+          }
+      }
+
+      
+
+
+
+      kframe->removeKmer(kmer);
+      REQUIRE(kframe->getCounter(kmer)==0);
+
+
+      kframe->setCounter(kmer,10);
+      REQUIRE(kframe->getCounter(kmer)==10);
+
+      kframe->setCounter(kmer,4);
+      REQUIRE(kframe->getCounter(kmer)==4);
+      kframe->setCounter(kmer,15);
+      REQUIRE(kframe->getCounter(kmer)==15);
+
+
+
+      kframe->setTag(kmer,1);
+      REQUIRE(kframe->getTag(kmer)==1);
     }
-    
-    for(auto seqPair:sequences){
-
-        string seq=seqPair.first;
-        for(int i=0;i<seq.size()-kSize;i++)
-        {
-          kmer=seq.substr(i,kSize);
-          uint64_t kmerHash=kframe.hashKmer(kmer);
-          auto goldIT=gold.find(kmerHash);
-          REQUIRE(goldIT->second==kframe.getCounter(kmer));
-        }
-    }
-
-    
-
-
-
-    kframe.removeKmer(kmer);
-    REQUIRE(kframe.getCounter(kmer)==0);
-
-
-    kframe.setCounter(kmer,10);
-    REQUIRE(kframe.getCounter(kmer)==10);
-
-    kframe.setCounter(kmer,4);
-    REQUIRE(kframe.getCounter(kmer)==4);
-    kframe.setCounter(kmer,15);
-    REQUIRE(kframe.getCounter(kmer)==15);
-
-
-
-    kframe.setTag(kmer,1);
-    REQUIRE(kframe.getTag(kmer)==1);
-
 
 }
 
@@ -148,48 +150,70 @@ TEST_CASE( "save and load" ) {
 
   map<uint64_t,int> gold;
   int kSize=31;
-  kDataFrameMQF kframe(kSize,20,2,2,0);
-  FastqReader reader("tests/testData/test.fastq");
-  deque<pair<string,string> > sequences;
-  while(!reader.isEOF())
-  {
-    reader.readNSeq(&sequences);
-  }
-  string kmer;
-  for(auto seqPair:sequences){
+  vector<kDataFrameMQF*> kframes;
+  kframes.push_back(new kDataFrameMQF(kSize,20,2,2,0));
+  for(auto kframe: kframes){
+    FastqReader reader("tests/testData/test.fastq");
+    deque<pair<string,string> > sequences;
+    while(!reader.isEOF())
+    {
+      reader.readNSeq(&sequences);
+    }
+    string kmer;
+    for(auto seqPair:sequences){
 
-      string seq=seqPair.first;
-      for(int i=0;i<seq.size()-kSize;i++)
-      {
-        kmer=seq.substr(i,kSize);
-        kframe.incrementCounter(kmer,1);
-        uint64_t kmerHash=kframe.hashKmer(kmer);
-        auto goldIT=gold.find(kmerHash);
-        if(goldIT==gold.end())
-          gold.insert(make_pair(kmerHash,1));
-        else{
-          goldIT->second++;
+        string seq=seqPair.first;
+        for(int i=0;i<seq.size()-kSize;i++)
+        {
+          kmer=seq.substr(i,kSize);
+          kframe->incrementCounter(kmer,1);
+          uint64_t kmerHash=kframe->hashKmer(kmer);
+          auto goldIT=gold.find(kmerHash);
+          if(goldIT==gold.end())
+            gold.insert(make_pair(kmerHash,1));
+          else{
+            goldIT->second++;
+          }
         }
-      }
-  }
-  
+    }
     string filePath="tests/testData/tmp.kDataFrame";
-    kframe.save(filePath);
+    kframe->save(filePath);
 
     kDataFrame* kframe2=kDataFrame::load(filePath);
+    
+    for(auto seqPair:sequences){
 
-  for(auto seqPair:sequences){
+        string seq=seqPair.first;
+        for(int i=0;i<seq.size()-kSize;i++)
+        {
+          kmer=seq.substr(i,kSize);
+          uint64_t kmerHash=kframe->hashKmer(kmer);
+          auto goldIT=gold.find(kmerHash);
+          REQUIRE(goldIT->second==kframe->getCounter(kmer));
+        }
+    }
 
-      string seq=seqPair.first;
-      for(int i=0;i<seq.size()-kSize;i++)
-      {
-        kmer=seq.substr(i,kSize);
-        uint64_t kmerHash=kframe2->hashKmer(kmer);
-        auto goldIT=gold.find(kmerHash);
-        REQUIRE(goldIT->second==kframe2->getCounter(kmer));
-      }
+    
+
+
+
+    kframe->removeKmer(kmer);
+    REQUIRE(kframe->getCounter(kmer)==0);
+
+
+    kframe->setCounter(kmer,10);
+    REQUIRE(kframe->getCounter(kmer)==10);
+
+    kframe->setCounter(kmer,4);
+    REQUIRE(kframe->getCounter(kmer)==4);
+    kframe->setCounter(kmer,15);
+    REQUIRE(kframe->getCounter(kmer)==15);
+
+
+
+    kframe->setTag(kmer,1);
+    REQUIRE(kframe->getTag(kmer)==1);
   }
-
 
 
 
