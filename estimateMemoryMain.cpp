@@ -45,10 +45,10 @@ int estimateMemory_main(int argc, char *argv[]){
       slotSize, tagSize,
      &res_noSlots, &res_fixedSizeCounter, &res_memory);
 
-  estimateMemRequirement_2Structures(input_files[0],slotSize,tagSize,
-				     &resSingeleQ,&res_noSlots2, &res_fixedSizeCounter2, &res_memory2);
+//  estimateMemRequirement_2Structures(input_files[0],slotSize,tagSize,
+//				     &resSingeleQ,&res_noSlots2, &res_fixedSizeCounter2, &res_memory2);
 
-  
+
   cout<<"Number Slots = "<<res_noSlots<<endl
       <<"Q = "<<log2((double)res_noSlots)<<endl
       <<"Fixed size counters= "<<res_fixedSizeCounter<<endl

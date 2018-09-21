@@ -25,6 +25,10 @@
 #include <string>
 
 enum DNA_MAP {A, C, T, G};  // A=1, C=0, T=2, G=3
+static uint8_t DNA_MAP_INT[]={4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
+	 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
+	 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 0, 4, 1, 4,
+	 4, 4, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 2, 4};
 static uint8_t DNA_REVERSE[]={2,3,0,1};
 #define BITMASK(nbits) ((nbits) == 64 ? 0xffffffffffffffff : (1ULL << (nbits)) \
 												- 1ULL)
@@ -36,11 +40,14 @@ class kmer {
 public:
 	static inline char map_int(uint8_t base);
 	static inline uint8_t map_base(char base);
+	static inline uint8_t map_base_vectorized(char base);
 	static uint64_t str_to_int(string str);
 	static string int_to_str(uint64_t kmer, uint32_t K);
 	static inline int reverse_complement_base(int x);
+
 	static uint64_t reverse_complement(uint64_t kmer, uint32_t K);
 	static inline bool compare_kmers(uint64_t kmer, uint64_t kmer_rev);
+	static inline uint64_t smallerKmer(uint64_t kmer, uint64_t kmer_rev);
 	static inline unsigned __int128 word_reverse_complement(unsigned __int128 w);
 	static inline int64_t word_reverse_complement(uint64_t w);
 	static inline uint32_t word_reverse_complement(uint32_t w);
@@ -72,7 +79,10 @@ inline uint8_t kmer::map_base(char base)
 		default:  { return DNA_MAP::G+1; }
 	}
 }
-
+inline uint8_t kmer::map_base_vectorized(char base)
+{
+	return DNA_MAP_INT[(int)base];
+}
 
 
 /* Return the reverse complement of a base */
@@ -87,7 +97,10 @@ inline bool kmer::compare_kmers(uint64_t kmer, uint64_t kmer_rev)
 {
 	return kmer <= kmer_rev;
 }
-
+inline uint64_t kmer::smallerKmer(uint64_t kmer, uint64_t kmer_rev)
+{
+	return kmer ^ ((kmer_rev ^ kmer) & -(kmer_rev < kmer));
+}
 
 
 #endif
