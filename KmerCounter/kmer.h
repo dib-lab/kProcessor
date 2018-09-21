@@ -25,9 +25,7 @@
 #include <string>
 
 enum DNA_MAP {A, C, T, G};  // A=1, C=0, T=2, G=3
-static uint8_t DNA_MAP_INT[]={4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
-	 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
-	 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 0, 4, 1, 4,
+static uint8_t DNA_MAP_INT[]={ 0, 4, 1, 4,
 	 4, 4, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 2, 4};
 static uint8_t DNA_REVERSE[]={2,3,0,1};
 #define BITMASK(nbits) ((nbits) == 64 ? 0xffffffffffffffff : (1ULL << (nbits)) \
@@ -81,7 +79,7 @@ inline uint8_t kmer::map_base(char base)
 }
 inline uint8_t kmer::map_base_vectorized(char base)
 {
-	return DNA_MAP_INT[(int)base];
+	return DNA_MAP_INT[(int)base-65];
 }
 
 
