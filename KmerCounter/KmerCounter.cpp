@@ -84,6 +84,27 @@ static inline void insertToLevels(uint64_t item,QF* local,QF* main,QF * diskMQF=
       }
 }
 
+std::vector<std::string> string_split(std::string s, const char delimiter)
+{
+    size_t start=0;
+    size_t end=s.find_first_of(delimiter);
+
+    std::vector<std::string> output;
+
+    while (end <= std::string::npos)
+    {
+	    output.emplace_back(s.substr(start, end-start));
+
+	    if (end == std::string::npos)
+	    	break;
+
+    	start=end+1;
+    	end = s.find_first_of(delimiter, start);
+    }
+
+    return output;
+}
+
 
 void loadIntoMQF(string sequenceFilename,int ksize,int noThreads, Hasher *hasher,QF * memoryMQF,QF * diskMQF){
 
@@ -108,6 +129,10 @@ void loadIntoMQF(string sequenceFilename,int ksize,int noThreads, Hasher *hasher
     reads=deque<pair<string,string> >(15000);
     qf_init(localMQF, (1ULL << QBITS_LOCAL_QF), memoryMQF->metadata->key_bits,
     0,memoryMQF->metadata->fixed_counter_size, true,"", 2038074761);
+
+    uint64_t  *LocalkmersBuffer,LocalkmersBufferSize=150,LocalkmersBufferTop=0;
+    LocalkmersBuffer=new uint64_t[LocalkmersBufferSize];
+
     while(moreWork)
     {
       #pragma omp critical
@@ -137,68 +162,68 @@ start_read:
 	  fs++; // increment the pointer
           continue;
         }
-
-        uint64_t first = 0;
-        uint64_t first_rev = 0;
-        uint64_t item = 0;
-
-        for(int i=0; i<ksize; i++) {
-          //First kmer
-          uint8_t curr = kmer::map_base(read[i]);
-          if (curr > DNA_MAP::G) {
-            // 'N' is encountered
-
-            read=read.substr(i+1, read.length());
-
-            //continue;
-            goto start_read;
-          }
-          first = first | curr;
-          first = first << 2;
+        LocalkmersBufferTop=0;
+        if(read.size()>LocalkmersBufferSize)
+        {
+          LocalkmersBufferSize=read.size();
+          delete [] LocalkmersBuffer;
+          LocalkmersBuffer=new uint64_t[LocalkmersBufferSize];
         }
-        first = first >> 2;
-        first_rev = kmer::reverse_complement(first, ksize);
 
+        vector<string> readParts=string_split(read,,'N');
+        for(auto readPart:readParts){
+          if(readPart.size()<k)
+            continue;
+          uint64_t first = 0;
+          uint64_t first_rev = 0;
+          uint64_t item = 0;
 
-        if (kmer::compare_kmers(first, first_rev))
-        item = first;
-        else
-        item = first_rev;
-
-        item = localHasher->hash(item)%memoryMQF->metadata->range;
-        //insertToLevels2(item,localMQF,memoryMQF,&local_capacity);
-        insertToLevels(item,localMQF,memoryMQF,diskMQF);
-        uint64_t next = (first << 2) & BITMASK(2*ksize);
-        uint64_t next_rev = first_rev >> 2;
-
-        for(uint32_t i=ksize; i<(read.size()); i++) {
-          //next kmers
-          //cout << "K: " << read.substr(i-K+1,K) << endl;
-          uint8_t curr = kmer::map_base(read[i]);
-          if (curr > DNA_MAP::G) {
-            // 'N' is encountered
-            //continue;
-            //read = read.substr(i+1, length(read));
-            read=read.substr(i+1, read.length());
-            //erase(read,0,i+1);
-
-            goto start_read;
+          for(int i=0; i<ksize; i++) {
+            //First kmer
+            uint8_t curr = kmer::map_base_vectorized(readPart[i]);
+            first = first | curr;
+            first = first << 2;
           }
-          next |= curr;
-          uint64_t tmp = kmer::reverse_complement_base(curr);
-          tmp <<= (ksize*2-2);
-          next_rev = next_rev | tmp;
-          if (kmer::compare_kmers(next, next_rev))
-          item = next;
-          else
-          item = next_rev;
+          first = first >> 2;
+          first_rev = kmer::reverse_complement(first, ksize);
+          LocalkmersBuffer[LocalkmersBufferTop++]=kmer::smallerKmer(first,first_rev);
 
 
-          item = localHasher->hash(item)%memoryMQF->metadata->range;
-          insertToLevels(item,localMQF,memoryMQF,diskMQF);
+        //  item = localHasher->hash(item)%memoryMQF->metadata->range;
           //insertToLevels2(item,localMQF,memoryMQF,&local_capacity);
-          next = (next << 2) & BITMASK(2*ksize);
-          next_rev = next_rev >> 2;
+          insertToLevels(item,localMQF,memoryMQF,diskMQF);
+          uint64_t next = (first << 2) & BITMASK(2*ksize);
+          uint64_t next_rev = first_rev >> 2;
+
+          for(uint32_t i=ksize; i<(read.size()); i++) {
+            //next kmers
+            //cout << "K: " << read.substr(i-K+1,K) << endl;
+            uint8_t curr = kmer::map_base(read[i]);
+            if (curr > DNA_MAP::G) {
+              // 'N' is encountered
+              //continue;
+              //read = read.substr(i+1, length(read));
+              read=read.substr(i+1, read.length());
+              //erase(read,0,i+1);
+
+              goto start_read;
+            }
+            next |= curr;
+            uint64_t tmp = kmer::reverse_complement_base(curr);
+            tmp <<= (ksize*2-2);
+            next_rev = next_rev | tmp;
+            if (kmer::compare_kmers(next, next_rev))
+            item = next;
+            else
+            item = next_rev;
+
+
+            item = localHasher->hash(item)%memoryMQF->metadata->range;
+            insertToLevels(item,localMQF,memoryMQF,diskMQF);
+            //insertToLevels2(item,localMQF,memoryMQF,&local_capacity);
+            next = (next << 2) & BITMASK(2*ksize);
+            next_rev = next_rev >> 2;
+          }
         }
         fs = ++fe;		// increment the pointer
         fs = static_cast<char*>(memchr(fs, '\n', end-fs)); // ignore one line
