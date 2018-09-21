@@ -39,7 +39,7 @@ CXXFLAGS= -g
 MQFDEBUG= D=1
 else
 CFLAGS  = -O3
-CXXFLAGS= -Ofast
+CXXFLAGS= -O3
 #CXXFLAGS= -O3 -no-prec-div -ansi-alias
 MQFDEBUG=
 endif
