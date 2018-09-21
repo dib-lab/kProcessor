@@ -32,6 +32,8 @@ int estimateMemory_main(int argc, char *argv[]){
   uint64_t res_noSlots, res_fixedSizeCounter, res_slotSize, res_memory;
   uint64_t slotSize;
 
+  uint64_t res_noSlots2, res_fixedSizeCounter2, res_slotSize2, res_memory2,resSingeleQ;
+
   if(fpr==0){
     slotSize=2*k;
   }
@@ -43,9 +45,20 @@ int estimateMemory_main(int argc, char *argv[]){
       slotSize, tagSize,
      &res_noSlots, &res_fixedSizeCounter, &res_memory);
 
+  estimateMemRequirement_2Structures(input_files[0],slotSize,tagSize,
+				     &resSingeleQ,&res_noSlots2, &res_fixedSizeCounter2, &res_memory2);
+
+  
   cout<<"Number Slots = "<<res_noSlots<<endl
       <<"Q = "<<log2((double)res_noSlots)<<endl
       <<"Fixed size counters= "<<res_fixedSizeCounter<<endl
       <<"Memory= "<<res_memory<<"KB"<<endl;
+
+
+  uint64_t totalSlots2=(1ULL<<resSingeleQ)+res_noSlots2;
+  int saving=(int)((double)((int64_t)res_noSlots-(int64_t)totalSlots2)/(double)(res_noSlots)*100);
+  cout<<"Singleton Q = "<<resSingeleQ<<endl;
+  cout<<"Q = "<<log2((double)res_noSlots2)<<endl;
+  cout<<"Two Structures saving= "<<saving<<endl;
   return 0;
 }
