@@ -166,8 +166,8 @@ start_read:
         item = first_rev;
 
         item = localHasher->hash(item)%memoryMQF->metadata->range;
-        //insertToLevels2(item,localMQF,memoryMQF,&local_capacity);
-        insertToLevels(item,localMQF,memoryMQF,diskMQF);
+        insertToLevels2(item,localMQF,memoryMQF,&local_capacity);
+	//  insertToLevels(item,localMQF,memoryMQF,diskMQF);
         uint64_t next = (first << 2) & BITMASK(2*ksize);
         uint64_t next_rev = first_rev >> 2;
 
@@ -195,8 +195,8 @@ start_read:
 
 
           item = localHasher->hash(item)%memoryMQF->metadata->range;
-          insertToLevels(item,localMQF,memoryMQF,diskMQF);
-          //insertToLevels2(item,localMQF,memoryMQF,&local_capacity);
+	  // insertToLevels(item,localMQF,memoryMQF,diskMQF);
+          insertToLevels2(item,localMQF,memoryMQF,&local_capacity);
           next = (next << 2) & BITMASK(2*ksize);
           next_rev = next_rev >> 2;
         }
