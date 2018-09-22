@@ -248,7 +248,7 @@ void loadIntoMQF(string sequenceFilename,int ksize,int noThreads, Hasher *hasher
         }
       }
         uint64_t key;
-      #pragma omp simd private(mask,key)
+      #pragma omp simd private(key)
         for(int i=0;i<LocalkmersBufferTop;i++){
           key=LocalkmersBuffer[i];
           key = (~key + (key << 21)) & mask; // key = (key << 21) - key - 1;

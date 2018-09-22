@@ -1,7 +1,7 @@
 PROGRAM	= Kprocessor
 
-CC	= icpc
-CXX	= icpc
+CC	= g++
+CXX	= g++
 
 
 
@@ -39,8 +39,8 @@ CXXFLAGS= -g
 MQFDEBUG= D=1
 else
 CFLAGS  = -O3
-#CXXFLAGS= -O3
-CXXFLAGS= -O3 -no-prec-div -ansi-alias
+CXXFLAGS= -O3
+#CXXFLAGS= -O3 -no-prec-div -ansi-alias
 MQFDEBUG=
 endif
 
