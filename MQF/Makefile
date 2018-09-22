@@ -7,7 +7,7 @@ ifdef D
 else
 	DEBUG=
 	OPT=-O3
-	#OPT= -O3 -no-prec-div -ansi-alias
+	OPT= -O3 -no-prec-div -ansi-alias
 endif
 
 ifdef NH
@@ -20,9 +20,9 @@ ifdef P
 	PROFILE=-pg -no-pie # for bug in gprof.
 endif
 
-CXX = g++
-CC = g++
-LD= g++
+CXX = icpc
+CC = icpc
+LD= icpc
 
 CXXFLAGS =   -std=c++11 -fPIC -Wall $(DEBUG) $(PROFILE) $(OPT) $(ARCH) -m64 -I. -Wno-unused-result -Wno-strict-aliasing -Wno-unused-function -fopenmp
 

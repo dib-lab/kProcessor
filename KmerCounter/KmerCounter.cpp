@@ -247,9 +247,20 @@ void loadIntoMQF(string sequenceFilename,int ksize,int noThreads, Hasher *hasher
           fs++; // increment the pointer
         }
       }
-      for(int i=0;i<LocalkmersBufferTop;i++){
-        LocalkmersBuffer[i]=Ihash(LocalkmersBuffer[i],mask);
-      }
+        uint64_t key;
+      #pragma omp simd private(mask,key)
+        for(int i=0;i<LocalkmersBufferTop;i++){
+          key=LocalkmersBuffer[i];
+          key = (~key + (key << 21)) & mask; // key = (key << 21) - key - 1;
+          key = key ^ key >> 24;
+          key = ((key + (key << 3)) + (key << 8)) & mask; // key * 265
+          key = key ^ key >> 14;
+          key = ((key + (key << 2)) + (key << 4)) & mask; // key * 21
+          key = key ^ key >> 28;
+          key = (key + (key << 31)) & mask;
+          LocalkmersBuffer[i]=key;
+        }
+
       for(int i=0;i<LocalkmersBufferTop;i++){
         insertToLevels2(LocalkmersBuffer[i],localMQF,memoryMQF,&local_capacity);
       }
