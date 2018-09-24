@@ -19,12 +19,16 @@ int index_main(int argc, char *argv[]){
   CLI::App app;
   string input_file;
   string names_fileName="";
+  string outDB;
   int kSize;
   int numThreads=1;
 
   app.add_option("-i,--input", input_file,
    "Fasta file containing the sequences to create the cDBG.")->required()
   ->check(CLI::ExistingFile);
+
+  app.add_option("-o,--output", outDB,
+   "Output kDataFrame filename.")->required();
 
   app.add_option("-n,--names", names_fileName,
    "TSV file of two columns: fasta sequences header and group name. If not supplied the sequence header is used as the group name. ")
@@ -106,7 +110,7 @@ CLI11_PARSE(app, argc, argv);
       convertMap.insert(make_pair(0,readTag));
       convertMap.insert(make_pair(readTag,readTag));
   //    cout<<readName<<"   "<<seq.size()<<endl;
-      for(int i=0;i<seq.size()-kSize;i++)
+      for(int i=0;i<seq.size()-kSize+1;i++)
       {
         kmer=seq.substr(i,kSize);
       //  cout<<i<<" "<<kmer<<" "<<frame->getCounter(kmer)<<endl;
@@ -156,86 +160,109 @@ CLI11_PARSE(app, argc, argv);
   //string filePath="tests/testData/tmp.kDataFrame";
   //indexFrame2->save(filePath);
   //kDataFrameMQF* indexFrame=(kDataFrameMQF*)kDataFrame::load(filePath);
-  kDataFrameMQF* indexFrame=frame;
-
-
-
+  //kDataFrameMQF* indexFrame=frame;
   cout<<"Number of Groups= "<<legend->size()<<endl;
+
+  frame->set_legend(legend);
+  frame->save(outDB+".mqf");
+  ofstream outNames(outDB+".namesMap");
+  for(auto iit=groupNameMap.begin(); iit!=groupNameMap.end();iit++){
+    outNames<<iit->first<<"\t"<<iit->second<<endl;
+  }
+
+
+
   // auto it=legend->begin();
   // while(it!=legend->end())
   // {
   //   cout<<"map "<<it->first<<" ->  ";
-  //   for(auto a:it->second)
-  //     cout<<a<<" ";
+  //   for(auto a:it->second){
+  //     auto git=groupNameMap.begin();
+  //     string res;
+  //     while(git!=groupNameMap.end())
+  //     {
+  //       if(git->second==a)
+  //         {
+  //           res=git->first;
+  //           break;
+  //         }
+  //       git++;
+  //     }
+  //     cout<<res<<" ";
+  //   }
   //   cout<<endl;
   //   it++;
   // }
+  //
+  // kDataFrameMQF* indexFrame=(kDataFrameMQF*)kDataFrame::load(outDB);
+  // legend=indexFrame->get_legend();
+  //
   // auto it2=indexFrame->begin();
   // while(!it2.isEnd()){
   //   cout<<(*it2).kmerHash<<" "<<(*it2).count<<endl;
   //   it2++;
   // }
-
-  seqan::SeqFileIn seqIn2(input_file.c_str());
-  int readCount=0;
-  int correct=0,wrong=0;
-  while(!atEnd(seqIn2)){
-    clear(reads);
-    clear(ids);
-    seqan::readRecords(ids, reads, seqIn2,chunkSize);
-    for(int j=0;j<length(reads);j++){
-      string readName=string((char*)seqan::toCString(ids[j]));
-
-      auto it=namesMap.find(readName);
-      if(it==namesMap.end())
-      {
-        cout<<"read "<<readName<<"dont have group. Please check the group names file."<<endl;
-      }
-      string groupName=it->second;
-
-      uint64_t readTag=groupNameMap.find(groupName)->second;
-      //cout<<groupName<<"-> "<<readTag<<endl;
-      string seq=string((char*)seqan::toCString(reads[j]));
-      if(seq.size()<kSize)
-        continue;
-      for(int i=0;i<seq.size()-kSize;i++)
-      {
-        kmer=seq.substr(i,kSize);
-
-        uint64_t tag=indexFrame->getTag(kmer);
-      //  cout<<">>"<<tag<<endl;
-        auto colors=legend->find(tag);
-        if(colors==legend->end())
-        {
-          wrong++;
-          cout<<"Colors not found "<<kmer<<" "<<tag<<endl;
-
-        }
-        else{
-          auto colorIt=colors->second.end();
-          colorIt=find(colors->second.begin(),colors->second.end(),readTag);
-          if(colorIt==colors->second.end()){
-      //      cout<<"Failed"<<endl;
-            cout<<"Found colors dont include the read target "<<kmer<<" readTag = "<<readTag<<endl;
-            cout<<"Tag= "<<tag<<endl;
-            for(auto a:colors->second){
-              cout<<a<<" ";
-            }
-            cout<<endl;
-            wrong++;
-      //    return -1;
-          }
-          else{
-            correct++;
-          }
-        }
-      }
-    }
-    readCount+=length(reads);
-  }
-  cout<<"Tested "<<readCount<<endl;
-  cout<<"Correct "<<correct<<endl;
-  cout<<"Wrong "<<wrong<<endl;
+  //
+  // seqan::SeqFileIn seqIn2(input_file.c_str());
+  // int readCount=0;
+  // int correct=0,wrong=0;
+  // while(!atEnd(seqIn2)){
+  //   clear(reads);
+  //   clear(ids);
+  //   seqan::readRecords(ids, reads, seqIn2,chunkSize);
+  //   for(int j=0;j<length(reads);j++){
+  //     string readName=string((char*)seqan::toCString(ids[j]));
+  //
+  //     auto it=namesMap.find(readName);
+  //     if(it==namesMap.end())
+  //     {
+  //       cout<<"read "<<readName<<"dont have group. Please check the group names file."<<endl;
+  //     }
+  //     string groupName=it->second;
+  //
+  //     uint64_t readTag=groupNameMap.find(groupName)->second;
+  //     //cout<<groupName<<"-> "<<readTag<<endl;
+  //     string seq=string((char*)seqan::toCString(reads[j]));
+  //     if(seq.size()<kSize)
+  //       continue;
+  //     for(int i=0;i<seq.size()-kSize;i++)
+  //     {
+  //       kmer=seq.substr(i,kSize);
+  //
+  //       uint64_t tag=indexFrame->getTag(kmer);
+  //     //  cout<<">>"<<tag<<endl;
+  //       auto colors=legend->find(tag);
+  //       if(colors==legend->end())
+  //       {
+  //         wrong++;
+  //         cout<<"Colors not found "<<kmer<<" "<<tag<<endl;
+  //
+  //       }
+  //       else{
+  //         auto colorIt=colors->second.end();
+  //         colorIt=find(colors->second.begin(),colors->second.end(),readTag);
+  //         if(colorIt==colors->second.end()){
+  //     //      cout<<"Failed"<<endl;
+  //           cout<<"Found colors dont include the read target "<<kmer<<" readTag = "<<readTag<<endl;
+  //           cout<<"Tag= "<<tag<<endl;
+  //           for(auto a:colors->second){
+  //             cout<<a<<" ";
+  //           }
+  //           cout<<endl;
+  //           wrong++;
+  //     //    return -1;
+  //         }
+  //         else{
+  //           correct++;
+  //         }
+  //       }
+  //     }
+  //   }
+  //   readCount+=length(reads);
+  // }
+  // cout<<"Tested "<<readCount<<endl;
+  // cout<<"Correct "<<correct<<endl;
+  // cout<<"Wrong "<<wrong<<endl;
 
 
 

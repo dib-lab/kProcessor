@@ -55,6 +55,15 @@ uint64_t kDataFrame::hashKmer(string kmer){
 kDataFrame* kDataFrame::load(string filePath){
   return kDataFrameMQF::load(filePath);
 }
+vector<int> kDataFrame::getColors(string kmer){
+  uint64_t tag=this->getTag(kmer);
+  auto colors=colorsMap->find(tag);
+  if(colors==colorsMap->end())
+  {
+    return vector<int>();
+  }
+  return colors->second;
+}
 
 kDataFrameMQF::kDataFrameMQF():kDataFrame(){
   mqf=new QF();
@@ -69,6 +78,7 @@ kDataFrameMQF::kDataFrameMQF(QF* mqf,uint64_t ksize,double falsePositiveRate):
 kDataFrame(falsePositiveRate,ksize)
 {
   this->mqf=mqf;
+  this->colorsMap=mqf->metadata->tags_map;
 }
 
 kDataFrameMQF::kDataFrameMQF(uint64_t ksize,vector<uint64_t> countHistogram,uint8_t tagSize
@@ -201,6 +211,10 @@ bool kDataFrameMQF::setTag(string kmer,uint64_t tag){
   return qf_add_tag(mqf,hash,tag,false,false)==1;
 }
 uint64_t kDataFrameMQF::getTag(string kmer){
+  if(kmer.find("N")!=string::npos)
+  {
+    return 0;
+  }
   uint64_t hash=hashKmer(kmer)%mqf->metadata->range;
   return qf_get_tag(mqf,hash);
 }

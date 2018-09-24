@@ -60,7 +60,7 @@ protected:
   vector<Hasher*> hashFunctions;
   uint64_t kSize;
   bool autoResize;
-  map<uint64_t,string> tagsLegend;
+  map<uint64_t,vector<int> >* colorsMap;
 public:
   kDataFrame();
   kDataFrame(double falsePositiveRate,uint8_t kSize);
@@ -86,6 +86,10 @@ public:
 
   virtual void save(string filePath)=0;
   static kDataFrame* load(string filePath);
+
+  vector<int> getColors(string kmer);
+  uint64_t getkSize(){return kSize;}
+  uint64_t setkSize(uint64_t k){kSize=k;}
 
 };
 
@@ -143,5 +147,6 @@ public:
 
   void set_legend(std::map<uint64_t, std::vector<int> > * t){
       mqf->metadata->tags_map=t;
+      this->colorsMap=t;
     }
 };
