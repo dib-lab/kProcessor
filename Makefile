@@ -5,9 +5,9 @@ CXX	= g++
 
 TBBLIB= -L ThirdParty/TBB/lib/intel64/gcc4.7/ -ltbb
 
-INCLUDE	= -IThirdParty/seqan/include -IMQF -I ThirdParty/TBB/include/
+INCLUDE	= -IThirdParty/seqan/include -IMQF
 CPPFLAGS	= -Wall -Wextra -std=c++14 -fPIC -fopenmp -W -Wall -pedantic
-LDFLAGS	= -lrt -lpthread -lbz2 -lz $(TBBLIB)
+LDFLAGS	= -lrt -lpthread -lbz2 -lz 
 
 
 SEQAN_FLAGS= -DSEQAN_HAS_ZLIB=1 -DSEQAN_HAS_BZIP2=1  -DSEQAN_HAS_OPENMP=1 -Wl,--whole-archive -Wl,--no-whole-archive
