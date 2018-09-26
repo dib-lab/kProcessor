@@ -282,14 +282,14 @@ int detectFusionGenes_main(int argc, char *argv[]){
   }
   ofstream outFusionInfo(outputPrefix+"_fusion.info");
   outFusionInfo<<"fileName"<<"\t"<<"recordIndex"<<"\t"<<"whichInPair"<<
-  "\t"<<"align_class"<<"\t"<<"familiy_A"<<"\t"<< "familiy_B"<<"\t"<<"no_families"
-  <<"\t"<< "len_families"<<"\t"<< "shared_kmers"<<"\t"<< "gaps"<<"\t"<< "sorted_keys"<<endl;
-
+  "\t"<<"align_class"<<"\t"<<"gene_families"<<"\t"<<"shared_kmers"<<"\t"<<"gaps"<<endl;
+  
   seqan::SeqFileOut fusion_fp((outputPrefix+"_fusion.fq").c_str());
 
   ofstream outFusionCalc(outputPrefix+"_fusion.calc");
-  outFusionCalc<<"fileName"<<"\t"<<"recordIndex"<<"\t"<<"fusion_class"<<"\t"<<
-  "familiy_A"<<"\t"<<"familiy_B"<<"\t"<<"len_families"<<"\t"<<"sorted_keys"<<endl;
+  outFusionCalc<<"fileName"<<"\t"<<"recordIndex"<<"\t"<<"whichInPair"<<
+  "\t"<<"align_class"<<"\t"<<"familiy_A"<<"\t"<< "familiy_B"<<"\t"<<"no_families"
+  <<"\t"<< "len_families"<<"\t"<< "shared_kmers"<<"\t"<< "gaps"<<"\t"<< "sorted_keys"<<endl;
 
   ofstream outFusionPairInfo(outputPrefix+"_fusionPair.info");
   outFusionPairInfo<<"fileName"<<"\t"<<"recordIndex"<<"\t"<<"fusion_class"<<"\t"
