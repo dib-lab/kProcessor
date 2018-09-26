@@ -13,6 +13,70 @@
 #include <algorithm>
 using namespace std;
 
+TEST_CASE("MAP load fasta and query")
+{
+
+  map<uint64_t, int> gold;
+  int kSize = 31;
+  vector<kDataFrame *> kframes;
+  kframes.push_back(new kDataFrameMAP(kSize));
+
+  for (auto kframe : kframes)
+  {
+    FastqReader reader("tests/testData/test.fastq");
+    deque<pair<string, string>> sequences;
+    while (!reader.isEOF())
+    {
+      reader.readNSeq(&sequences);
+    }
+    string kmer;
+    for (auto seqPair : sequences)
+    {
+
+      string seq = seqPair.first;
+      for (int i = 0; i < seq.size() - kSize; i++)
+      {
+        kmer = seq.substr(i, kSize);
+        kframe->incrementCounter(kmer, 1);
+        uint64_t kmerHash = kframe->hashKmer(kmer);
+        auto goldIT = gold.find(kmerHash);
+        if (goldIT == gold.end())
+          gold.insert(make_pair(kmerHash, 1));
+        // else
+        // {
+        //   goldIT->second++; // Comment this
+        // }
+      }
+    }
+
+    for (auto seqPair : sequences)
+    {
+
+      string seq = seqPair.first;
+      for (int i = 0; i < seq.size() - kSize; i++)
+      {
+        kmer = seq.substr(i, kSize);
+        uint64_t kmerHash = kframe->hashKmer(kmer);
+        auto goldIT = gold.find(kmerHash);
+        REQUIRE(goldIT->second == kframe->getCounter(kmer));
+      }
+    }
+
+    kframe->removeKmer(kmer);
+    REQUIRE(kframe->getCounter(kmer) == 0);
+ 
+    kframe->setCounter(kmer, 10);
+    REQUIRE(kframe->getCounter(kmer));
+
+    kframe->setCounter(kmer, 4);
+    REQUIRE(kframe->getCounter(kmer));
+    kframe->setCounter(kmer, 15);
+    REQUIRE(kframe->getCounter(kmer));
+
+    kframe->setTag(kmer, 1);
+    REQUIRE(kframe->getTag(kmer) == 1);
+  }
+}
 
 TEST_CASE( "load fasta and query" ) {
 
@@ -44,7 +108,7 @@ TEST_CASE( "load fasta and query" ) {
             if(goldIT==gold.end())
               gold.insert(make_pair(kmerHash,1));
             else{
-              goldIT->second++;
+              goldIT->second++; // Comment this
             }
           }
       }

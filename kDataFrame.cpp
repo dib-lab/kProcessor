@@ -304,12 +304,18 @@ bool kDataFrameMAP::kmerExist(string kmer){
 
 bool kDataFrameMAP::setCounter(string kmer, uint64_t count)
 {
-  return 1;
+  if (!kDataFrameMAP::kmerExist(kmer))
+  {
+    setTag(kmer, 0);
+    return 1;
+  }
+  return 0;
 }
 
 bool kDataFrameMAP::incrementCounter(string kmer, uint64_t count)
 {
-  if(kDataFrameMAP::kmerExist(kmer)){
+  if (!kDataFrameMAP::kmerExist(kmer))
+  {
     setTag(kmer, 0);
     return 1;
   }
@@ -324,6 +330,16 @@ bool kDataFrameMAP::setTag(string kmer, uint64_t tag)
 {
   if (checkKmerSize(kmer))
   {
+    if (kDataFrameMAP::kmerExist(kmer))
+    {
+      map<string, uint64_t>::iterator i = kDataFrameMAP::MAP.find(kmer);
+      if (i != kDataFrameMAP::MAP.end())
+      {
+        i->second = tag; // not_found
+        return 1;
+      }
+    }
+
     kDataFrameMAP::MAP.insert(std::make_pair(kmer, tag));
     return 1;
   }
@@ -332,7 +348,6 @@ bool kDataFrameMAP::setTag(string kmer, uint64_t tag)
 
 uint64_t kDataFrameMAP::getTag(string kmer)
 {
-
   map<string, uint64_t>::iterator i = kDataFrameMAP::MAP.find(kmer);
   if (i == kDataFrameMAP::MAP.end())
   {
