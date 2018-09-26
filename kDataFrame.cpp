@@ -4,6 +4,10 @@
 #include <fstream>
 #include <math.h>
 #include <limits>
+#include <boost/archive/binary_oarchive.hpp>
+#include <boost/archive/binary_iarchive.hpp>
+#include <boost/serialization/map.hpp>
+
 #include "KmerCounter/KmerCounter.hpp"
 using namespace std;
 
@@ -269,4 +273,110 @@ kDataFrameMQF* kDataFrameMQF::index(vector<kDataFrameMQF*> kframes){
 
 void kDataFrameMQF::loadIntoFastq(std::string sequenceFilename,int noThreads){
   loadIntoMQF(sequenceFilename,kSize,noThreads,hashFunctions[0],mqf);
+}
+
+// kDataFrameMAP _____________________________
+
+kDataFrameMAP::kDataFrameMAP(uint64_t ksize)
+{
+  kDataFrame::kSize = ksize;
+}
+
+bool kDataFrameMAP::checkKmerSize(string kmer)
+{
+  if (kmer.length() != kDataFrame::kSize)
+  {
+    return 0;
+  }
+  return 1;
+}
+
+bool kDataFrameMAP::kmerExist(string kmer){
+
+  map<string, uint64_t>::iterator i = kDataFrameMAP::MAP.find(kmer);
+  if (i == kDataFrameMAP::MAP.end())
+  {
+    return 0; // Not Found
+  }
+  return 1; // Found
+}
+
+
+bool kDataFrameMAP::setCounter(string kmer, uint64_t count)
+{
+  return 1;
+}
+
+bool kDataFrameMAP::incrementCounter(string kmer, uint64_t count)
+{
+  if(kDataFrameMAP::kmerExist(kmer)){
+    setTag(kmer, 0);
+    return 1;
+  }
+  return 0;
+}
+
+uint64_t kDataFrameMAP::getCounter(string kmer) {
+  return kDataFrameMAP::kmerExist(kmer);
+}
+
+bool kDataFrameMAP::setTag(string kmer, uint64_t tag)
+{
+  if (checkKmerSize(kmer))
+  {
+    kDataFrameMAP::MAP.insert(std::make_pair(kmer, tag));
+    return 1;
+  }
+  return 0;
+}
+
+uint64_t kDataFrameMAP::getTag(string kmer)
+{
+
+  map<string, uint64_t>::iterator i = kDataFrameMAP::MAP.find(kmer);
+  if (i == kDataFrameMAP::MAP.end())
+  {
+    return 0; // not_found
+  }
+  return i->second;
+}
+
+bool kDataFrameMAP::removeKmer(string kmer)
+{
+  return kDataFrameMAP::MAP.erase(kmer);
+}
+
+uint64_t kDataFrameMAP::size()
+{
+  return (uint64_t)kDataFrameMAP::MAP.size();
+}
+
+uint64_t kDataFrameMAP::filled_space() {}
+
+bool kDataFrameMAP::isFull()
+{
+  return 1;
+}
+
+void kDataFrameMAP::save(string filePath)
+{
+  ofstream f(filePath, ios::binary);
+  boost::archive::binary_oarchive oa(f);
+  oa << kDataFrameMAP::MAP;
+}
+
+void kDataFrameMAP::load(string filePath)
+{
+  ifstream f(filePath, ios::binary);
+  boost::archive::binary_iarchive iarch(f);
+  iarch >> kDataFrameMAP::MAP;
+}
+
+kDataFrameIterator kDataFrameMAP::begin(){
+  return NULL;
+}
+
+    kDataFrameMAP::~kDataFrameMAP()
+{
+  kDataFrameMAP::MAP.clear();
 }

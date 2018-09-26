@@ -18,8 +18,12 @@ TEST_CASE( "load fasta and query" ) {
 
     map<uint64_t,int> gold;
     int kSize=31;
-    vector<kDataFrameMQF*> kframes;
+    vector<kDataFrame*> kframes;
     kframes.push_back(new kDataFrameMQF(kSize,20,2,2,0));
+
+    // vector<kDataFrameMAP *> kframes;
+    kframes.push_back(new kDataFrameMAP(kSize));
+
     for(auto kframe: kframes){
       FastqReader reader("tests/testData/test.fastq");
       deque<pair<string,string> > sequences;

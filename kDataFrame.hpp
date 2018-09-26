@@ -89,6 +89,9 @@ public:
 
 };
 
+// OLD -------------------------------------
+
+
 class kDataFrameMQF: public kDataFrame{
 private:
   QF* mqf;
@@ -144,4 +147,37 @@ public:
   void set_legend(std::map<uint64_t, std::vector<int> > * t){
       mqf->metadata->tags_map=t;
     }
+};
+
+class kDataFrameMAP : public kDataFrame
+{
+private:
+  map<string, uint64_t> MAP;
+
+protected:
+  bool checkKmerSize(string kmer);
+  bool kmerExist(string kmer);
+
+public : kDataFrameMAP(uint64_t ksize);
+
+  ~kDataFrameMAP();
+
+  bool setCounter(string kmer, uint64_t count);
+  bool incrementCounter(string kmer, uint64_t count);
+  uint64_t getCounter(string kmer);
+
+  bool setTag(string kmer, uint64_t tag);
+  uint64_t getTag(string kmer);
+
+  bool removeKmer(string kmer);
+
+  uint64_t size();
+  uint64_t filled_space();
+  bool isFull();
+
+  kDataFrameIterator begin();
+  
+  void save(string filePath);
+  void load(string filePath);
+
 };
