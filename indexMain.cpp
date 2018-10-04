@@ -75,7 +75,10 @@ CLI11_PARSE(app, argc, argv);
   vector<kDataFrameMQF*> frames;
   int currIndex=0;
   string kmer;
-  kDataFrameMQF* frame=new kDataFrameMQF(kSize,27,2,20,0);
+  uint64_t tagBits=22;
+  uint64_t maxTagValue=(1ULL<<tagBits)-1;
+
+  kDataFrameMQF* frame=new kDataFrameMQF(kSize,28,2,20,0);
   //frame->loadIntoFastq(input_file,numThreads);
 
   uint64_t lastTag=0;
@@ -141,6 +144,10 @@ CLI11_PARSE(app, argc, argv);
 
             itTag=tagsMap.find(colorsString);
             groupID++;
+            if(groupID>maxTagValue){
+              cerr<<"Tag size is not enough. ids reached "<<groupID<<endl;
+              return -1;
+            }
           }
           uint64_t newColor=itTag->second;
           convertMap.insert(make_pair(currentTag,newColor));
