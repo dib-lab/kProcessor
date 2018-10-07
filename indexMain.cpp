@@ -75,10 +75,10 @@ CLI11_PARSE(app, argc, argv);
   vector<kDataFrameMQF*> frames;
   int currIndex=0;
   string kmer;
-  uint64_t tagBits=22;
+  uint64_t tagBits=0;
   uint64_t maxTagValue=(1ULL<<tagBits)-1;
 
-  kDataFrameMQF* frame=new kDataFrameMQF(kSize,28,2,20,0);
+  kDataFrameMQF* frame=new kDataFrameMQF(kSize,28,2,tagBits,0);
   //frame->loadIntoFastq(input_file,numThreads);
 
   uint64_t lastTag=0;
@@ -117,8 +117,8 @@ CLI11_PARSE(app, argc, argv);
       {
         kmer=seq.substr(i,kSize);
       //  cout<<i<<" "<<kmer<<" "<<frame->getCounter(kmer)<<endl;
-        frame->incrementCounter(kmer,1);
-        uint64_t currentTag=frame->getTag(kmer);
+        //frame->incrementCounter(kmer,1);
+        uint64_t currentTag=frame->getCounter(kmer);
 
         auto itc=convertMap.find(currentTag);
         if(itc==convertMap.end())
@@ -144,10 +144,10 @@ CLI11_PARSE(app, argc, argv);
 
             itTag=tagsMap.find(colorsString);
             groupID++;
-            if(groupID>maxTagValue){
-              cerr<<"Tag size is not enough. ids reached "<<groupID<<endl;
-              return -1;
-            }
+            // if(groupID>=maxTagValue){
+            //   cerr<<"Tag size is not enough. ids reached "<<groupID<<endl;
+            //   return -1;
+            // }
           }
           uint64_t newColor=itTag->second;
           convertMap.insert(make_pair(currentTag,newColor));
@@ -155,7 +155,15 @@ CLI11_PARSE(app, argc, argv);
         }
 
 
-        frame->setTag(kmer,itc->second);
+
+        frame->setCounter(kmer,itc->second);
+        if(frame->getCounter(kmer)!=itc->second)
+        {
+              //frame->setC(kmer,itc->second);
+          cout<<"Error Founded "<<kmer<<" from sequence "<<readName<<" expected "
+          <<itc->second<<" found "<<frame->getTag(kmer)<<" "<<frame->getTag(kmer)<<endl;
+          return -1;
+        }
 
       }
       readID+=1;
@@ -203,6 +211,7 @@ CLI11_PARSE(app, argc, argv);
   //
   // kDataFrameMQF* indexFrame=(kDataFrameMQF*)kDataFrame::load(outDB);
   // legend=indexFrame->get_legend();
+  kDataFrameMQF* indexFrame=frame;
   //
   // auto it2=indexFrame->begin();
   // while(!it2.isEnd()){
@@ -210,66 +219,66 @@ CLI11_PARSE(app, argc, argv);
   //   it2++;
   // }
   //
-  // seqan::SeqFileIn seqIn2(input_file.c_str());
-  // int readCount=0;
-  // int correct=0,wrong=0;
-  // while(!atEnd(seqIn2)){
-  //   clear(reads);
-  //   clear(ids);
-  //   seqan::readRecords(ids, reads, seqIn2,chunkSize);
-  //   for(int j=0;j<length(reads);j++){
-  //     string readName=string((char*)seqan::toCString(ids[j]));
-  //
-  //     auto it=namesMap.find(readName);
-  //     if(it==namesMap.end())
-  //     {
-  //       cout<<"read "<<readName<<"dont have group. Please check the group names file."<<endl;
-  //     }
-  //     string groupName=it->second;
-  //
-  //     uint64_t readTag=groupNameMap.find(groupName)->second;
-  //     //cout<<groupName<<"-> "<<readTag<<endl;
-  //     string seq=string((char*)seqan::toCString(reads[j]));
-  //     if(seq.size()<kSize)
-  //       continue;
-  //     for(int i=0;i<seq.size()-kSize;i++)
-  //     {
-  //       kmer=seq.substr(i,kSize);
-  //
-  //       uint64_t tag=indexFrame->getTag(kmer);
-  //     //  cout<<">>"<<tag<<endl;
-  //       auto colors=legend->find(tag);
-  //       if(colors==legend->end())
-  //       {
-  //         wrong++;
-  //         cout<<"Colors not found "<<kmer<<" "<<tag<<endl;
-  //
-  //       }
-  //       else{
-  //         auto colorIt=colors->second.end();
-  //         colorIt=find(colors->second.begin(),colors->second.end(),readTag);
-  //         if(colorIt==colors->second.end()){
-  //     //      cout<<"Failed"<<endl;
-  //           cout<<"Found colors dont include the read target "<<kmer<<" readTag = "<<readTag<<endl;
-  //           cout<<"Tag= "<<tag<<endl;
-  //           for(auto a:colors->second){
-  //             cout<<a<<" ";
-  //           }
-  //           cout<<endl;
-  //           wrong++;
-  //     //    return -1;
-  //         }
-  //         else{
-  //           correct++;
-  //         }
-  //       }
-  //     }
-  //   }
-  //   readCount+=length(reads);
-  // }
-  // cout<<"Tested "<<readCount<<endl;
-  // cout<<"Correct "<<correct<<endl;
-  // cout<<"Wrong "<<wrong<<endl;
+  seqan::SeqFileIn seqIn2(input_file.c_str());
+  int readCount=0;
+  int correct=0,wrong=0;
+  while(!atEnd(seqIn2)){
+    clear(reads);
+    clear(ids);
+    seqan::readRecords(ids, reads, seqIn2,chunkSize);
+    for(int j=0;j<length(reads);j++){
+      string readName=string((char*)seqan::toCString(ids[j]));
+
+      auto it=namesMap.find(readName);
+      if(it==namesMap.end())
+      {
+        cout<<"read "<<readName<<"dont have group. Please check the group names file."<<endl;
+      }
+      string groupName=it->second;
+
+      uint64_t readTag=groupNameMap.find(groupName)->second;
+      //cout<<groupName<<"-> "<<readTag<<endl;
+      string seq=string((char*)seqan::toCString(reads[j]));
+      if(seq.size()<kSize)
+        continue;
+      for(int i=0;i<seq.size()-kSize;i++)
+      {
+        kmer=seq.substr(i,kSize);
+
+        uint64_t tag=indexFrame->getCounter(kmer);
+      //  cout<<">>"<<tag<<endl;
+        auto colors=legend->find(tag);
+        if(colors==legend->end())
+        {
+          wrong++;
+          cout<<"Colors not found "<<kmer<<" "<<tag<<endl;
+          return -1;
+        }
+        else{
+          auto colorIt=colors->second.end();
+          colorIt=find(colors->second.begin(),colors->second.end(),readTag);
+          if(colorIt==colors->second.end()){
+      //      cout<<"Failed"<<endl;
+            cout<<"Found colors dont include the read target "<<kmer<<" readTag = "<<readTag<<endl;
+            cout<<"Tag= "<<tag<<endl;
+            for(auto a:colors->second){
+              cout<<a<<" ";
+            }
+            cout<<endl;
+            wrong++;
+          return -1;
+          }
+          else{
+            correct++;
+          }
+        }
+      }
+    }
+    readCount+=length(reads);
+  }
+  cout<<"Tested "<<readCount<<endl;
+  cout<<"Correct "<<correct<<endl;
+  cout<<"Wrong "<<wrong<<endl;
 
 
 

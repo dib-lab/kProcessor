@@ -387,16 +387,16 @@ bool kDataFrameMAP::isFull()
 
 void kDataFrameMAP::save(string filePath)
 {
-  ofstream f(filePath, ios::binary);
-  boost::archive::binary_oarchive oa(f);
-  oa << kDataFrameMAP::MAP;
+  // ofstream f(filePath, ios::binary);
+  // boost::archive::binary_oarchive oa(f);
+  // oa << kDataFrameMAP::MAP;
 }
 
 void kDataFrameMAP::load(string filePath)
 {
-  ifstream f(filePath, ios::binary);
-  boost::archive::binary_iarchive iarch(f);
-  iarch >> kDataFrameMAP::MAP;
+  // ifstream f(filePath, ios::binary);
+  // boost::archive::binary_iarchive iarch(f);
+  // iarch >> kDataFrameMAP::MAP;
 }
 
 kDataFrameIterator kDataFrameMAP::begin(){
