@@ -12,6 +12,7 @@
 #include <seqan/seq_io.h>
 #include "kDataFrame.hpp"
 #include<algorithm>
+#include <queue>
 using namespace std;
 
 
@@ -46,9 +47,11 @@ CLI11_PARSE(app, argc, argv);
   map<string,uint64_t> tagsMap;
   map<string,uint64_t> groupNameMap;
   std::map<uint64_t, std::vector<int> >  *legend=new std::map<uint64_t, std::vector<int> >();
+  map<uint64_t,uint64_t> colorsCount;
   uint64_t readID=0,groupID=1;
   ifstream namesFile(names_fileName.c_str());
   string seqName,groupName;
+  priority_queue <uint64_t, vector<uint64_t>, std::greater<uint64_t> > freeColors;
 
   while(namesFile>>seqName>>groupName){
     namesMap.insert(make_pair(seqName,groupName));
@@ -61,6 +64,7 @@ CLI11_PARSE(app, argc, argv);
       tmp.clear();
       tmp.push_back(groupID);
       legend->insert(make_pair(groupID,tmp));
+      colorsCount.insert(make_pair(groupID,0));
       groupID++;
     }
   }
@@ -139,19 +143,41 @@ CLI11_PARSE(app, argc, argv);
           auto itTag=tagsMap.find(colorsString);
           if(itTag==tagsMap.end())
           {
-            tagsMap.insert(make_pair(colorsString,groupID));
-            legend->insert(make_pair(groupID,colors));
+            uint64_t newColor;
+            if(freeColors.size()==0){
+              newColor=groupID++;
+            }
+            else{
+              newColor=freeColors.top();
+              freeColors.pop();
+            }
 
+            tagsMap.insert(make_pair(colorsString,newColor));
+            legend->insert(make_pair(newColor,colors));
             itTag=tagsMap.find(colorsString);
-            groupID++;
+            colorsCount[newColor]=0;
             // if(groupID>=maxTagValue){
             //   cerr<<"Tag size is not enough. ids reached "<<groupID<<endl;
             //   return -1;
             // }
           }
           uint64_t newColor=itTag->second;
+
           convertMap.insert(make_pair(currentTag,newColor));
           itc=convertMap.find(currentTag);
+        }
+
+        if(itc->second!=currentTag)
+        {
+
+          colorsCount[currentTag]--;
+          if(colorsCount[currentTag]==0  && currentTag!=0 ){
+            freeColors.push(currentTag);
+            legend->erase(currentTag);
+            if(convertMap.find(currentTag)!=convertMap.end())
+              convertMap.erase(currentTag);
+          }
+          colorsCount[itc->second]++;
         }
 
 
@@ -273,8 +299,9 @@ CLI11_PARSE(app, argc, argv);
           }
         }
       }
+      readCount+=1;
     }
-    readCount+=length(reads);
+
   }
   cout<<"Tested "<<readCount<<endl;
   cout<<"Correct "<<correct<<endl;
