@@ -15,6 +15,9 @@
 #include <queue>
 using namespace std;
 
+// Activate / Deactivate debugging.	// Activate / Deactivate debugging.
+static bool _DEBUG = 0;
+
 
 int index_main(int argc, char *argv[]){
   CLI::App app;
@@ -82,7 +85,8 @@ CLI11_PARSE(app, argc, argv);
   uint64_t tagBits=0;
   uint64_t maxTagValue=(1ULL<<tagBits)-1;
 
-  kDataFrameMQF* frame=new kDataFrameMQF(kSize,28,2,tagBits,0);
+  // kDataFrameMQF* frame=new kDataFrameMQF(kSize,28,2,tagBits,0);
+  kDataFrameMAP *frame = new kDataFrameMAP(kSize);
   //frame->loadIntoFastq(input_file,numThreads);
 
   uint64_t lastTag=0;
@@ -205,13 +209,19 @@ CLI11_PARSE(app, argc, argv);
   cout<<"Number of Groups= "<<legend->size()<<endl;
 
   frame->set_legend(legend);
-  frame->save(outDB+".mqf");
+
+  cerr << "[!] Done Indexing, writing files ... " << endl;
+
+  frame->save(outDB);
   ofstream outNames(outDB+".namesMap");
   for(auto iit=groupNameMap.begin(); iit!=groupNameMap.end();iit++){
     outNames<<iit->first<<"\t"<<iit->second<<endl;
   }
 
 
+
+  if (!_DEBUG)
+    return 0;
 
   // auto it=legend->begin();
   // while(it!=legend->end())
@@ -237,7 +247,7 @@ CLI11_PARSE(app, argc, argv);
   //
   // kDataFrameMQF* indexFrame=(kDataFrameMQF*)kDataFrame::load(outDB);
   // legend=indexFrame->get_legend();
-  kDataFrameMQF* indexFrame=frame;
+  kDataFrameMAP* indexFrame=frame;
   //
   // auto it2=indexFrame->begin();
   // while(!it2.isEnd()){

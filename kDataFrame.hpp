@@ -91,10 +91,17 @@ public:
   uint64_t getkSize(){return kSize;}
   uint64_t setkSize(uint64_t k){kSize=k;}
 
+  string getCanonicalKmer(string kmer){
+    uint64_t kmerI = kmer::str_to_int(kmer);
+    uint64_t kmerIR = kmer::reverse_complement(kmerI, kSize);
+    uint64_t item;
+    if (kmer::compare_kmers(kmerI, kmerIR))
+      return kmer;
+    else
+      return kmer::int_to_str(kmerIR,kSize);
+  }
+
 };
-
-// OLD -------------------------------------
-
 
 class kDataFrameMQF: public kDataFrame{
 private:
@@ -159,13 +166,11 @@ class kDataFrameMAP : public kDataFrame
 private:
   map<string, uint64_t> MAP;
 
-protected:
-  bool checkKmerSize(string kmer);
-  bool kmerExist(string kmer);
+public:
+  kDataFrameMAP(uint64_t ksize);
 
-public : kDataFrameMAP(uint64_t ksize);
 
-  ~kDataFrameMAP();
+  inline bool kmerExist(string kmer);
 
   bool setCounter(string kmer, uint64_t count);
   bool incrementCounter(string kmer, uint64_t count);
@@ -183,6 +188,20 @@ public : kDataFrameMAP(uint64_t ksize);
   kDataFrameIterator begin();
 
   void save(string filePath);
-  void load(string filePath);
+  static kDataFrame *load(string filePath);
 
+  void set_legend(std::map<uint64_t, std::vector<int>> *t)
+  {
+    this->colorsMap = t;
+  }
+
+  std::map<uint64_t, std::vector<int>> *get_legend()
+  {
+    return this->colorsMap;
+  }
+
+    ~kDataFrameMAP() {
+        this->MAP.clear();
+        this->colorsMap->clear();
+    }
 };
