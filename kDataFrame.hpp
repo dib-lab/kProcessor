@@ -83,9 +83,10 @@ public:
   virtual bool isFull()=0;
 
   virtual kDataFrameIterator begin()=0;
-
+  virtual void set_legend(std::map<uint64_t, std::vector<int>> *t) = 0;
+  virtual std::map<uint64_t, std::vector<int> > * get_legend() = 0;
   virtual void save(string filePath)=0;
-  static kDataFrame* load(string filePath);
+  static kDataFrame* load(string filePath, string method);
 
   vector<int> getColors(string kmer);
   uint64_t getkSize(){return kSize;}

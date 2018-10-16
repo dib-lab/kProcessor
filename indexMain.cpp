@@ -24,6 +24,7 @@ int index_main(int argc, char *argv[]){
   string input_file;
   string names_fileName="";
   string outDB;
+  string method;
   int kSize;
   int numThreads=1;
 
@@ -41,12 +42,35 @@ int index_main(int argc, char *argv[]){
   app.add_option("-k,--kmer-length",kSize,"kmer length")->required();
 
 
+
   app.add_option("-t,--threads", numThreads,
    "Number of threads used in kmer counting. Default 1");
 
-CLI11_PARSE(app, argc, argv);
+  app.add_option("-m,--method", method,
+                 "Data strucure used in indexing <MAP> or <MQF>, default: ksize < 32 = MQF, Ksize > 31 = MAP.");
+
+
+  CLI11_PARSE(app, argc, argv);
   map<string,string> namesMap;
 
+  if (method.empty())
+  {
+    method = (kSize <= 31) ? "MQF" : "MAP";
+  }
+  else
+  {
+    if (method.compare("MAP") && method.compare("MQF"))
+    {
+      cerr << "method can be only set to <MAP> or <MQF>" << endl;
+      return 0;
+    }
+    else if (kSize > 31 && method == "MQF")
+    {
+      cerr << "can't proceed using MQF with ksize > 31" << endl;
+      return 0;
+    }
+  }
+  
   map<string,uint64_t> tagsMap;
   map<string,uint64_t> groupNameMap;
   std::map<uint64_t, std::vector<int> >  *legend=new std::map<uint64_t, std::vector<int> >();
@@ -84,10 +108,13 @@ CLI11_PARSE(app, argc, argv);
   string kmer;
   uint64_t tagBits=0;
   uint64_t maxTagValue=(1ULL<<tagBits)-1;
-
-  // kDataFrameMQF* frame=new kDataFrameMQF(kSize,28,2,tagBits,0);
-  kDataFrameMAP *frame = new kDataFrameMAP(kSize);
-  //frame->loadIntoFastq(input_file,numThreads);
+  
+  kDataFrame *frame;
+  if (!method.compare("MQF"))
+    frame = new kDataFrameMQF(kSize, 28, 2, tagBits, 0);
+  
+  else
+    frame = new kDataFrameMAP(kSize);
 
   uint64_t lastTag=0;
   readID=0;
@@ -204,7 +231,7 @@ CLI11_PARSE(app, argc, argv);
   //kDataFrameMQF* indexFrame2=frame;
   //string filePath="tests/testData/tmp.kDataFrame";
   //indexFrame2->save(filePath);
-  //kDataFrameMQF* indexFrame=(kDataFrameMQF*)kDataFrame::load(filePath);
+  //kDataFrameMQF* indexFrame=(kDataFrameMQF*)kDataFrame::load(filePath, method);
   //kDataFrameMQF* indexFrame=frame;
   cout<<"Number of Groups= "<<legend->size()<<endl;
 
@@ -247,7 +274,15 @@ CLI11_PARSE(app, argc, argv);
   //
   // kDataFrameMQF* indexFrame=(kDataFrameMQF*)kDataFrame::load(outDB);
   // legend=indexFrame->get_legend();
-  kDataFrameMAP* indexFrame=frame;
+  kDataFrame* indexFrame;
+
+  if (!method.compare("MQF"))
+    indexFrame = (kDataFrameMQF*) frame;
+
+  else
+    indexFrame = (kDataFrameMAP *)frame;
+    
+
   //
   // auto it2=indexFrame->begin();
   // while(!it2.isEnd()){

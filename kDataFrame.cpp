@@ -56,19 +56,9 @@ uint64_t kDataFrame::hashKmer(string kmer){
   return hashFunctions[0]->hash(item);
 }
 
-kDataFrame *kDataFrame::load(string filePath) {
-    ifstream config_file("config.txt");
-
-  while(true)
-        {
-            string key, value;
-            if (!getline(config_file, key, '=')) break;
-            if (key == "class_type"){
-                getline(config_file, value, '\n');
-                if (value == "MQF") return kDataFrameMQF::load(filePath);
-                else if (value == "MAP") return kDataFrameMAP::load(filePath);
-            }
-        }
+kDataFrame *kDataFrame::load(string filePath, string method) {
+        if (!method.compare("MQF")) return kDataFrameMQF::load(filePath);
+        else if (!method.compare("MAP")) return kDataFrameMAP::load(filePath);
 }
 
 vector<int> kDataFrame::getColors(string kmer){

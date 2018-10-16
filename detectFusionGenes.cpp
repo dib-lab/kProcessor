@@ -302,7 +302,7 @@ int detectFusionGenes_main(int argc, char *argv[]){
   <<"familiy_A"<<"\t"<<"familiy_B"<<"\t"<<"len_families"<<"\t"<<"sorted_keys"<<endl;
 
   cout<<"Start Loading the Database."<<endl;
-  kDataFrame* DB=kDataFrame::load(dbFile+".mqf");
+  kDataFrame* DB=kDataFrame::load(dbFile+".mqf", "MQF"); // needs future edit
   ifstream inputNamesMap(dbFile+".namesMap");
   string name;
   uint64_t nameTag;
