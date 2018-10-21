@@ -16,7 +16,7 @@
 using namespace std;
 
 // Activate / Deactivate debugging.	// Activate / Deactivate debugging.
-static bool _DEBUG = 0;
+static bool _DEBUG = 1;
 
 
 int index_main(int argc, char *argv[]){
@@ -70,7 +70,7 @@ int index_main(int argc, char *argv[]){
       return 0;
     }
   }
-  
+
   map<string,uint64_t> tagsMap;
   map<string,uint64_t> groupNameMap;
   std::map<uint64_t, std::vector<int> >  *legend=new std::map<uint64_t, std::vector<int> >();
@@ -108,11 +108,11 @@ int index_main(int argc, char *argv[]){
   string kmer;
   uint64_t tagBits=0;
   uint64_t maxTagValue=(1ULL<<tagBits)-1;
-  
+
   kDataFrame *frame;
   if (!method.compare("MQF"))
     frame = new kDataFrameMQF(kSize, 28, 2, tagBits, 0);
-  
+
   else
     frame = new kDataFrameMAP(kSize);
 
@@ -224,8 +224,14 @@ int index_main(int argc, char *argv[]){
 
       }
       readID+=1;
+      if(colorsCount[readTag]==0)
+      {
+        freeColors.push(readTag);
+        legend->erase(readTag);
+      }
 
     }
+
   }
   cout<<"Loaded Sequences= "<<readID<<endl;
   //kDataFrameMQF* indexFrame2=frame;
@@ -281,7 +287,7 @@ int index_main(int argc, char *argv[]){
 
   else
     indexFrame = (kDataFrameMAP *)frame;
-    
+
 
   //
   // auto it2=indexFrame->begin();
