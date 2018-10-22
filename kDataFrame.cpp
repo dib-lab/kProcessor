@@ -332,7 +332,8 @@ bool kDataFrameMAP::setCounter(string kmer, uint64_t tag) {
     kmer=getCanonicalKmer(kmer);
     if (kmer.length() == this->kSize) {
         if (this->kmerExist(kmer)) {
-            map<string, uint64_t>::iterator i = this->MAP.find(kmer);
+            // unordered_map<string, uint64_t>::iterator i = this->MAP.find(kmer);
+            auto i = this->MAP.find(kmer);
             if (i != this->MAP.end()) {
                 i->second = tag; // update existing key's value.
                 return 1;
@@ -348,7 +349,8 @@ bool kDataFrameMAP::setCounter(string kmer, uint64_t tag) {
 uint64_t kDataFrameMAP::getCounter(string kmer)
 {
   kmer = getCanonicalKmer(kmer);
-  map<string, uint64_t>::iterator i = this->MAP.find(kmer);
+  // unordered_map<string, uint64_t>::iterator i = this->MAP.find(kmer);
+  auto i = this->MAP.find(kmer);
   if (i == this->MAP.end())
   {
     return 0; // not_found
@@ -375,7 +377,7 @@ bool kDataFrameMAP::isFull() {
 void kDataFrameMAP::save(string filePath) {
     ofstream myfile;
     myfile.open(filePath + ".map", ios::out);
-    map<string, uint64_t>::iterator it;
+    unordered_map<string, uint64_t>::iterator it;
     myfile << this->kSize << endl;
     for (auto const &it : this->MAP) {
         myfile << it.first << ":" << it.second << endl;
