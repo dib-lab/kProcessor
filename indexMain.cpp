@@ -15,7 +15,7 @@
 #include <queue>
 using namespace std;
 
-// Activate / Deactivate debugging.	// Activate / Deactivate debugging.
+// Activate / Deactivate debugging.
 static bool _DEBUG = 1;
 
 
@@ -233,13 +233,13 @@ int index_main(int argc, char *argv[]){
     }
 
   }
-  cout<<"Loaded Sequences= "<<readID<<endl;
+  cerr<<"Loaded Sequences= "<<readID<<endl;
   //kDataFrameMQF* indexFrame2=frame;
   //string filePath="tests/testData/tmp.kDataFrame";
   //indexFrame2->save(filePath);
   //kDataFrameMQF* indexFrame=(kDataFrameMQF*)kDataFrame::load(filePath, method);
   //kDataFrameMQF* indexFrame=frame;
-  cout<<"Number of Groups= "<<legend->size()<<endl;
+  cerr<<"Number of Groups= "<<legend->size()<<endl;
 
   frame->set_legend(legend);
 
@@ -318,7 +318,7 @@ int index_main(int argc, char *argv[]){
       string seq=string((char*)seqan::toCString(reads[j]));
       if(seq.size()<kSize)
         continue;
-      for(int i=0;i<seq.size()-kSize;i++)
+      for (int i = 0; i < seq.size() - kSize + 1; i++)
       {
         kmer=seq.substr(i,kSize);
 
@@ -354,9 +354,9 @@ int index_main(int argc, char *argv[]){
     }
 
   }
-  cout<<"Tested "<<readCount<<endl;
-  cout<<"Correct "<<correct<<endl;
-  cout<<"Wrong "<<wrong<<endl;
+  cerr<<"Tested "<<readCount<<endl;
+  cerr<<"Correct "<<correct<<endl;
+  cerr<<"Wrong "<<wrong<<endl;
 
 
 
