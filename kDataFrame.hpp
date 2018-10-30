@@ -4,6 +4,7 @@
 #include "MQF/gqf.h"
 #include "KmerCounter/kmer.h"
 #include <map>
+#include <unordered_map>
 
 using namespace std;
 
@@ -162,10 +163,12 @@ public:
     }
 };
 
+// kDataFrameMAP _____________________________
+
 class kDataFrameMAP : public kDataFrame
 {
 private:
-  map<string, uint64_t> MAP;
+  unordered_map<string, uint64_t> MAP;
 
 public:
   kDataFrameMAP(uint64_t ksize);
