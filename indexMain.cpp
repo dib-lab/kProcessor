@@ -79,10 +79,11 @@ int index_main(int argc, char *argv[]){
   ifstream namesFile(names_fileName.c_str());
   string seqName,groupName;
   priority_queue <uint64_t, vector<uint64_t>, std::greater<uint64_t> > freeColors;
-
+  map<string,uint64_t> groupCounter;
   while(namesFile>>seqName>>groupName){
     namesMap.insert(make_pair(seqName,groupName));
     auto it=groupNameMap.find(groupName);
+    groupCounter[groupName]++;
     if(it==groupNameMap.end())
     {
       groupNameMap.insert(make_pair(groupName,groupID));
@@ -226,8 +227,11 @@ int index_main(int argc, char *argv[]){
       readID+=1;
       if(colorsCount[readTag]==0)
       {
-        freeColors.push(readTag);
-        legend->erase(readTag);
+        groupCounter[groupName]--;
+        if(groupCounter[groupName]==0){
+          freeColors.push(readTag);
+          legend->erase(readTag);
+        }
       }
 
     }
