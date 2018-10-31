@@ -361,7 +361,8 @@ int index_main(int argc, char *argv[]){
   cerr<<"Tested "<<readCount<<endl;
   cerr<<"Correct "<<correct<<endl;
   cerr<<"Wrong "<<wrong<<endl;
-
+  delete frame;
+  //delete legend;
 
 
   return 0;
