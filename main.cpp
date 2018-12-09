@@ -8,6 +8,7 @@ using namespace std;
 int KmerCounter_main(int argc, char *argv[]);
 int estimateMemory_main(int argc, char *argv[]);
 int dump_main(int argc, char *argv[]);
+int index_main(int argc, char *argv[]);
 
 
 string KprocessorVersion()
@@ -29,7 +30,8 @@ static void usage()
 "  -- Counter\n"<<
 "     count          count kmers in seqeunces file \n"<<
 "     estimate       estimate the memory requirements for kmer counting\n"<<
-"     dump           dump kmers in the MQF in format of (kmer count) \n";
+"     dump           dump kmers in the MQF in format of (kmer count) \n"<<
+"     index          create a colored debruijn graph of a fasta file\n";
 }
 
 int main(int argc, char *argv[])
@@ -48,6 +50,7 @@ int main(int argc, char *argv[])
     if (string(argv[1])== "count")  ret =KmerCounter_main(argc-1,argv+1);
     else if (string(argv[1])== "estimate")  ret =estimateMemory_main(argc-1,argv+1);
     else if (string(argv[1])== "dump")  ret =dump_main(argc-1,argv+1);
+    else if (string(argv[1])== "index")  ret =index_main(argc-1,argv+1);
     else if (string(argv[1])== "--version" ) {
       cout<<"This is Kprocessor version "<<KprocessorVersion()<<" developed by Mostafa Shokrof <mostafa.shokrof@gmail.com>\n";
     }

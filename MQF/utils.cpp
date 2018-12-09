@@ -21,7 +21,8 @@ vector<int> key_to_vector_int(const string& key){
   vector<int> res;
   for(auto f:tokens)
   {
-    res.push_back(atoi(f.c_str()));
+    if(f!="")
+      res.push_back(atoi(f.c_str()));
   }
   return res;
 }
