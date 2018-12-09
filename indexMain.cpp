@@ -16,7 +16,7 @@
 using namespace std;
 
 // Activate / Deactivate debugging.
-static bool _DEBUG = 0;
+static bool _DEBUG = 1;
 
 
 int index_main(int argc, char *argv[]){

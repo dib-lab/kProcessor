@@ -255,7 +255,7 @@ void kDataFrameMQF::save(string filePath){
   //   it++;
   // }
   // file.close();
-  qf_serialize(mqf,(filePath+".mqf").c_str());
+  qf_serialize(mqf,(filePath).c_str());
 }
 kDataFrame* kDataFrameMQF::load(string filePath){
   ifstream file(filePath+".extra");
@@ -317,7 +317,7 @@ bool kDataFrameMAP::setTag(string kmer, uint64_t count)
 bool kDataFrameMAP::incrementCounter(string kmer, uint64_t count) {
     kmer=getCanonicalKmer(kmer);
     if (!this->kmerExist(kmer)) {
-        setTag(kmer, 0);
+        setCounter(kmer, 0);
         return 1;
     }
     return 0;
