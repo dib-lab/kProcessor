@@ -251,9 +251,7 @@ TEST_CASE( "save and load" ) {
 
     string filePath="tests/testData/tmp.kDataFrame";
     kframe->save(filePath);
-    cerr << "Done: " << endl;
     kDataFrame* kframe2=kDataFrame::load(filePath, "MQF");
-    cerr << "Done2: " << endl;
     for(auto seqPair:sequences){
 
         string seq=seqPair.first;
