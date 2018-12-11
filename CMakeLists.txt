@@ -21,15 +21,15 @@ set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -std=c++14 -fPIC -fopenmp
 
 set(LDFLAGS "-lrt -lpthread -lbz2 -lz")
 
-LINK_DIRECTORIES(${CMAKE_BINARY_DIR}/MQF)
+LINK_DIRECTORIES(${CMAKE_BINARY_DIR}/lib//MQF)
 
 include_directories("ThirdParty/CLI")
 include_directories("include")
-include_directories("KmerDecoder")
-include_directories("KmerCounter")
-include_directories("HashUtils")
-include_directories("Utils")
-include_directories("MQF")
+include_directories("lib/KmerDecoder")
+include_directories("lib/KmerCounter")
+include_directories("lib/HashUtils")
+include_directories("lib/Utils")
+include_directories("lib/MQF")
 
 
 file(GLOB SOURCES "src/*.cpp")
