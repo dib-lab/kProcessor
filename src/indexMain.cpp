@@ -1,11 +1,11 @@
 #include <iostream>
 #include <string>
-#include "ThirdParty/CLI11.hpp"
+#include "CLI11.hpp"
 #include <vector>
 #include <stdint.h>
 #include <gqf.h>
-#include "KmerCounter/KmerCounter.hpp"
-#include "KmerCounter/kmer.h"
+#include "KmerCounter.hpp"
+#include "kmer.h"
 #include "fstream"
 #include <cmath>
 #include <map>

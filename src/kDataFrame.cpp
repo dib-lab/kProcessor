@@ -1,5 +1,5 @@
 #include "kDataFrame.hpp"
-#include "KmerCounter/kmer.h"
+#include "kmer.h"
 #include <iostream>
 #include <fstream>
 #include <math.h>
@@ -7,7 +7,7 @@
 #include <sstream>
 
 
-#include "KmerCounter/KmerCounter.hpp"
+#include "KmerCounter.hpp"
 using namespace std;
 
 kDataFrameMQFIterator::kDataFrameMQFIterator(QF* mqf)

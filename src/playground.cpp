@@ -1,12 +1,12 @@
 #include <iostream>
 #include <string>
-#include "ThirdParty/CLI11.hpp"
+#include "CLI11.hpp"
 #include <vector>
 #include <stdint.h>
 #include <gqf.h>
-#include "KmerCounter/KmerCounter.hpp"
-#include "KmerCounter/kmer.h"
-#include "Utils/utils.hpp"
+#include "KmerCounter.hpp"
+#include "kmer.h"
+#include "utils.hpp"
 #include <cmath>
 
 using namespace std;
