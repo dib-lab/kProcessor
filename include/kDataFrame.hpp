@@ -1,8 +1,8 @@
-#include <hashutil.h>
+#include <HashUtils/hashutil.h>
 #include <vector>
 #include <stdint.h>
 #include "gqf.h"
-#include "kmer.h"
+#include "KmerCounter/kmer.h"
 #include <map>
 #include <unordered_map>
 

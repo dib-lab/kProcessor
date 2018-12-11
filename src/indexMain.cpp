@@ -4,8 +4,8 @@
 #include <vector>
 #include <stdint.h>
 #include <gqf.h>
-#include "KmerCounter.hpp"
-#include "kmer.h"
+#include "KmerCounter/KmerCounter.hpp"
+#include "KmerCounter/kmer.h"
 #include "fstream"
 #include <cmath>
 #include <map>

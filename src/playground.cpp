@@ -4,9 +4,9 @@
 #include <vector>
 #include <stdint.h>
 #include <gqf.h>
-#include "KmerCounter.hpp"
-#include "kmer.h"
-#include "utils.hpp"
+#include "KmerCounter/KmerCounter.hpp"
+#include "KmerCounter/kmer.h"
+#include "Utils/utils.hpp"
 #include <cmath>
 
 using namespace std;
