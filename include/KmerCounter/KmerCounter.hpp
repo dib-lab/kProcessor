@@ -2,7 +2,7 @@
 #define KmerCounter_HPP
 #include <stdint.h>
 #include <string>
-#include <gqf.h>
+#include <gqf.hpp>
 #include "../HashUtils/hashutil.h"
 #include <math.h>
 

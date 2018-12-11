@@ -12,7 +12,7 @@
 #include <stdexcept>
 #include <math.h>
 #include <deque>
-#include <gqf.h>
+#include <gqf.hpp>
 using namespace std;
 using namespace seqan;
 #define QBITS_LOCAL_QF 16

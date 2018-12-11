@@ -1,0 +1,6 @@
+/home/mabuelanin/Desktop/gitkraken/cmake_kProcessor/build/CMakeFiles/rebuild_cache.dir
+/home/mabuelanin/Desktop/gitkraken/cmake_kProcessor/build/CMakeFiles/kProcessor.dir
+/home/mabuelanin/Desktop/gitkraken/cmake_kProcessor/build/CMakeFiles/edit_cache.dir
+/home/mabuelanin/Desktop/gitkraken/cmake_kProcessor/build/MQF/CMakeFiles/rebuild_cache.dir
+/home/mabuelanin/Desktop/gitkraken/cmake_kProcessor/build/MQF/CMakeFiles/MQF.dir
+/home/mabuelanin/Desktop/gitkraken/cmake_kProcessor/build/MQF/CMakeFiles/edit_cache.dir

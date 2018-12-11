@@ -1,3 +1,10 @@
+# Still needs 
+## [ ] Build & Release options
+## [ ] Build with debug option
+## [ ] Build test cases option
+## [ ] Build and generate static library option
+
+
 # Minimum cmake version
 cmake_minimum_required (VERSION 3.0.0)
 
@@ -35,11 +42,20 @@ set(LDFLAGS "-lrt -lpthread -lbz2 -lz")
 
 include_directories("ThirdParty/CLI")
 include_directories("include")
-include_directories("ThirdParty/MQF")
+include_directories("ThirdParty/MQF/include")
 
+
+
+## Install project namespaced headers
+add_subdirectory(ThirdParty/MQF/ MQF)
 
 file(GLOB SOURCES "src/*.cpp" "lib/KmerCounter/*.cpp" "lib/KmerDecoder/*.cpp" "lib/HashUtils/*.cpp")
 
 add_executable(kProcessor ${SOURCES})
-target_link_libraries(kProcessor ${CMAKE_SOURCE_DIR}/ThirdParty/MQF/libMQF.a)
+#target_link_libraries(kProcessor ${CMAKE_SOURCE_DIR}/ThirdParty/MQF/build/liblMQF.a)
+
+target_link_libraries(${PROJECT_NAME}
+    lib::MQF
+)
+
 target_link_libraries (kProcessor ${SEQAN_LIBRARIES})
