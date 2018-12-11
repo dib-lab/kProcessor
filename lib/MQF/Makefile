@@ -44,6 +44,9 @@ main:	main.o	gqf.o	utils.o
 libgqf: gqf.o utils.o
 	$(LD) $^ $(LDFLAGS) --shared -o $@.so
 
+libMQF.a:  gqf.o utils.o
+	ar rcs libMQF.a gqf.o utils.o 
+
 test:  $(TESTFILES) gqf.c test.o utils.o
 	$(LD) $(LDFLAGS) -DTEST -o mqf_test test.o utils.o $(TESTFILES) gqf.c
 
