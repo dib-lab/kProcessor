@@ -1,0 +1,2 @@
+/usr/bin/ar qc liblMQF.a  CMakeFiles/lMQF.dir/src/gqf.cpp.o CMakeFiles/lMQF.dir/src/utils.cpp.o
+/usr/bin/ranlib liblMQF.a

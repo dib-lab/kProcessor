@@ -9,6 +9,10 @@
 cmake_minimum_required (VERSION 3.0.0)
 
 set (SEQAN_INCLUDE_PATH "${CMAKE_CURRENT_LIST_DIR}/ThirdParty/seqan/include")
+#set(BUILD_STATIC "NO" CACHE BOOL "")
+#set(... CACHE ...)
+
+option(MyOption "BUILD_STATIC" OFF)
 
 # Name of project and that it is C/C++.
 project (kProcessor C CXX)
@@ -37,8 +41,8 @@ set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -std=c++14 -fPIC -fopenmp
 
 message(STATUS "FLAGS: ${CMAKE_CXX_FLAGS}")
 
-set(LDFLAGS "-lrt -lpthread -lbz2 -lz")
 
+set(LDFLAGS "-lrt -lpthread -lbz2 -lz")
 
 include_directories("ThirdParty/CLI")
 include_directories("include")
@@ -49,8 +53,17 @@ file(GLOB SOURCES "src/*.cpp" "lib/KmerCounter/*.cpp" "lib/KmerDecoder/*.cpp" "l
 
 add_subdirectory(ThirdParty/MQF/)
 
-add_executable(kProcessor ${SOURCES})
+
+if(BUILD_STATIC)
+    add_library(kProcessor ${SOURCES})    
+else()
+    add_executable(kProcessor ${SOURCES})
+endif()
 
 target_link_libraries(kProcessor lMQF)
-
 target_link_libraries (kProcessor ${SEQAN_LIBRARIES})
+
+
+
+
+
