@@ -21,10 +21,5 @@ set(CMAKE_CXX_FLAGS "-fPIC -Wall ${DEBUG} ${PROFILE} ${OPT} -m64 -Wno-unused-res
 
 add_definitions(${CMAKE_CXX_FLAGS})
 
-add_library(${PROJECT_NAME} ${SOURCES})
-add_library(lib::MQF ALIAS ${PROJECT_NAME})
-#add_library(lMQF STATIC ${SOURCES})
+add_library(lMQF STATIC ${SOURCES})
 
-target_include_directories( ${PROJECT_NAME}
-    PUBLIC ${PROJECT_SOURCE_DIR}/build
-)

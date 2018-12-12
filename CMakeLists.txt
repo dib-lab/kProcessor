@@ -45,17 +45,12 @@ include_directories("include")
 include_directories("ThirdParty/MQF/include")
 
 
-
-## Install project namespaced headers
-add_subdirectory(ThirdParty/MQF/ MQF)
-
 file(GLOB SOURCES "src/*.cpp" "lib/KmerCounter/*.cpp" "lib/KmerDecoder/*.cpp" "lib/HashUtils/*.cpp")
 
-add_executable(kProcessor ${SOURCES})
-#target_link_libraries(kProcessor ${CMAKE_SOURCE_DIR}/ThirdParty/MQF/build/liblMQF.a)
+add_subdirectory(ThirdParty/MQF/)
 
-target_link_libraries(${PROJECT_NAME}
-    lib::MQF
-)
+add_executable(kProcessor ${SOURCES})
+
+target_link_libraries(kProcessor lMQF)
 
 target_link_libraries (kProcessor ${SEQAN_LIBRARIES})
