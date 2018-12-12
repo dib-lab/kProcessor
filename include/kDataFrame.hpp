@@ -1,7 +1,7 @@
-#include "HashUtils/hashutil.h"
+#include <HashUtils/hashutil.h>
 #include <vector>
 #include <stdint.h>
-#include "MQF/gqf.h"
+#include "gqf.hpp"
 #include "KmerCounter/kmer.h"
 #include <map>
 #include <unordered_map>

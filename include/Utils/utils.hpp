@@ -2,7 +2,7 @@
 #define UTILS_HPP
 #include <stdint.h>
 #include <string>
-#include <gqf.h>
+#include <gqf.hpp>
 #include <seqan/seq_io.h>
 
 using namespace seqan;

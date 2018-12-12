@@ -1,18 +1,18 @@
-#include "KmerCounter.hpp"
+#include "KmerCounter/KmerCounter.hpp"
 #include <iostream>
-#include "kmer.h"
+#include "KmerCounter/kmer.h"
 #include <fstream>
 
 #include <seqan/seq_io.h>
-#include "../HashUtils/hashutil.h"
+#include "HashUtils/hashutil.h"
 #include <seqan/parallel.h>
-#include "../KmerDecoder/FastqReader.hpp"
+#include "KmerDecoder/FastqReader.hpp"
 #include <limits>
 #include <omp.h>
 #include <stdexcept>
 #include <math.h>
 #include <deque>
-#include <gqf.h>
+#include <gqf.hpp>
 using namespace std;
 using namespace seqan;
 #define QBITS_LOCAL_QF 16

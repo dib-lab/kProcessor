@@ -1,6 +1,6 @@
 #include "../ThirdParty/catch.hpp"
 #include "../KmerCounter/KmerCounter.hpp"
-#include <gqf.h>
+#include <gqf.hpp>
 #include <stdint.h>
 #include <fstream>
 #include <map>

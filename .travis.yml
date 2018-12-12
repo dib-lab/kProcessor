@@ -16,8 +16,10 @@ matrix:
 
 script:
   - g++ --version
-  - make test
-  - ./test
+  - mkdir build && cd build
+  - cmake ..
+  - make
+
 branches:
   only:
   - master

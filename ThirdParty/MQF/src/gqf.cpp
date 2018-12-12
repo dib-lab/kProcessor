@@ -16,10 +16,10 @@
 #include <fstream>
 #include <algorithm>
 #include <stdexcept>
-#include "gqf.h"
+#include "gqf.hpp"
 #include <iostream>
 #include <map>
-#include "utils.h"
+#include "utils.hpp"
 
 
 /******************************************************************

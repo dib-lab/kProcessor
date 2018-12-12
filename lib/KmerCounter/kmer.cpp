@@ -1,7 +1,7 @@
 
 #include <stdio.h>
 #include <string>
-#include "kmer.h"
+#include "KmerCounter/kmer.h"
 
 using namespace std;
 
