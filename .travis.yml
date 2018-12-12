@@ -16,8 +16,12 @@ matrix:
 
 script:
   - g++ --version
-  - make test
-  - ./test
+  - cd build
+  - cmake ..
+  - make
+  - cd ..
+  - ./kProcessor
+
 branches:
   only:
   - master
