@@ -19,7 +19,6 @@ script:
   - mkdir build && cd build
   - cmake ..
   - make
-  - ./kProcessor
 
 branches:
   only:
