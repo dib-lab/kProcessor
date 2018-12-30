@@ -62,7 +62,7 @@ kDataFrame *kDataFrame::load(string filePath, string method) {
 }
 
 vector<int> kDataFrame::getColors(string kmer){
-  uint64_t tag=this->getCounterkmer);
+  uint64_t tag=this->getCounter(kmer);
   auto colors=colorsMap->find(tag);
   if(colors==colorsMap->end())
   {
