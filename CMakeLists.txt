@@ -4,6 +4,7 @@
 ## [ ] Build test cases option
 ## [ ] Build and generate static library option
 ## create a cmake file for build seqan
+## change the static linking options to something cmake
 
 
 # Minimum cmake version
@@ -24,8 +25,6 @@ include_directories("ThirdParty/MQF/include")
 
 add_subdirectory(ThirdParty/MQF/)
 
-##TODO list
-## change the static linking options to something cmake
 
 set(LIBRARY_NAME
     kProcessor
@@ -43,8 +42,8 @@ target_include_directories(${LIBRARY_NAME} PRIVATE
 )
 
 target_include_directories(${LIBRARY_NAME} PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:include>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/${LIBRARY_NAME}>
+    $<INSTALL_INTERFACE:include/${LIBRARY_NAME}>
 )
 
 
@@ -74,6 +73,8 @@ message(STATUS "FLAGS: ${CMAKE_CXX_FLAGS}")
 set(LDFLAGS "-lrt -lpthread -lbz2 -lz")
 
 
+
+
 #if(BUILD_STATIC)
 #    add_library(kProcessor ${SOURCES})
 #else()
@@ -86,3 +87,4 @@ set(LDFLAGS "-lrt -lpthread -lbz2 -lz")
 
 
 add_subdirectory(tests/)
+add_subdirectory(apps/)
