@@ -33,3 +33,4 @@
 
 build/*
 Kprocessor
+docs/doxygen/*
