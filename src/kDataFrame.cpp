@@ -73,12 +73,12 @@ vector<int> kDataFrame::getColors(string kmer){
 
 kDataFrameMQF::kDataFrameMQF():kDataFrame(){
   mqf=new QF();
-  qf_init(mqf, (1ULL<<16), 2*kSize, 0,2, true, "", 2038074761);
+  qf_init(mqf, (1ULL<<16), 2*kSize, 0,2,0, true, "", 2038074761);
 }
 kDataFrameMQF::kDataFrameMQF(uint64_t ksize,uint8_t q,uint8_t fixedCounterSize,uint8_t tagSize,double falsePositiveRate):
 kDataFrame(falsePositiveRate,ksize){
   mqf=new QF();
-  qf_init(mqf, (1ULL<<q), 2*ksize,tagSize,fixedCounterSize, true, "", 2038074761);
+  qf_init(mqf, (1ULL<<q), 2*ksize,tagSize,fixedCounterSize, 0,true, "", 2038074761);
 }
 kDataFrameMQF::kDataFrameMQF(QF* mqf,uint64_t ksize,double falsePositiveRate):
 kDataFrame(falsePositiveRate,ksize)
@@ -96,7 +96,7 @@ kDataFrameMQF::kDataFrameMQF(uint64_t ksize,vector<uint64_t> countHistogram,uint
     uint64_t memory;
     kDataFrameMQF::estimateParameters(countHistogram,2*ksize,tagSize,
     &nSlots,&fixedCounterSize,&memory);
-    qf_init(mqf, nSlots, 2*ksize,tagSize,fixedCounterSize, true, "", 2038074761);
+    qf_init(mqf, nSlots, 2*ksize,tagSize,fixedCounterSize, 0,true,"", 2038074761);
   }
 
 uint64_t kDataFrameMQF::estimateMemory(uint64_t nslots,uint64_t slotSize, uint64_t fcounter, uint64_t tagSize)

@@ -89,7 +89,7 @@ int KmerCounter_main(int argc, char *argv[]){
   if(maxMemory!=0){
     if(requiredMem>maxMemory){
       diskqf=new QF();
-      qf_init(diskqf, nslots, num_hashbits, 0,fixed_size_counter, false, outputMQF.c_str(), 2038074761);
+      qf_init(diskqf, nslots, num_hashbits, 0,fixed_size_counter,0, false, outputMQF.c_str(), 2038074761);
       while(requiredMem>maxMemory)
       {
         nslots/=2;
@@ -101,7 +101,7 @@ int KmerCounter_main(int argc, char *argv[]){
 
 
 
-  qf_init(&memqf, nslots, num_hashbits, 0,fixed_size_counter, true, "", 2038074761);
+  qf_init(&memqf, nslots, num_hashbits, 0,fixed_size_counter, 0,true, "", 2038074761);
 
   for(auto file: input_files)
     loadIntoMQF(file,k,noThreads,hasher,&memqf,diskqf);

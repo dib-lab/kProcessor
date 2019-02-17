@@ -83,7 +83,7 @@ void loadIntoMQF(string sequenceFilename,int ksize,int noThreads, Hasher *hasher
     localMQF= new QF();
     reads=deque<pair<string,string> >(15000);
     qf_init(localMQF, (1ULL << QBITS_LOCAL_QF), memoryMQF->metadata->key_bits,
-    0,memoryMQF->metadata->fixed_counter_size, true,"", 2038074761);
+    0,memoryMQF->metadata->fixed_counter_size,0 ,true,"", 2038074761);
     while(moreWork)
     {
       SEQAN_OMP_PRAGMA(critical)

@@ -262,9 +262,8 @@ static void modify_metadata(QF *cf, uint64_t *metadata, int cnt)
 #else
 	//qf_spin_lock(&cf->mem->metadata_lock, true);
 #endif
-	#pragma omp atomic
 	*metadata = *metadata + cnt;
-//	qf_spin_unlock(&cf->mem->metadata_lock);
+	//qf_spin_unlock(&cf->mem->metadata_lock);
 	return;
 }
 
@@ -465,9 +464,7 @@ static inline qfblock * get_block(const QF *qf, uint64_t block_index)
 	 // 					8*qf->metadata->tag_bits
 	 // 				 )) );
 	 //printf("blocks start=%p\n",qf->blocks );
-	return (qfblock *)(((char *)qf->blocks) + block_index * (sizeof(qfblock) +
-						 qf->metadata->bits_per_slot * 8
-					 ));
+	return (qfblock *)(((char *)qf->blocks) + block_index * (qf->metadata->blockSize));
 }
 #endif
 
@@ -1803,7 +1800,7 @@ static inline bool insert(QF *qf, __uint128_t hash, uint64_t count, bool lock=fa
  * Code that uses the above to implement key-value-counter operations. *
  ***********************************************************************/
 
-void qf_init(QF *qf, uint64_t nslots, uint64_t key_bits, uint64_t tag_bits,uint64_t fixed_counter_size,
+void qf_init(QF *qf, uint64_t nslots, uint64_t key_bits, uint64_t tag_bits,uint64_t fixed_counter_size,uint64_t blocksTagSize,
 						 bool mem, const char * path, uint32_t seed)
 {
 	//qf=(QF*)calloc(sizeof(QF),1);
@@ -1838,7 +1835,8 @@ void qf_init(QF *qf, uint64_t nslots, uint64_t key_bits, uint64_t tag_bits,uint6
 // #endif
 //printf("bits per slot =%lu,key remainder bits =%lu, fixed counter =%lu, tag_bits=%lu\n",
 //bits_per_slot,key_remainder_bits,fixed_counter_size,tag_bits );
-size = nblocks * (sizeof(qfblock) + (8 * bits_per_slot )) ;
+uint64_t blockSize=sizeof(qfblock) + (8 * bits_per_slot )+blocksTagSize;
+size = nblocks * (blockSize) ;
 
 qf->mem = (qfmem *)calloc(sizeof(qfmem), 1);
 
@@ -1848,8 +1846,10 @@ qf->mem = (qfmem *)calloc(sizeof(qfmem), 1);
 		qf->metadata->size = size;
 		qf->metadata->seed = seed;
 		qf->metadata->nslots = num_slots;
+		qf->metadata->blockSize=blockSize;
 		qf->metadata->xnslots = qf->metadata->nslots +
 			10*sqrt((double)qf->metadata->nslots);
+		qf->metadata->BlockTag_bits=blocksTagSize;
 		qf->metadata->key_bits = key_bits;
 		qf->metadata->tag_bits = tag_bits;
 		qf->metadata->fixed_counter_size = fixed_counter_size;
@@ -1902,6 +1902,7 @@ qf->mem = (qfmem *)calloc(sizeof(qfmem), 1);
 		qf->metadata->size = size;
 		qf->metadata->seed = seed;
 		qf->metadata->nslots = num_slots;
+		qf->metadata->blockSize=blockSize;
 		qf->metadata->xnslots = qf->metadata->nslots +
 														10*sqrt((double)qf->metadata->nslots);
 		qf->metadata->key_bits = key_bits;
@@ -1909,7 +1910,7 @@ qf->mem = (qfmem *)calloc(sizeof(qfmem), 1);
 		qf->metadata->fixed_counter_size = fixed_counter_size;
 		qf->metadata->key_remainder_bits = key_remainder_bits;
 		qf->metadata->bits_per_slot = bits_per_slot;
-
+		qf->metadata->BlockTag_bits=blocksTagSize;
 		qf->metadata->range = qf->metadata->nslots;
 		qf->metadata->range <<= qf->metadata->key_remainder_bits;
 		qf->metadata->nblocks = (qf->metadata->xnslots + SLOTS_PER_BLOCK - 1) /
@@ -1936,6 +1937,44 @@ qf->mem = (qfmem *)calloc(sizeof(qfmem), 1);
 																						sizeof(wait_time_data));
 #endif
 }
+char* qf_getBlockTag_pointer_byBlock(const QF *qf, uint64_t index){
+
+	return (char*)&get_block(qf, index )->slots+(8 * qf->metadata->bits_per_slot );
+}
+
+bool qf_getBlockTag_pointer_byItem(const QF *qf, uint64_t key,char *&res){
+	__uint128_t hash = key;
+	uint64_t hash_remainder   = hash & BITMASK(qf->metadata->key_remainder_bits);
+	int64_t hash_bucket_index = hash >> qf->metadata->key_remainder_bits;
+	if(hash_bucket_index > qf->metadata->xnslots){
+			throw std::out_of_range("qf_getBlockTag_pointer_byItem is called with hash index out of range");
+		}
+	if (!is_occupied(qf, hash_bucket_index))
+		return false;
+
+	int64_t runstart_index = hash_bucket_index == 0 ? 0 : run_end(qf,
+																																hash_bucket_index-1)
+		+ 1;
+	if (runstart_index < hash_bucket_index)
+		runstart_index = hash_bucket_index;
+
+	/* printf("MC RUNSTART: %02lx RUNEND: %02lx\n", runstart_index, runend_index); */
+
+	uint64_t current_remainder, current_count, current_end;
+	do {
+		current_end = decode_counter(qf, runstart_index, &current_remainder,
+																 &current_count);
+		if (current_remainder == hash_remainder){
+			res=qf_getBlockTag_pointer_byBlock(qf,runstart_index/64);
+			return true;
+		}
+		runstart_index = current_end + 1;
+	} while (!is_runend(qf, current_end));
+
+	return false;
+
+}
+
 
 /* The caller should call qf_init on the dest QF before calling this function.
  */
@@ -1959,6 +1998,8 @@ void qf_copy(QF *dest, QF *src)
 void qf_destroy(QF *qf)
 {
 	assert(qf->blocks != NULL);
+
+	qf->metadata->noccupied_slots=0;
 	if(qf->metadata->tags_map!=NULL){
 		delete qf->metadata->tags_map;
 		qf->metadata->tags_map=NULL;
@@ -1973,7 +2014,6 @@ void qf_destroy(QF *qf)
 	close(qf->mem->fd);
 	}
 
-	qf->metadata->noccupied_slots=0;
 }
 
 void qf_close(QF *qf)
@@ -2278,6 +2318,15 @@ uint64_t qf_count_key(const QF *qf, uint64_t key)
 	return 0;
 }
 
+void qf_setCounter(QF* qf,uint64_t key, uint64_t count, bool lock, bool spin )
+{
+	uint64_t currentCounter=qf_count_key(qf,key);
+	if(currentCounter<count)
+		qf_insert(qf,key,count-currentCounter,lock,spin);
+	else if(currentCounter > count )
+		qf_remove(qf,key,currentCounter-count,lock,spin);
+}
+
 
 
 
@@ -2289,16 +2338,46 @@ bool qf_iterator(QF *qf, QFi *qfi, uint64_t position)
 	if(position > qf->metadata->xnslots){
 		throw std::out_of_range("qf_iterator is called with position out of range");
 	}
+	// if(position==62016)
+	// {
+	// 	cout<<"Ready to debug"<<endl;
+	// 	qf_dump_block(qf,(position/64)-1);
+	// 	qf_dump_block(qf,position/64);
+  //
+  //
+	// }
+
 	if (!is_occupied(qf, position)) {
-		uint64_t block_index = position;
-		uint64_t idx = bitselect(get_block(qf, block_index)->occupieds[0], 0);
-		if (idx == 64) {
-			while(idx == 64 && block_index < qf->metadata->nblocks) {
-				block_index++;
-				idx = bitselect(get_block(qf, block_index)->occupieds[0], 0);
+
+		int offset=offset_lower_bound(qf, position);
+		if(0 && offset>0)
+		{
+			const uint64_t fixed_count_max=(1ULL << qf->metadata->fixed_counter_size)-1;
+			position--;
+			uint64_t fixedCounter=get_fixed_counter(qf,position);
+			bool in=false;
+			while(fixedCounter==fixed_count_max)
+			{
+				in=true;
+				position++;
+				fixedCounter=get_fixed_counter(qf,position);
 			}
+
+			position++;
+		//	cout<<position<<endl;
 		}
-		position = block_index * SLOTS_PER_BLOCK + idx;
+		else{
+			uint64_t block_index = position/64;
+			uint64_t idx = bitselect(get_block(qf, block_index)->occupieds[0], 0);
+			if (idx == 64) {
+				while(idx == 64 && block_index < qf->metadata->nblocks) {
+					block_index++;
+					idx = bitselect(get_block(qf, block_index)->occupieds[0], 0);
+				}
+			}
+			//cout<<"Here "<<idx<<endl;
+			position = block_index * SLOTS_PER_BLOCK + idx;
+		}
 	}
 
 	qfi->qf = qf;
@@ -2317,6 +2396,63 @@ bool qf_iterator(QF *qf, QFi *qfi, uint64_t position)
 	if (qfi->current >= qf->metadata->nslots)
 		return false;
 	return true;
+}
+
+bool qfi_firstInBlock(QF* qf,QFi *it, QFi * res){
+	uint64_t current=(it->current/64)*64;
+	uint64_t startSearch = current == 0 ? 0 : current-1;
+	qf_iterator(qf,res,startSearch);
+	uint64_t tmp=0;
+	while(res->current>current){
+		tmp++;
+		if(it->current<tmp)
+			break;
+		qf_iterator(qf,res,it->current-tmp);
+	}
+	while(res->current < current)
+		qfi_next(res);
+}
+
+bool qfi_find(QF *qf,QFi *qfi, uint64_t key)
+{
+	__uint128_t hash = key;
+	uint64_t hash_remainder   = hash & BITMASK(qf->metadata->key_remainder_bits);
+	int64_t hash_bucket_index = hash >> qf->metadata->key_remainder_bits;
+
+	if (!is_occupied(qf, hash_bucket_index))
+		return 0;
+
+	int64_t runstart_index = hash_bucket_index == 0 ? 0 : run_end(qf,
+																																hash_bucket_index-1)
+		+ 1;
+	if (runstart_index < hash_bucket_index)
+		runstart_index = hash_bucket_index;
+
+	/* printf("MC RUNSTART: %02lx RUNEND: %02lx\n", runstart_index, runend_index); */
+
+	uint64_t current_remainder, current_count, current_end;
+	do {
+		current_end = decode_counter(qf, runstart_index, &current_remainder,
+																 &current_count);
+		if (current_remainder == hash_remainder){
+			// qf_iterator(qf,qfi,runstart_index/64);
+			// uint64_t ckey,count,value;
+			// qfi_get(qfi,&ckey,&value,&count);
+			// while(ckey!=key){
+			// 	qfi_next(qfi);
+			// 	qfi_get(qfi,&ckey,&value,&count);
+			// }
+		//	uint64_t position=runstart_index;
+			qfi->qf = qf;
+			qfi->num_clusters = 0;
+			qfi->run = hash_bucket_index;
+			qfi->current=runstart_index;
+			return true;
+		}
+
+		runstart_index = current_end + 1;
+	} while (!is_runend(qf, current_end));
+	return false;
 }
 
 int qfi_get(QFi *qfi, uint64_t *key, uint64_t *value, uint64_t *count)
@@ -2402,6 +2538,23 @@ int qfi_next(QFi *qfi)
 			return 0;
 		}
 	}
+}
+
+double slotsUsedInCounting(QF* qf){
+	QFi *qfi=new QFi();
+	qf_iterator(qf,qfi,0);
+	//qfi_next(qfi);
+	uint64_t current_remainder,current_count;
+	uint64_t res=0;
+	uint64_t distictItems=0;
+	while(!qfi_end(qfi)){
+		uint64_t end=decode_counter(qfi->qf, qfi->current, &current_remainder, &current_count);
+		uint64_t usedSlots=end-qfi->current;
+		res+=usedSlots+1;
+		distictItems+=1;
+		qfi_next(qfi);
+	}
+	return (double)res;
 }
 
 int qfi_end(QFi *qfi)
@@ -2910,10 +3063,10 @@ QF* qf_resize(QF* qf, int newQ, const char * originalFilename, const char * newF
 	QF* newQF=(QF *)calloc(sizeof(QF), 1);
 	if(newFilename)
 	{
-		qf_init(newQF, (1ULL<<newQ),qf->metadata->key_bits, qf->metadata->tag_bits,qf->metadata->fixed_counter_size, false, newFilename, 2038074761);
+		qf_init(newQF, (1ULL<<newQ),qf->metadata->key_bits, qf->metadata->tag_bits,qf->metadata->fixed_counter_size,qf->metadata->BlockTag_bits, false, newFilename, 2038074761);
 	}
 	else{
-		qf_init(newQF, (1ULL<<newQ),qf->metadata->key_bits, qf->metadata->tag_bits,qf->metadata->fixed_counter_size, true, "" , 2038074761);
+		qf_init(newQF, (1ULL<<newQ),qf->metadata->key_bits, qf->metadata->tag_bits,qf->metadata->fixed_counter_size,qf->metadata->BlockTag_bits, true, "" , 2038074761);
 	}
 	QFi qfi;
 	qf_iterator(qf, &qfi, 0);
@@ -2996,11 +3149,9 @@ uint64_t qf_magnitude(QF *qf)
 
 int qf_space(QF *qf)
 {
-  uint64_t noccupied_slots;
-
-  #pragma omp atomic read
-  noccupied_slots=qf->metadata->noccupied_slots;
-  return (int)(((double)noccupied_slots/(double)qf->metadata->xnslots)* 100.0);
+		return (int)(((double)qf->metadata->noccupied_slots/
+								 (double)qf->metadata->xnslots
+							 )* 100.0);
 }
 
 
@@ -3023,6 +3174,63 @@ void qf_migrate(QF* source, QF* dest){
 		} while (!qfi_next(&source_i));
 	}
 }
+
+void qf_BatchQuery( QF* qf,QF* Batch){
+	QFi source_i;
+	if (qf_iterator(Batch, &source_i, 0)) {
+		do {
+			uint64_t key = 0, value = 0, count = 0;
+			qfi_get(&source_i, &key, &value, &count);
+			uint64_t memCount=qf_count_key(qf,key);
+			qf_setCounter(Batch,key,memCount);
+		} while (!qfi_next(&source_i));
+	}
+}
+bool qf_ComputeItemsOrder(QF* qf){
+	if(qf->metadata->BlockTag_bits!=32)
+	{
+		return true;
+	}
+	QFi source_i;
+	uint32_t prevOrder=0;
+	uint64_t currBlockId=0;
+	if (qf_iterator(qf, &source_i, 0)) {
+		do {
+			uint64_t key = 0, value = 0, count = 0;
+			if(source_i.current/64!=currBlockId)
+			{
+				currBlockId=source_i.current/64;
+				char* blockTag=qf_getBlockTag_pointer_byBlock(qf,currBlockId);
+				uint32_t* tmp=(uint32_t*)blockTag;
+				*tmp=prevOrder;
+				//memcopy(blockTag,&prevOrder,4);
+			}
+			prevOrder++;
+		} while (!qfi_next(&source_i));
+	}
+}
+uint64_t itemOrder(QF* qf,uint64_t item){
+	if(qf->metadata->BlockTag_bits!=32)
+	{
+	//	cout<<"sasa "<<qf->metadata->tag_bits<<endl;
+		return 0;
+	}
+	char* blockTag;
+	qf_getBlockTag_pointer_byItem(qf,item,blockTag);
+	uint32_t order=0;
+	order=*((uint32_t*)blockTag);
+	QFi itemIt,blockIT;
+	qfi_find(qf,&itemIt,item);
+	qfi_firstInBlock(qf,&itemIt,&blockIT);
+	while(blockIT.current<itemIt.current)
+	{
+		order++;
+		qfi_next(&blockIT);
+	}
+	return order;
+
+}
+
 
 #ifdef TEST
 	#include "tests/lowLevelTests.hpp"
