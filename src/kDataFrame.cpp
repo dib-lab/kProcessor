@@ -61,15 +61,7 @@ kDataFrame *kDataFrame::load(string filePath, string method) {
         else if (!method.compare("MAP")) return kDataFrameMAP::load(filePath);
 }
 
-vector<int> kDataFrame::getColors(string kmer){
-  uint64_t tag=this->getCounter(kmer);
-  auto colors=colorsMap->find(tag);
-  if(colors==colorsMap->end())
-  {
-    return vector<int>();
-  }
-  return colors->second;
-}
+
 
 kDataFrameMQF::kDataFrameMQF():kDataFrame(){
   mqf=new QF();
@@ -84,7 +76,6 @@ kDataFrameMQF::kDataFrameMQF(QF* mqf,uint64_t ksize,double falsePositiveRate):
 kDataFrame(falsePositiveRate,ksize)
 {
   this->mqf=mqf;
-  this->colorsMap=mqf->metadata->tags_map;
 }
 
 kDataFrameMQF::kDataFrameMQF(uint64_t ksize,vector<uint64_t> countHistogram,uint8_t tagSize
@@ -212,18 +203,7 @@ uint64_t kDataFrameMQF::getCounter(string kmer){
   return qf_count_key(mqf,hash);
 }
 
-bool kDataFrameMQF::setTag(string kmer,uint64_t tag){
-  uint64_t hash=hashKmer(kmer)%mqf->metadata->range;
-  return qf_add_tag(mqf,hash,tag,false,false)==1;
-}
-uint64_t kDataFrameMQF::getTag(string kmer){
-  if(kmer.find("N")!=string::npos)
-  {
-    return 0;
-  }
-  uint64_t hash=hashKmer(kmer)%mqf->metadata->range;
-  return qf_get_tag(mqf,hash);
-}
+
 
 bool kDataFrameMQF::removeKmer(string kmer){
   uint64_t hash=hashKmer(kmer)%mqf->metadata->range;
@@ -270,27 +250,9 @@ kDataFrameIterator kDataFrameMQF::begin(){
     return *(new kDataFrameIterator(new kDataFrameMQFIterator(mqf)));
 }
 
-kDataFrameMQF* kDataFrameMQF::index(vector<kDataFrameMQF*> kframes){
-  uint64_t targetOccupiedSlots=0;
-  for(auto kframe:kframes){
-    targetOccupiedSlots+=kframe->mqf->metadata->noccupied_slots;
-  }
-  vector<uint64_t> countHistogram(2);
-  countHistogram[0]=targetOccupiedSlots;
-  countHistogram[1]=targetOccupiedSlots;
 
-  kDataFrameMQF *res= new kDataFrameMQF(kframes[0]->kSize,24,2,15,0);
-  QF* qf_arr[kframes.size()];
-  for(int i=0;i<kframes.size();i++){
-    qf_arr[i]=kframes[i]->mqf;
-  }
-  qf_invertable_merge(qf_arr,kframes.size(),res->mqf);
-  return res;
-}
 
-void kDataFrameMQF::loadIntoFastq(std::string sequenceFilename,int noThreads){
-  loadIntoMQF(sequenceFilename,kSize,noThreads,hashFunctions[0],mqf);
-}
+
 
 // kDataFrameMAP _____________________________
 
@@ -303,16 +265,7 @@ inline bool kDataFrameMAP::kmerExist(string kmer) {
     return (this->MAP.find(kmer) == this->MAP.end()) ? 0 : 1;
 }
 
-bool kDataFrameMAP::setTag(string kmer, uint64_t count)
-{
-  kmer = getCanonicalKmer(kmer);
-  if (!this->kmerExist(kmer))
-  {
-    setTag(kmer, 0);
-    return 0; // Not Found
-  }
-  return 1; // Found
-}
+
 
 bool kDataFrameMAP::incrementCounter(string kmer, uint64_t count) {
     kmer=getCanonicalKmer(kmer);
@@ -323,10 +276,7 @@ bool kDataFrameMAP::incrementCounter(string kmer, uint64_t count) {
     return 0;
 }
 
-uint64_t kDataFrameMAP::getTag(string kmer) {
-    kmer=getCanonicalKmer(kmer);
-    return this->kmerExist(kmer);
-}
+
 
 bool kDataFrameMAP::setCounter(string kmer, uint64_t tag) {
     kmer=getCanonicalKmer(kmer);
@@ -384,15 +334,7 @@ void kDataFrameMAP::save(string filePath) {
     }
 
 
-    for (auto const &it2 : *this->colorsMap) {
-        myfile << it2.first << "-";
-        for (int i = 0; i < it2.second.size(); i++)
-            myfile << it2.second[i] << ",";
-
-        myfile << endl;
-    }
-    myfile.close();
-
+  
 }
 
 kDataFrame *kDataFrameMAP::load(string filePath) {
@@ -408,32 +350,10 @@ kDataFrame *kDataFrameMAP::load(string filePath) {
         getline(myfile, key, ':');
         if (getline(myfile, value, '\n')) {
             // cout << "Key:" << key << "| Value: " << value << endl;
-            KMAP->setTag(key, std::stoull(value));
+            KMAP->setCounter(key, std::stoull(value));
         } else break;
     }
     myfile.close();
-
-
-    std::istringstream vcolors(key);
-    map <uint64_t, vector<int>> *colors = new std::map <uint64_t, std::vector<int>>();
-
-
-    while (!vcolors.eof()) {
-        getline(vcolors, key, '-');
-        if (getline(vcolors, value, '\n')) {
-            // cout << "Key:" << key << "| Value: " << value << endl;
-            std::stringstream ss(value);
-            int i;
-            while (ss >> i) {
-                (*colors)[std::stoull(key)].push_back(i);
-                if (ss.peek() == ',')
-                    ss.ignore();
-            }
-        }
-    }
-
-    KMAP->set_legend(colors);
-
     return KMAP;
 }
 

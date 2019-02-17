@@ -61,7 +61,6 @@ protected:
   vector<Hasher*> hashFunctions;
   uint64_t kSize;
   bool autoResize;
-  map<uint64_t,vector<int> >* colorsMap;
 public:
   kDataFrame();
   kDataFrame(double falsePositiveRate,uint8_t kSize);
@@ -74,9 +73,6 @@ public:
   virtual bool incrementCounter(string kmer,uint64_t count)=0;
   virtual uint64_t getCounter(string kmer)=0;
 
-  virtual bool setTag(string kmer,uint64_t tag)=0;
-  virtual uint64_t getTag(string kmer)=0;
-
   virtual bool removeKmer(string kmer)=0;
 
   virtual uint64_t size()=0;
@@ -84,12 +80,11 @@ public:
   virtual bool isFull()=0;
 
   virtual kDataFrameIterator begin()=0;
-  virtual void set_legend(std::map<uint64_t, std::vector<int>> *t) = 0;
-  virtual std::map<uint64_t, std::vector<int> > * get_legend() = 0;
+
   virtual void save(string filePath)=0;
   static kDataFrame* load(string filePath, string method);
 
-  vector<int> getColors(string kmer);
+
   uint64_t getkSize(){return kSize;}
   uint64_t setkSize(uint64_t k){kSize=k;}
 
@@ -134,8 +129,6 @@ public:
   bool incrementCounter(string kmer,uint64_t count);
   uint64_t getCounter(string kmer);
 
-  bool setTag(string kmer,uint64_t tag);
-  uint64_t getTag(string kmer);
 
   bool removeKmer(string kmer);
 
@@ -148,19 +141,12 @@ public:
 
   kDataFrameIterator begin();
 
-  static kDataFrameMQF* index(vector<kDataFrameMQF*> kframes);
-
-  void loadIntoFastq(string sequenceFilename,int noThreads);
 
 
-  std::map<uint64_t, std::vector<int> > * get_legend(){
-    return mqf->metadata->tags_map;
-  }
 
-  void set_legend(std::map<uint64_t, std::vector<int> > * t){
-      mqf->metadata->tags_map=t;
-      this->colorsMap=t;
-    }
+
+
+
 };
 
 // kDataFrameMAP _____________________________
@@ -180,8 +166,6 @@ public:
   bool incrementCounter(string kmer, uint64_t count);
   uint64_t getCounter(string kmer);
 
-  bool setTag(string kmer, uint64_t tag);
-  uint64_t getTag(string kmer);
 
   bool removeKmer(string kmer);
 
@@ -194,18 +178,8 @@ public:
   void save(string filePath);
   static kDataFrame *load(string filePath);
 
-  void set_legend(std::map<uint64_t, std::vector<int>> *t)
-  {
-    this->colorsMap = t;
-  }
-
-  std::map<uint64_t, std::vector<int>> *get_legend()
-  {
-    return this->colorsMap;
-  }
 
     ~kDataFrameMAP() {
-        this->MAP.clear();
-        this->colorsMap->clear();
+        this->MAP.clear();        
     }
 };
