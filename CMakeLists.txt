@@ -32,9 +32,12 @@ set(LIBRARY_NAME
 file(GLOB kProcessorLibSrc "src/*.cpp" "src/KmerCounter/*.cpp" "src/KmerDecoder/*.cpp" "src/HashUtils/*.cpp")
 
 
-add_library(${LIBRARY_NAME}
+add_library(${LIBRARY_NAME} STATIC
     ${kProcessorLibSrc}
     )
+target_link_libraries(kProcessor lMQF)
+target_link_libraries (kProcessor ${SEQAN_LIBRARIES})
+
 
 target_include_directories(${LIBRARY_NAME} PRIVATE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/${LIBRARY_NAME}>
@@ -75,14 +78,6 @@ set(LDFLAGS "-lrt -lpthread -lbz2 -lz")
 
 
 
-#if(BUILD_STATIC)
-#    add_library(kProcessor ${SOURCES})
-#else()
-#    add_executable(kProcessor ${SOURCES})
-#endif()
-
-#target_link_libraries(kProcessor lMQF)
-#target_link_libraries (kProcessor ${SEQAN_LIBRARIES})
 
 
 

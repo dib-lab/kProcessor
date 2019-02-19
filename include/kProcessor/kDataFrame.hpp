@@ -75,7 +75,13 @@ public:
 
   virtual bool removeKmer(string kmer)=0;
 
+/// size function returns the number of kmers in the kDataframe.
   virtual uint64_t size()=0;
+/// max_size function returns the maximum number of kmers that the kDataframe can hold.
+  virtual uint64_t max_size()=0;
+/// Test whether the kDataFrame is empty.
+/*! Returns a bool value indicating whether the kDataFrame is empty, i.e. whether its size is 0.*/
+  bool empty();
   virtual uint64_t filled_space()=0;
   virtual bool isFull()=0;
 
@@ -133,6 +139,9 @@ public:
   bool removeKmer(string kmer);
 
   uint64_t size();
+/// max_size function returns the estimated maximum number of kmers that the kDataframeMQF can hold.
+/*! The number of kmers is estimated as if all the kmers repeated 2^(fixed counter size)-1 times.*/
+  uint64_t max_size();
   uint64_t filled_space();
   bool isFull();
 
@@ -157,6 +166,7 @@ private:
   unordered_map<string, uint64_t> MAP;
 
 public:
+  kDataFrameMAP();
   kDataFrameMAP(uint64_t ksize);
 
 
@@ -170,6 +180,7 @@ public:
   bool removeKmer(string kmer);
 
   uint64_t size();
+  uint64_t max_size();
   uint64_t filled_space();
   bool isFull();
 
@@ -180,6 +191,6 @@ public:
 
 
     ~kDataFrameMAP() {
-        this->MAP.clear();        
+        this->MAP.clear();
     }
 };

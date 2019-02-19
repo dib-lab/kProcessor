@@ -44,6 +44,10 @@ kDataFrame::kDataFrame(double falsePositiveRate,uint8_t k_size){
   hashFunctions.push_back(hasher);
 }
 
+bool kDataFrame::empty(){
+  return this->size()==0;
+}
+
 uint64_t kDataFrame::hashKmer(string kmer){
   uint64_t kmerI=kmer::str_to_int(kmer);
   uint64_t kmerIR=kmer::reverse_complement(kmerI,kSize);
@@ -213,6 +217,9 @@ bool kDataFrameMQF::removeKmer(string kmer){
 }
 
 uint64_t kDataFrameMQF::size(){
+  return mqf->metadata->ndistinct_elts;
+}
+uint64_t kDataFrameMQF::max_size(){
   return mqf->metadata->xnslots;
 }
 uint64_t kDataFrameMQF::filled_space(){
@@ -259,7 +266,9 @@ kDataFrameIterator kDataFrameMQF::begin(){
 kDataFrameMAP::kDataFrameMAP(uint64_t ksize) {
     this->kSize = ksize;
 }
-
+kDataFrameMAP::kDataFrameMAP() {
+    this->kSize = 23;
+}
 inline bool kDataFrameMAP::kmerExist(string kmer) {
     kmer=getCanonicalKmer(kmer);
     return (this->MAP.find(kmer) == this->MAP.end()) ? 0 : 1;
@@ -318,6 +327,11 @@ uint64_t kDataFrameMAP::size() {
     this->MAP.size();
 }
 
+uint64_t kDataFrameMAP::max_size() {
+    return (uint64_t)
+    this->MAP.max_size();
+}
+
 uint64_t kDataFrameMAP::filled_space() {}
 
 bool kDataFrameMAP::isFull() {
@@ -334,7 +348,7 @@ void kDataFrameMAP::save(string filePath) {
     }
 
 
-  
+
 }
 
 kDataFrame *kDataFrameMAP::load(string filePath) {
