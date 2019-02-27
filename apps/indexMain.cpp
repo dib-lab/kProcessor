@@ -157,8 +157,13 @@ int index_main(int argc, char *argv[]){
         uint64_t currentTag=frame->getCounter(kmer);
         if (kmer == "CCTCCTCCTCCTCTTCTTCTC")
         {
-          std::cerr << "currentTag: " << currentTag << std::endl;
+          std::cerr << "[Reverse] currentTag: " << currentTag << std::endl;
         }
+        else if (kmer == "GAGAAGAAGAGGAGGAGGAGG")
+        {
+          std::cerr << "[Forward] currentTag: " << currentTag << std::endl;
+        }
+        
 
         auto itc=convertMap.find(currentTag);
         if(itc==convertMap.end())
@@ -200,7 +205,11 @@ int index_main(int argc, char *argv[]){
           uint64_t newColor=itTag->second;
           if (kmer == "CCTCCTCCTCCTCTTCTTCTC")
           {
-            std::cerr << "newColor: " << newColor << std::endl;
+            std::cerr << "[Reverse] newColor: " << newColor << std::endl;
+          }
+          else if (kmer == "GAGAAGAAGAGGAGGAGGAGG")
+          {
+            std::cerr << "[Forward] newColor: " << newColor << std::endl;
           }
 
           convertMap.insert(make_pair(currentTag,newColor));
