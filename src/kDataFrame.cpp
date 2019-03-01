@@ -408,7 +408,7 @@ kDataFrame *kDataFrameMAP::load(string filePath) {
         getline(myfile, key, ':');
         if (getline(myfile, value, '\n')) {
             // cout << "Key:" << key << "| Value: " << value << endl;
-            KMAP->setTag(key, std::stoull(value));
+            KMAP->setCounter(key, std::stoull(value));
         } else break;
     }
     myfile.close();
