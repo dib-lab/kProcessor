@@ -258,11 +258,13 @@ void kDataFrameMQF::save(string filePath){
   qf_serialize(mqf,(filePath).c_str());
 }
 kDataFrame* kDataFrameMQF::load(string filePath){
+  filePath += ".mqf";
+  cerr << "[!] Loading MQF from" << filePath << endl;
   ifstream file(filePath+".extra");
   uint64_t filekSize;
   file>>filekSize;
   QF* mqf=new QF();
-  qf_deserialize(mqf,(filePath+".mqf").c_str());
+  qf_deserialize(mqf,(filePath).c_str());
   return new kDataFrameMQF(mqf,filekSize,0);
 }
 
