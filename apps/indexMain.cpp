@@ -155,15 +155,6 @@ int index_main(int argc, char *argv[]){
       //  cout<<i<<" "<<kmer<<" "<<frame->getCounter(kmer)<<endl;
         //frame->incrementCounter(kmer,1);
         uint64_t currentTag=frame->getCounter(kmer);
-        if (kmer == "CCTCCTCCTCCTCTTCTTCTC")
-        {
-          std::cerr << "[Reverse] currentTag: " << currentTag << std::endl;
-        }
-        else if (kmer == "GAGAAGAAGAGGAGGAGGAGG")
-        {
-          std::cerr << "[Forward] currentTag: " << currentTag << std::endl;
-        }
-        
 
         auto itc=convertMap.find(currentTag);
         if(itc==convertMap.end())
@@ -203,14 +194,6 @@ int index_main(int argc, char *argv[]){
             // }
           }
           uint64_t newColor=itTag->second;
-          if (kmer == "CCTCCTCCTCCTCTTCTTCTC")
-          {
-            std::cerr << "[Reverse] newColor: " << newColor << std::endl;
-          }
-          else if (kmer == "GAGAAGAAGAGGAGGAGGAGG")
-          {
-            std::cerr << "[Forward] newColor: " << newColor << std::endl;
-          }
 
           convertMap.insert(make_pair(currentTag,newColor));
           itc=convertMap.find(currentTag);
@@ -220,7 +203,7 @@ int index_main(int argc, char *argv[]){
         {
 
           colorsCount[currentTag]--;
-          if(colorsCount[currentTag]==0  && currentTag!=0 ){
+          if(colorsCount[currentTag]==0  && currentTag!=0 && currentTag>groupNameMap.size()){
             freeColors.push(currentTag);
             vector<int> colors = legend->find(currentTag)->second;
             string colorsString = to_string(colors[0]);
