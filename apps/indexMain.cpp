@@ -112,7 +112,7 @@ int index_main(int argc, char *argv[]){
 
   kDataFrame *frame;
   if (!method.compare("MQF"))
-    frame = new kDataFrameMQF(kSize, 28, 2, tagBits, 0);
+    frame = new kDataFrameMQF(kSize, 29, 2, tagBits, 0);
 
   else
     frame = new kDataFrameMAP(kSize);
