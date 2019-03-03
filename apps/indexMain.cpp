@@ -53,10 +53,6 @@ int index_main(int argc, char *argv[]){
   CLI11_PARSE(app, argc, argv);
   map<string,string> namesMap;
 
-  if(_DEBUG){
-    _DEBUG = 1;
-  }
-
   if (method.empty())
   {
     method = (kSize <= 31) ? "MQF" : "MAP";
