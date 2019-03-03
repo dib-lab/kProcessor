@@ -15,16 +15,13 @@
 #include <queue>
 using namespace std;
 
-// Activate / Deactivate debugging.
-static bool _DEBUG = 1;
-
-
 int index_main(int argc, char *argv[]){
   CLI::App app;
   string input_file;
   string names_fileName="";
   string outDB;
   string method;
+  bool _DEBUG = 0;
   int kSize;
   int numThreads=1;
 
@@ -49,9 +46,16 @@ int index_main(int argc, char *argv[]){
   app.add_option("-m,--method", method,
                  "Data strucure used in indexing <MAP> or <MQF>, default: ksize < 32 = MQF, Ksize > 31 = MAP.");
 
+  app.add_option("-d,--debug", _DEBUG,
+                 "to activate debugging, set -d 1.");
+
 
   CLI11_PARSE(app, argc, argv);
   map<string,string> namesMap;
+
+  if(_DEBUG){
+    _DEBUG = 1;
+  }
 
   if (method.empty())
   {
@@ -262,11 +266,12 @@ int index_main(int argc, char *argv[]){
     outNames<<iit->first<<"\t"<<iit->second<<endl;
   }
 
-
+ cerr << "[!] Done writing the index on disk ..." << endl;
 
   if (!_DEBUG)
     return 0;
 
+  cerr << "[!] Double checking the index quality ..." << endl;
   // auto it=legend->begin();
   // while(it!=legend->end())
   // {
