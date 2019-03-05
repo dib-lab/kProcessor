@@ -186,7 +186,7 @@ bool kDataFrameMQF::isEnough(vector<uint64_t> histogram,uint64_t noSlots,uint64_
 
 
 
-bool kDataFrameMQF::setCounter(string kmer,uint64_t count){
+bool kDataFrameMQF::setCount(string kmer,uint64_t count){
   uint64_t hash=hashKmer(kmer)%mqf->metadata->range;
   uint64_t currentCount=qf_count_key(mqf,hash);
   if(currentCount>count){
@@ -197,22 +197,28 @@ bool kDataFrameMQF::setCounter(string kmer,uint64_t count){
   }
   return true;
 }
-bool kDataFrameMQF::incrementCounter(string kmer,uint64_t count){
+bool kDataFrameMQF::insert(string kmer,uint64_t count){
   uint64_t hash=hashKmer(kmer)%mqf->metadata->range;
   qf_insert(mqf,hash,count,true,true);
   return true;
 }
-uint64_t kDataFrameMQF::getCounter(string kmer){
+bool kDataFrameMQF::insert(string kmer){
+  uint64_t hash=hashKmer(kmer)%mqf->metadata->range;
+  qf_insert(mqf,hash,1,true,true);
+  return true;
+}
+uint64_t kDataFrameMQF::count(string kmer){
   uint64_t hash=hashKmer(kmer)%mqf->metadata->range;
   return qf_count_key(mqf,hash);
 }
 
 
 
-bool kDataFrameMQF::removeKmer(string kmer){
+bool kDataFrameMQF::erase(string kmer){
   uint64_t hash=hashKmer(kmer)%mqf->metadata->range;
   uint64_t currentCount=qf_count_key(mqf,hash);
-  qf_remove(mqf,hash,currentCount,true,true);
+
+  //qf_remove(mqf,hash,currentCount,true,true);
   return true;
 }
 
@@ -222,8 +228,11 @@ uint64_t kDataFrameMQF::size(){
 uint64_t kDataFrameMQF::max_size(){
   return mqf->metadata->xnslots;
 }
-uint64_t kDataFrameMQF::filled_space(){
-  return (uint64_t)qf_space(mqf);
+float kDataFrameMQF::load_factor(){
+  return (float)qf_space(mqf)/100.0;
+}
+float kDataFrameMQF::max_load_factor(){
+  return 0.9;
 }
 bool kDataFrameMQF::isFull(){
   return mqf->metadata->noccupied_slots>=mqf->metadata->maximum_occupied_slots;
@@ -265,9 +274,11 @@ kDataFrameIterator kDataFrameMQF::begin(){
 
 kDataFrameMAP::kDataFrameMAP(uint64_t ksize) {
     this->kSize = ksize;
+    this->MAP=unordered_map<string,uint64_t>(1000);
 }
 kDataFrameMAP::kDataFrameMAP() {
     this->kSize = 23;
+    this->MAP=unordered_map<string,uint64_t>(1000);
 }
 inline bool kDataFrameMAP::kmerExist(string kmer) {
     kmer=getCanonicalKmer(kmer);
@@ -276,48 +287,32 @@ inline bool kDataFrameMAP::kmerExist(string kmer) {
 
 
 
-bool kDataFrameMAP::incrementCounter(string kmer, uint64_t count) {
+bool kDataFrameMAP::insert(string kmer, uint64_t count) {
     kmer=getCanonicalKmer(kmer);
-    if (!this->kmerExist(kmer)) {
-        setCounter(kmer, 0);
-        return 1;
-    }
-    return 0;
+    this->MAP[kmer]+=count;
+    return true;
+}
+bool kDataFrameMAP::insert(string kmer) {
+    kmer=getCanonicalKmer(kmer);
+    this->MAP[kmer]++;
+    return true;
 }
 
 
-
-bool kDataFrameMAP::setCounter(string kmer, uint64_t tag) {
+bool kDataFrameMAP::setCount(string kmer, uint64_t tag) {
     kmer=getCanonicalKmer(kmer);
-    if (kmer.length() == this->kSize) {
-        if (this->kmerExist(kmer)) {
-            // unordered_map<string, uint64_t>::iterator i = this->MAP.find(kmer);
-            auto i = this->MAP.find(kmer);
-            if (i != this->MAP.end()) {
-                i->second = tag; // update existing key's value.
-                return 1;
-            }
-        }
-
-        this->MAP.insert(std::make_pair(kmer, tag));
-        return 1;
-    }
-    return 0;
+    this->MAP[kmer]=tag;
+    return true;
 }
 
-uint64_t kDataFrameMAP::getCounter(string kmer)
+uint64_t kDataFrameMAP::count(string kmer)
 {
   kmer = getCanonicalKmer(kmer);
   // unordered_map<string, uint64_t>::iterator i = this->MAP.find(kmer);
-  auto i = this->MAP.find(kmer);
-  if (i == this->MAP.end())
-  {
-    return 0; // not_found
-  }
-  return i->second;
+  return this->MAP[kmer];
 }
 
-bool kDataFrameMAP::removeKmer(string kmer) {
+bool kDataFrameMAP::erase(string kmer) {
     kmer=getCanonicalKmer(kmer);
     return this->MAP.erase(kmer);
 }
@@ -332,7 +327,13 @@ uint64_t kDataFrameMAP::max_size() {
     this->MAP.max_size();
 }
 
-uint64_t kDataFrameMAP::filled_space() {}
+float kDataFrameMAP::load_factor() {
+    return this->MAP.load_factor();
+}
+
+float kDataFrameMAP::max_load_factor() {
+    return this->MAP.max_load_factor();
+}
 
 bool kDataFrameMAP::isFull() {
     return 1;
@@ -364,7 +365,7 @@ kDataFrame *kDataFrameMAP::load(string filePath) {
         getline(myfile, key, ':');
         if (getline(myfile, value, '\n')) {
             // cout << "Key:" << key << "| Value: " << value << endl;
-            KMAP->setCounter(key, std::stoull(value));
+            KMAP->setCount(key, std::stoull(value));
         } else break;
     }
     myfile.close();

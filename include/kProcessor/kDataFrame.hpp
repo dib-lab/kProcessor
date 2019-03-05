@@ -69,20 +69,34 @@ public:
 
   }
   uint64_t hashKmer(string kmer);
-  virtual bool setCounter(string kmer,uint64_t count)=0;
-  virtual bool incrementCounter(string kmer,uint64_t count)=0;
-  virtual uint64_t getCounter(string kmer)=0;
+/// insert the kmer one time in the kDataFrame, or increment the kmer count if it is already exists.
+/*! Returns bool value indicating whether the kmer is inserted or not*/
+  virtual bool insert(string kmer)=0;
+/// insert the kmer N time in the kDataFrame, or increment the kmer count with N if it is already exists.
+/*! Returns bool value indicating whether the kmer is inserted or not*/
+  virtual bool insert(string kmer,uint64_t N)=0;
+/// set the kmer's count to N time in the kDataFrame
+/*! Returns bool value indicating whether the kmer is inserted or not.
+The difference between setCount and insert is that setCount set the count to N no matter the previous kmer count was*/
+  virtual bool setCount(string kmer,uint64_t N)=0;
+/// returns the count of the kmer in the kDataFrame, i.e. the number of times the kmer is inserted in the kdataFrame.
+  virtual uint64_t count(string kmer)=0;
+// Removes  a kmer from the kDataFrame
+/*! Returns bool value indicating whether the kmer is erased or not*/
+  virtual bool erase(string kmer)=0;
 
-  virtual bool removeKmer(string kmer)=0;
-
-/// size function returns the number of kmers in the kDataframe.
+/// Returns the number of kmers in the kDataframe.
   virtual uint64_t size()=0;
-/// max_size function returns the maximum number of kmers that the kDataframe can hold.
+/// Returns the maximum number of kmers that the kDataframe can hold.
   virtual uint64_t max_size()=0;
 /// Test whether the kDataFrame is empty.
 /*! Returns a bool value indicating whether the kDataFrame is empty, i.e. whether its size is 0.*/
   bool empty();
-  virtual uint64_t filled_space()=0;
+/// Returns the current load factor in the kDataFrame.
+  virtual float load_factor()=0;
+/// Returns the current maximum load factor for the kDataFrame.
+  virtual float max_load_factor()=0;
+
   virtual bool isFull()=0;
 
   virtual kDataFrameIterator begin()=0;
@@ -94,7 +108,7 @@ public:
   uint64_t getkSize(){return kSize;}
   uint64_t setkSize(uint64_t k){kSize=k;}
 
-  string getCanonicalKmer(string kmer){
+  inline string getCanonicalKmer(string kmer){
     uint64_t kmerI = kmer::str_to_int(kmer);
     uint64_t kmerIR = kmer::reverse_complement(kmerI, kSize);
     uint64_t item;
@@ -131,18 +145,20 @@ public:
   uint64_t *res_noSlots,uint64_t *res_fixedSizeCounter, uint64_t *res_memory);
 
 
-  bool setCounter(string kmer,uint64_t count);
-  bool incrementCounter(string kmer,uint64_t count);
-  uint64_t getCounter(string kmer);
+  bool setCount(string kmer,uint64_t count);
+  bool insert(string kmer,uint64_t count);
+  bool insert(string kmer);
+  uint64_t count(string kmer);
 
 
-  bool removeKmer(string kmer);
+  bool erase(string kmer);
 
   uint64_t size();
 /// max_size function returns the estimated maximum number of kmers that the kDataframeMQF can hold.
 /*! The number of kmers is estimated as if all the kmers repeated 2^(fixed counter size)-1 times.*/
   uint64_t max_size();
-  uint64_t filled_space();
+  float load_factor();
+  float max_load_factor();
   bool isFull();
 
   void save(string filePath);
@@ -172,16 +188,18 @@ public:
 
   inline bool kmerExist(string kmer);
 
-  bool setCounter(string kmer, uint64_t count);
-  bool incrementCounter(string kmer, uint64_t count);
-  uint64_t getCounter(string kmer);
+  bool setCount(string kmer, uint64_t count);
+  bool insert(string kmer);
+  bool insert(string kmer, uint64_t count);
+  uint64_t count(string kmer);
 
 
-  bool removeKmer(string kmer);
+  bool erase(string kmer);
 
   uint64_t size();
   uint64_t max_size();
-  uint64_t filled_space();
+  float load_factor();
+  float max_load_factor();
   bool isFull();
 
   kDataFrameIterator begin();
