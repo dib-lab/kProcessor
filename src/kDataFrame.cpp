@@ -28,37 +28,17 @@ kmerRow kDataFrameMQFIterator::operator * (){
 
 kDataFrame::kDataFrame(){
   kSize=31;
-  autoResize=false;
-  hashFunctions.push_back(new IntegerHasher(BITMASK(2*kSize)));
 }
-kDataFrame::kDataFrame(double falsePositiveRate,uint8_t k_size){
+kDataFrame::kDataFrame(uint8_t k_size){
   kSize=k_size;
-  autoResize=false;
-  Hasher* hasher;
-  if(falsePositiveRate==0){
-    hasher=new IntegerHasher(BITMASK(2*kSize));
-  }
-  else if(falsePositiveRate<1){
-  hasher=new MumurHasher(2038074761);
-  }
-  hashFunctions.push_back(hasher);
+
 }
 
 bool kDataFrame::empty(){
   return this->size()==0;
 }
 
-uint64_t kDataFrame::hashKmer(string kmer){
-  uint64_t kmerI=kmer::str_to_int(kmer);
-  uint64_t kmerIR=kmer::reverse_complement(kmerI,kSize);
-  uint64_t item;
-  if (kmer::compare_kmers(kmerI, kmerIR))
-    item = kmerI;
-  else
-    item = kmerIR;
 
-  return hashFunctions[0]->hash(item);
-}
 
 kDataFrame *kDataFrame::load(string filePath, string method) {
         if (!method.compare("MQF")) return kDataFrameMQF::load(filePath);
@@ -70,21 +50,58 @@ kDataFrame *kDataFrame::load(string filePath, string method) {
 kDataFrameMQF::kDataFrameMQF():kDataFrame(){
   mqf=new QF();
   qf_init(mqf, (1ULL<<16), 2*kSize, 0,2,0, true, "", 2038074761);
+  hasher=(new IntegerHasher(kSize));
+  falsePositiveRate=0;
+  hashbits=2*kSize;
+  range=(1ULL<<hashbits);
 }
 kDataFrameMQF::kDataFrameMQF(uint64_t ksize,uint8_t q,uint8_t fixedCounterSize,uint8_t tagSize,double falsePositiveRate):
-kDataFrame(falsePositiveRate,ksize){
+kDataFrame(ksize){
   mqf=new QF();
   qf_init(mqf, (1ULL<<q), 2*ksize,tagSize,fixedCounterSize, 0,true, "", 2038074761);
+  this->falsePositiveRate=falsePositiveRate;
+  if(falsePositiveRate==0){
+    hasher=(new IntegerHasher(kSize));
+  }
+  else if(falsePositiveRate<1){
+  hasher=(new MumurHasher(2038074761));
+  }
+  hashbits=2*kSize;
+  range=(1ULL<<hashbits);
+
 }
 kDataFrameMQF::kDataFrameMQF(QF* mqf,uint64_t ksize,double falsePositiveRate):
-kDataFrame(falsePositiveRate,ksize)
+kDataFrame(ksize)
 {
   this->mqf=mqf;
+this->falsePositiveRate=falsePositiveRate;
+  if(falsePositiveRate==0){
+    hasher=(new IntegerHasher(kSize));
+  }
+  else if(falsePositiveRate<1){
+  hasher=(new MumurHasher(2038074761));
+  }
+  hashbits=this->mqf->metadata->key_bits;
+  range=(1ULL<<hashbits);
+}
+
+void kDataFrameMQF::reserve(uint64_t n)
+{
+  QF* old=mqf;
+  mqf=new QF();
+  uint64_t q=(uint64_t)ceil(log2((double)n*1.4));
+  qf_init(mqf, (1ULL<<q), hashbits,0,2, 0,true, "", 2038074761);
+  if(old!=NULL)
+  {
+    qf_migrate(old,mqf);
+    qf_destroy(old);
+    delete old;
+  }
 }
 
 kDataFrameMQF::kDataFrameMQF(uint64_t ksize,vector<uint64_t> countHistogram,uint8_t tagSize
   ,double falsePositiveRate):
-  kDataFrame(falsePositiveRate,ksize)
+  kDataFrame(ksize)
   {
     uint64_t nSlots;
     uint64_t fixedCounterSize;
@@ -187,35 +204,56 @@ bool kDataFrameMQF::isEnough(vector<uint64_t> histogram,uint64_t noSlots,uint64_
 
 
 bool kDataFrameMQF::setCount(string kmer,uint64_t count){
-  uint64_t hash=hashKmer(kmer)%mqf->metadata->range;
+  uint64_t hash=hasher->hash(kmer)% range;
   uint64_t currentCount=qf_count_key(mqf,hash);
   if(currentCount>count){
     qf_remove(mqf,hash,currentCount-count,false,false);
   }
   else{
-    qf_insert(mqf,hash,count-currentCount,false,false);
+    try{
+      qf_insert(mqf,hash,count-currentCount,false,false);
+    }
+    catch(overflow_error & e)
+    {
+      reserve((1ULL<<mqf->metadata->nslots));
+      return setCount(kmer,count);
+    }
   }
   return true;
 }
 bool kDataFrameMQF::insert(string kmer,uint64_t count){
-  uint64_t hash=hashKmer(kmer)%mqf->metadata->range;
+  uint64_t hash=hasher->hash(kmer)% range;
+  try{
   qf_insert(mqf,hash,count,true,true);
+  }
+  catch(overflow_error & e)
+  {
+    reserve(mqf->metadata->nslots);
+    return insert(kmer,count);
+  }
   return true;
 }
 bool kDataFrameMQF::insert(string kmer){
-  uint64_t hash=hashKmer(kmer)%mqf->metadata->range;
-  qf_insert(mqf,hash,1,true,true);
+  uint64_t hash=hasher->hash(kmer)% range;
+  try{
+    qf_insert(mqf,hash,1,true,true);
+  }
+  catch(overflow_error & e)
+  {
+    reserve((1ULL<<mqf->metadata->nslots));
+    return insert(kmer);
+  }
   return true;
 }
 uint64_t kDataFrameMQF::count(string kmer){
-  uint64_t hash=hashKmer(kmer)%mqf->metadata->range;
+  uint64_t hash=hasher->hash(kmer)% range;
   return qf_count_key(mqf,hash);
 }
 
 
 
 bool kDataFrameMQF::erase(string kmer){
-  uint64_t hash=hashKmer(kmer)%mqf->metadata->range;
+  uint64_t hash=hasher->hash(kmer)% range;
   uint64_t currentCount=qf_count_key(mqf,hash);
 
   //qf_remove(mqf,hash,currentCount,true,true);
@@ -234,9 +272,7 @@ float kDataFrameMQF::load_factor(){
 float kDataFrameMQF::max_load_factor(){
   return 0.9;
 }
-bool kDataFrameMQF::isFull(){
-  return mqf->metadata->noccupied_slots>=mqf->metadata->maximum_occupied_slots;
-}
+
 
 void kDataFrameMQF::save(string filePath){
   filePath += ".mqf";
@@ -275,56 +311,49 @@ kDataFrameIterator kDataFrameMQF::begin(){
 kDataFrameMAP::kDataFrameMAP(uint64_t ksize) {
     this->kSize = ksize;
     this->MAP=unordered_map<string,uint64_t>(1000);
+
 }
 kDataFrameMAP::kDataFrameMAP() {
     this->kSize = 23;
     this->MAP=unordered_map<string,uint64_t>(1000);
 }
-inline bool kDataFrameMAP::kmerExist(string kmer) {
-    kmer=getCanonicalKmer(kmer);
-    return (this->MAP.find(kmer) == this->MAP.end()) ? 0 : 1;
+inline bool kDataFrameMAP::kmerExist(string kmerS) {
+    return (this->MAP.find(kmer::canonicalKmer(kmerS)) == this->MAP.end()) ? 0 : 1;
 }
 
 
 
-bool kDataFrameMAP::insert(string kmer, uint64_t count) {
-    kmer=getCanonicalKmer(kmer);
-    this->MAP[kmer]+=count;
+bool kDataFrameMAP::insert(string kmerS, uint64_t count) {
+    this->MAP[kmer::canonicalKmer(kmerS)]+=count;
     return true;
 }
-bool kDataFrameMAP::insert(string kmer) {
-    kmer=getCanonicalKmer(kmer);
-    this->MAP[kmer]++;
+bool kDataFrameMAP::insert(string kmerS) {
+    this->MAP[kmer::canonicalKmer(kmerS)]++;
     return true;
 }
 
 
-bool kDataFrameMAP::setCount(string kmer, uint64_t tag) {
-    kmer=getCanonicalKmer(kmer);
-    this->MAP[kmer]=tag;
+bool kDataFrameMAP::setCount(string kmerS, uint64_t tag) {
+    this->MAP[kmer::canonicalKmer(kmerS)]=tag;
     return true;
 }
 
-uint64_t kDataFrameMAP::count(string kmer)
+uint64_t kDataFrameMAP::count(string kmerS)
 {
-  kmer = getCanonicalKmer(kmer);
-  // unordered_map<string, uint64_t>::iterator i = this->MAP.find(kmer);
-  return this->MAP[kmer];
+  return this->MAP[kmer::canonicalKmer(kmerS)];
 }
 
-bool kDataFrameMAP::erase(string kmer) {
-    kmer=getCanonicalKmer(kmer);
-    return this->MAP.erase(kmer);
+bool kDataFrameMAP::erase(string kmerS)
+{
+  return this->MAP.erase(kmer::canonicalKmer(kmerS));
 }
 
 uint64_t kDataFrameMAP::size() {
-    return (uint64_t)
-    this->MAP.size();
+    return (uint64_t)this->MAP.size();
 }
 
 uint64_t kDataFrameMAP::max_size() {
-    return (uint64_t)
-    this->MAP.max_size();
+    return (uint64_t)this->MAP.max_size();
 }
 
 float kDataFrameMAP::load_factor() {
@@ -335,9 +364,7 @@ float kDataFrameMAP::max_load_factor() {
     return this->MAP.max_load_factor();
 }
 
-bool kDataFrameMAP::isFull() {
-    return 1;
-}
+
 
 void kDataFrameMAP::save(string filePath) {
     ofstream myfile;
@@ -371,7 +398,10 @@ kDataFrame *kDataFrameMAP::load(string filePath) {
     myfile.close();
     return KMAP;
 }
-
+void kDataFrameMAP::reserve(uint64_t n)
+{
+  this->MAP.reserve(n);
+}
 kDataFrameIterator kDataFrameMAP::begin() {
     return NULL;
 }

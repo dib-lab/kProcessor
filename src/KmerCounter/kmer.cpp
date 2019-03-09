@@ -26,7 +26,24 @@ uint64_t kmer::str_to_int(string str)
 	}
 	return strint >> 2;
 }
-
+uint64_t kmer::str_to_canonical_int(string str)
+{
+	uint64_t kmerI=kmer::str_to_int(str);
+	uint64_t kmerIR=kmer::reverse_complement(kmerI,str.size());
+	if (kmer::compare_kmers(kmerI, kmerIR))
+		return kmerI;
+	else
+		return kmerIR;
+}
+ string kmer::canonicalKmer(string kmer){
+	uint64_t kmerI = kmer::str_to_int(kmer);
+	uint64_t kmerIR = kmer::reverse_complement(kmerI, kmer.size());
+	uint64_t item;
+	if (kmer::compare_kmers(kmerI, kmerIR))
+		return kmer;
+	else
+		return kmer::int_to_str(kmerIR,kmer.size());
+}
 /**
 * Converts a uint64_t to a string of "ACTG"
 * where each character is represented by using only two bits

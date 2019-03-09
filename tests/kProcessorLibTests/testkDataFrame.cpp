@@ -95,9 +95,6 @@ TYPED_TEST(kDataFrameTest,insertNTimes)
         }
         checkedKmers++;
     }
-    cout<<kframe->size()<<endl;
-    cout<<kframe->load_factor()<<" "<<kframe->max_load_factor()<<endl;
-
 }
 TYPED_TEST(kDataFrameTest,eraseKmers)
 {
@@ -147,4 +144,29 @@ TYPED_TEST(kDataFrameTest,eraseKmers)
         checkedKmers++;
     }
 
+}
+
+
+TYPED_TEST(kDataFrameTest,autoResize)
+{
+
+    kDataFrame* kframe=&this->kFrame;
+    EXPECT_EQ(kframe->empty(), true);
+    int insertedKmers=0;
+    for(auto k:this->kmers)
+    {
+        kframe->insert(k.first,k.second);        
+        insertedKmers++;
+    }
+    int checkedKmers=0;
+    for(auto k:this->kmers)
+    {
+        int c=kframe->count(k.first);
+        EXPECT_GE(c,k.second);
+        if(checkedKmers==insertedKmers)
+        {
+          break;
+        }
+        checkedKmers++;
+    }
 }

@@ -26,29 +26,33 @@
 #include <stdlib.h>
 #include <stdint.h>
 
-
+using namespace std;
 class Hasher{
 public:
+	virtual uint64_t hash(string key){return 0;};
 	virtual uint64_t hash(uint64_t key){return 0;};
 	virtual Hasher* clone(){return this;};
 };
 class MumurHasher: public Hasher{
+	using Hasher::hash;
 private:
 	uint64_t seed;
 public:
 	MumurHasher(uint64_t Iseed){seed=Iseed;}
 	Hasher* clone() { return new MumurHasher(seed);}
-	uint64_t hash(uint64_t key);
+	uint64_t hash(string kmer);
 };
 
 class IntegerHasher: public Hasher{
 private:
 	uint64_t mask;
+	uint64_t kSize;
 public:
-	IntegerHasher(uint64_t Imask){mask=Imask;}
-	Hasher* clone() { return new IntegerHasher(mask);}
+	IntegerHasher(uint64_t kSize);
+	Hasher* clone() { return new IntegerHasher(kSize);}
+	uint64_t hash(string key);
 	uint64_t hash(uint64_t key);
-	uint64_t Ihash(uint64_t key);
+	string Ihash(uint64_t key);
 };
 
 

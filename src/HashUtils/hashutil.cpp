@@ -19,6 +19,7 @@
  */
 
 #include "HashUtils/hashutil.h"
+#include "KmerCounter/kmer.h"
 #include <iostream>
 using namespace std;
 	//-----------------------------------------------------------------------------
@@ -30,10 +31,11 @@ using namespace std;
 
 	// 64-bit hash for 64-bit platforms
 
-	uint64_t MumurHasher::hash(uint64_t Ikey)
+	uint64_t MumurHasher::hash(string Skey)
 	{
-		void * key=(void *)&Ikey;
-		int len=sizeof(Ikey);
+		const char* SkeyChar=Skey.c_str();
+		void * key=(void *)&SkeyChar;
+		int len=Skey.size();
 		const uint64_t m = 0xc6a4a7935bd1e995;
 		const int r = 47;
 
@@ -129,6 +131,11 @@ using namespace std;
 	// 	return h;
 	// }
 
+  IntegerHasher::IntegerHasher(uint64_t kSize)
+	{
+		this->kSize=kSize;
+		this->mask=BITMASK(2*kSize);
+	}
 
 	/*
 	 *   For any 1<k<=64, let mask=(1<<k)-1. hash_64() is a bijection on [0,1<<k),
@@ -141,7 +148,18 @@ using namespace std;
 
 	// Thomas Wang's integer hash functions. See
 	// <https://gist.github.com/lh3/59882d6b96166dfc3d8d> for a snapshot.
-
+	uint64_t IntegerHasher::hash(string kmer)
+	{
+		uint64_t key=kmer::str_to_canonical_int(kmer);
+		key = (~key + (key << 21)) & mask; // key = (key << 21) - key - 1;
+		key = key ^ key >> 24;
+		key = ((key + (key << 3)) + (key << 8)) & mask; // key * 265
+		key = key ^ key >> 14;
+		key = ((key + (key << 2)) + (key << 4)) & mask; // key * 21
+		key = key ^ key >> 28;
+		key = (key + (key << 31)) & mask;
+		return key;
+	}
 	uint64_t IntegerHasher::hash(uint64_t key)
 	{
 		key = (~key + (key << 21)) & mask; // key = (key << 21) - key - 1;
@@ -153,10 +171,9 @@ using namespace std;
 		key = (key + (key << 31)) & mask;
 		return key;
 	}
-
 	// The inversion of hash_64(). Modified from
 	// <https://naml.us/blog/tag/invertible>
-	uint64_t IntegerHasher::Ihash(uint64_t key)
+	string IntegerHasher::Ihash(uint64_t key)
 	{
 		uint64_t tmp;
 
@@ -190,5 +207,5 @@ using namespace std;
 		tmp = ~(key - (tmp << 21));
 		key = ~(key - (tmp << 21)) & mask;
 
-		return key;
+		return kmer::int_to_str(key,kSize);
 	}

@@ -186,7 +186,7 @@ void dumpMQF(QF * MQF,int ksize,std::string outputFilename){
   do {
     uint64_t key, value, count;
     qfi_get(&qfi, &key, &value, &count);
-    string kmer=kmer::int_to_str(Ihasher.Ihash(key),ksize);
+    string kmer=Ihasher.Ihash(key);
     output<<kmer<<" "<<count<<"\n";
   } while(!qfi_next(&qfi));
 }

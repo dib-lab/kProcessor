@@ -58,17 +58,18 @@ public:
 
 class kDataFrame{
 protected:
-  vector<Hasher*> hashFunctions;
   uint64_t kSize;
-  bool autoResize;
+
 public:
   kDataFrame();
-  kDataFrame(double falsePositiveRate,uint8_t kSize);
+  kDataFrame(uint8_t kSize);
+
 
   virtual ~kDataFrame(){
 
   }
-  uint64_t hashKmer(string kmer);
+/// request a capacity change so that the kDataFrame can approximately at least n kmers
+  virtual void reserve (uint64_t n )=0;
 /// insert the kmer one time in the kDataFrame, or increment the kmer count if it is already exists.
 /*! Returns bool value indicating whether the kmer is inserted or not*/
   virtual bool insert(string kmer)=0;
@@ -97,7 +98,6 @@ The difference between setCount and insert is that setCount set the count to N n
 /// Returns the current maximum load factor for the kDataFrame.
   virtual float max_load_factor()=0;
 
-  virtual bool isFull()=0;
 
   virtual kDataFrameIterator begin()=0;
 
@@ -108,21 +108,17 @@ The difference between setCount and insert is that setCount set the count to N n
   uint64_t getkSize(){return kSize;}
   uint64_t setkSize(uint64_t k){kSize=k;}
 
-  inline string getCanonicalKmer(string kmer){
-    uint64_t kmerI = kmer::str_to_int(kmer);
-    uint64_t kmerIR = kmer::reverse_complement(kmerI, kSize);
-    uint64_t item;
-    if (kmer::compare_kmers(kmerI, kmerIR))
-      return kmer;
-    else
-      return kmer::int_to_str(kmerIR,kSize);
-  }
+
 
 };
 
 class kDataFrameMQF: public kDataFrame{
 private:
   QF* mqf;
+  Hasher* hasher;
+  double falsePositiveRate;
+  uint64_t hashbits;
+  uint64_t range;
   static bool isEnough(vector<uint64_t> histogram,uint64_t noSlots,uint64_t fixedSizeCounter,uint64_t slotSize);
 public:
   kDataFrameMQF();
@@ -136,6 +132,8 @@ public:
     qf_destroy(mqf);
     delete mqf;
   }
+  void reserve (uint64_t n);
+
   static uint64_t estimateMemory(uint64_t nslots,uint64_t slotSize,
     uint64_t fcounter, uint64_t tagSize);
 
@@ -159,19 +157,12 @@ public:
   uint64_t max_size();
   float load_factor();
   float max_load_factor();
-  bool isFull();
+
 
   void save(string filePath);
   static kDataFrame* load(string filePath);
 
   kDataFrameIterator begin();
-
-
-
-
-
-
-
 };
 
 // kDataFrameMAP _____________________________
@@ -185,6 +176,7 @@ public:
   kDataFrameMAP();
   kDataFrameMAP(uint64_t ksize);
 
+  void reserve (uint64_t n);
 
   inline bool kmerExist(string kmer);
 
@@ -192,21 +184,16 @@ public:
   bool insert(string kmer);
   bool insert(string kmer, uint64_t count);
   uint64_t count(string kmer);
-
-
   bool erase(string kmer);
 
   uint64_t size();
   uint64_t max_size();
   float load_factor();
   float max_load_factor();
-  bool isFull();
-
   kDataFrameIterator begin();
 
   void save(string filePath);
   static kDataFrame *load(string filePath);
-
 
     ~kDataFrameMAP() {
         this->MAP.clear();
