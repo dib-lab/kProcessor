@@ -70,6 +70,16 @@ kDataFrame(ksize){
   range=(1ULL<<hashbits);
 
 }
+kDataFrameMQF::kDataFrameMQF(uint64_t ksize):
+kDataFrame(ksize){
+  this->falsePositiveRate=0.0;
+  hasher=(new IntegerHasher(kSize));
+  hashbits=2*kSize;
+  range=(1ULL<<hashbits);
+  mqf=NULL;
+  reserve(10000);
+}
+
 kDataFrameMQF::kDataFrameMQF(QF* mqf,uint64_t ksize,double falsePositiveRate):
 kDataFrame(ksize)
 {

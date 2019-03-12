@@ -4,49 +4,53 @@
 #include <time.h>
 #include <stdint.h>
 #include <iostream>
+#include <vector>
 using namespace std;
 //add the new kDataframes here to be tested
-using MyTypes = ::testing::Types<kDataFrameMQF,kDataFrameMAP>;
-TYPED_TEST_SUITE(kDataFrameTest, MyTypes);
+// using MyTypes = ::testing::Types<kDataFrameMQF,kDataFrameMAP>;
+// TEST_P_SUITE(kDataFrameTest, MyTypes);
+//static vector<kDataFrame*> framesToBeTested;
 
-template<class T_kDataFrame>
-unordered_map<string,int> kDataFrameTest<T_kDataFrame>::kmers;
-
-template<class T_kDataFrame>
-void kDataFrameTest<T_kDataFrame>::SetUp() {
-  if(kmers.size()==0)
+vector<kDataFrame*> BuildTestFrames()
+{
+  vector<kDataFrame*> framesToBeTested;
+  vector<int> kSizes={21,31};
+  for(auto k:kSizes)
   {
-    srand (time(NULL));
-    int kSize=kFrame.getkSize();
-    int nKmers=100000;
-    uint64_t range=(1ULL<<kSize);
-    while(kmers.size() < nKmers)
-    {
-      uint64_t kmerInt=rand()%range;
-      string kmerStr=kmer::int_to_str(kmerInt,kSize);
-      uint64_t kmerCount=(rand()%1000)+1;
-      kmers[kmerStr]=kmerInt;
-    }
+    framesToBeTested.push_back(new kDataFrameMQF(k));
   }
+  for(auto k:kSizes)
+  {
+    framesToBeTested.push_back(new kDataFrameMAP(k));
+  }
+  return framesToBeTested;
 }
 
+INSTANTIATE_TEST_SUITE_P(testFrames,
+                        kDataFrameTest,
+                        ::testing::ValuesIn(BuildTestFrames()));
 
-TYPED_TEST(kDataFrameTest,emptykDataFrame)
+static  kmersGenerator kmersGen;
+
+
+TEST_P(kDataFrameTest,emptykDataFrame)
 {
 
-    kDataFrame* kframe=&this->kFrame;
+    kDataFrame* kframe=GetParam();
     EXPECT_EQ(kframe->empty(), true);
-    kframe->insert(this->kmers.begin()->first);
+    unordered_map<string,int>* kmers=kmersGen.getKmers((int)kframe->getkSize());
+    kframe->insert(kmers->begin()->first);
     EXPECT_EQ(kframe->empty(),false);
 }
 
-TYPED_TEST(kDataFrameTest,insertOneTime)
+TEST_P(kDataFrameTest,insertOneTime)
 {
 
-    kDataFrame* kframe=&this->kFrame;
+    kDataFrame* kframe=GetParam();
     EXPECT_EQ(kframe->empty(), true);
     int insertedKmers=0;
-    for(auto k:this->kmers)
+    unordered_map<string,int>* kmers=kmersGen.getKmers((int)kframe->getkSize());
+    for(auto k:*kmers)
     {
         kframe->insert(k.first);
         if(kframe->load_factor()>=kframe->max_load_factor()*0.8)
@@ -56,7 +60,7 @@ TYPED_TEST(kDataFrameTest,insertOneTime)
         insertedKmers++;
     }
     int checkedKmers=0;
-    for(auto k:this->kmers)
+    for(auto k:*kmers)
     {
         int c=kframe->count(k.first);
         EXPECT_GE(c,1);
@@ -69,13 +73,14 @@ TYPED_TEST(kDataFrameTest,insertOneTime)
 
 }
 
-TYPED_TEST(kDataFrameTest,insertNTimes)
+TEST_P(kDataFrameTest,insertNTimes)
 {
 
-    kDataFrame* kframe=&this->kFrame;
+    kDataFrame* kframe=GetParam();
     EXPECT_EQ(kframe->empty(), true);
+    unordered_map<string,int>* kmers=kmersGen.getKmers((int)kframe->getkSize());
     int insertedKmers=0;
-    for(auto k:this->kmers)
+    for(auto k:*kmers)
     {
         kframe->insert(k.first,k.second);
         if(kframe->load_factor()>=kframe->max_load_factor()*0.8)
@@ -85,7 +90,7 @@ TYPED_TEST(kDataFrameTest,insertNTimes)
         insertedKmers++;
     }
     int checkedKmers=0;
-    for(auto k:this->kmers)
+    for(auto k:*kmers)
     {
         int c=kframe->count(k.first);
         EXPECT_GE(c,k.second);
@@ -96,13 +101,14 @@ TYPED_TEST(kDataFrameTest,insertNTimes)
         checkedKmers++;
     }
 }
-TYPED_TEST(kDataFrameTest,eraseKmers)
+TEST_P(kDataFrameTest,eraseKmers)
 {
 
-    kDataFrame* kframe=&this->kFrame;
+    kDataFrame* kframe=GetParam();
     EXPECT_EQ(kframe->empty(), true);
+    unordered_map<string,int>* kmers=kmersGen.getKmers((int)kframe->getkSize());
     int insertedKmers=0;
-    for(auto k:this->kmers)
+    for(auto k:*kmers)
     {
         kframe->insert(k.first);
         if(kframe->load_factor()>=kframe->max_load_factor()*0.8)
@@ -112,7 +118,7 @@ TYPED_TEST(kDataFrameTest,eraseKmers)
         insertedKmers++;
     }
     int checkedKmers=0;
-    for(auto k:this->kmers)
+    for(auto k:*kmers)
     {
         if(checkedKmers%2==0)
           kframe->erase(k.first);
@@ -126,7 +132,7 @@ TYPED_TEST(kDataFrameTest,eraseKmers)
     }
 
     checkedKmers=0;
-    for(auto k:this->kmers)
+    for(auto k:*kmers)
     {
         int c=kframe->count(k.first);
         if(checkedKmers%2==0)
@@ -147,19 +153,20 @@ TYPED_TEST(kDataFrameTest,eraseKmers)
 }
 
 
-TYPED_TEST(kDataFrameTest,autoResize)
+TEST_P(kDataFrameTest,autoResize)
 {
 
-    kDataFrame* kframe=&this->kFrame;
+    kDataFrame* kframe=GetParam();
     EXPECT_EQ(kframe->empty(), true);
+    unordered_map<string,int>* kmers=kmersGen.getKmers((int)kframe->getkSize());
     int insertedKmers=0;
-    for(auto k:this->kmers)
+    for(auto k:*kmers)
     {
-        kframe->insert(k.first,k.second);        
+        kframe->insert(k.first,k.second);
         insertedKmers++;
     }
     int checkedKmers=0;
-    for(auto k:this->kmers)
+    for(auto k:*kmers)
     {
         int c=kframe->count(k.first);
         EXPECT_GE(c,k.second);

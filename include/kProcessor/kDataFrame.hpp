@@ -122,6 +122,7 @@ private:
   static bool isEnough(vector<uint64_t> histogram,uint64_t noSlots,uint64_t fixedSizeCounter,uint64_t slotSize);
 public:
   kDataFrameMQF();
+  kDataFrameMQF(uint64_t kSize);
   kDataFrameMQF(uint64_t ksize,uint8_t q,uint8_t fixedCounterSize,uint8_t tagSize
     ,double falsePositiveRate);
   kDataFrameMQF(QF* mqf,uint64_t ksize,double falsePositiveRate);
