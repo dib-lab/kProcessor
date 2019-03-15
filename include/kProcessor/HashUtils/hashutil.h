@@ -25,12 +25,16 @@
 #include <string>
 #include <stdlib.h>
 #include <stdint.h>
+#include <stdexcept>
 
 using namespace std;
 class Hasher{
 public:
 	virtual uint64_t hash(string key){return 0;};
 	virtual uint64_t hash(uint64_t key){return 0;};
+	virtual string Ihash(uint64_t key){
+		throw logic_error("Reverese Hash function is not/ cannot be implemented for this hash function.");
+	}
 	virtual Hasher* clone(){return this;};
 };
 class MumurHasher: public Hasher{

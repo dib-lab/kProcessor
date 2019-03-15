@@ -177,3 +177,32 @@ TEST_P(kDataFrameTest,autoResize)
         checkedKmers++;
     }
 }
+
+TEST_P(kDataFrameTest,iterateOverAllKmers)
+{
+
+    kDataFrame* kframe=GetParam();
+    EXPECT_EQ(kframe->empty(), true);
+    unordered_map<string,int>* kmers=kmersGen.getKmers((int)kframe->getkSize());
+    unordered_map<string,int> insertedKmers;
+    for(auto k:*kmers)
+    {
+      kframe->insert(k.first,k.second);
+      insertedKmers[k.first]+=k.second;
+      if(kframe->load_factor()>=kframe->max_load_factor()*0.8){
+        break;
+      }
+    }
+    int checkedKmers=0;
+    kDataFrameIterator it=kframe->begin();
+    while(it!=kframe->end())
+    {
+      string kmer=it.getKmer();
+      uint64_t count=it.getKmerCount();
+      ASSERT_EQ(count,insertedKmers[kmer]);
+      insertedKmers.erase(kmer);
+      it++;
+    }
+    EXPECT_EQ(insertedKmers.size(),0);
+
+}

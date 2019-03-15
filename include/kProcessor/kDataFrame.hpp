@@ -8,41 +8,123 @@
 
 using namespace std;
 
-class kmerRow{
-public:
-  string kmer;
-  uint64_t kmerHash;
-  uint64_t count;
-  uint64_t tag;
-};
+class kDataFrame;
+
 
 
 class _kDataFrameIterator{
 protected:
-  bool end;
-  kmerRow current;
+  uint64_t kSize;
 public:
-  _kDataFrameIterator(){
-    end=false;
-  }
-  virtual void operator ++ (int)=0;
-  virtual kmerRow operator * ()=0;
-  virtual bool isEnd(){return end;}
+  _kDataFrameIterator(){}
+  _kDataFrameIterator(uint64_t k):kSize(k){}
+  virtual _kDataFrameIterator& operator ++ (int)=0;
+  virtual _kDataFrameIterator* clone()=0;
+  virtual uint64_t getHashedKmer()=0;
+  virtual string getKmer()=0;
+  virtual uint64_t getKmerCount()=0;
+  virtual bool setKmerCount(uint64_t count)=0;
+  virtual bool operator ==(const _kDataFrameIterator& other)=0;
+  virtual bool operator !=(const _kDataFrameIterator& other)=0;
+  virtual ~_kDataFrameIterator(){};
+
 };
 
 class kDataFrameIterator{
 private:
+  kDataFrame* origin;
   _kDataFrameIterator* iterator;
 public:
-  kDataFrameIterator(_kDataFrameIterator* it){
+  kDataFrameIterator(){
+    iterator=NULL;
+  }
+  kDataFrameIterator(const kDataFrameIterator& other){
+    if(other.iterator!=NULL){
+      iterator=other.iterator->clone();
+      origin=other.origin;
+    }
+    else{
+      iterator=NULL;
+      origin=NULL;
+    }
+  }
+  kDataFrameIterator& operator= (const kDataFrameIterator& other){
+    if(other.iterator!=NULL){
+      iterator=other.iterator->clone();
+      origin=other.origin;
+    }
+    else{
+      iterator=NULL;
+      origin=NULL;
+    }
+    return *this;
+  }
+  kDataFrameIterator(_kDataFrameIterator* it,kDataFrame* o){
+    this->origin=o;
     iterator=it;
   }
-  void operator ++ (int){(*iterator)++;}
-  kmerRow operator * (){
-    return *(*iterator);
+/// Increment the iterator to the next kmer
+  kDataFrameIterator& operator ++ (int){
+    (*iterator)++;
+    return *this;
   }
-  bool isEnd(){
-    return iterator->isEnd();
+// /// Increment the iterator to the next kmer
+//   kDataFrameIterator operator ++ (int){
+//     kDataFrameIterator temp=*this;
+//     (*iterator)++;
+//     return temp;
+//   }
+// /// Compare the position of each iterator in the underlying datastructure.
+// /*! returns True when other points to kmer points to a further position than the current */
+//   bool operator <(const kDataFrameIterator& other){
+//     return *iterator < *other.iterator;
+//   }
+//   /// Compare the position of each iterator in the underlying datastructure.
+//   /*! returns True when other points to kmer points to a nerarer position than the current */
+//   bool operator >(const kDataFrameIterator& other){
+//     return *iterator > *other.iterator;
+//   }
+//   /// Compare the position of each iterator in the underlying datastructure.
+//   /*! returns True when other points to kmer points to a further or equal position than the current */
+//   bool operator <=(const kDataFrameIterator& other){
+//     return *iterator <= *other.iterator;
+//   }
+//   /// Compare the position of each iterator in the underlying datastructure.
+//   /*! returns True when other points to kmer points to a nearer or equal position than the current */
+//   bool operator >=(const kDataFrameIterator& other){
+//     return *iterator >= *other.iterator;
+//   }
+  /// Compare the position of each iterator in the underlying datastructure.
+  /*! returns True when current and other points to the same kmer */
+  bool operator ==(const kDataFrameIterator& other)
+  {
+    return *iterator == *other.iterator;
+  }
+  /// Compare the position of each iterator in the underlying datastructure.
+  /*! returns True when current and other points to different kmers */
+  bool operator !=(const kDataFrameIterator& other)
+  {
+    return *iterator != *other.iterator;
+  }
+  /// Returns the hash value of the current kmer
+  uint64_t getHashedKmer(){
+    return iterator->getHashedKmer();
+  };
+  /// Returns the current kmer
+  string getKmer(){
+    return iterator->getKmer();
+  }
+  /// Returns the count of the current kmer
+  uint64_t getKmerCount(){
+    return iterator->getKmerCount();
+  }
+  /// sets the count of the current kmer
+  bool setKmerCount(uint64_t count){
+    return iterator->setKmerCount(count);
+  }
+
+  ~kDataFrameIterator(){
+    delete iterator;
   }
 };
 
@@ -50,16 +132,45 @@ public:
 class kDataFrameMQFIterator:public _kDataFrameIterator{
 private:
   QFi* qfi;
+  Hasher* hasher;
 public:
-  kDataFrameMQFIterator(QF* mqf);
-  void operator ++ (int);
-  kmerRow operator * ();
+  kDataFrameMQFIterator(QF*,uint64_t kSize,Hasher* h);
+  kDataFrameMQFIterator(const kDataFrameMQFIterator&);
+  kDataFrameMQFIterator& operator ++ (int);
+  _kDataFrameIterator* clone();
+  uint64_t getHashedKmer();
+  string getKmer();
+  uint64_t getKmerCount();
+  bool setKmerCount(uint64_t count);
+  void endIterator();
+  bool operator ==(const _kDataFrameIterator& other);
+  bool operator !=(const _kDataFrameIterator& other);
+   ~kDataFrameMQFIterator();
+};
+
+class kDataFrameMAPIterator:public _kDataFrameIterator{
+private:
+  unordered_map<string, uint64_t>::iterator iterator;
+  Hasher* hasher;
+public:
+  kDataFrameMAPIterator(unordered_map<string, uint64_t>::iterator,uint64_t kSize);
+  kDataFrameMAPIterator(const kDataFrameMAPIterator&);
+  kDataFrameMAPIterator& operator ++ (int);
+  _kDataFrameIterator* clone();
+  uint64_t getHashedKmer();
+  string getKmer();
+  uint64_t getKmerCount();
+  bool setKmerCount(uint64_t count);
+  void endIterator();
+  bool operator ==(const _kDataFrameIterator& other);
+  bool operator !=(const _kDataFrameIterator& other);
+   ~kDataFrameMAPIterator();
 };
 
 class kDataFrame{
 protected:
   uint64_t kSize;
-
+  Hasher* hasher;
 public:
   kDataFrame();
   kDataFrame(uint8_t kSize);
@@ -98,8 +209,10 @@ The difference between setCount and insert is that setCount set the count to N n
 /// Returns the current maximum load factor for the kDataFrame.
   virtual float max_load_factor()=0;
 
-
+///Returns an iterator at the beginning of the kDataFrame
   virtual kDataFrameIterator begin()=0;
+///Returns an iterator at the end of the kDataFrame
+  virtual kDataFrameIterator end()=0;
 
   virtual void save(string filePath)=0;
   static kDataFrame* load(string filePath, string method);
@@ -113,13 +226,14 @@ The difference between setCount and insert is that setCount set the count to N n
 };
 
 class kDataFrameMQF: public kDataFrame{
+
 private:
   QF* mqf;
-  Hasher* hasher;
   double falsePositiveRate;
   uint64_t hashbits;
   uint64_t range;
   static bool isEnough(vector<uint64_t> histogram,uint64_t noSlots,uint64_t fixedSizeCounter,uint64_t slotSize);
+  friend class kDataframeMQF;
 public:
   kDataFrameMQF();
   kDataFrameMQF(uint64_t kSize);
@@ -164,6 +278,7 @@ public:
   static kDataFrame* load(string filePath);
 
   kDataFrameIterator begin();
+  kDataFrameIterator end();
 };
 
 // kDataFrameMAP _____________________________
@@ -192,6 +307,7 @@ public:
   float load_factor();
   float max_load_factor();
   kDataFrameIterator begin();
+  kDataFrameIterator end();
 
   void save(string filePath);
   static kDataFrame *load(string filePath);
