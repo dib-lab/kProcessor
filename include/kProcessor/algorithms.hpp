@@ -4,9 +4,11 @@
 #include <string>
 #include <gqf.hpp>
 #include "HashUtils/hashutil.h"
+#include "kDataFrame.hpp"
 #include <math.h>
 
 
+namespace kProcessor{
 void loadIntoMQF(std::string sequenceFilename, int k,int noThreads,Hasher *hasher,QF * memoryMQF,QF * diskMQF=NULL);
 
 void dumpMQF(QF * memoryMQF,int ksize,std::string outputFilename);
@@ -26,4 +28,6 @@ inline uint64_t estimateMemory(uint64_t nslots,uint64_t slotSize, uint64_t fcoun
      return ((nblocks)*(blocksize+8*(slotSize+fcounter+tagSize)))/1024;
 
    }
+kDataFrame* transform(kDataFrame* input,kmerRow (*fn)(kmerRow i));
+}
 #endif

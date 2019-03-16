@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <iostream>
 #include <vector>
+#include "algorithms.hpp"
 using namespace std;
 //add the new kDataframes here to be tested
 // using MyTypes = ::testing::Types<kDataFrameMQF,kDataFrameMAP>;
@@ -200,6 +201,41 @@ TEST_P(kDataFrameTest,iterateOverAllKmers)
       string kmer=it.getKmer();
       uint64_t count=it.getKmerCount();
       ASSERT_EQ(count,insertedKmers[kmer]);
+      insertedKmers.erase(kmer);
+      it++;
+    }
+    EXPECT_EQ(insertedKmers.size(),0);
+
+}
+
+
+TEST_P(kDataFrameTest,transformPlus10)
+{
+
+    kDataFrame* kframe=GetParam();
+    EXPECT_EQ(kframe->empty(), true);
+    unordered_map<string,int>* kmers=kmersGen.getKmers((int)kframe->getkSize());
+    unordered_map<string,int> insertedKmers;
+    for(auto k:*kmers)
+    {
+      kframe->insert(k.first,k.second);
+      insertedKmers[k.first]+=k.second;
+      if(kframe->load_factor()>=kframe->max_load_factor()*0.8){
+        break;
+      }
+    }
+    int checkedKmers=0;
+    kDataFrame* kframe2=kProcessor::transform(kframe,[](kmerRow k)
+    {
+      k.count+=10;
+      return k;
+    });
+    kDataFrameIterator it=kframe2->begin();
+    while(it!=kframe2->end())
+    {
+      string kmer=it.getKmer();
+      uint64_t count=it.getKmerCount();
+      ASSERT_EQ(count,insertedKmers[kmer]+10);
       insertedKmers.erase(kmer);
       it++;
     }

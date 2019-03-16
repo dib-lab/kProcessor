@@ -39,7 +39,7 @@ int estimateMemory_main(int argc, char *argv[]){
     slotSize=-(uint64_t)(log2(fpr))+1;
   }
 
-  estimateMemRequirement(input_files[0],
+  kProcessor::estimateMemRequirement(input_files[0],
       slotSize, tagSize,
      &res_noSlots, &res_fixedSizeCounter, &res_memory);
 

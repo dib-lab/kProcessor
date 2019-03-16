@@ -29,6 +29,6 @@ int dump_main(int argc, char *argv[]){
   QF qf;
   qf_read(&qf,input_file.c_str());
 
-  dumpMQF(&qf,k,outputKmers);
+  kProcessor::dumpMQF(&qf,k,outputKmers);
   return 0;
 }

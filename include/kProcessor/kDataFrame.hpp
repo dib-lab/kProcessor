@@ -1,3 +1,6 @@
+#ifndef _kDataFRAME_H_
+#define _kDataFRAME_H_
+
 #include <HashUtils/hashutil.h>
 #include <vector>
 #include <stdint.h>
@@ -10,7 +13,29 @@ using namespace std;
 
 class kDataFrame;
 
-
+class kmerRow{
+public:
+  string kmer;
+  uint64_t hashedKmer;
+  uint64_t count;
+  kmerRow(){
+    kmer="";
+    hashedKmer=0;
+    count=0;
+  }
+  kmerRow(string kmer,uint64_t hashedKmer,uint64_t count)
+  {
+    this->kmer=kmer;
+    this->hashedKmer=hashedKmer;
+    this->count=count;
+  }
+  kmerRow(const kmerRow& other)
+  {
+    kmer=other.kmer;
+    hashedKmer=other.hashedKmer;
+    count=other.count;
+  }
+};
 
 class _kDataFrameIterator{
 protected:
@@ -122,7 +147,12 @@ public:
   bool setKmerCount(uint64_t count){
     return iterator->setKmerCount(count);
   }
-
+  kmerRow operator*(){
+    return kmerRow(iterator->getKmer(),
+                   iterator->getHashedKmer(),
+                   iterator->getKmerCount()
+                  );
+  }
   ~kDataFrameIterator(){
     delete iterator;
   }
@@ -179,6 +209,9 @@ public:
   virtual ~kDataFrame(){
 
   }
+/// creates a new kDataframe using the same parameters as the current kDataFrame.
+/*! It is like clone but without copying the data */
+  virtual kDataFrame* getTwin()=0;
 /// request a capacity change so that the kDataFrame can approximately at least n kmers
   virtual void reserve (uint64_t n )=0;
 /// insert the kmer one time in the kDataFrame, or increment the kmer count if it is already exists.
@@ -187,6 +220,9 @@ public:
 /// insert the kmer N time in the kDataFrame, or increment the kmer count with N if it is already exists.
 /*! Returns bool value indicating whether the kmer is inserted or not*/
   virtual bool insert(string kmer,uint64_t N)=0;
+  /// insert the kmer in the kmer row time in the kDataFrame, or increment the kmer count with the count in the row if it is already exists.
+  /*! Returns bool value indicating whether the kmer is inserted or not*/
+  bool insert(kmerRow k);
 /// set the kmer's count to N time in the kDataFrame
 /*! Returns bool value indicating whether the kmer is inserted or not.
 The difference between setCount and insert is that setCount set the count to N no matter the previous kmer count was*/
@@ -219,7 +255,7 @@ The difference between setCount and insert is that setCount set the count to N n
 
 
   uint64_t getkSize(){return kSize;}
-  uint64_t setkSize(uint64_t k){kSize=k;}
+  void setkSize(uint64_t k){kSize=k;}
 
 
 
@@ -248,6 +284,8 @@ public:
     delete mqf;
   }
   void reserve (uint64_t n);
+
+  kDataFrame* getTwin();
 
   static uint64_t estimateMemory(uint64_t nslots,uint64_t slotSize,
     uint64_t fcounter, uint64_t tagSize);
@@ -291,7 +329,7 @@ private:
 public:
   kDataFrameMAP();
   kDataFrameMAP(uint64_t ksize);
-
+  kDataFrame* getTwin();
   void reserve (uint64_t n);
 
   inline bool kmerExist(string kmer);
@@ -316,3 +354,5 @@ public:
         this->MAP.clear();
     }
 };
+
+#endif

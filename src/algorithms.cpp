@@ -17,7 +17,7 @@ using namespace std;
 using namespace seqan;
 #define QBITS_LOCAL_QF 16
 
-
+namespace kProcessor{
 static inline void insertToLevels(uint64_t item,QF* local,QF* main,QF * diskMQF=NULL)
 {
   if(!qf_insert(main, item, 1,
@@ -288,4 +288,18 @@ void estimateMemRequirement(std::string ntcardFilename,
   }
 
 
+}
+
+kDataFrame* transform(kDataFrame* input,kmerRow (*fn)(kmerRow it)){
+  kDataFrame* res=input->getTwin();
+  kDataFrameIterator it=input->begin();
+  while(it!=input->end())
+  {
+    kmerRow newkmer=fn(*it);
+    res->insert(newkmer);
+    it++;
+  }
+  return res;
+
+}
 }

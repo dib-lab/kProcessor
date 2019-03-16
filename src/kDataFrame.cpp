@@ -137,6 +137,9 @@ bool kDataFrame::empty(){
   return this->size()==0;
 }
 
+bool kDataFrame::insert(kmerRow k){
+  return this->insert(k.kmer,k.count);
+}
 
 
 kDataFrame *kDataFrame::load(string filePath, string method) {
@@ -192,6 +195,11 @@ this->falsePositiveRate=falsePositiveRate;
   }
   hashbits=this->mqf->metadata->key_bits;
   range=(1ULL<<hashbits);
+}
+kDataFrame* kDataFrameMQF::getTwin(){
+  uint64_t q=log2(mqf->metadata->nslots);
+  return ((kDataFrame*)new kDataFrameMQF(kSize,q,mqf->metadata->fixed_counter_size,
+    mqf->metadata->tag_bits,falsePositiveRate));
 }
 
 void kDataFrameMQF::reserve(uint64_t n)
@@ -513,6 +521,9 @@ kDataFrame *kDataFrameMAP::load(string filePath) {
     }
     myfile.close();
     return KMAP;
+}
+kDataFrame* kDataFrameMAP::getTwin(){
+  return ((kDataFrame*)new kDataFrameMAP(kSize));
 }
 void kDataFrameMAP::reserve(uint64_t n)
 {
