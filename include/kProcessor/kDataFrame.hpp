@@ -2,7 +2,7 @@
 #include <vector>
 #include <stdint.h>
 #include "gqf.hpp"
-#include "KmerCounter/kmer.h"
+#include "Utils/kmer.h"
 #include <map>
 #include <unordered_map>
 

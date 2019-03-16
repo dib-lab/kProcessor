@@ -29,7 +29,8 @@ add_subdirectory(ThirdParty/MQF/)
 set(LIBRARY_NAME
     kProcessor
 )
-file(GLOB kProcessorLibSrc "src/*.cpp" "src/KmerCounter/*.cpp" "src/KmerDecoder/*.cpp" "src/HashUtils/*.cpp")
+file(GLOB kProcessorLibSrc "src/*.cpp" "src/KmerDecoder/*.cpp"
+"src/HashUtils/*.cpp" "src/Utils/*.cpp")
 
 
 add_library(${LIBRARY_NAME} STATIC

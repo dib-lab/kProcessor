@@ -19,7 +19,7 @@
  */
 
 #include "HashUtils/hashutil.h"
-#include "KmerCounter/kmer.h"
+#include "Utils/kmer.h"
 #include <iostream>
 using namespace std;
 	//-----------------------------------------------------------------------------

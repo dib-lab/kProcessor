@@ -1,6 +1,6 @@
-#include "KmerCounter/KmerCounter.hpp"
+#include "algorithms.hpp"
 #include <iostream>
-#include "KmerCounter/kmer.h"
+#include "Utils/kmer.h"
 #include <fstream>
 
 #include <seqan/seq_io.h>

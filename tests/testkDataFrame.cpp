@@ -1,5 +1,5 @@
 #include "../ThirdParty/catch.hpp"
-#include "../KmerCounter/KmerCounter.hpp"
+#include "../algorithms.hpp"
 #include <gqf.hpp>
 #include <stdint.h>
 #include <fstream>

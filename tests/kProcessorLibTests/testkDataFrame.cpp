@@ -1,5 +1,5 @@
 #include "testkDataframe.h"
-#include "KmerCounter/kmer.h"
+#include "Utils/kmer.h"
 #include <stdlib.h>
 #include <time.h>
 #include <stdint.h>
