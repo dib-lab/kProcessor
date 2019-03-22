@@ -321,7 +321,7 @@ bool kDataFrameMQF::isEnough(vector<uint64_t> histogram,uint64_t noSlots,uint64_
 
 
 bool kDataFrameMQF::setCount(string kmer,uint64_t count){
-  uint64_t hash=hasher->hash(kmer)% range;
+  uint64_t hash=hasher->hash(kmer)% mqf->metadata->range;
   uint64_t currentCount=qf_count_key(mqf,hash);
   if(currentCount>count){
     qf_remove(mqf,hash,currentCount-count,false,false);
@@ -332,14 +332,14 @@ bool kDataFrameMQF::setCount(string kmer,uint64_t count){
     }
     catch(overflow_error & e)
     {
-      reserve((1ULL<<mqf->metadata->nslots));
+      reserve(mqf->metadata->nslots);
       return setCount(kmer,count);
     }
   }
   return true;
 }
 bool kDataFrameMQF::insert(string kmer,uint64_t count){
-  uint64_t hash=hasher->hash(kmer)% range;
+  uint64_t hash=hasher->hash(kmer)% mqf->metadata->range;
   try{
   qf_insert(mqf,hash,count,true,true);
   }
@@ -351,26 +351,28 @@ bool kDataFrameMQF::insert(string kmer,uint64_t count){
   return true;
 }
 bool kDataFrameMQF::insert(string kmer){
-  uint64_t hash=hasher->hash(kmer)% range;
+  if(load_factor()>0.9)
+    reserve(mqf->metadata->nslots);
+  uint64_t hash=hasher->hash(kmer)% mqf->metadata->range;
   try{
-    qf_insert(mqf,hash,1,true,true);
+    qf_insert(mqf,hash,1,false,false);
   }
   catch(overflow_error & e)
   {
-    reserve((1ULL<<mqf->metadata->nslots));
+    reserve(mqf->metadata->nslots);
     return insert(kmer);
   }
   return true;
 }
 uint64_t kDataFrameMQF::count(string kmer){
-  uint64_t hash=hasher->hash(kmer)% range;
+  uint64_t hash=hasher->hash(kmer)% mqf->metadata->range;
   return qf_count_key(mqf,hash);
 }
 
 
 
 bool kDataFrameMQF::erase(string kmer){
-  uint64_t hash=hasher->hash(kmer)% range;
+  uint64_t hash=hasher->hash(kmer)% mqf->metadata->range;
   uint64_t currentCount=qf_count_key(mqf,hash);
 
   //qf_remove(mqf,hash,currentCount,true,true);

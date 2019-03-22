@@ -8,7 +8,7 @@
 #include "Utils/kmer.h"
 #include <map>
 #include <unordered_map>
-
+#include <iostream>
 using namespace std;
 
 class kDataFrame;
@@ -245,12 +245,16 @@ The difference between setCount and insert is that setCount set the count to N n
 /// Returns the current maximum load factor for the kDataFrame.
   virtual float max_load_factor()=0;
 
-///Returns an iterator at the beginning of the kDataFrame
+///Returns an iterator at the beginning of the kDataFrame.
   virtual kDataFrameIterator begin()=0;
-///Returns an iterator at the end of the kDataFrame
+///Returns an iterator at the end of the kDataFrame.
   virtual kDataFrameIterator end()=0;
 
   virtual void save(string filePath)=0;
+/// Returns the  hash function used by kDataframe.
+  Hasher* getHasher(){
+    return hasher;
+  };
   static kDataFrame* load(string filePath, string method);
 
 
@@ -267,7 +271,7 @@ private:
   QF* mqf;
   double falsePositiveRate;
   uint64_t hashbits;
-  uint64_t range;
+  __uint128_t range;
   static bool isEnough(vector<uint64_t> histogram,uint64_t noSlots,uint64_t fixedSizeCounter,uint64_t slotSize);
   friend class kDataframeMQF;
 public:
@@ -311,6 +315,10 @@ public:
   float load_factor();
   float max_load_factor();
 
+
+  QF* getMQF(){
+    return mqf;
+  }
 
   void save(string filePath);
   static kDataFrame* load(string filePath);

@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <iostream>
 #include <vector>
+#include <seqan/seq_io.h>
 #include "algorithms.hpp"
 using namespace std;
 //add the new kDataframes here to be tested
@@ -240,5 +241,37 @@ TEST_P(kDataFrameTest,transformPlus10)
       it++;
     }
     EXPECT_EQ(insertedKmers.size(),0);
+
+}
+
+
+TEST_P(kDataFrameTest,parsingTest)
+{
+  string fileName="test.noN.fastq";
+  kDataFrame* kframe=GetParam();
+  int kSize=kframe->getkSize();
+  kProcessor::parseSequences(fileName,1,kframe);
+  seqan::SeqFileIn seqIn(fileName.c_str());
+  seqan::StringSet<seqan::CharString> ids;
+  seqan::StringSet<seqan::CharString> reads;
+  int chunkSize=1000;
+  while(!atEnd(seqIn)){
+    clear(reads);
+    clear(ids);
+
+    seqan::readRecords(ids, reads, seqIn,chunkSize);
+    for(int j=0;j<length(reads);j++)
+    {
+      string seq=string((char*)seqan::toCString(reads[j]));
+      for(int i=0;i<seq.size()-kSize+1;i++)
+      {
+          string kmer=seq.substr(i,kSize);
+          ASSERT_GE(kframe->count(kmer),1);
+      }
+    }
+
+  }
+  seqan::close(seqIn);
+
 
 }

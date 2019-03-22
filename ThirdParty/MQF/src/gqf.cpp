@@ -1391,6 +1391,10 @@ static inline bool insert1(QF *qf, __uint128_t hash, bool lock, bool spin)
 
 	uint64_t fixed_count_max=((1ULL)<<qf->metadata->fixed_counter_size)-1;
 
+	if(hash_bucket_index > qf->metadata->xnslots){
+		throw std::out_of_range("Insert is called with hash index out of range");
+	}
+
 	if (lock) {
 		if(qf->mem->general_lock)
 			return false;

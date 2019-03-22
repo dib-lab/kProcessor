@@ -302,4 +302,29 @@ kDataFrame* transform(kDataFrame* input,kmerRow (*fn)(kmerRow it)){
   return res;
 
 }
+
+
+void parseSequences(string seqFileName,int nThreads,kDataFrame* output){
+//  if(dynamic_cast<kDataFrameMQF*>(output))
+//  {
+//    loadIntoMQF(seqFileName,output->getkSize(),nThreads, output->getHasher(),((kDataFrameMQF*)output)->getMQF(),NULL);
+//    return;
+//  }
+  FastqReaderSqueker reader(seqFileName);
+  deque<pair<string,string> > reads;
+  int k=output->getkSize();
+  while(!reader.isEOF())
+  {
+    reader.readNSeq(&reads,5000);
+    for(auto seqPair:reads)
+    {
+      string seq=seqPair.first;
+      for(int i=0;i<seq.size()-k+1;i++){
+        string kmer=seq.substr(i,k);
+        output->insert(kmer);
+      }
+    }
+    reads.clear();
+  }
+}
 }

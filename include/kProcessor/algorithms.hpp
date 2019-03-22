@@ -29,5 +29,7 @@ inline uint64_t estimateMemory(uint64_t nslots,uint64_t slotSize, uint64_t fcoun
 
    }
 kDataFrame* transform(kDataFrame* input,kmerRow (*fn)(kmerRow i));
+
+void parseSequences(string seqFileName,int nThreads,kDataFrame* output);
 }
 #endif
