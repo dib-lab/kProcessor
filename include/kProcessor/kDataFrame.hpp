@@ -12,6 +12,8 @@
 using namespace std;
 
 class kDataFrame;
+class kDataFrameMAP;
+
 
 class kmerRow{
 public:
@@ -35,6 +37,23 @@ public:
     hashedKmer=other.hashedKmer;
     count=other.count;
   }
+  bool operator < (kmerRow& other)
+  {
+    return hashedKmer<other.hashedKmer;
+  }
+  bool operator > ( kmerRow& other)
+  {
+    return hashedKmer>other.hashedKmer;
+  }
+  bool operator < (const kmerRow& other)
+  {
+    return hashedKmer<other.hashedKmer;
+  }
+  bool operator > (const kmerRow& other)
+  {
+    return hashedKmer>other.hashedKmer;
+  }
+
 };
 
 class _kDataFrameIterator{
@@ -181,9 +200,9 @@ public:
 class kDataFrameMAPIterator:public _kDataFrameIterator{
 private:
   unordered_map<string, uint64_t>::iterator iterator;
-  Hasher* hasher;
+  kDataFrameMAP* origin;
 public:
-  kDataFrameMAPIterator(unordered_map<string, uint64_t>::iterator,uint64_t kSize);
+  kDataFrameMAPIterator(unordered_map<string, uint64_t>::iterator,kDataFrameMAP* origin,uint64_t kSize);
   kDataFrameMAPIterator(const kDataFrameMAPIterator&);
   kDataFrameMAPIterator& operator ++ (int);
   _kDataFrameIterator* clone();
@@ -204,7 +223,6 @@ protected:
 public:
   kDataFrame();
   kDataFrame(uint8_t kSize);
-
 
   virtual ~kDataFrame(){
 
@@ -333,7 +351,6 @@ class kDataFrameMAP : public kDataFrame
 {
 private:
   unordered_map<string, uint64_t> MAP;
-
 public:
   kDataFrameMAP();
   kDataFrameMAP(uint64_t ksize);
@@ -355,6 +372,7 @@ public:
   kDataFrameIterator begin();
   kDataFrameIterator end();
 
+  uint64_t bucket(string kmer);
   void save(string filePath);
   static kDataFrame *load(string filePath);
 

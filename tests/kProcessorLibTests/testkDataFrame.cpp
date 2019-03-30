@@ -32,6 +32,36 @@ INSTANTIATE_TEST_SUITE_P(testFrames,
                         kDataFrameTest,
                         ::testing::ValuesIn(BuildTestFrames()));
 
+
+vector<string> fastqFiles={"test.noN.fastq","test2.noN.fastq","test2.noN.fastq"};
+INSTANTIATE_TEST_SUITE_P(testcounting,
+                         algorithmsTest,
+                        ::testing::Combine(
+                        ::testing::ValuesIn(BuildTestFrames()),
+                        ::testing::ValuesIn(fastqFiles)
+                      ));
+
+vector<vector<string> > setFunctionsTestInput={{"test.noN.fastq","test2.noN.fastq","test2.noN.fastq"}};
+
+vector<vector<kDataFrame*> > BuildTestFramesForSetFunctions()
+{
+  vector<vector<kDataFrame*> > framesToBeTested(2);
+  int k=31;
+  for(auto file:setFunctionsTestInput[0])
+  {
+    framesToBeTested[0].push_back(new kDataFrameMQF(k));
+    kProcessor::parseSequences(file,1,framesToBeTested[0].back());
+    framesToBeTested[1].push_back(new kDataFrameMAP(k));
+    kProcessor::parseSequences(file,1,framesToBeTested[1].back());
+  }
+  return framesToBeTested;
+}
+INSTANTIATE_TEST_SUITE_P(testSetFunctions,
+                         setFunctionsTest,
+                        ::testing::ValuesIn(BuildTestFramesForSetFunctions())
+                      );
+
+
 static  kmersGenerator kmersGen;
 
 
@@ -245,10 +275,10 @@ TEST_P(kDataFrameTest,transformPlus10)
 }
 
 
-TEST_P(kDataFrameTest,parsingTest)
+TEST_P(algorithmsTest,parsingTest)
 {
-  string fileName="test.noN.fastq";
-  kDataFrame* kframe=GetParam();
+  kDataFrame* kframe=get<0>(GetParam());
+  string fileName=get<1>(GetParam());
   int kSize=kframe->getkSize();
   kProcessor::parseSequences(fileName,1,kframe);
   seqan::SeqFileIn seqIn(fileName.c_str());
@@ -272,6 +302,54 @@ TEST_P(kDataFrameTest,parsingTest)
 
   }
   seqan::close(seqIn);
+}
+
+TEST_P(setFunctionsTest,unioinTest)
+{
+  vector<kDataFrame*> input=GetParam();
+  kDataFrame* unioinResult=kProcessor::kFrameUnion(input);
+  cout<<unioinResult->size()<<endl;
+  for(auto kframe:input)
+  {
+    auto it=kframe->begin();
+    while(it!=kframe->end())
+    {
+      int count=unioinResult->count((*it).kmer);
+      ASSERT_GE(count,((*it).count));
+      it++;
+    }
+  }
+
+}
+TEST_P(setFunctionsTest,intersectTest)
+{
+  vector<kDataFrame*> input=GetParam();
+
+  kDataFrame* unioinResult=kProcessor::kFrameIntersect(input);
+  auto it=unioinResult->begin();
+
+    // for(auto kframe:input)
+    // {
+    //   auto it=kframe->begin();
+    //   while(it!=kframe->end())
+    //   {
+    //   //  cout<<(*it).kmer<<endl;
+    //     it++;
+    //   }
+    //   //int count=kframe->count((*it).kmer);
+    // //  ASSERT_GE(count,((*it).count));
+    // }
+
+
+  while(it!=unioinResult->end())
+  {
+    for(auto kframe:input)
+    {
+      int count=kframe->count((*it).kmer);
+      ASSERT_GE(count,((*it).count));
+    }
+    it++;
+  }
 
 
 }

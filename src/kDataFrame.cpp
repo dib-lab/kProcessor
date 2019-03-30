@@ -10,6 +10,10 @@
 #include "algorithms.hpp"
 using namespace std;
 
+
+
+
+
 kDataFrameMQFIterator::kDataFrameMQFIterator(QF* mqf,uint64_t kSize,Hasher* h)
 :_kDataFrameIterator(kSize)
 {
@@ -69,9 +73,26 @@ void kDataFrameMQFIterator::endIterator(){
 }
 
 bool kDataFrameMQFIterator::operator ==(const _kDataFrameIterator& other){
+  if(qfi->current >= qfi->qf->metadata->xnslots &&
+    ((kDataFrameMQFIterator*)&other)->qfi->current >=
+     ((kDataFrameMQFIterator*)&other)->qfi->qf->metadata->xnslots )
+     return true;
+
   return qfi->current == ((kDataFrameMQFIterator*)&other)->qfi->current;
 }
 bool kDataFrameMQFIterator::operator !=(const _kDataFrameIterator& other){
+  if(qfi->current >= qfi->qf->metadata->xnslots &&
+    ((kDataFrameMQFIterator*)&other)->qfi->current >=
+     ((kDataFrameMQFIterator*)&other)->qfi->qf->metadata->xnslots )
+     return false;
+  if(qfi->current >= qfi->qf->metadata->xnslots &&
+    ((kDataFrameMQFIterator*)&other)->qfi->current <
+     ((kDataFrameMQFIterator*)&other)->qfi->qf->metadata->xnslots )
+     return true;
+  if(qfi->current < qfi->qf->metadata->xnslots &&
+       ((kDataFrameMQFIterator*)&other)->qfi->current >=
+        ((kDataFrameMQFIterator*)&other)->qfi->qf->metadata->xnslots )
+        return true;
   return qfi->current != ((kDataFrameMQFIterator*)&other)->qfi->current;
 }
 kDataFrameMQFIterator::~kDataFrameMQFIterator(){
@@ -79,16 +100,18 @@ kDataFrameMQFIterator::~kDataFrameMQFIterator(){
 }
 
 
-kDataFrameMAPIterator::kDataFrameMAPIterator(unordered_map<string,uint64_t>::iterator it,uint64_t kSize)
+kDataFrameMAPIterator::kDataFrameMAPIterator(unordered_map<string,uint64_t>::iterator it,kDataFrameMAP* origin,uint64_t kSize)
 :_kDataFrameIterator(kSize)
 {
   iterator=it;
+  this->origin=origin;
 }
 
 kDataFrameMAPIterator::kDataFrameMAPIterator(const kDataFrameMAPIterator& other):
 _kDataFrameIterator(other.kSize)
 {
   iterator=other.iterator;
+  this->origin=other.origin;
 }
 _kDataFrameIterator* kDataFrameMAPIterator::clone(){
   return new kDataFrameMAPIterator(*this);
@@ -99,8 +122,8 @@ kDataFrameMAPIterator& kDataFrameMAPIterator::operator ++ (int){
   return *this;
 }
 uint64_t kDataFrameMAPIterator::getHashedKmer(){
-  return 0;
-//to be fixed
+  return origin->getHasher()->hash(iterator->first);
+
 }
 string kDataFrameMAPIterator::getKmer(){
   return iterator->first;
@@ -145,6 +168,7 @@ bool kDataFrame::insert(kmerRow k){
 kDataFrame *kDataFrame::load(string filePath, string method) {
         if (!method.compare("MQF")) return kDataFrameMQF::load(filePath);
         else if (!method.compare("MAP")) return kDataFrameMAP::load(filePath);
+        else return NULL;
 }
 
 
@@ -418,15 +442,14 @@ kDataFrame* kDataFrameMQF::load(string filePath){
 }
 
 kDataFrameIterator kDataFrameMQF::begin(){
-    return *(new kDataFrameIterator(
+    return (kDataFrameIterator(
       (_kDataFrameIterator*)new kDataFrameMQFIterator(mqf,kSize,hasher),
       (kDataFrame*)this));
 }
 kDataFrameIterator kDataFrameMQF::end(){
   kDataFrameMQFIterator* it=new kDataFrameMQFIterator(mqf,kSize,hasher);
   it->endIterator();
-    return *(new kDataFrameIterator( (_kDataFrameIterator*)it,
-                                     (kDataFrame*)this));
+  return (kDataFrameIterator(it,(kDataFrame*)this));
 }
 
 
@@ -437,11 +460,12 @@ kDataFrameIterator kDataFrameMQF::end(){
 kDataFrameMAP::kDataFrameMAP(uint64_t ksize) {
     this->kSize = ksize;
     this->MAP=unordered_map<string,uint64_t>(1000);
-
+    hasher=new wrapperHasher<unordered_map<string,uint64_t>::hasher >(MAP.hash_function(),ksize);
 }
 kDataFrameMAP::kDataFrameMAP() {
     this->kSize = 23;
     this->MAP=unordered_map<string,uint64_t>(1000);
+    hasher=new wrapperHasher<unordered_map<string,uint64_t>::hasher >(MAP.hash_function(),kSize);
 }
 inline bool kDataFrameMAP::kmerExist(string kmerS) {
     return (this->MAP.find(kmer::canonicalKmer(kmerS)) == this->MAP.end()) ? 0 : 1;
@@ -468,6 +492,12 @@ uint64_t kDataFrameMAP::count(string kmerS)
 {
   return this->MAP[kmer::canonicalKmer(kmerS)];
 }
+
+uint64_t kDataFrameMAP::bucket(string kmerS)
+{
+  return this->MAP.bucket(kmer::canonicalKmer(kmerS));
+}
+
 
 bool kDataFrameMAP::erase(string kmerS)
 {
@@ -533,11 +563,11 @@ void kDataFrameMAP::reserve(uint64_t n)
 }
 kDataFrameIterator kDataFrameMAP::begin() {
   return *(new kDataFrameIterator(
-    (_kDataFrameIterator*)new kDataFrameMAPIterator(MAP.begin(),kSize),
+    (_kDataFrameIterator*)new kDataFrameMAPIterator(MAP.begin(),this,kSize),
     (kDataFrame*)this));
 }
 kDataFrameIterator kDataFrameMAP::end() {
   return *(new kDataFrameIterator(
-    (_kDataFrameIterator*)new kDataFrameMAPIterator(MAP.end(),kSize),
+    (_kDataFrameIterator*)new kDataFrameMAPIterator(MAP.end(),this,kSize),
     (kDataFrame*)this));
 }

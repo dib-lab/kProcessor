@@ -21,7 +21,10 @@
 #include "HashUtils/hashutil.h"
 #include "Utils/kmer.h"
 #include <iostream>
+#include <unordered_map>
 using namespace std;
+
+
 	//-----------------------------------------------------------------------------
 	// MurmurHash2, 64-bit versions, by Austin Appleby
 

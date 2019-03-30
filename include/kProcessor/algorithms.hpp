@@ -6,6 +6,8 @@
 #include "HashUtils/hashutil.h"
 #include "kDataFrame.hpp"
 #include <math.h>
+#include <vector>
+
 
 
 namespace kProcessor{
@@ -29,6 +31,14 @@ inline uint64_t estimateMemory(uint64_t nslots,uint64_t slotSize, uint64_t fcoun
 
    }
 kDataFrame* transform(kDataFrame* input,kmerRow (*fn)(kmerRow i));
+void merge(const vector<kDataFrame*>& input,kDataFrame* result,kmerRow (*fn)(vector<kmerRow>& i));
+
+//
+kDataFrame* kFrameUnion(const vector<kDataFrame*>& input);
+
+kDataFrame* kFrameIntersect(const vector<kDataFrame*>& input);
+//kDataFrame* kframeIntersect(vector<kDataFrame*> input);
+//kDataFrame* kframeDiff(vector<kDataFrame*> input);
 
 void parseSequences(string seqFileName,int nThreads,kDataFrame* output);
 }

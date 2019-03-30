@@ -13,6 +13,9 @@
 #include <math.h>
 #include <deque>
 #include <gqf.hpp>
+#include <queue>
+#include <functional>
+#include <limits>
 using namespace std;
 using namespace seqan;
 #define QBITS_LOCAL_QF 16
@@ -327,4 +330,103 @@ void parseSequences(string seqFileName,int nThreads,kDataFrame* output){
     reads.clear();
   }
 }
+
+
+struct CustomKmerRow
+{
+    bool operator()(const pair<kmerRow,int>& lhs, const pair<kmerRow,int>& rhs)
+    {
+        return lhs.first.hashedKmer > rhs.first.hashedKmer;
+    }
+};
+void merge(const vector<kDataFrame*>& input,kDataFrame* res,kmerRow (*fn)(vector<kmerRow>& i)){
+  priority_queue <pair<kmerRow,int>,vector<pair<kmerRow,int> > , CustomKmerRow  > Q;
+  vector<kDataFrameIterator> iterators(input.size());
+  for(int i=0;i<input.size();i++)
+  {
+    iterators[i]=input[i]->begin();
+    if(iterators[i]!=input[i]->end()){
+    //  cout<<i<<" "<<(*iterators[i]).hashedKmer<<endl;
+      Q.push(make_pair(*iterators[i],i));
+    }
+  }
+  vector<kmerRow> current(input.size());
+  while(Q.size()>0)
+  {
+    for(int i=0;i<current.size();i++)
+      current[i]=kmerRow();
+    pair<kmerRow,int> top=Q.top();
+    Q.pop();
+    iterators[top.second]++;
+    current[top.second]=top.first;
+  //  cout<<top.first.hashedKmer<<" "<<top.second<<endl;
+    if(iterators[top.second]!=input[top.second]->end())
+      Q.push(make_pair(*iterators[top.second],top.second));
+    while(Q.size()>0 && top.first.hashedKmer==Q.top().first.hashedKmer)
+    {
+      top=Q.top();
+      Q.pop();
+      current[top.second]=top.first;
+      iterators[top.second]++;
+      if(iterators[top.second]!=input[top.second]->end())
+        Q.push(make_pair(*iterators[top.second],top.second));
+    }
+
+    kmerRow newRow=fn(current);
+    res->insert(newRow);
+  }
+
+}
+kDataFrame* kFrameUnion(const vector<kDataFrame*>& input){
+  kDataFrame* res=input[0]->getTwin();
+  uint64_t numKmers=0;
+  for(auto kframe:input)
+  {
+    numKmers+=kframe->size();
+  }
+  res->reserve((uint64_t)((double)numKmers*0.75));
+  merge(input,res,[](vector<kmerRow>& input)->kmerRow {
+    kmerRow res;
+    for(int i=0;i<input.size();i++)
+    {
+      if(input[i].count!=0)
+      {
+        res.kmer=input[i].kmer;
+        res.hashedKmer=input[i].hashedKmer;
+      }
+      res.count+=input[i].count;
+    }
+    return res;
+  });
+  return res;
+}
+
+kDataFrame* kFrameIntersect(const vector<kDataFrame*>& input){
+  kDataFrame* res=input[0]->getTwin();
+  uint64_t numKmers=numeric_limits<uint64_t>::max();
+  for(auto kframe:input)
+  {
+    numKmers=min(numKmers,(uint64_t)kframe->size());
+  }
+  res->reserve((uint64_t)((double)numKmers*1.2));
+  merge(input,res,[](vector<kmerRow>& input)->kmerRow {
+    kmerRow res=input[0];
+  //  cout<<"Start"<<endl;
+  //  cout<<input[0].kmer<<endl;
+    for(int i=1;i<input.size();i++)
+    {
+      //cout<<input[i].kmer<<endl;
+      res.count=min(res.count,input[i].count);
+    }
+    if(res.count==0)
+      return kmerRow();
+    //cout<<res.count<<endl;
+    return res;
+  });
+  //cout<<"Size "<<res->size()<<endl;
+  return res;
+}
+
+//kDataFrame* intersect(vector<kDataFrame*> input);
+//kDataFrame* diff(vector<kDataFrame*> input);
 }

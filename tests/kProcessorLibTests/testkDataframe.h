@@ -7,8 +7,12 @@ using namespace std;
 
 
 class kDataFrameTest : public ::testing::TestWithParam<kDataFrame* >{
+};
 
+class algorithmsTest : public ::testing::TestWithParam<tuple<kDataFrame*,string> >{
+};
 
+class setFunctionsTest : public ::testing::TestWithParam<vector<kDataFrame*>  >{
 };
 
 class kmersGenerator{

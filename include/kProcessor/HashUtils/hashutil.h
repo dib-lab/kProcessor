@@ -26,6 +26,8 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdexcept>
+#include <unordered_map>
+#include "Utils/kmer.h"
 
 using namespace std;
 class Hasher{
@@ -58,6 +60,29 @@ public:
 	uint64_t hash(uint64_t key);
 	string Ihash(uint64_t key);
 };
+
+template<class hashFnType>
+class wrapperHasher: public Hasher{
+private:
+	hashFnType fn;
+	uint64_t kSize;
+public:
+	wrapperHasher(hashFnType fnn,uint64_t kSize)
+		:fn(fnn),kSize(kSize){}
+	Hasher* clone(){
+		return new wrapperHasher(fn,kSize);
+	}
+	uint64_t hash(string key){
+		return fn(key);
+	}
+
+	uint64_t hash(uint64_t key){
+		string kmerStr=kmer::int_to_str(key,kSize);
+		return fn(kmerStr);
+	}
+
+};
+
 
 
 
