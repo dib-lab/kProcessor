@@ -37,6 +37,8 @@ void merge(const vector<kDataFrame*>& input,kDataFrame* result,kmerRow (*fn)(vec
 kDataFrame* kFrameUnion(const vector<kDataFrame*>& input);
 
 kDataFrame* kFrameIntersect(const vector<kDataFrame*>& input);
+
+kDataFrame* kFrameDiff(const vector<kDataFrame*>& input);
 //kDataFrame* kframeIntersect(vector<kDataFrame*> input);
 //kDataFrame* kframeDiff(vector<kDataFrame*> input);
 

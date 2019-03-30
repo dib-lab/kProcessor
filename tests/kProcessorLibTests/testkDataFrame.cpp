@@ -308,7 +308,6 @@ TEST_P(setFunctionsTest,unioinTest)
 {
   vector<kDataFrame*> input=GetParam();
   kDataFrame* unioinResult=kProcessor::kFrameUnion(input);
-  cout<<unioinResult->size()<<endl;
   for(auto kframe:input)
   {
     auto it=kframe->begin();
@@ -319,29 +318,16 @@ TEST_P(setFunctionsTest,unioinTest)
       it++;
     }
   }
+  delete unioinResult;
 
 }
 TEST_P(setFunctionsTest,intersectTest)
 {
   vector<kDataFrame*> input=GetParam();
 
-  kDataFrame* unioinResult=kProcessor::kFrameIntersect(input);
-  auto it=unioinResult->begin();
-
-    // for(auto kframe:input)
-    // {
-    //   auto it=kframe->begin();
-    //   while(it!=kframe->end())
-    //   {
-    //   //  cout<<(*it).kmer<<endl;
-    //     it++;
-    //   }
-    //   //int count=kframe->count((*it).kmer);
-    // //  ASSERT_GE(count,((*it).count));
-    // }
-
-
-  while(it!=unioinResult->end())
+  kDataFrame* intersectResult=kProcessor::kFrameIntersect(input);
+  auto it=intersectResult->begin();
+  while(it!=intersectResult->end())
   {
     for(auto kframe:input)
     {
@@ -350,6 +336,28 @@ TEST_P(setFunctionsTest,intersectTest)
     }
     it++;
   }
+  delete intersectResult;
+
+}
+
+TEST_P(setFunctionsTest,differenceTest)
+{
+  vector<kDataFrame*> input=GetParam();
+
+  kDataFrame* diffResult=kProcessor::kFrameDiff(input);
+  auto it=diffResult->begin();
+  while(it!=diffResult->end())
+  {
+      int count=input[0]->count((*it).kmer);
+      ASSERT_EQ(count,((*it).count));
+      for(int i=1;i<input.size();i++)
+      {
+        int count=input[i]->count((*it).kmer);
+        ASSERT_EQ(count,0);
+      }
+      it++;
+  }
+  delete diffResult;
 
 
 }

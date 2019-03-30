@@ -427,6 +427,27 @@ kDataFrame* kFrameIntersect(const vector<kDataFrame*>& input){
   return res;
 }
 
+kDataFrame* kFrameDiff(const vector<kDataFrame*>& input){
+  kDataFrame* res=input[0]->getTwin();
+  merge(input,res,[](vector<kmerRow>& input)->kmerRow {
+    kmerRow res=input[0];
+    bool found=false;
+    for(int i=1;i<input.size();i++)
+    {
+      if(input[i].count>0)
+      {
+        found=true;
+        break;
+      }
+    }
+    if(found)
+      return kmerRow();
+    return res;
+  });
+  //cout<<"Size "<<res->size()<<endl;
+  return res;
+}
+
 //kDataFrame* intersect(vector<kDataFrame*> input);
 //kDataFrame* diff(vector<kDataFrame*> input);
 }
