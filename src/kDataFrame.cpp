@@ -12,7 +12,10 @@ using namespace std;
 
 
 
-
+inline bool fileExists(const std::string& name) {
+    ifstream f(name.c_str());
+    return f.good();
+}
 
 kDataFrameMQFIterator::kDataFrameMQFIterator(QF* mqf,uint64_t kSize,Hasher* h)
 :_kDataFrameIterator(kSize)
@@ -165,10 +168,13 @@ bool kDataFrame::insert(kmerRow k){
 }
 
 
-kDataFrame *kDataFrame::load(string filePath, string method) {
-        if (!method.compare("MQF")) return kDataFrameMQF::load(filePath);
-        else if (!method.compare("MAP")) return kDataFrameMAP::load(filePath);
-        else return NULL;
+kDataFrame *kDataFrame::load(string filePath) {
+  if(fileExists(filePath+".mqf"))
+    return kDataFrameMQF::load(filePath);
+  else if (fileExists(filePath+".map"))
+    return kDataFrameMAP::load(filePath);
+  else
+    throw std::runtime_error("Could not open kDataFrame file");
 }
 
 
@@ -218,6 +224,7 @@ this->falsePositiveRate=falsePositiveRate;
   hasher=(new MumurHasher(2038074761));
   }
   hashbits=this->mqf->metadata->key_bits;
+  hashbits=2*kSize;
   range=(1ULL<<hashbits);
 }
 kDataFrame* kDataFrameMQF::getTwin(){
@@ -418,7 +425,7 @@ float kDataFrameMQF::max_load_factor(){
 
 
 void kDataFrameMQF::save(string filePath){
-  filePath += ".mqf";
+  //filePath += ".mqf";
   ofstream file(filePath+".extra");
   file<<kSize<<endl;
   // uint64_t legendSize=tagsLegend.size();
@@ -430,7 +437,7 @@ void kDataFrameMQF::save(string filePath){
   //   it++;
   // }
   // file.close();
-  qf_serialize(mqf,(filePath).c_str());
+  qf_serialize(mqf,(filePath+".mqf").c_str());
 }
 kDataFrame* kDataFrameMQF::load(string filePath){
   ifstream file(filePath+".extra");
@@ -537,7 +544,6 @@ void kDataFrameMAP::save(string filePath) {
 
 kDataFrame *kDataFrameMAP::load(string filePath) {
     filePath += ".map";
-    cout << "[!] Loading " << filePath << endl;
     ifstream myfile(filePath);
     string key, value;
 

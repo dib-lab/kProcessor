@@ -273,7 +273,7 @@ The difference between setCount and insert is that setCount set the count to N n
   Hasher* getHasher(){
     return hasher;
   };
-  static kDataFrame* load(string filePath, string method);
+  static kDataFrame* load(string filePath);
 
 
   uint64_t getkSize(){return kSize;}

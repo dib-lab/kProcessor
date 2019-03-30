@@ -239,6 +239,51 @@ TEST_P(kDataFrameTest,iterateOverAllKmers)
 
 }
 
+string gen_random(const int len) {
+    static const char alphanum[] =
+        "0123456789"
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        "abcdefghijklmnopqrstuvwxyz";
+    string s="";
+    for (int i = 0; i < len; ++i) {
+        s+= alphanum[rand() % (sizeof(alphanum) - 1)];
+    }
+
+    return s;
+}
+
+TEST_P(kDataFrameTest,saveAndIterateOverAllKmers)
+{
+
+    kDataFrame* kframe=GetParam();
+    EXPECT_EQ(kframe->empty(), true);
+    unordered_map<string,int>* kmers=kmersGen.getKmers((int)kframe->getkSize());
+    unordered_map<string,int> insertedKmers;
+    for(auto k:*kmers)
+    {
+      kframe->insert(k.first,k.second);
+      insertedKmers[k.first]+=k.second;
+      if(kframe->load_factor()>=kframe->max_load_factor()*0.8){
+        break;
+      }
+    }
+    string fileName="tmp.kdataframe."+gen_random(4);
+    kframe->save(fileName);
+    kDataFrame* kframeLoaded=kDataFrame::load(fileName);
+    int checkedKmers=0;
+    kDataFrameIterator it=kframeLoaded->begin();
+    while(it!=kframeLoaded->end())
+    {
+      string kmer=it.getKmer();
+      uint64_t count=it.getKmerCount();
+      ASSERT_EQ(count,insertedKmers[kmer]);
+      insertedKmers.erase(kmer);
+      it++;
+    }
+    EXPECT_EQ(insertedKmers.size(),0);
+
+}
+
 
 TEST_P(kDataFrameTest,transformPlus10)
 {
