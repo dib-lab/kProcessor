@@ -1,3 +1,10 @@
+/**
+ * @file algorithms.hpp
+ *
+ * Algorithms to help the calculations on the kDataframes using the Functional programming paradigm..
+ *
+ */
+
 #ifndef KmerCounter_HPP
 #define KmerCounter_HPP
 #include <stdint.h>
@@ -30,18 +37,30 @@ inline uint64_t estimateMemory(uint64_t nslots,uint64_t slotSize, uint64_t fcoun
      return ((nblocks)*(blocksize+8*(slotSize+fcounter+tagSize)))/1024;
 
    }
+
+/// Load the kmers in the input file into the output kDataframe. Input File can be of formats: fastq,fasta, sam, and bam.
+void parseSequences(string seqFileName,int nThreads,kDataFrame* output);
+
+/// Applies a function on all the kmers in the input kDataframe. The output is another kDataframe with the transformed kmers.
 kDataFrame* transform(kDataFrame* input,kmerRow (*fn)(kmerRow i));
+
+/*! Merge the a list of kDataframes into a one.
+ *
+ * The Input is a list of kDataframes and a function to decide how to merge the kmers. The merged kmers will be inserted into the result kDataframe.
+ * The function to decide the merging behavior takes a list of kmerRows,all have the same kmer hashedKmer, as an input and output one kmer row to be inserted in the result kDataFrame. If the returned kmer row has count equal zero nothing to be inserted.
+ * The function will be called repeatedly through merging. This function is used to implement the set functions.
+ */
 void merge(const vector<kDataFrame*>& input,kDataFrame* result,kmerRow (*fn)(vector<kmerRow>& i));
 
-//
+/// Calculate the union of the kDataFrames. The result kDataframe will have all the kmers in the input list of kDataframes. The count of the kmers equals to the sum of the kmer count in the input list.
 kDataFrame* kFrameUnion(const vector<kDataFrame*>& input);
 
+/// Calculate the intersect of the kDataFrames. The result kDataframe will have only kmers that exists in all the kDataframes. The count of the kmers equals to the minimum of the kmer count in the input list.
 kDataFrame* kFrameIntersect(const vector<kDataFrame*>& input);
 
+/// Calculate the difference of the kDataframes. The result kDataframe will have only kmers that exists in the first kDataframe and not in any of the rest input kDataframes. The count of the kmers equals to the count in the first kDataframe.
 kDataFrame* kFrameDiff(const vector<kDataFrame*>& input);
-//kDataFrame* kframeIntersect(vector<kDataFrame*> input);
-//kDataFrame* kframeDiff(vector<kDataFrame*> input);
 
-void parseSequences(string seqFileName,int nThreads,kDataFrame* output);
+
 }
 #endif
