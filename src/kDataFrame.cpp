@@ -406,7 +406,7 @@ bool kDataFrameMQF::erase(string kmer){
   uint64_t hash=hasher->hash(kmer)% mqf->metadata->range;
   uint64_t currentCount=qf_count_key(mqf,hash);
 
-  //qf_remove(mqf,hash,currentCount,true,true);
+  qf_remove(mqf,hash,currentCount,false,false);
   return true;
 }
 
