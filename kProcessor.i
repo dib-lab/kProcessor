@@ -19,7 +19,14 @@ using namespace std; // Extremly important
 
 /******** kDataFrame Interface ************/
 %include "swig_interfaces/kDataFrame/kDataFrameIterator.i"
+%include "swig_interfaces/kDataFrame/kmerRow.i"
 %include "swig_interfaces/kDataFrame/kDataFrame.i"
 %include "swig_interfaces/kDataFrame/kDataFrameMQF.i"
 %include "swig_interfaces/kDataFrame/kDataFrameMAP.i"
+
+%{
+#include "algorithms.hpp" // including algorithms
+%}
+
+%include "swig_interfaces/algorithms/parseSequences.i"
 /******** END kDataFrame ************/

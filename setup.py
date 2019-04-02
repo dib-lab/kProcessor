@@ -6,10 +6,11 @@ os.environ["CC"] = "g++"
 
 src_files = glob(os.path.join('src', '*', '*cpp'))
 src_files += glob("src/kDataFrame.cpp")
+src_files += glob("src/algorithms.cpp")
 src_files += ["kProcessor_wrap.cxx"]
 
 includes = ["include/kProcessor", "ThirdParty/CLI",
-            "ThirdParty/MQF/include", "ThirdParty/seqan/include"]
+            "ThirdParty/MQF/include", "ThirdParty/seqan/include", "ThirdParty/TBB/include"]
 
 kProcessor_module = Extension(name='_kProcessor',
                               library_dirs=['ThirdParty/MQF/build/',
