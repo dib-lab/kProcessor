@@ -28,5 +28,7 @@ using namespace std; // Extremly important
 #include "algorithms.hpp" // including algorithms
 %}
 
-%include "swig_interfaces/algorithms/parseSequences.i"
+%template(kFramesVector) vector<kDataFrame*>; /*vector to tuple conversion*/
+
+%include "swig_interfaces/algorithms/algorithms.i"
 /******** END kDataFrame ************/
