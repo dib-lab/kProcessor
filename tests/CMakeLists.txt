@@ -5,7 +5,7 @@ include(ExternalProject)
 
 # Download and install GoogleTest
 ExternalProject_Add(
-    gtest
+    gtest2
     URL https://github.com/google/googletest/archive/master.zip
     PREFIX ${CMAKE_CURRENT_BINARY_DIR}/gtest
     # Disable install step
@@ -13,11 +13,11 @@ ExternalProject_Add(
 )
 
 # Get GTest source and binary directories from CMake project
-ExternalProject_Get_Property(gtest source_dir binary_dir)
+ExternalProject_Get_Property(gtest2 source_dir binary_dir)
 
 # Create a libgtest target to be used as a dependency by test programs
 add_library(libgtest IMPORTED STATIC GLOBAL)
-add_dependencies(libgtest gtest)
+add_dependencies(libgtest gtest2)
 
 # Set libgtest properties
 set_target_properties(libgtest PROPERTIES
@@ -27,7 +27,7 @@ set_target_properties(libgtest PROPERTIES
 
 # Create a libgmock target to be used as a dependency by test programs
 add_library(libgmock IMPORTED STATIC GLOBAL)
-add_dependencies(libgmock gtest)
+add_dependencies(libgmock gtest2)
 
 # Set libgmock properties
 set_target_properties(libgmock PROPERTIES

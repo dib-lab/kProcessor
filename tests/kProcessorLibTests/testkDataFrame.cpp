@@ -7,11 +7,66 @@
 #include <vector>
 #include <seqan/seq_io.h>
 #include "algorithms.hpp"
+#include <iterator>
+#include <algorithm>
+
+
+#include <set>
 using namespace std;
-//add the new kDataframes here to be tested
-// using MyTypes = ::testing::Types<kDataFrameMQF,kDataFrameMAP>;
-// TEST_P_SUITE(kDataFrameTest, MyTypes);
-//static vector<kDataFrame*> framesToBeTested;
+
+
+INSTANTIATE_TEST_SUITE_P(testcolorsTable,
+                         colorsTableTest,
+                        ::testing::Combine(
+                        ::testing::Values("bitVector"),
+                        ::testing::Values(10,20,100),
+                        ::testing::Values(10,100,1000)
+                      ));
+void colorsTableTest::SetUp(){
+  uint64_t numSamples=get<1>(GetParam());
+  uint64_t numColors=get<2>(GetParam());
+  for(int i=1;i<=numColors;i++)
+  {
+    int n=rand()%(numSamples*2);
+    set<uint32_t> colors;
+    colors.clear();
+    for(int j=0;j<n;j++)
+    {
+      colors.insert(rand()%numSamples);
+    }
+    vector<uint32_t> colorsVec;
+    colorsVec.clear();
+    copy(colors.begin(),colors.end(),back_inserter(colorsVec));
+    simColors[i]=colorsVec;
+  }
+}
+colorTable* createColorTables(string name,uint64_t numSamples,uint64_t numColors)
+{
+  if(name=="bitVector")
+    return new BitVectorsTable(numSamples);
+  return NULL;
+}
+
+
+TEST_P(colorsTableTest,insertAndQuery)
+{
+  string colorTableName=get<0>(GetParam());
+  uint64_t numSamples=get<1>(GetParam());
+  uint64_t numColors=get<2>(GetParam());
+  colorTable* table=createColorTables(colorTableName,numSamples,numColors);
+  for(int i=1;i<=numColors;i++)
+  {
+    table->setColor(i,simColors[i]);
+  }
+  for(auto it:simColors)
+  {
+    vector<uint32_t> res;
+    res.clear();
+    table->getSamples(it.first,res);
+    EXPECT_EQ(res,it.second);
+  }
+}
+
 
 vector<kDataFrame*> BuildTestFrames()
 {

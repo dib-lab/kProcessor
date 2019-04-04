@@ -17,13 +17,13 @@ enable_testing()
 
 
 include_directories("ThirdParty/CLI")
-#include_directories("include/kProcessor")
 include_directories("ThirdParty/MQF/include")
-
-
+include_directories("ThirdParty/json")
+include_directories("ThirdParty/sdsl-lite/include")
 
 
 add_subdirectory(ThirdParty/MQF/)
+add_subdirectory(ThirdParty/sdsl-lite/)
 
 
 set(LIBRARY_NAME
@@ -38,7 +38,7 @@ add_library(${LIBRARY_NAME} STATIC
     )
 target_link_libraries(kProcessor lMQF)
 target_link_libraries (kProcessor ${SEQAN_LIBRARIES})
-
+target_link_libraries(kProcessor sdsl)
 
 target_include_directories(${LIBRARY_NAME} PRIVATE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/${LIBRARY_NAME}>

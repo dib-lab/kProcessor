@@ -1,0 +1,3 @@
+[submodule "ThirdParty/sdsl-lite"]
+	path = ThirdParty/sdsl-lite
+	url = https://github.com/simongog/sdsl-lite
