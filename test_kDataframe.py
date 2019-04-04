@@ -221,13 +221,10 @@ class TestKDataFrame(unittest.TestCase):
         kframe_kmers_counts = set()
 
         it = union_kFrame.begin()
-        print(inserted_counts1)
-        print(inserted_counts2)
 
         while(it != union_kFrame.end()):
             count = it.getKmerCount()
             kframe_kmers_counts.add(count)
-            print(count)
             it.next()
 
         self.assertEqual(len(kframe_kmers_counts), len(inserted_counts1.union(inserted_counts2)))
@@ -245,18 +242,10 @@ class TestKDataFrame(unittest.TestCase):
 
         # Create random kmers list
         kmers_list1 = generate_kmers(kSize, kmers_no=20)
-        inserted_kmers1 = set([kmer[0] for kmer in kmers_list1])
-
         kmers_list2 = generate_kmers(kSize, kmers_no=10)
 
         # Replicate some kmers from kmers_list1 in kmers_list2 to make sure len(intersection) > 0
         kmers_list2 += kmers_list1[0:10]
-
-        inserted_kmers2= set([kmer[0] for kmer in kmers_list2])
-
-        print(kmers_list1)
-        print("--------------------------------")
-        print(kmers_list2)
 
         # Inserting Kmers
         for kmer in kmers_list1:
@@ -269,6 +258,37 @@ class TestKDataFrame(unittest.TestCase):
         intersect_kFrame = kp.kFrameIntersect(kFrames_vec)
 
         self.assertGreater(intersect_kFrame.size(), 1)
+
+
+    def test_differenceTest(self):
+        print(self._testMethodName)
+        kSize = 31
+
+        # Empty kDataFrames
+        ## auto binding to vector<kDataFrame*>
+        kFrames_vec = [kp.kDataFrameMQF(kSize), kp.kDataFrameMQF(kSize)]
+
+        self.assertTrue(kFrames_vec[0].empty())
+        self.assertTrue(kFrames_vec[1].empty())
+
+        # Create random kmers list
+        kmers_list1 = generate_kmers(kSize, kmers_no=20)
+        kmers_list2 = generate_kmers(kSize, kmers_no=10)
+
+        # Replicate some kmers from kmers_list1 in kmers_list2 to make sure len(intersection) > 0
+        kmers_list2 += kmers_list1[0:10]
+
+        # Inserting Kmers
+        for kmer in kmers_list1:
+            self.assertTrue(kFrames_vec[0].insert(kmer[0], kmer[1]))
+
+        for kmer in kmers_list2:
+            self.assertTrue(kFrames_vec[1].insert(kmer[0], kmer[1]))
+
+        # Apply kFrameIntersect
+        diff_kFrame = kp.kFrameIntersect(kFrames_vec)
+
+        self.assertGreater(diff_kFrame.size(), 1)
 
 
 
