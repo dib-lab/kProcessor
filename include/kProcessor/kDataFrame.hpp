@@ -37,6 +37,17 @@ public:
     hashedKmer=other.hashedKmer;
     count=other.count;
   }
+
+  kmerRow copy(const kmerRow& other)
+  {
+    return * (new kmerRow(other));
+  }
+
+  bool operator==(kmerRow &other)
+  {
+    return hashedKmer == other.hashedKmer;
+  }
+
   bool operator < (kmerRow& other)
   {
     return hashedKmer<other.hashedKmer;
