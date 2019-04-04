@@ -37,6 +37,12 @@ public:
     return *this;
   }
 
+/// IMPLEMENTED ONLY IN SWIG PYTHON INTERFACE
+  kDataFrameIterator& next(){
+    (*iterator)++;
+    return *this;
+  }
+
 
   /// Compare the position of each iterator in the underlying datastructure.
   /*! returns True when current and other points to the same kmer */

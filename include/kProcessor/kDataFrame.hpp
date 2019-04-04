@@ -112,6 +112,13 @@ public:
     (*iterator)++;
     return *this;
   }
+
+  /// Increment the iterator to the next kmer (Implemented mainly for python interface)
+  kDataFrameIterator& next(){
+    (*iterator)++;
+    return *this;
+  }
+
 // /// Increment the iterator to the next kmer
 //   kDataFrameIterator operator ++ (int){
 //     kDataFrameIterator temp=*this;
