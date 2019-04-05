@@ -147,7 +147,6 @@ setup(name='kProcessor',
       long_description_content_type='text/markdown',
       long_description=readme,
       classifiers=classifiers,
-      #data_files=[('kProcessor', DEPENDENTS)],
       include_package_data=True,
       project_urls={
         'Bug Reports': 'https://github.com/dib-lab/kProcessor/issues',
