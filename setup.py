@@ -148,8 +148,3 @@ setup(name='kProcessor',
         'Source': 'https://github.com/dib-lab/kProcessor',
         },
       )
-
-
-print("\n" * 4)
-print("--" * 5)
-print("ENJOY USING\n %s" % KPROCESSOR)
