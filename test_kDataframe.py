@@ -14,7 +14,7 @@ def generate_kmers(kSize, kmers_no):
 
 class TestKDataFrame(unittest.TestCase):
 
-    fastqFiles = ["testData/test.noN.fastq", "testData/test2.noN.fastq", "testData/test2.noN.fastq"]
+    fastqFiles = ["tests/testData/test.noN.fastq", "tests/testData/test2.noN.fastq", "tests/testData/test2.noN.fastq"]
 
     def test_emptykDataFrame(self):
         print(self._testMethodName)
