@@ -41,17 +41,11 @@ SOURCES = [
     'src/KmerDecoder/FastqReader.cpp',
     'ThirdParty/MQF/src/gqf.cpp',
     'ThirdParty/MQF/src/utils.cpp',
+    'swig_interfaces/kProcessor.i',
 ]
 
-if find_executable('swig'):
-    SOURCES.append('swig_interfaces/kProcessor.i')
-elif os.path.exists('kProcessor_wrap.cpp'):
-    SOURCES.append('kProcessor_wrap.cpp')
-else:
-    print("Error:  Building this module requires either that swig is installed\n"
-          "        (e.g., 'sudo apt install swig') or that wiringpi_wrap.c from the\n"
-          "        source distribution (on pypi) is available.")
-    sys.exit(1)
+if not find_executable('swig'):
+    sys.exit("Error:  Building this module requires 'swig' to be installed")
 
 
 INCLUDES = [
