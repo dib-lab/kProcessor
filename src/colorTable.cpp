@@ -175,6 +175,42 @@ void BitVectorsTable::save(string prefix)
     sdsl::store_to_file(color, bv_file.c_str());
   }
 }
+
+colorTableInv::colorTableInv(){
+
+}
+colorTableInv::~colorTableInv(){
+
+}
+
+stringColorTableInv::stringColorTableInv(){
+
+}
+stringColorTableInv::~stringColorTableInv(){
+
+}
+uint64_t stringColorTableInv::getColorId(vector<uint32_t>& combination)
+{
+
+  return table[getKey(combination)];
+
+}
+string stringColorTableInv::getKey(vector<uint32_t>& combination)
+{
+  string key="";
+  for(auto i:combination)
+  {
+    key+=std::to_string(i)+";";
+  }
+  return key;
+}
+
+
+void stringColorTableInv::setColorId(uint64_t colorID,vector<uint32_t>& combination)
+{  
+  table[getKey(combination)]=colorID;
+}
+
 //
 // static unique_ptr<samplesCombination> samplesCombination::load(ifstream& input){
 //   uint8_t code;

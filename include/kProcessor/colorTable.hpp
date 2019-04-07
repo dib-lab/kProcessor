@@ -18,6 +18,25 @@ public:
 
 };
 
+class colorTableInv{
+public:
+  colorTableInv();
+  virtual ~colorTableInv();
+  virtual uint64_t getColorId(vector<uint32_t>& )=0;
+  virtual void setColorId(uint64_t colorID,vector<uint32_t>& v)=0;
+};
+
+class stringColorTableInv: public colorTableInv{
+private:
+  unordered_map<string,uint64_t> table;
+  string getKey(vector<uint32_t>&);
+public:
+  stringColorTableInv();
+  ~stringColorTableInv();
+  uint64_t getColorId(vector<uint32_t>& );
+  void setColorId(uint64_t colorID,vector<uint32_t>& v);
+};
+
 // this class is copied and edited from mantis project
 //https://github.com/splatlab/mantis
 class BitVectorsTable: public colorTable{

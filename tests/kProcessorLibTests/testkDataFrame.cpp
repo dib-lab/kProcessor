@@ -482,6 +482,54 @@ TEST_P(setFunctionsTest,differenceTest)
       it++;
   }
   delete diffResult;
+}
 
+vector<colorTableInv*> BuildColorTableInv()
+{
+  vector<colorTableInv*> tablesToBeTested;
+  tablesToBeTested.push_back(new stringColorTableInv());
+  return tablesToBeTested;
+}
+
+void colorsTableInvTest::SetUp(){
+  for(int i=1;i<=numColors;i++)
+  {
+    int n=rand()%(numSamples*2)+1;
+    set<uint32_t> colors;
+    colors.clear();
+    for(int j=0;j<n;j++)
+    {
+      colors.insert(rand()%numSamples);
+    }
+    vector<uint32_t> colorsVec;
+    colorsVec.clear();
+    copy(colors.begin(),colors.end(),back_inserter(colorsVec));
+    simColors[i]=colorsVec;
+  }
+}
+
+INSTANTIATE_TEST_SUITE_P(testcolorsTableInvTest,
+                        colorsTableInvTest,
+                        ::testing::ValuesIn(BuildColorTableInv()));
+
+
+TEST_P(colorsTableInvTest,setAndGet)
+{
+    colorTableInv* table=GetParam();
+    for(int i=1;i<=numColors;i++)
+    {
+      if(table->getColorId(simColors[i])==0)
+        table->setColorId(i,simColors[i]);
+      else{
+        simColors.erase(i);
+      }
+    }
+    for(auto it:simColors)
+    {
+      vector<uint32_t> res;
+      res.clear();
+      uint64_t colorId =table->getColorId(it.second);
+      EXPECT_EQ(colorId,it.first);
+    }
 
 }

@@ -20,6 +20,13 @@ class colorsTableTest : public ::testing::TestWithParam<tuple<string, uint64_t,u
     virtual void SetUp();
 };
 
+class colorsTableInvTest : public ::testing::TestWithParam<colorTableInv* >{
+public:
+  const uint64_t numColors=10000;
+  const uint64_t numSamples=1000;  
+  unordered_map<uint64_t,vector<uint32_t> > simColors;
+  virtual void SetUp();
+};
 
 class setFunctionsTest : public ::testing::TestWithParam<vector<kDataFrame*>  >{
 };
