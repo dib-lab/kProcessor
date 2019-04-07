@@ -67,6 +67,30 @@ TEST_P(colorsTableTest,insertAndQuery)
   }
 }
 
+TEST_P(colorsTableTest,saveAndLoad)
+{
+  string colorTableName=get<0>(GetParam());
+  uint64_t numSamples=get<1>(GetParam());
+  uint64_t numColors=get<2>(GetParam());
+  colorTable* table=createColorTables(colorTableName,numSamples,numColors);
+  for(int i=1;i<=numColors;i++)
+  {
+    table->setColor(i,simColors[i]);
+  }
+  string fileName="colorTable.test";
+  table->save(fileName);
+  delete table;
+  colorTable* loadedTable=colorTable::load(fileName);
+  for(auto it:simColors)
+  {
+    vector<uint32_t> res;
+    res.clear();
+    loadedTable->getSamples(it.first,res);
+    EXPECT_EQ(res,it.second);
+  }
+  delete loadedTable;
+}
+
 
 vector<kDataFrame*> BuildTestFrames()
 {

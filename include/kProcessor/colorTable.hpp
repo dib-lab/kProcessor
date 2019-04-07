@@ -9,7 +9,7 @@ class colorTable{
 public:
   colorTable();
   virtual ~colorTable();
-  static bool load(string folderName);
+  static colorTable* load(string folderName);
   virtual bool getSamples(uint64_t colorID,vector<uint32_t>& res)=0;
   virtual bool setColor(uint64_t colorID,vector<uint32_t>& v)=0;
   virtual void save(string folderName)=0;

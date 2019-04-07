@@ -7,8 +7,16 @@
 using nlohmann::json;
 using namespace std;
 
-bool colorTable::load(string folderName){
-
+colorTable* colorTable::load(string prefix){
+  string configFilename=prefix+"colorTableConfig.json";
+  ifstream configStream(configFilename);
+  json config;
+  configStream>>config;
+  configStream.close();
+  string type=config["Type"];
+  if(type=="BitVectorsTable")
+    return new BitVectorsTable(prefix);
+  throw std::logic_error("Unknown color table file type ="+ type);
 }
 BitVectorsTable::BitVectorsTable(uint64_t numSamples)
 {
@@ -24,12 +32,15 @@ BitVectorsTable::BitVectorsTable(string prefix){
   configStream>>config;
   configStream.close();
   numSamples=config["numSamples"];
-  std::vector<std::string> eqclass_files = kProcessor::utils::GetFilesExt(prefix.c_str(),
-                                                                   "_eqclass_rrr.mqf.cls");
+  int counter=0;
+  string fileName=prefix +"."+ std::to_string(counter) + ".cls.eqclass_rrr";
   std::map<int, std::string> sorted_files;
-  for (std::string file : eqclass_files) {
-    int id = std::stoi(kProcessor::utils::first_part(kProcessor::utils::last_part(file, '/'), '_'));
-    sorted_files[id] = file;
+  while(kProcessor::utils::FileExists(fileName))
+  {
+
+    sorted_files[counter] = fileName;
+    counter++;
+    fileName=prefix +"."+ std::to_string(counter) + ".cls.eqclass_rrr";
   }
   eqclasses.reserve(sorted_files.size());
   uint32_t num_serializations=0;
@@ -111,7 +122,8 @@ bool BitVectorsTable::getSamples(uint64_t colorID,vector<uint32_t>& res)
             res.push_back(sCntr);
           }
     bucket_offset += len;
-  }  
+  }
+
   return true;
 
 }
@@ -158,8 +170,8 @@ void BitVectorsTable::save(string prefix)
   int currentBuffer=0;
   for(auto color: eqclasses)
   {
-    std::string bv_file(prefix + std::to_string(currentBuffer++)
-    + "_eqclass_rrr.mqf.cls");
+    std::string bv_file(prefix +"."+ std::to_string(currentBuffer++)
+    + ".cls.eqclass_rrr");
     sdsl::store_to_file(color, bv_file.c_str());
   }
 }

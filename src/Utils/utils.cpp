@@ -74,4 +74,20 @@ std::string first_part(std::string str, char c) {
 	uint64_t found = str.find_first_of(c);
 	return str.substr(0, found);
 }
+
+// copied from mantis
+// Taken from
+// http://stackoverflow.com/questions/12774207/fastest-way-to-check-if-a-file-exist-using-standard-c-c11-c
+bool FileExists(std::string Spath) {
+	const char* path=Spath.c_str();
+	struct stat fileStat;
+	if (stat(path, &fileStat)) {
+		return false;
+	}
+	if (!S_ISREG(fileStat.st_mode)) {
+		return false;
+	}
+	return true;
+}
+
 }

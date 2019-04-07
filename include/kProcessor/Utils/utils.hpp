@@ -12,6 +12,7 @@ bool has_suffix(const std::string& s, const std::string& suffix);
 std::vector<std::string> GetFilesExt(const char *dir, const char *ext);
 std::string last_part(std::string str, char c);
 std::string first_part(std::string str, char c);
+bool FileExists(std::string);
 }
 
 #endif
