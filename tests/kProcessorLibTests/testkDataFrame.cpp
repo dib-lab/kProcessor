@@ -18,7 +18,7 @@ using namespace std;
 INSTANTIATE_TEST_SUITE_P(testcolorsTable,
                          colorsTableTest,
                         ::testing::Combine(
-                        ::testing::Values("bitVector"),
+                        ::testing::Values("bitVector","intVector"),
                         ::testing::Values(10,20,100),
                         ::testing::Values(10,100,1000)
                       ));
@@ -44,6 +44,8 @@ colorTable* createColorTables(string name,uint64_t numSamples,uint64_t numColors
 {
   if(name=="bitVector")
     return new BitVectorsTable(numSamples);
+  if(name=="intVector")
+      return new intVectorsTable();
   return NULL;
 }
 
@@ -531,5 +533,98 @@ TEST_P(colorsTableInvTest,setAndGet)
       uint64_t colorId =table->getColorId(it.second);
       EXPECT_EQ(colorId,it.first);
     }
+
+}
+
+INSTANTIATE_TEST_SUITE_P(testIndexing,
+                        indexingTest,
+                        ::testing::Values("test1.fa"));
+
+
+TEST_P(indexingTest,index)
+{
+  string filename=GetParam();
+  colored_kDataFrame* res= kProcessor::index(filename,filename+".names",25);
+
+  seqan::SeqFileIn seqIn2(filename.c_str());
+  seqan::StringSet<seqan::CharString> ids;
+  seqan::StringSet<seqan::CharString> reads;
+  uint64_t kSize=res->getkSize();
+  int chunkSize=1000;
+  int readCount=0;
+  int correct=0,wrong=0;
+  vector<uint32_t> colors;
+  string kmer;
+  while(!atEnd(seqIn2)){
+    clear(reads);
+    clear(ids);
+    seqan::readRecords(ids, reads, seqIn2,chunkSize);
+    for(int j=0;j<length(reads);j++){
+      string readName=string((char*)seqan::toCString(ids[j]));
+      uint32_t sampleID=res->namesMapInv[readName];
+      ASSERT_NE(sampleID,0);
+
+
+      string seq=string((char*)seqan::toCString(reads[j]));
+      if(seq.size()<kSize)
+        continue;
+      for (int i = 0; i < seq.size() - kSize + 1; i++)
+      {
+        kmer=seq.substr(i,kSize);
+        colors.clear();
+        res->getSamplesIDForKmer(kmer,colors);
+        ASSERT_NE(colors.size(),0);
+        auto colorIt=colors.end();
+        colorIt=find(colors.begin(),colors.end(),sampleID);
+        ASSERT_NE(colorIt,colors.end());
+
+      }
+    }
+
+  }
+
+}
+TEST_P(indexingTest,saveAndLoad)
+{
+  string filename=GetParam();
+  colored_kDataFrame* res1= kProcessor::index(filename,filename+".names",25);
+  res1->save("tmp.coloredKdataFrame");
+  colored_kDataFrame* res=colored_kDataFrame::load("tmp.coloredKdataFrame");
+  seqan::SeqFileIn seqIn2(filename.c_str());
+  seqan::StringSet<seqan::CharString> ids;
+  seqan::StringSet<seqan::CharString> reads;
+  uint64_t kSize=res->getkSize();
+  int chunkSize=1000;
+  int readCount=0;
+  int correct=0,wrong=0;
+  vector<uint32_t> colors;
+  string kmer;
+  while(!atEnd(seqIn2)){
+    clear(reads);
+    clear(ids);
+    seqan::readRecords(ids, reads, seqIn2,chunkSize);
+    for(int j=0;j<length(reads);j++){
+      string readName=string((char*)seqan::toCString(ids[j]));
+      uint32_t sampleID=res->namesMapInv[readName];
+      ASSERT_NE(sampleID,0);
+
+
+      string seq=string((char*)seqan::toCString(reads[j]));
+      if(seq.size()<kSize)
+        continue;
+      for (int i = 0; i < seq.size() - kSize + 1; i++)
+      {
+        kmer=seq.substr(i,kSize);
+        colors.clear();
+        res->getSamplesIDForKmer(kmer,colors);
+        ASSERT_NE(colors.size(),0);
+        auto colorIt=colors.end();
+        colorIt=find(colors.begin(),colors.end(),sampleID);
+        ASSERT_NE(colorIt,colors.end());
+
+      }
+    }
+
+  }
 
 }

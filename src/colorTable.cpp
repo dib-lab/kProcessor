@@ -16,6 +16,8 @@ colorTable* colorTable::load(string prefix){
   string type=config["Type"];
   if(type=="BitVectorsTable")
     return new BitVectorsTable(prefix);
+  if(type=="intVectorsTable")
+      return new intVectorsTable(prefix);
   throw std::logic_error("Unknown color table file type ="+ type);
 }
 BitVectorsTable::BitVectorsTable(uint64_t numSamples)
@@ -207,9 +209,78 @@ string stringColorTableInv::getKey(vector<uint32_t>& combination)
 
 
 void stringColorTableInv::setColorId(uint64_t colorID,vector<uint32_t>& combination)
-{  
+{
   table[getKey(combination)]=colorID;
 }
+
+
+
+intVectorsTable::intVectorsTable(string folderName){
+  string configFilename=folderName+"colorTableConfig.json";
+  ifstream configStream(configFilename);
+  json config;
+  configStream>>config;
+  configStream.close();
+  numSamples=config["numSamples"];
+
+  string inputFilename=folderName+"colors.intvectors";
+  ifstream input(inputFilename);
+  uint32_t size;
+  input>>size;
+  colors=std::unordered_map<uint64_t, std::vector<uint32_t> >(size);
+  for(int i=0;i<size;i++)
+  {
+    uint64_t color,colorSize;
+    input>>color>>colorSize;
+    uint32_t sampleID;
+    colors[color]=std::vector<uint32_t>(colorSize);
+    for(int j=0;j<colorSize;j++)
+    {
+      input>>sampleID;
+      colors[color][j]=sampleID;
+    }
+  }
+
+}
+//BitVectorsTable(vector<string> fileNames,uint64_t numSamples);
+intVectorsTable::~intVectorsTable(){
+
+}
+bool intVectorsTable::getSamples(uint64_t colorID,vector<uint32_t>& res){
+  auto it=colors.find(colorID);
+  if(it ==colors.end())
+    return false;
+  res=colors[colorID];
+  return true;
+}
+bool intVectorsTable::setColor(uint64_t colorID,vector<uint32_t>& v){
+  colors[colorID]=v;
+  return true;
+}
+void intVectorsTable::save(string folderName){
+  json config={
+    {"Type","intVectorsTable"},
+    {"numSamples" ,numSamples},
+    {"numColors", numColors}
+  };
+  string configFilename=folderName+"colorTableConfig.json";
+  ofstream configStream(configFilename);
+  configStream<<config;
+  configStream.close();
+
+  string outputFilename=folderName+"colors.intvectors";
+  ofstream output(outputFilename);
+  output<<colors.size()<<endl;
+  for(auto it:colors)
+  {
+    output<<it.first<<" "<<it.second.size();
+    for(auto i:it.second)
+      output<<" "<<i;
+    output<<endl;
+  }
+  output.close();
+}
+
 
 //
 // static unique_ptr<samplesCombination> samplesCombination::load(ifstream& input){

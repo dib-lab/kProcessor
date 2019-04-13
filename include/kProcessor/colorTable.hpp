@@ -56,6 +56,20 @@ private:
   uint64_t nCurrentColors;
 };
 
+
+class intVectorsTable: public colorTable{
+public:
+  intVectorsTable(){}  
+  intVectorsTable(string folderName);
+  //BitVectorsTable(vector<string> fileNames,uint64_t numSamples);
+  virtual ~intVectorsTable();
+  bool getSamples(uint64_t colorID,vector<uint32_t>& res)override;
+  bool setColor(uint64_t colorID,vector<uint32_t>& v)override;
+  void save(string folderName)override;
+private:
+  std::unordered_map<uint64_t, std::vector<uint32_t> > colors;
+};
+
 // class samplesCombination{
 // public:
 //   samplesCombination(){}

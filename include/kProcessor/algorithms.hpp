@@ -14,6 +14,7 @@
 #include "kDataFrame.hpp"
 #include <math.h>
 #include <vector>
+#include "colored_kDataFrame.hpp"
 
 
 
@@ -41,6 +42,9 @@ inline uint64_t estimateMemory(uint64_t nslots,uint64_t slotSize, uint64_t fcoun
 /// Load the kmers in the input file into the output kDataframe. Input File can be of formats: fastq,fasta, sam, and bam.
 void parseSequences(string seqFileName,int nThreads,kDataFrame* output);
 
+/// Load the kmers in the input string into the output kDataframe.
+void parseSequencesFromString(string sequence,kDataFrame* output);
+
 /// Applies a function on all the kmers in the input kDataframe. The output is another kDataframe with the transformed kmers.
 kDataFrame* transform(kDataFrame* input,kmerRow (*fn)(kmerRow i));
 
@@ -60,6 +64,8 @@ kDataFrame* kFrameIntersect(const vector<kDataFrame*>& input);
 
 /// Calculate the difference of the kDataframes. The result kDataframe will have only kmers that exists in the first kDataframe and not in any of the rest input kDataframes. The count of the kmers equals to the count in the first kDataframe.
 kDataFrame* kFrameDiff(const vector<kDataFrame*>& input);
+
+colored_kDataFrame* index(string seqFileName,string namesFiles,uint64_t kSize);
 
 
 }
