@@ -1,0 +1,15 @@
+# Include the README
+include *.md
+
+# Include the license file
+include LICENSE
+
+# Include the headers files
+recursive-include ThirdParty/MQF/include *
+recursive-include ThirdParty/MQF/include *
+recursive-include ThirdParty/seqan/include/seqan *
+recursive-include include *
+
+
+# Include SWIG interfaces
+recursive-include swig_interfaces *
