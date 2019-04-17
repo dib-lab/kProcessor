@@ -7,6 +7,9 @@ include LICENSE
 # Include the headers files
 recursive-include ThirdParty/MQF/include *
 recursive-include ThirdParty/MQF/include *
+recursive-include ThirdParty/json *
+recursive-include ThirdParty/sdsl-lite/include *
+#include sdsl-lite/build/lib/libsdsl.a
 recursive-include ThirdParty/seqan/include/seqan *
 recursive-include include *
 

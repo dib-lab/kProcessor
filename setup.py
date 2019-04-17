@@ -33,10 +33,14 @@ try:
 except IOError:
     readme = ''
 
+
 SOURCES = [
     'src/algorithms.cpp',
     'src/kDataFrame.cpp',
+    'src/colorTable.cpp',
+    'src/colored_kDataFrame.cpp',
     'src/Utils/kmer.cpp',
+    'src/Utils/utils.cpp',
     'src/HashUtils/hashutil.cpp',
     'src/KmerDecoder/FastqReader.cpp',
     'ThirdParty/MQF/src/gqf.cpp',
@@ -47,17 +51,20 @@ SOURCES = [
 if not find_executable('swig'):
     sys.exit("Error:  Building this module requires 'swig' to be installed")
 
+v = "build4/ThirdParty/sdsl-lite/"
+L = v
 
 INCLUDES = [
+    L + 'include',
     'include/kProcessor',
     'ThirdParty/CLI',
     'ThirdParty/MQF/include',
     'ThirdParty/seqan/include',
     'ThirdParty/TBB/include',
+    'ThirdParty/json',
 ]
 
 COMPILE_ARGS = [
-    '-Wall',
     "-lgomp",
     '-Wextra',
     '-std=c++14',
@@ -65,6 +72,8 @@ COMPILE_ARGS = [
     '-fopenmp',
     '-W',
     '-Wall',
+    '-O3',
+    '-O2',
     '-pedantic',
     '-lrt',
     '-lpthread',
@@ -73,25 +82,30 @@ COMPILE_ARGS = [
     '-DSEQAN_HAS_ZLIB=1',
     '-DSEQAN_HAS_BZIP2=1',
     '-DSEQAN_HAS_OPENMP=1',
-    "-DSEQAN_HAS_EXECINFO=1"
+    "-DSEQAN_HAS_EXECINFO=1",
 ]
 
 LINK_ARGS = [
     "-fopenmp",
     "-lgomp",
     "-lbz2",
+    "-lz",
 ]
 
+    
+
+
 LIBRARIES_DIRS = [
-    '/usr/lib/x86_64-linux-gnu/'
+    L + "lib",
 ]
 
 LIBRARIES = [
+    'sdsl',
     'z',
 ]
 
 SWIG_OPTS = [
-    '-DSWIGWORDSIZE64',
+    #'-DSWIGWORDSIZE64',
     '-c++',
     '-py3',
     '-outdir',
@@ -109,13 +123,13 @@ class CustomBuild(build):
 
 
 kProcessor_module = Extension('_kProcessor',
+                          library_dirs=LIBRARIES_DIRS,
+                          libraries=LIBRARIES,
                           sources=SOURCES,
                           include_dirs=INCLUDES,
-      #                    library_dirs=LIBRARIES_DIRS,
-                          libraries=LIBRARIES,
                           extra_compile_args=COMPILE_ARGS,
                           extra_link_args=LINK_ARGS,
-                          swig_opts=SWIG_OPTS,                          
+                          swig_opts=SWIG_OPTS,
                           )
 
 classifiers = [

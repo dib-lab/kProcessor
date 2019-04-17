@@ -13,6 +13,14 @@ using namespace std; // Extremly important
 %import stdint.i            /*This mainly used for converting python int to C++ uint64_t*/
 %include std_string.i       /*And this for converting python str to C++ std::string*/
 
+/*  ~~~~DISABLED FOR NOW~~~~~~  */
+/*  ~~~~UNCOMMENT TO ENABLE namesMap interface~~~~  */
+/*  ~~~~WORKS ONLY IN SWIG4.0 ~~~~  */
+//%include std_unordered_map.i
+//%template(MAPsi) unordered_map<uint32_t, std::string>;
+//%template(MAPis) unordered_map<std::string, uint32_t>;
+
+
 /*Just copy/paste the snippet I'm interested in to be wrapped!*/
 
 // no need to include subclasses if all their methods (that we are interested in) are defined in the superclass
@@ -23,6 +31,26 @@ using namespace std; // Extremly important
 %include "swig_interfaces/kDataFrame/kDataFrame.i"
 %include "swig_interfaces/kDataFrame/kDataFrameMQF.i"
 %include "swig_interfaces/kDataFrame/kDataFrameMAP.i"
+/******** kDataFrame Interface ************/
+
+
+/******** colored_kDataFrame Interface ************/
+
+%{
+#include "colored_kDataFrame.hpp"
+%}
+%include "swig_interfaces/colored_kDataFrame.i"
+
+/******** colored_kDataFrame Interface ************/
+
+/******** colorTable Interface ************/
+
+%{
+#include "colorTable.hpp"
+%}
+%include "swig_interfaces/colorTable.i"
+
+/******** colorTable Interface ************/
 
 %{
 #include "algorithms.hpp" // including algorithms
