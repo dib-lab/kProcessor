@@ -16,8 +16,8 @@ import os
 
 print(sys.argv)
 
-if sys.version_info[:2] < (3, 5) or sys.version_info[:2] > (3, 6):
-    raise RuntimeError("Python version == 3.6 required.")
+if sys.version_info[:2] < (3, 5) or sys.version_info[:2] > (3, 7):
+    raise RuntimeError("Python version == (3.6 | 3.7) required.")
 
 if os.path.exists('MANIFEST'):
     os.remove('MANIFEST')
@@ -139,6 +139,7 @@ classifiers = [
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.6",
+    "Programming Language :: Python :: 3.7",
 ]
 
 setup(name='kProcessor',
@@ -149,7 +150,7 @@ setup(name='kProcessor',
       ext_modules=[kProcessor_module],
       py_modules=['kProcessor'],
       url='https://github.com/dib-lab/kProcessor',
-      python_requires='>=3.6, <3.7',
+      python_requires='>=3.6, <=3.7',
       cmdclass={'build': CustomBuild},
       license='BSD 3-Clause',
       long_description_content_type='text/markdown',
