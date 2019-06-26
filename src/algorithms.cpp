@@ -632,8 +632,8 @@ colored_kDataFrame* index(string input_file,string names_fileName,uint64_t kSize
   res->setkDataFrame(frame);
   for(auto iit=namesMap.begin(); iit!=namesMap.end();iit++){
     uint32_t sampleID=groupNameMap[iit->second];
-    res->namesMap[sampleID]=iit->first;
-    res->namesMapInv[iit->first]=sampleID;
+    res->namesMap[sampleID]=iit->second;
+    res->namesMapInv[iit->second]=sampleID;
   }
   return res;
 
