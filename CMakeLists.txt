@@ -12,6 +12,8 @@ cmake_minimum_required (VERSION 3.0.0)
 # Name of project and that it is C/C++.
 project (kProcessor C CXX)
 
+# IMPORTANT == -FPIC #SDSL-LINKING
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 enable_testing()
 
@@ -38,6 +40,8 @@ add_library(${LIBRARY_NAME} STATIC
     )
 target_link_libraries(kProcessor lMQF)
 target_link_libraries (kProcessor ${SEQAN_LIBRARIES})
+
+#set_property(TARGET sdsl PROPERTY POSITION_INDEPENDENT_CODE ON)
 target_link_libraries(kProcessor sdsl)
 
 target_include_directories(${LIBRARY_NAME} PRIVATE

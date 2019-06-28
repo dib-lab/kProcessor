@@ -35,54 +35,23 @@ except IOError:
 
 
 SOURCES = [
-    'src/algorithms.cpp',
-    'src/kDataFrame.cpp',
-    'src/colorTable.cpp',
-    'src/colored_kDataFrame.cpp',
-    'src/Utils/kmer.cpp',
-    'src/Utils/utils.cpp',
-    'src/HashUtils/hashutil.cpp',
-    'src/KmerDecoder/FastqReader.cpp',
-    'ThirdParty/MQF/src/gqf.cpp',
-    'ThirdParty/MQF/src/utils.cpp',
     'swig_interfaces/kProcessor.i',
 ]
 
 if not find_executable('swig'):
     sys.exit("Error:  Building this module requires 'swig' to be installed")
 
-v = "build4/ThirdParty/sdsl-lite/"
-L = v
+
 
 INCLUDES = [
-    L + 'include',
     'include/kProcessor',
-    'ThirdParty/CLI',
+#    'include/',
+#    'ThirdParty/CLI',
     'ThirdParty/MQF/include',
-    'ThirdParty/seqan/include',
-    'ThirdParty/TBB/include',
-    'ThirdParty/json',
-]
-
-COMPILE_ARGS = [
-    "-lgomp",
-    '-Wextra',
-    '-std=c++14',
-    '-fPIC',
-    '-fopenmp',
-    '-W',
-    '-Wall',
-    '-O3',
-    '-O2',
-    '-pedantic',
-    '-lrt',
-    '-lpthread',
-    '-lbz2',
-    '-lz',
-    '-DSEQAN_HAS_ZLIB=1',
-    '-DSEQAN_HAS_BZIP2=1',
-    '-DSEQAN_HAS_OPENMP=1',
-    "-DSEQAN_HAS_EXECINFO=1",
+#    'ThirdParty/seqan/include',
+#    'ThirdParty/TBB/include',
+#    'ThirdParty/json',
+    'ThirdParty/sdsl-lite/include',
 ]
 
 LINK_ARGS = [
@@ -92,20 +61,20 @@ LINK_ARGS = [
     "-lz",
 ]
 
-    
-
 
 LIBRARIES_DIRS = [
-    L + "lib",
+    "build",
+    "build/ThirdParty/MQF",
+    "build/ThirdParty/sdsl-lite/lib",
 ]
 
 LIBRARIES = [
+    'kProcessor',
     'sdsl',
-    'z',
+    'lMQF',
 ]
 
 SWIG_OPTS = [
-    #'-DSWIGWORDSIZE64',
     '-c++',
     '-py3',
     '-outdir',
@@ -127,7 +96,6 @@ kProcessor_module = Extension('_kProcessor',
                           libraries=LIBRARIES,
                           sources=SOURCES,
                           include_dirs=INCLUDES,
-                          extra_compile_args=COMPILE_ARGS,
                           extra_link_args=LINK_ARGS,
                           swig_opts=SWIG_OPTS,
                           )
