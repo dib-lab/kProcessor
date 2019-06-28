@@ -463,19 +463,17 @@ kDataFrameIterator kDataFrameMQF::end(){
 
 kDataFrameBMQF::kDataFrameBMQF():kDataFrame(){
   bufferedmqf=new bufferedMQF();
-  // bufferedMQF_init requires different arguments
-  bufferedMQF_init(bufferedmqf, (1ULL<<16), 2*kSize, 0,2,0, true, "", 2038074761);
+  bufferedMQF_init(bufferedmqf, (1ULL<<16), (1ULL<<16), 2*kSize, 0,2,0, "");
   hasher=(new IntegerHasher(kSize));
   falsePositiveRate=0;
   hashbits=2*kSize;
   range=(1ULL<<hashbits);
 }
 
-kDataFrameBMQF::kDataFrameBMQF(uint64_t ksize,uint8_t q,uint8_t fixedCounterSize,uint8_t tagSize,double falsePositiveRate):
+kDataFrameBMQF::kDataFrameBMQF(uint64_t ksize,uint8_t q,uint8_t fixedCounterSize,uint8_t value_bits,double falsePositiveRate):
 kDataFrame(ksize){
   bufferedmqf=new bufferedMQF();
-  // bufferedMQF_init requires different arguments
-  bufferedMQF_init(mqf, (1ULL<<q), 2*ksize,tagSize,fixedCounterSize, 0,true, "", 2038074761);
+  bufferedMQF_init(bufferedmqf, (1ULL<<q), (1ULL<<q), 2*kSize, value_bits,fixedCounterSize,0, "");
   this->falsePositiveRate=falsePositiveRate;
   if(falsePositiveRate==0){
     hasher=(new IntegerHasher(kSize));
@@ -515,7 +513,6 @@ kDataFrame(ksize)
 
 kDataFrame* kDataFrameBMQF::getTwin(){
   uint64_t q=log2(bufferedmqf->memoryBuffer->metadata->nslots);
-  // bufferedMQF has different parameters
   return ((kDataFrame*)new kDataFrameBMQF(kSize,q,bufferedmqf->memoryBuffer->metadata->fixed_counter_size,
     bufferedmqf->memoryBuffer->metadata->tag_bits,falsePositiveRate));
 }
@@ -525,8 +522,7 @@ void kDataFrameBMQF::reserve(uint64_t n)
   bufferedMQF* old=bufferedmqf;
   bufferedmqf=new bufferedMQF();
   uint64_t q=(uint64_t)ceil(log2((double)n*1.4));
-  // bufferedMQF_init requires different arguments
-  bufferedMQF_init(bufferedmqf, (1ULL<<q), hashbits,0,2, 0,true, "", 2038074761);
+  bufferedMQF_init(bufferedmqf, (1ULL<<q), (1ULL<<q), hashbits, 0,2, 0, "");
   if(old!=NULL)
   {
 
@@ -536,32 +532,31 @@ void kDataFrameBMQF::reserve(uint64_t n)
   }
 }
 
-kDataFrameBMQF::kDataFrameBMQF(uint64_t ksize,vector<uint64_t> countHistogram,uint8_t tagSize
+kDataFrameBMQF::kDataFrameBMQF(uint64_t ksize,vector<uint64_t> countHistogram,uint8_t value_bits
   ,double falsePositiveRate):
   kDataFrame(ksize)
   {
     uint64_t nSlots;
     uint64_t fixedCounterSize;
     uint64_t memory;
-    kDataFrameBMQF::estimateParameters(countHistogram,2*ksize,tagSize,
+    kDataFrameBMQF::estimateParameters(countHistogram,2*ksize,value_bits,
     &nSlots,&fixedCounterSize,&memory);
-    // bufferedMQF_init requires different arguments
-    bufferedMQF_init(bufferedmqf, nSlots, 2*ksize,tagSize,fixedCounterSize, 0,true,"", 2038074761);
+    bufferedMQF_init(bufferedmqf, nSlots, nSlots, 2*kSize, value_bits,fixedCounterSize,0, "");
   }
 
-uint64_t kDataFrameBMQF::estimateMemory(uint64_t nslots,uint64_t slotSize, uint64_t fcounter, uint64_t tagSize)
+uint64_t kDataFrameBMQF::estimateMemory(uint64_t nslots,uint64_t slotSize, uint64_t fcounter, uint64_t value_bits)
      {
        uint64_t SLOTS_PER_BLOCK=64;
        uint64_t xnslots = nslots + 10*sqrt((double)nslots);
      	uint64_t nblocks = (xnslots + SLOTS_PER_BLOCK - 1) / SLOTS_PER_BLOCK;
        uint64_t blocksize=17;
 
-       return ((nblocks)*(blocksize+8*(slotSize+fcounter+tagSize)))/1024;
+       return ((nblocks)*(blocksize+8*(slotSize+fcounter+value_bits)))/1024;
 
      }
 
 void kDataFrameBMQF::estimateParameters(vector<uint64_t> countHistogram,
-  uint64_t numHashBits,uint64_t tagSize,
+  uint64_t numHashBits,uint64_t value_bits,
 uint64_t *res_noSlots,uint64_t *res_fixedSizeCounter, uint64_t *res_memory){
 
   uint64_t noDistinctKmers=countHistogram[0];
@@ -577,7 +572,7 @@ uint64_t *res_noSlots,uint64_t *res_fixedSizeCounter, uint64_t *res_memory){
     {
       if(isEnough(countHistogram,noSlots,fixedSizeCounter,slotSize))
       {
-        uint64_t tmpMem=estimateMemory(noSlots,slotSize,fixedSizeCounter,tagSize);
+        uint64_t tmpMem=estimateMemory(noSlots,slotSize,fixedSizeCounter,value_bits);
         if(*res_memory>tmpMem)
         {
           *res_memory=tmpMem;
@@ -645,7 +640,7 @@ bool kDataFrameBMQF::setCount(string kmer,uint64_t count){
   uint64_t hash=hasher->hash(kmer)% bufferedmqf->memoryBuffer->metadata->range;
   uint64_t currentCount=bufferedMQF_count_key(bufferedmqf,hash);
   if(currentCount>count){
-    bufferedMQF_remove(bufferedmqf,hash,currentCount-count,false,false);
+    bufferedMQF_remove(bufferedmqf->memoryBuffer,hash,currentCount-count,false,false);
   }
   else{
     try{
