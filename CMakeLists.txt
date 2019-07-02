@@ -87,11 +87,12 @@ add_subdirectory(apps/)
 
 
 #### Building Documentation with Doxygen
+
+if(BUILD_DOCUMENTATION)
 find_package(Doxygen)
 option(BUILD_DOCUMENTATION "Create and install the HTML based API
 documentation (requires Doxygen)" ${DOXYGEN_FOUND})
 
-if(BUILD_DOCUMENTATION)
     if(NOT DOXYGEN_FOUND)
          message(FATAL_ERROR "Doxygen is needed to build the documentation.")
     endif()
