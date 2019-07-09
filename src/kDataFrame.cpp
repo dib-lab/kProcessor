@@ -737,8 +737,19 @@ kDataFrameBMQF* kDataFrameBMQF::load(string filePath){
   file>>filekSize;
   bufferedMQF* bufferedmqf=new bufferedMQF();
   bufferedMQF_deserialize(bufferedmqf,(filePath+".mqf").c_str());
-  return new kDataFrameBMQF(mqf,filekSize,0);
-}
+  return new kDataFrameBMQF(bufferedmqf,filekSize,0);
+ }
+
+ kDataFrameIterator kDataFrameBMQF::begin(){
+     return (kDataFrameIterator(
+       (_kDataFrameIterator*)new kDataFrameMQFIterator(bufferedmqf->memoryBuffer,kSize,hasher),
+       (kDataFrame*)this));
+ }
+
+ kDataFrameIterator kDataFrameBMQF::end(){
+   kDataFrameMQFIterator* it=new kDataFrameMQFIterator(bufferedmqf->memoryBuffer,kSize,hasher);
+   it->endIterator();
+   return (kDataFrameIterator(it,(kDataFrame*)this));
 
 
 // kDataFrameMAP _____________________________
