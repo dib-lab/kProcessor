@@ -6,7 +6,7 @@
 #include <pthread.h>
 #include <map>
 #include <vector>
-#include "gqf.h"
+#include "gqf.hpp"
 #include <fstream>
 #include <stxxl/vector>
 
