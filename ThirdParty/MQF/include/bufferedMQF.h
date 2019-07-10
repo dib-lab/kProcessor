@@ -3,7 +3,7 @@
 
 #include <inttypes.h>
 #include <stdbool.h>
-#include <pthread.h>
+
 #include "gqf.hpp"
 #include "onDiskMQF.h"
 #ifdef __cplusplus
