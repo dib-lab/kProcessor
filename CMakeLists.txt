@@ -15,14 +15,15 @@ project (kProcessor C CXX)
 
 enable_testing()
 
-
+add_subdirectory(ThirdParty/MQF/)
 include_directories("ThirdParty/CLI")
 include_directories("ThirdParty/MQF/include")
 include_directories("ThirdParty/json")
 include_directories("ThirdParty/sdsl-lite/include")
 
 
-add_subdirectory(ThirdParty/MQF/)
+
+
 add_subdirectory(ThirdParty/sdsl-lite/)
 
 
@@ -70,7 +71,7 @@ set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${SEQAN_CXX_FLAGS}")
 
 message(STATUS "DEF: ${SEQAN_DEFINITIONS}")
 
-set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -std=c++14 -fPIC -fopenmp -W -Wall -pedantic")
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -std=c++14 -fPIC -fopenmp -W -Wall -pedantic -fpermissive")
 
 message(STATUS "FLAGS: ${CMAKE_CXX_FLAGS}")
 
