@@ -99,7 +99,7 @@ private:
   bool _insert(__uint128_t hash, uint64_t count, bool lock, bool spin);
 
 public:
-  stxxl::vector<onDisk_qfblock<bitsPerSlot> >* blocks;
+  stxxl::vector<onDisk_qfblock<bitsPerSlot> > blocks;
 /*!
 @breif initialize mqf .
 
@@ -119,13 +119,13 @@ void reset() override;
 ~_onDiskMQF();
 inline typename stxxl::vector<onDisk_qfblock<bitsPerSlot> >::iterator  get_block(uint64_t block_index)
 {
-    typename stxxl::vector<onDisk_qfblock<bitsPerSlot> >::iterator it = this->blocks->begin();
+    typename stxxl::vector<onDisk_qfblock<bitsPerSlot> >::iterator it = this->blocks.begin();
     it+=block_index;
     return it;
 }
 inline typename stxxl::vector<onDisk_qfblock<bitsPerSlot> >::const_iterator get_block_const( uint64_t block_index)
 {
-    typename stxxl::vector<onDisk_qfblock<bitsPerSlot> >::const_iterator it = this->blocks->cbegin();
+    typename stxxl::vector<onDisk_qfblock<bitsPerSlot> >::const_iterator it = this->blocks.cbegin();
     it+=block_index;
     return it;
 }
@@ -2244,7 +2244,7 @@ _onDiskMQF<bitsPerSlot>::_onDiskMQF( uint64_t nslots, uint64_t key_bits, uint64_
 																					sizeof(volatile int));
 
 
-	blocks=new stxxl::vector<onDisk_qfblock<bitsPerSlot> >(metadata->nblocks,stxxlBufferSize/16);
+	blocks=stxxl::vector<onDisk_qfblock<bitsPerSlot> >(metadata->nblocks,stxxlBufferSize/16);
 	// for(uint64_t i=0;i<metadata->nblocks;i++)
 	// 	blocks[i]=onDisk_qfblock<bitsPerSlot>();
   //
@@ -2335,7 +2335,7 @@ _onDiskMQF<bitsPerSlot>::~_onDiskMQF()
 	if (qf->metadata->mem) {
 		free(qf->mem);
 		free(qf->metadata);
-		qf->blocks->clear();
+		qf->blocks.clear();
 		//free(qf->blocks);
 	} else {
 	//msync(qf->metadata, qf->metadata->size + sizeof(qfmetadata),MS_SYNC);
