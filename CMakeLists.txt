@@ -24,7 +24,7 @@ include_directories("ThirdParty/sdsl-lite/include")
 
 add_subdirectory(ThirdParty/MQF/)
 add_subdirectory(ThirdParty/sdsl-lite/)
-
+add_subdirectory(ThirdParty/kmerDecoder)
 
 set(LIBRARY_NAME
     kProcessor
@@ -39,6 +39,7 @@ add_library(${LIBRARY_NAME} STATIC
 target_link_libraries(kProcessor lMQF)
 target_link_libraries (kProcessor ${SEQAN_LIBRARIES})
 target_link_libraries(kProcessor sdsl)
+target_link_libraries(kProcessor kmerDecoder)
 
 target_include_directories(${LIBRARY_NAME} PRIVATE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/${LIBRARY_NAME}>
