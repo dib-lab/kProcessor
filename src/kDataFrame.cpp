@@ -5,7 +5,9 @@
 #include <math.h>
 #include <limits>
 #include <sstream>
-
+#include <cereal/types/unordered_map.hpp>
+#include <cereal/types/memory.hpp>
+#include <cereal/archives/binary.hpp>
 
 #include "algorithms.hpp"
 using namespace std;
@@ -546,33 +548,32 @@ float kDataFrameMAP::max_load_factor() {
 
 
 void kDataFrameMAP::save(string filePath) {
-    ofstream myfile;
-    myfile.open(filePath + ".map", ios::out);
-    flat_hash_map<uint64_t, uint64_t>::iterator it;
-    myfile << this->kSize << endl;
 
-    for (auto const &it : this->MAP) {
-        myfile << it.first << ":" << it.second << endl;
-    }
+    // Write the kmerSize
+    ofstream file(filePath+".extra");
+    file<<kSize<<endl;
+
+    std::ofstream os(filePath + ".phmap", std::ios::binary);
+    cereal::BinaryOutputArchive archive(os);
+    archive(this->MAP);
 
 }
 
 kDataFrame *kDataFrameMAP::load(string filePath) {
-    filePath += ".map";
-    ifstream myfile(filePath);
-    string key, value;
 
-    getline(myfile, key, '\n'); // Get Kmer_size from first line
-    kDataFrameMAP *KMAP = new kDataFrameMAP(std::stoull(key));
+    // Load kSize
+    ifstream file(filePath+".extra");
+    uint64_t kSize;
+    file>>kSize;
 
-    while (!myfile.eof()) {
-        getline(myfile, key, ':');
-        if (getline(myfile, value, '\n')) {
-            // cout << "Key:" << key << "| Value: " << value << endl;
-            KMAP->setCount(key, std::stoull(value));
-        } else break;
-    }
-    myfile.close();
+    // Initialize kDataFrameMAP
+    kDataFrameMAP *KMAP = new kDataFrameMAP(kSize);
+
+    // Load the hashMap into the kDataFrameMAP
+    std::ifstream os(filePath + ".phmap", std::ios::binary);
+    cereal::BinaryInputArchive iarchive(os);
+    iarchive(KMAP->MAP);
+
     return KMAP;
 }
 kDataFrame* kDataFrameMAP::getTwin(){
