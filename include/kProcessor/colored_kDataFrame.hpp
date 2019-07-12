@@ -3,7 +3,9 @@
 
 #include "kDataFrame.hpp"
 #include "colorTable.hpp"
+#include <parallel_hashmap/phmap.h>
 using namespace std;
+using phmap::flat_hash_map;
 
 class colored_kDataFrame{
 private:
@@ -12,8 +14,8 @@ private:
   colorTableInv* colorsInv;
   uint64_t nextAvailableColor;
 public:
-  unordered_map<uint32_t,string> namesMap;
-  unordered_map<string,uint32_t> namesMapInv;
+  flat_hash_map<uint32_t,string> namesMap;
+  flat_hash_map<string,uint32_t> namesMapInv;
   colored_kDataFrame();
   void addNewColor(uint32_t color, vector<uint32_t> & samplesIds);
   void setKmerColor(string kmer,uint32_t color);
