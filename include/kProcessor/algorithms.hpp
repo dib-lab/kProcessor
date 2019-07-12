@@ -66,7 +66,6 @@ kDataFrame* kFrameIntersect(const vector<kDataFrame*>& input);
 kDataFrame* kFrameDiff(const vector<kDataFrame*>& input);
 
 colored_kDataFrame* index(string seqFileName,string namesFiles,uint64_t kSize);
-
-
+colored_kDataFrame *index(string seqFileName, string namesFiles, uint64_t kSize, uint64_t Q);
 }
 #endif

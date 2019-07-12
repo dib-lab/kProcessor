@@ -16,8 +16,8 @@ import os
 
 print(sys.argv)
 
-if sys.version_info[:2] < (3, 5) or sys.version_info[:2] > (3, 6):
-    raise RuntimeError("Python version == 3.6 required.")
+if sys.version_info[:2] < (3, 5) or sys.version_info[:2] > (3, 7):
+    raise RuntimeError("Python version == (3.6 | 3.7) required.")
 
 if os.path.exists('MANIFEST'):
     os.remove('MANIFEST')
@@ -33,14 +33,8 @@ try:
 except IOError:
     readme = ''
 
+
 SOURCES = [
-    'src/algorithms.cpp',
-    'src/kDataFrame.cpp',
-    'src/Utils/kmer.cpp',
-    'src/HashUtils/hashutil.cpp',
-    'src/KmerDecoder/FastqReader.cpp',
-    'ThirdParty/MQF/src/gqf.cpp',
-    'ThirdParty/MQF/src/utils.cpp',
     'swig_interfaces/kProcessor.i',
 ]
 
@@ -48,50 +42,39 @@ if not find_executable('swig'):
     sys.exit("Error:  Building this module requires 'swig' to be installed")
 
 
+
 INCLUDES = [
     'include/kProcessor',
-    'ThirdParty/CLI',
+#    'include/',
+#    'ThirdParty/CLI',
     'ThirdParty/MQF/include',
-    'ThirdParty/seqan/include',
-    'ThirdParty/TBB/include',
-]
-
-COMPILE_ARGS = [
-    '-Wall',
-    "-lgomp",
-    '-Wextra',
-    '-std=c++14',
-    '-fPIC',
-    '-fopenmp',
-    '-W',
-    '-Wall',
-    '-pedantic',
-    '-lrt',
-    '-lpthread',
-    '-lbz2',
-    '-lz',
-    '-DSEQAN_HAS_ZLIB=1',
-    '-DSEQAN_HAS_BZIP2=1',
-    '-DSEQAN_HAS_OPENMP=1',
-    "-DSEQAN_HAS_EXECINFO=1"
+#    'ThirdParty/seqan/include',
+#    'ThirdParty/TBB/include',
+#    'ThirdParty/json',
+    'ThirdParty/sdsl-lite/include',
 ]
 
 LINK_ARGS = [
     "-fopenmp",
     "-lgomp",
     "-lbz2",
+    "-lz",
 ]
 
+
 LIBRARIES_DIRS = [
-    '/usr/lib/x86_64-linux-gnu/'
+    "build",
+    "build/ThirdParty/MQF",
+    "build/ThirdParty/sdsl-lite/lib",
 ]
 
 LIBRARIES = [
-    'z',
+    'kProcessor',
+    'sdsl',
+    'lMQF',
 ]
 
 SWIG_OPTS = [
-    '-DSWIGWORDSIZE64',
     '-c++',
     '-py3',
     '-outdir',
@@ -109,13 +92,12 @@ class CustomBuild(build):
 
 
 kProcessor_module = Extension('_kProcessor',
+                          library_dirs=LIBRARIES_DIRS,
+                          libraries=LIBRARIES,
                           sources=SOURCES,
                           include_dirs=INCLUDES,
-      #                    library_dirs=LIBRARIES_DIRS,
-                          libraries=LIBRARIES,
-                          extra_compile_args=COMPILE_ARGS,
                           extra_link_args=LINK_ARGS,
-                          swig_opts=SWIG_OPTS,                          
+                          swig_opts=SWIG_OPTS,
                           )
 
 classifiers = [
@@ -125,6 +107,7 @@ classifiers = [
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.6",
+    "Programming Language :: Python :: 3.7",
 ]
 
 setup(name='kProcessor',
@@ -135,7 +118,7 @@ setup(name='kProcessor',
       ext_modules=[kProcessor_module],
       py_modules=['kProcessor'],
       url='https://github.com/dib-lab/kProcessor',
-      python_requires='>=3.6, <3.7',
+      python_requires='>=3.6, <=3.7',
       cmdclass={'build': CustomBuild},
       license='BSD 3-Clause',
       long_description_content_type='text/markdown',
