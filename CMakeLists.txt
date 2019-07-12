@@ -22,7 +22,9 @@ include_directories("ThirdParty/CLI")
 include_directories("ThirdParty/MQF/include")
 include_directories("ThirdParty/json")
 include_directories("ThirdParty/sdsl-lite/include")
-
+include_directories("ThirdParty/kmerDecoder/include")
+include_directories("ThirdParty/kmerDecoder/lib/parallel_hashmap")
+include_directories("ThirdParty/cereal/include")
 
 add_subdirectory(ThirdParty/MQF/)
 add_subdirectory(ThirdParty/sdsl-lite/)
