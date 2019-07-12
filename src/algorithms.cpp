@@ -648,6 +648,190 @@ colored_kDataFrame* index(string input_file,string names_fileName,uint64_t kSize
 
 }
 
+colored_kDataFrame *index(string input_file, string names_fileName, uint64_t kSize, uint64_t Q)
+{
+  map<string, string> namesMap;
+  map<string, uint64_t> tagsMap;
+  map<string, uint64_t> groupNameMap;
+  std::map<uint64_t, std::vector<uint32_t>> *legend = new std::map<uint64_t, std::vector<uint32_t>>();
+  map<uint64_t, uint64_t> colorsCount;
+  uint64_t readID = 0, groupID = 1;
+  ifstream namesFile(names_fileName.c_str());
+  string seqName, groupName;
+  priority_queue<uint64_t, vector<uint64_t>, std::greater<uint64_t>> freeColors;
+  map<string, uint64_t> groupCounter;
+  while (namesFile >> seqName >> groupName)
+  {
+    namesMap.insert(make_pair(seqName, groupName));
+    auto it = groupNameMap.find(groupName);
+    groupCounter[groupName]++;
+    if (it == groupNameMap.end())
+    {
+      groupNameMap.insert(make_pair(groupName, groupID));
+      tagsMap.insert(make_pair(to_string(groupID), groupID));
+      vector<uint32_t> tmp;
+      tmp.clear();
+      tmp.push_back(groupID);
+      legend->insert(make_pair(groupID, tmp));
+      colorsCount.insert(make_pair(groupID, 0));
+      groupID++;
+    }
+  }
+
+  seqan::SeqFileIn seqIn(input_file.c_str());
+
+  seqan::StringSet<seqan::CharString> ids;
+  seqan::StringSet<seqan::CharString> reads;
+  int chunkSize = 1000;
+  vector<kDataFrameMQF *> frames;
+  int currIndex = 0;
+  string kmer;
+  uint64_t tagBits = 0;
+  uint64_t maxTagValue = (1ULL << tagBits) - 1;
+
+  kDataFrame *frame;
+  frame = new kDataFrameMQF(kSize, Q, 2, tagBits, 0);
+  //frame = new kDataFrameMAP(kSize);
+
+  uint64_t lastTag = 0;
+  readID = 0;
+
+  while (!atEnd(seqIn))
+  {
+    clear(reads);
+    clear(ids);
+
+    seqan::readRecords(ids, reads, seqIn, chunkSize);
+
+    map<uint64_t, uint64_t> convertMap;
+
+    for (int j = 0; j < length(reads); j++)
+    {
+      string readName = string((char *)seqan::toCString(ids[j]));
+
+      auto it = namesMap.find(readName);
+      if (it == namesMap.end())
+      {
+        cout << "read " << readName << "dont have group. Please check the group names file." << endl;
+      }
+      string groupName = it->second;
+
+      uint64_t readTag = groupNameMap.find(groupName)->second;
+
+      string seq = string((char *)seqan::toCString(reads[j]));
+      if (seq.size() < kSize)
+        continue;
+      convertMap.clear();
+      convertMap.insert(make_pair(0, readTag));
+      convertMap.insert(make_pair(readTag, readTag));
+      //    cout<<readName<<"   "<<seq.size()<<endl;
+      for (int i = 0; i < seq.size() - kSize + 1; i++)
+      {
+        kmer = seq.substr(i, kSize);
+        //  cout<<i<<" "<<kmer<<" "<<frame->count(kmer)<<endl;
+        //frame->incrementCounter(kmer,1);
+        uint64_t currentTag = frame->count(kmer);
+
+        auto itc = convertMap.find(currentTag);
+        if (itc == convertMap.end())
+        {
+          vector<uint32_t> colors = legend->find(currentTag)->second;
+          auto tmpiT = find(colors.begin(), colors.end(), readTag);
+          if (tmpiT == colors.end())
+          {
+            colors.push_back(readTag);
+            sort(colors.begin(), colors.end());
+          }
+
+          string colorsString = to_string(colors[0]);
+          for (int k = 1; k < colors.size(); k++)
+          {
+            colorsString += ";" + to_string(colors[k]);
+          }
+
+          auto itTag = tagsMap.find(colorsString);
+          if (itTag == tagsMap.end())
+          {
+            uint64_t newColor;
+            if (freeColors.size() == 0)
+            {
+              newColor = groupID++;
+            }
+            else
+            {
+              newColor = freeColors.top();
+              freeColors.pop();
+            }
+
+            tagsMap.insert(make_pair(colorsString, newColor));
+            legend->insert(make_pair(newColor, colors));
+            itTag = tagsMap.find(colorsString);
+            colorsCount[newColor] = 0;
+            // if(groupID>=maxTagValue){
+            //   cerr<<"Tag size is not enough. ids reached "<<groupID<<endl;
+            //   return -1;
+            // }
+          }
+          uint64_t newColor = itTag->second;
+
+          convertMap.insert(make_pair(currentTag, newColor));
+          itc = convertMap.find(currentTag);
+        }
+
+        if (itc->second != currentTag)
+        {
+
+          colorsCount[currentTag]--;
+          if (colorsCount[currentTag] == 0 && currentTag != 0)
+          {
+            freeColors.push(currentTag);
+            legend->erase(currentTag);
+            if (convertMap.find(currentTag) != convertMap.end())
+              convertMap.erase(currentTag);
+          }
+          colorsCount[itc->second]++;
+        }
+
+        frame->setCount(kmer, itc->second);
+        if (frame->count(kmer) != itc->second)
+        {
+          //frame->setC(kmer,itc->second);
+          cout << "Error Founded " << kmer << " from sequence " << readName << " expected "
+               << itc->second << " found " << frame->count(kmer) << endl;
+          return NULL;
+        }
+      }
+      readID += 1;
+      if (colorsCount[readTag] == 0)
+      {
+        groupCounter[groupName]--;
+        if (groupCounter[groupName] == 0)
+        {
+          freeColors.push(readTag);
+          legend->erase(readTag);
+        }
+      }
+    }
+  }
+  colorTable *colors = new intVectorsTable();
+  for (auto it : *legend)
+  {
+    colors->setColor(it.first, it.second);
+  }
+
+  colored_kDataFrame *res = new colored_kDataFrame();
+  res->setColorTable(colors);
+  res->setkDataFrame(frame);
+  for (auto iit = namesMap.begin(); iit != namesMap.end(); iit++)
+  {
+    uint32_t sampleID = groupNameMap[iit->second];
+    res->namesMap[sampleID] = iit->second;
+    res->namesMapInv[iit->second] = sampleID;
+  }
+  return res;
+}
+
+
 //kDataFrame* intersect(vector<kDataFrame*> input);
 //kDataFrame* diff(vector<kDataFrame*> input);
 }
