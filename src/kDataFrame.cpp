@@ -103,10 +103,11 @@ kDataFrameMQFIterator::~kDataFrameMQFIterator(){
 }
 
 
-kDataFrameMAPIterator::kDataFrameMAPIterator(unordered_map<string,uint64_t>::iterator it,kDataFrameMAP* origin,uint64_t kSize)
+kDataFrameMAPIterator::kDataFrameMAPIterator(flat_hash_map<uint64_t,uint64_t>::iterator it,kDataFrameMAP* origin,uint64_t kSize)
 :_kDataFrameIterator(kSize)
 {
   iterator=it;
+  this->hasher = (new IntegerHasher(kSize));
   this->origin=origin;
 }
 
@@ -125,11 +126,13 @@ kDataFrameMAPIterator& kDataFrameMAPIterator::operator ++ (int){
   return *this;
 }
 uint64_t kDataFrameMAPIterator::getHashedKmer(){
-  return origin->getHasher()->hash(iterator->first);
+  //return origin->getHasher()->hash(iterator->first);
+  return iterator->first;
 
 }
 string kDataFrameMAPIterator::getKmer(){
-  return iterator->first;
+    return kmer::int_to_str(getHashedKmer(), this->kSize);
+    // return iterator->first;
 }
 uint64_t kDataFrameMAPIterator::getKmerCount(){
   return iterator->second;
@@ -460,55 +463,68 @@ kDataFrameIterator kDataFrameMQF::end(){
 }
 
 
-
-
 // kDataFrameMAP _____________________________
 
 kDataFrameMAP::kDataFrameMAP(uint64_t ksize) {
     this->kSize = ksize;
-    this->MAP=unordered_map<string,uint64_t>(1000);
-    hasher=new wrapperHasher<unordered_map<string,uint64_t>::hasher >(MAP.hash_function(),ksize);
+    this->MAP=flat_hash_map<uint64_t,uint64_t>(1000);
+    // hasher=new wrapperHasher<flat_hash_map<string,uint64_t>::hasher >(MAP.hash_function(),ksize);
+    this->hasher = (new IntegerHasher(ksize));
 }
 kDataFrameMAP::kDataFrameMAP() {
     this->kSize = 23;
-    this->MAP=unordered_map<string,uint64_t>(1000);
-    hasher=new wrapperHasher<unordered_map<string,uint64_t>::hasher >(MAP.hash_function(),kSize);
+    this->MAP=flat_hash_map<uint64_t,uint64_t>(1000);
+    // hasher=new wrapperHasher<flat_hash_map<string,uint64_t>::hasher >(MAP.hash_function(),kSize);
+    this->hasher = (new IntegerHasher(23));
 }
-inline bool kDataFrameMAP::kmerExist(string kmerS) {
-    return (this->MAP.find(kmer::canonicalKmer(kmerS)) == this->MAP.end()) ? 0 : 1;
+inline bool kDataFrameMAP::kmerExist(string kmerS){
+    uint64_t hash = kmer::str_to_int(kmerS);
+    return (this->MAP.find(hash) == this->MAP.end()) ? 0 : 1;
+    // return (this->MAP.find(kmer::canonicalKmer(kmerS)) == this->MAP.end()) ? 0 : 1;
 }
 
 
 
 bool kDataFrameMAP::insert(string kmerS, uint64_t count) {
-    this->MAP[kmer::canonicalKmer(kmerS)]+=count;
+    uint64_t hash= kmer::str_to_int(kmerS);
+    this->MAP[hash] += count;
+    //this->MAP[kmer::canonicalKmer(kmerS)] += count;
     return true;
 }
 bool kDataFrameMAP::insert(string kmerS) {
-    this->MAP[kmer::canonicalKmer(kmerS)]++;
+    uint64_t hash= kmer::str_to_int(kmerS);
+    this->MAP[hash]++;
+    // this->MAP[kmer::canonicalKmer(kmerS)]++;
     return true;
 }
 
 
 bool kDataFrameMAP::setCount(string kmerS, uint64_t tag) {
-    this->MAP[kmer::canonicalKmer(kmerS)]=tag;
+    uint64_t hash = kmer::str_to_int(kmerS);
+    this->MAP[hash]=tag;
+//    this->MAP[kmer::canonicalKmer(kmerS)]=tag;
     return true;
 }
 
 uint64_t kDataFrameMAP::count(string kmerS)
+
 {
-  return this->MAP[kmer::canonicalKmer(kmerS)];
+    uint64_t hash= kmer::str_to_int(kmerS);
+    return this->MAP[hash];
 }
 
 uint64_t kDataFrameMAP::bucket(string kmerS)
 {
-  return this->MAP.bucket(kmer::canonicalKmer(kmerS));
+  // return this->MAP.bucket(kmer::canonicalKmer(kmerS));
 }
 
 
 bool kDataFrameMAP::erase(string kmerS)
 {
-  return this->MAP.erase(kmer::canonicalKmer(kmerS));
+    uint64_t hash = kmer::str_to_int(kmerS);;
+    return this->MAP.erase(hash);
+
+//    return this->MAP.erase(kmer::canonicalKmer(kmerS));
 }
 
 uint64_t kDataFrameMAP::size() {
@@ -532,13 +548,12 @@ float kDataFrameMAP::max_load_factor() {
 void kDataFrameMAP::save(string filePath) {
     ofstream myfile;
     myfile.open(filePath + ".map", ios::out);
-    unordered_map<string, uint64_t>::iterator it;
+    flat_hash_map<uint64_t, uint64_t>::iterator it;
     myfile << this->kSize << endl;
+
     for (auto const &it : this->MAP) {
         myfile << it.first << ":" << it.second << endl;
     }
-
-
 
 }
 

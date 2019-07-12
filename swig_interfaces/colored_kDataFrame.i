@@ -1,7 +1,7 @@
 class colored_kDataFrame{
 public:
-  unordered_map<uint32_t,string> namesMap;
-  unordered_map<string,uint32_t> namesMapInv;
+  flat_hash_map<uint32_t,string> namesMap;
+  flat_hash_map<string,uint32_t> namesMapInv;
   colored_kDataFrame();
   void addNewColor(uint32_t color, vector<uint32_t> & samplesIds);
   void setKmerColor(string kmer,uint32_t color);

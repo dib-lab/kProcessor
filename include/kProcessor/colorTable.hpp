@@ -3,6 +3,9 @@
 #include <vector>
 #include "sdsl/vectors.hpp"
 #include <memory>
+#include <parallel_hashmap/phmap.h>
+
+using phmap::flat_hash_map;
 
 using namespace std;
 class colorTable{
@@ -67,7 +70,7 @@ public:
   bool setColor(uint64_t colorID,vector<uint32_t>& v)override;
   void save(string folderName)override;
 private:
-  std::unordered_map<uint64_t, std::vector<uint32_t> > colors;
+  flat_hash_map<uint64_t, std::vector<uint32_t> > colors;
 };
 
 // class samplesCombination{

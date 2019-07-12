@@ -227,7 +227,7 @@ intVectorsTable::intVectorsTable(string folderName){
   ifstream input(inputFilename);
   uint32_t size;
   input>>size;
-  colors=std::unordered_map<uint64_t, std::vector<uint32_t> >(size);
+  colors=flat_hash_map<uint64_t, std::vector<uint32_t> >(size);
   for(int i=0;i<size;i++)
   {
     uint64_t color,colorSize;

@@ -6,9 +6,10 @@
 #include <stdint.h>
 #include "gqf.hpp"
 #include "Utils/kmer.h"
-#include <map>
-#include <unordered_map>
 #include <iostream>
+#include <parallel_hashmap/phmap.h>
+
+using phmap::flat_hash_map;
 using namespace std;
 
 class kDataFrame;
@@ -217,10 +218,11 @@ public:
 
 class kDataFrameMAPIterator:public _kDataFrameIterator{
 private:
-  unordered_map<string, uint64_t>::iterator iterator;
+  flat_hash_map<uint64_t, uint64_t>::iterator iterator;
   kDataFrameMAP* origin;
+  Hasher * hasher;
 public:
-  kDataFrameMAPIterator(unordered_map<string, uint64_t>::iterator,kDataFrameMAP* origin,uint64_t kSize);
+  kDataFrameMAPIterator(flat_hash_map<uint64_t, uint64_t>::iterator,kDataFrameMAP* origin,uint64_t kSize);
   kDataFrameMAPIterator(const kDataFrameMAPIterator&);
   kDataFrameMAPIterator& operator ++ (int);
   _kDataFrameIterator* clone();
@@ -368,7 +370,7 @@ public:
 class kDataFrameMAP : public kDataFrame
 {
 private:
-  unordered_map<string, uint64_t> MAP;
+  flat_hash_map<uint64_t, uint64_t> MAP;
 public:
   kDataFrameMAP();
   kDataFrameMAP(uint64_t ksize);
