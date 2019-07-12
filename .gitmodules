@@ -4,3 +4,6 @@
 [submodule "ThirdParty/kmerDecoder"]
 	path = ThirdParty/kmerDecoder
 	url = https://github.com/mr-eyes/kmerDecoder.git
+[submodule "ThirdParty/cereal"]
+	path = ThirdParty/cereal
+	url = https://github.com/USCiLab/cereal.git
