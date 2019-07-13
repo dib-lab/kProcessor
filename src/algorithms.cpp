@@ -605,9 +605,15 @@ namespace kProcessor {
         // ofstream outNames(outDB+".namesMap");
 
     }
-        flat_hash_map<string, string> namesMap;
+
+    kmerDecoder* build_kmerDecoder(std::string mode, std::map<std::string, int>){
+
+        
+
+    }
 
     colored_kDataFrame *index(string input_file, string names_fileName, uint64_t kSize, uint64_t Q) {
+        flat_hash_map<string, string> namesMap;
         flat_hash_map<string, uint64_t> tagsMap;
         flat_hash_map<string, uint64_t> groupNameMap;
         flat_hash_map<uint64_t, std::vector<uint32_t>> *legend = new flat_hash_map<uint64_t, std::vector<uint32_t>>();

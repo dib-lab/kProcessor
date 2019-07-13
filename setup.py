@@ -14,8 +14,6 @@ from distutils.spawn import find_executable
 import sys
 import os
 
-print(sys.argv)
-
 if sys.version_info[:2] < (3, 5) or sys.version_info[:2] > (3, 7):
     raise RuntimeError("Python version == (3.6 | 3.7) required.")
 
@@ -33,7 +31,6 @@ try:
 except IOError:
     readme = ''
 
-
 SOURCES = [
     'swig_interfaces/kProcessor.i',
 ]
@@ -41,17 +38,11 @@ SOURCES = [
 if not find_executable('swig'):
     sys.exit("Error:  Building this module requires 'swig' to be installed")
 
-
-
 INCLUDES = [
     'include/kProcessor',
-#    'include/',
-#    'ThirdParty/CLI',
     'ThirdParty/MQF/include',
-#    'ThirdParty/seqan/include',
-#    'ThirdParty/TBB/include',
-#    'ThirdParty/json',
     'ThirdParty/sdsl-lite/include',
+    'ThirdParty/kmerDecoder/lib/parallel-hashmap'
 ]
 
 LINK_ARGS = [
@@ -61,17 +52,18 @@ LINK_ARGS = [
     "-lz",
 ]
 
-
 LIBRARIES_DIRS = [
     "build",
     "build/ThirdParty/MQF",
     "build/ThirdParty/sdsl-lite/lib",
+    "build/ThirdParty/kmerDecoder"
 ]
 
 LIBRARIES = [
     'kProcessor',
     'sdsl',
     'lMQF',
+    'kmerDecoder'
 ]
 
 SWIG_OPTS = [
@@ -92,13 +84,13 @@ class CustomBuild(build):
 
 
 kProcessor_module = Extension('_kProcessor',
-                          library_dirs=LIBRARIES_DIRS,
-                          libraries=LIBRARIES,
-                          sources=SOURCES,
-                          include_dirs=INCLUDES,
-                          extra_link_args=LINK_ARGS,
-                          swig_opts=SWIG_OPTS,
-                          )
+                              library_dirs=LIBRARIES_DIRS,
+                              libraries=LIBRARIES,
+                              sources=SOURCES,
+                              include_dirs=INCLUDES,
+                              extra_link_args=LINK_ARGS,
+                              swig_opts=SWIG_OPTS,
+                              )
 
 classifiers = [
     "License :: OSI Approved :: Apache Software License",
@@ -126,8 +118,7 @@ setup(name='kProcessor',
       classifiers=classifiers,
       include_package_data=True,
       project_urls={
-        'Bug Reports': 'https://github.com/dib-lab/kProcessor/issues',
-        'Say Thanks!': 'https://saythanks.io/to/mr-eyes',
-        'Source': 'https://github.com/dib-lab/kProcessor',
-        },
+          'Bug Reports': 'https://github.com/dib-lab/kProcessor/issues',
+          'Source': 'https://github.com/dib-lab/kProcessor',
+      },
       )
