@@ -544,13 +544,14 @@ INSTANTIATE_TEST_SUITE_P(testIndexing,
 TEST_P(indexingTest,index)
 {
   string filename=GetParam();
-  colored_kDataFrame* res= kProcessor::index(filename,filename+".names",25);
+  int chunkSize = 1000;
+  kmerDecoder *KMERS = kProcessor::initialize_kmerDecoder(filename, "kmers", chunkSize, {{"k", 25}});
+  colored_kDataFrame* res= kProcessor::index(KMERS, filename+".names");
 
   seqan::SeqFileIn seqIn2(filename.c_str());
   seqan::StringSet<seqan::CharString> ids;
   seqan::StringSet<seqan::CharString> reads;
   uint64_t kSize=res->getkSize();
-  int chunkSize=1000;
   int readCount=0;
   int correct=0,wrong=0;
   vector<uint32_t> colors;
@@ -587,14 +588,15 @@ TEST_P(indexingTest,index)
 TEST_P(indexingTest,saveAndLoad)
 {
   string filename=GetParam();
-  colored_kDataFrame* res1= kProcessor::index(filename,filename+".names",25);
+  int chunkSize = 1000;
+  kmerDecoder *KMERS = kProcessor::initialize_kmerDecoder(filename, "kmers", chunkSize, {{"k", 25}});
+  colored_kDataFrame* res1= kProcessor::index(KMERS,filename+".names");
   res1->save("tmp.coloredKdataFrame");
   colored_kDataFrame* res=colored_kDataFrame::load("tmp.coloredKdataFrame");
   seqan::SeqFileIn seqIn2(filename.c_str());
   seqan::StringSet<seqan::CharString> ids;
   seqan::StringSet<seqan::CharString> reads;
   uint64_t kSize=res->getkSize();
-  int chunkSize=1000;
   int readCount=0;
   int correct=0,wrong=0;
   vector<uint32_t> colors;

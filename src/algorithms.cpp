@@ -15,7 +15,6 @@
 #include <queue>
 #include <functional>
 #include <limits>
-#include "kmerDecoder.hpp"
 #include <parallel_hashmap/phmap.h>
 
 using std::string;
@@ -431,182 +430,8 @@ namespace kProcessor {
         return res;
     }
 
-    colored_kDataFrame *index(string input_file, string names_fileName, uint64_t kSize) {
-        flat_hash_map<string, string> namesMap;
-        flat_hash_map<string, uint64_t> tagsMap;
-        flat_hash_map<string, uint64_t> groupNameMap;
-        flat_hash_map<uint64_t, std::vector<uint32_t> > *legend = new flat_hash_map<uint64_t, std::vector<uint32_t> >();
-        flat_hash_map<uint64_t, uint64_t> colorsCount;
-        uint64_t readID = 0, groupID = 1;
-        ifstream namesFile(names_fileName.c_str());
-        string seqName, groupName;
-        priority_queue<uint64_t, vector<uint64_t>, std::greater<uint64_t> > freeColors;
-        flat_hash_map<string, uint64_t> groupCounter;
-        while (namesFile >> seqName >> groupName) {
-            namesMap.insert(make_pair(seqName, groupName));
-            auto it = groupNameMap.find(groupName);
-            groupCounter[groupName]++;
-            if (it == groupNameMap.end()) {
-                groupNameMap.insert(make_pair(groupName, groupID));
-                tagsMap.insert(make_pair(to_string(groupID), groupID));
-                vector<uint32_t> tmp;
-                tmp.clear();
-                tmp.push_back(groupID);
-                legend->insert(make_pair(groupID, tmp));
-                colorsCount.insert(make_pair(groupID, 0));
-                groupID++;
-            }
-        }
 
-
-        seqan::SeqFileIn seqIn(input_file.c_str());
-        unsigned int chunk_size = 1000;
-
-        vector<kDataFrameMAP *> frames;
-        // vector<kDataFrameMQF *> frames;
-        int currIndex = 0;
-        string kmer;
-        uint64_t tagBits = 0;
-        uint64_t maxTagValue = (1ULL << tagBits) - 1;
-
-        kDataFrame *frame;
-        frame = new kDataFrameMAP(kSize);
-        // frame = new kDataFrameMQF(kSize, 27, 2, tagBits, 0);
-//frame = new kDataFrameMAP(kSize);
-
-        uint64_t lastTag = 0;
-        readID = 0;
-
-        kmerDecoder *KMERS;
-        KMERS = new Kmers(seqIn, chunk_size, kSize);
-
-
-        while (!KMERS->end()) {
-            KMERS->next_chunk();
-
-            flat_hash_map<uint64_t, uint64_t> convertMap;
-
-
-            for (const auto &read : *KMERS->getKmers()) {
-                string readName = read.first;
-
-                auto it = namesMap.find(readName);
-
-                if (it == namesMap.end()) {
-                    cout << "read " << readName << "dont have group. Please check the group names file." << endl;
-                }
-                string groupName = it->second;
-
-                uint64_t readTag = groupNameMap.find(groupName)->second;
-
-
-                convertMap.clear();
-                convertMap.insert(make_pair(0, readTag));
-                convertMap.insert(make_pair(readTag, readTag));
-                //    cout<<readName<<"   "<<seq.size()<<endl;
-                for (const auto &kmer: read.second) {
-                    //  cout<<i<<" "<<kmer<<" "<<frame->count(kmer)<<endl;
-                    //frame->incrementCounter(kmer,1);
-                    uint64_t currentTag = frame->count(kmer);
-
-                    auto itc = convertMap.find(currentTag);
-                    if (itc == convertMap.end()) {
-                        vector<uint32_t> colors = legend->find(currentTag)->second;
-                        auto tmpiT = find(colors.begin(), colors.end(), readTag);
-                        if (tmpiT == colors.end()) {
-                            colors.push_back(readTag);
-                            sort(colors.begin(), colors.end());
-                        }
-
-                        string colorsString = to_string(colors[0]);
-                        for (int k = 1; k < colors.size(); k++) {
-                            colorsString += ";" + to_string(colors[k]);
-                        }
-
-                        auto itTag = tagsMap.find(colorsString);
-                        if (itTag == tagsMap.end()) {
-                            uint64_t newColor;
-                            if (freeColors.size() == 0) {
-                                newColor = groupID++;
-                            } else {
-                                newColor = freeColors.top();
-                                freeColors.pop();
-                            }
-
-                            tagsMap.insert(make_pair(colorsString, newColor));
-                            legend->insert(make_pair(newColor, colors));
-                            itTag = tagsMap.find(colorsString);
-                            colorsCount[newColor] = 0;
-                            // if(groupID>=maxTagValue){
-                            //   cerr<<"Tag size is not enough. ids reached "<<groupID<<endl;
-                            //   return -1;
-                            // }
-                        }
-                        uint64_t newColor = itTag->second;
-
-                        convertMap.insert(make_pair(currentTag, newColor));
-                        itc = convertMap.find(currentTag);
-                    }
-
-                    if (itc->second != currentTag) {
-
-                        colorsCount[currentTag]--;
-                        if (colorsCount[currentTag] == 0 && currentTag != 0) {
-                            freeColors.push(currentTag);
-                            legend->erase(currentTag);
-                            if (convertMap.find(currentTag) != convertMap.end())
-                                convertMap.erase(currentTag);
-                        }
-                        colorsCount[itc->second]++;
-                    }
-
-
-                    frame->setCount(kmer, itc->second);
-                    if (frame->count(kmer) != itc->second) {
-                        //frame->setC(kmer,itc->second);
-                        cout << "Error Founded " << kmer << " from sequence " << readName << " expected "
-                             << itc->second << " found " << frame->count(kmer) << endl;
-                        return NULL;
-                    }
-
-                }
-                readID += 1;
-                if (colorsCount[readTag] == 0) {
-                    groupCounter[groupName]--;
-                    if (groupCounter[groupName] == 0) {
-                        freeColors.push(readTag);
-                        legend->erase(readTag);
-                    }
-                }
-
-            }
-
-        }
-        colorTable *colors = new intVectorsTable();
-        for (auto it:*legend) {
-            colors->setColor(it.first, it.second);
-        }
-
-        colored_kDataFrame *res = new colored_kDataFrame();
-        res->setColorTable(colors);
-        res->setkDataFrame(frame);
-        for (auto iit = namesMap.begin(); iit != namesMap.end(); iit++) {
-            uint32_t sampleID = groupNameMap[iit->second];
-            res->namesMap[sampleID] = iit->second;
-            res->namesMapInv[iit->second] = sampleID;
-        }
-        return res;
-
-        // frame->set_legend(legend);
-        //
-        // cerr << "[!] Done Indexing, writing files ... " << endl;
-        //
-        // frame->save(outDB);
-        // ofstream outNames(outDB+".namesMap");
-
-    }
-
-    kmerDecoder* build_kmerDecoder(std::string filename, int chunkSize, std::string mode, std::map<std::string, int> params) {
+    kmerDecoder* initialize_kmerDecoder(std::string filename, int chunkSize, std::string mode, std::map<std::string, int> params) {
 
         // for avoiding case sensitivity issues.
         transform(mode.begin(), mode.end(), mode.begin(), ::tolower);
@@ -646,7 +471,7 @@ namespace kProcessor {
         }
     }
 
-    colored_kDataFrame *index(string input_file, string names_fileName, uint64_t kSize, uint64_t Q) {
+    colored_kDataFrame *index(kmerDecoder *KD, string names_fileName, uint64_t Q) {
         flat_hash_map<string, string> namesMap;
         flat_hash_map<string, uint64_t> tagsMap;
         flat_hash_map<string, uint64_t> groupNameMap;
@@ -673,19 +498,23 @@ namespace kProcessor {
             }
         }
 
-        unsigned int chunk_size = 1000;
-        kmerDecoder *KD;
-        KD = new Kmers(input_file, chunk_size, kSize);
 
         vector<kDataFrameMQF *> frames;
         int currIndex = 0;
         string kmer;
         uint64_t tagBits = 0;
         uint64_t maxTagValue = (1ULL << tagBits) - 1;
-
         kDataFrame *frame;
-        frame = new kDataFrameMQF(kSize, Q, 2, tagBits, 0);
-        //frame = new kDataFrameMAP(kSize);
+        int kSize = KD->get_kSize();
+
+        if (kSize < 17) {
+            frame = new kDataFrameMAP(kSize);
+        } else if (kSize > 17 && kSize <= 31) {
+            frame = new kDataFrameMQF(kSize, Q, 2, tagBits, 0);
+        } else {
+            std::cerr << "can't proceed with kSize > 31" << std::endl;
+            exit(1);
+        }
 
         uint64_t lastTag = 0;
         readID = 0;
@@ -797,8 +626,6 @@ namespace kProcessor {
         }
         return res;
     }
-
-
 
 
 } // End of namespace kProcessor
