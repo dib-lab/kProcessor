@@ -606,10 +606,44 @@ namespace kProcessor {
 
     }
 
-    kmerDecoder* build_kmerDecoder(std::string mode, std::map<std::string, int>){
+    kmerDecoder* build_kmerDecoder(std::string filename, int chunkSize, std::string mode, std::map<std::string, int> params) {
 
-        
+        // for avoiding case sensitivity issues.
+        transform(mode.begin(), mode.end(), mode.begin(), ::tolower);
 
+        if (mode == "kmers") {
+            if (params.find("k") != params.end()) {
+                return new Kmers(filename, chunkSize, params["k"]);
+            } else {
+                std::cerr << "kmerDecoder Kmers parameters validation failed" << std::endl;
+                exit(1);
+            }
+        } else if (mode == "skipmers") {
+            bool check_k = (params.find("k") != params.end());
+            bool check_m = (params.find("m") != params.end());
+            bool check_n = (params.find("n") != params.end());
+
+            if (check_k && check_m && check_n) {
+                return new Skipmers(filename, chunkSize, params["m"], params["n"], params["k"]);
+            } else {
+                std::cerr << "kmerDecoder Skipmers parameters validation failed" << std::endl;
+                exit(1);
+            }
+        } else if (mode == "minimizers") {
+            bool check_k = (params.find("k") != params.end());
+            bool check_w = (params.find("w") != params.end());
+
+            if (check_k && check_w) {
+                return new Minimizers(filename, chunkSize, params["k"], params["w"]);
+            } else {
+                std::cerr << "kmerDecoder Skipmers parameters validation failed" << std::endl;
+                exit(1);
+            }
+
+        }else{
+            std::cerr << "supported kmerDecoder modes: {kmers, skipmers, minimizers}" << std::endl;
+            exit(1);
+        }
     }
 
     colored_kDataFrame *index(string input_file, string names_fileName, uint64_t kSize, uint64_t Q) {
@@ -639,10 +673,9 @@ namespace kProcessor {
             }
         }
 
-        seqan::SeqFileIn seqIn(input_file.c_str());
         unsigned int chunk_size = 1000;
         kmerDecoder *KD;
-        KD = new Kmers(seqIn, chunk_size, kSize);
+        KD = new Kmers(input_file, chunk_size, kSize);
 
         vector<kDataFrameMQF *> frames;
         int currIndex = 0;

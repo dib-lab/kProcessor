@@ -65,7 +65,7 @@ kDataFrame* kFrameIntersect(const vector<kDataFrame*>& input);
 /// Calculate the difference of the kDataframes. The result kDataframe will have only kmers that exists in the first kDataframe and not in any of the rest input kDataframes. The count of the kmers equals to the count in the first kDataframe.
 kDataFrame* kFrameDiff(const vector<kDataFrame*>& input);
 
-kmerDecoder* build_kmerDecoder(std::string mode, std::map<std::string, int>);
+kmerDecoder* build_kmerDecoder(std::string mode, int chunkSize, std::map<std::string, int> parameters);
 
 colored_kDataFrame* index(string seqFileName,string namesFiles,uint64_t kSize);
 colored_kDataFrame *index(string seqFileName, string namesFiles, uint64_t kSize, uint64_t Q);
