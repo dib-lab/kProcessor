@@ -8,6 +8,8 @@
 using namespace std; // Extremly important
 
 %include "std_vector.i"     /*Using std::vector typemaps*/
+%include std_map.i
+
 %template(IntVector) vector<int>; /*vector to tuple conversion*/
 
 %import stdint.i            /*This mainly used for converting python int to C++ uint64_t*/
@@ -19,7 +21,7 @@ using namespace std; // Extremly important
 %include std_unordered_map.i
 %template(MAPsi) unordered_map<uint32_t, std::string>;
 %template(MAPis) unordered_map<std::string, uint32_t>;
-
+%template(kmerDecoderParams) map<string, int>;
 
 /*Just copy/paste the snippet I'm interested in to be wrapped!*/
 
