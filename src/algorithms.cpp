@@ -437,29 +437,29 @@ namespace kProcessor {
         transform(mode.begin(), mode.end(), mode.begin(), ::tolower);
 
         if (mode == "kmers") {
-            if (params.find("k") != params.end()) {
-                return new Kmers(filename, chunkSize, params["k"]);
+            if (params.find("kSize") != params.end()) {
+                return new Kmers(filename, chunkSize, params["kSize"]);
             } else {
                 std::cerr << "kmerDecoder Kmers parameters validation failed" << std::endl;
                 exit(1);
             }
         } else if (mode == "skipmers") {
-            bool check_k = (params.find("k") != params.end());
+            bool check_k = (params.find("kSize") != params.end());
             bool check_m = (params.find("m") != params.end());
             bool check_n = (params.find("n") != params.end());
 
             if (check_k && check_m && check_n) {
-                return new Skipmers(filename, chunkSize, params["m"], params["n"], params["k"]);
+                return new Skipmers(filename, chunkSize, params["m"], params["n"], params["kSize"]);
             } else {
                 std::cerr << "kmerDecoder Skipmers parameters validation failed" << std::endl;
                 exit(1);
             }
         } else if (mode == "minimizers") {
-            bool check_k = (params.find("k") != params.end());
+            bool check_k = (params.find("kSize") != params.end());
             bool check_w = (params.find("w") != params.end());
 
             if (check_k && check_w) {
-                return new Minimizers(filename, chunkSize, params["k"], params["w"]);
+                return new Minimizers(filename, chunkSize, params["kSize"], params["w"]);
             } else {
                 std::cerr << "kmerDecoder Skipmers parameters validation failed" << std::endl;
                 exit(1);
