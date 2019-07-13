@@ -723,14 +723,14 @@ void kDataFrameBMQF::save(string filePath){
   //   it++;
   // }
   // file.close();
-  bufferedMQF_serialize(bufferedmqf,(filePath+".mqf").c_str());
+  qf_serialize(bufferedmqf->memoryBuffer,(filePath+".mqf").c_str());
 }
 kDataFrame* kDataFrameBMQF::load(string filePath){
   ifstream file(filePath+".extra");
   uint64_t filekSize;
   file>>filekSize;
   bufferedMQF* bufferedmqf=new bufferedMQF();
-  bufferedMQF_deserialize(bufferedmqf,(filePath+".mqf").c_str());
+  qf_deserialize(bufferedmqf->memoryBuffer,(filePath+".mqf").c_str());
   return new kDataFrameBMQF(bufferedmqf,filekSize,0);
  }
 
