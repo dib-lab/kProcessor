@@ -431,7 +431,7 @@ namespace kProcessor {
     }
 
 
-    kmerDecoder* initialize_kmerDecoder(std::string filename, int chunkSize, std::string mode, std::map<std::string, int> params) {
+    kmerDecoder* initialize_kmerDecoder(std::string filename, std::string mode, int chunkSize, std::map<std::string, int> params) {
 
         // for avoiding case sensitivity issues.
         transform(mode.begin(), mode.end(), mode.begin(), ::tolower);
