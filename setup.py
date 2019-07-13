@@ -42,6 +42,8 @@ INCLUDES = [
     'include/kProcessor',
     'ThirdParty/MQF/include',
     'ThirdParty/sdsl-lite/include',
+    'ThirdParty/kmerDecoder/include',
+    'ThirdParty/kmerDecoder/lib/seqan/include',
     'ThirdParty/kmerDecoder/lib/parallel-hashmap'
 ]
 
