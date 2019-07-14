@@ -431,37 +431,37 @@ namespace kProcessor {
     }
 
 
-    kmerDecoder* initialize_kmerDecoder(std::string filename, std::string mode, int chunkSize, std::map<std::string, int> params) {
+    kmerDecoder* initialize_kmerDecoder(std::string filename, int chunkSize, std::string mode, std::map<std::string, int> params){
 
         // for avoiding case sensitivity issues.
         transform(mode.begin(), mode.end(), mode.begin(), ::tolower);
 
         if (mode == "kmers") {
-            if (params.find("kSize") != params.end()) {
-                return new Kmers(filename, chunkSize, params["kSize"]);
+            if (params.find("k_size") != params.end()) {
+                return new Kmers(filename, chunkSize, params["k_size"]);
             } else {
-                std::cerr << "kmerDecoder Kmers parameters validation failed" << std::endl;
+                std::cerr << "kmerDecoder Kmers parameters {k_size} validation failed" << std::endl;
                 exit(1);
             }
         } else if (mode == "skipmers") {
-            bool check_k = (params.find("kSize") != params.end());
+            bool check_k = (params.find("k_size") != params.end());
             bool check_m = (params.find("m") != params.end());
             bool check_n = (params.find("n") != params.end());
 
             if (check_k && check_m && check_n) {
-                return new Skipmers(filename, chunkSize, params["m"], params["n"], params["kSize"]);
+                return new Skipmers(filename, chunkSize, params["m"], params["n"], params["k_size"]);
             } else {
-                std::cerr << "kmerDecoder Skipmers parameters validation failed" << std::endl;
+                std::cerr << "kmerDecoder Skipmers parameters {k_size, m, n} validation failed" << std::endl;
                 exit(1);
             }
         } else if (mode == "minimizers") {
-            bool check_k = (params.find("kSize") != params.end());
+            bool check_k = (params.find("k_size") != params.end());
             bool check_w = (params.find("w") != params.end());
 
             if (check_k && check_w) {
-                return new Minimizers(filename, chunkSize, params["kSize"], params["w"]);
+                return new Minimizers(filename, chunkSize, params["k_size"], params["w"]);
             } else {
-                std::cerr << "kmerDecoder Skipmers parameters validation failed" << std::endl;
+                std::cerr << "kmerDecoder Skipmers parameters {k_size, w} validation failed" << std::endl;
                 exit(1);
             }
 
