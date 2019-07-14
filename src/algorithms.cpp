@@ -293,6 +293,11 @@ namespace kProcessor {
     }
 
     void parseSequences(kmerDecoder * KD, kDataFrame* output){
+        if (KD->get_kSize() != (int)output->getkSize()){
+            std::cerr << "kmerDecoder kSize must be equal to kDataFrame kSize" << std::endl;
+            exit(1);
+        }
+
         while (!KD->end()) {
             KD->next_chunk();
             for (const auto &seq : *KD->getKmers()) {
@@ -326,10 +331,15 @@ namespace kProcessor {
     }
 
     void parseSequencesFromString(kmerDecoder *KD, string sequence, kDataFrame *output) {
+        if (KD->get_kSize() != (int)output->getkSize()) {
+            std::cerr << "kmerDecoder kSize must be equal to kDataFrame kSize" << std::endl;
+            exit(1);
+        }
+
         std::vector<std::string> kmers;
         KD->seq_to_kmers(sequence, kmers);
 
-        for(const auto &kmer : kmers){
+        for (const auto &kmer : kmers) {
             output->insert(kmer);
         }
 

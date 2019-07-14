@@ -43,7 +43,7 @@ inline uint64_t estimateMemory(uint64_t nslots,uint64_t slotSize, uint64_t fcoun
 /// Load the kmers in the input file into the output kDataframe. Input File can be of formats: fastq,fasta, sam, and bam.
 void parseSequences(string seqFileName,int nThreads,kDataFrame* output);
 
-/// Load the kmers in the input file into the output kDataframe. Input File can be of formats: fastq,fasta, sam, and bam.
+/// Load the kmers in the input file into the output kDataframe. Input File can be of formats: fastq,fasta.
 void parseSequences(kmerDecoder * KD, kDataFrame* output);
 
 /// Load the kmers in the input string into the output kDataframe.
