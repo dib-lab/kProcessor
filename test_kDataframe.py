@@ -35,10 +35,11 @@ class TestKDataFrame(unittest.TestCase):
         framesToBeTested = [[],[]]
 
         for file in self.fastqFiles:
+            KD = kp.initialize_kmerDecoder(file, 1000, "kmers",{"k_size" : 31})
             framesToBeTested[0].append(kp.kDataFrameMQF(31))
-            kp.parseSequences(file, 1, framesToBeTested[0][-1])
+            kp.parseSequences(KD, framesToBeTested[0][-1])
             framesToBeTested[1].append(kp.kDataFrameMAP(31))
-            kp.parseSequences(file, 1, framesToBeTested[1][-1])
+            kp.parseSequences(KD, framesToBeTested[1][-1])
 
         self.framesToBeTested = framesToBeTested
 
@@ -170,7 +171,7 @@ class TestKDataFrame(unittest.TestCase):
         # Get all inserted kmers counts
         inserted_counts = set([kmer[1] for kmer in kmers_list])
 
-        fileNames = ["tmp.kdataframe.mqf", "tmp.kdataframe.map"]
+        fileNames = ["tmp.kdataframe", "tmp.kdataframe"]
 
         for i in range(len(kFrames)):
             kFrames[i].save(fileNames[i])
