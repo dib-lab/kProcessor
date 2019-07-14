@@ -1,5 +1,5 @@
 namespace kProcessor{
-void parseSequences(string seqFileName,int nThreads,kDataFrame* output);
+void parseSequences(kmerDecoder * KD, kDataFrame* output);
 void parseSequencesFromString(kmerDecoder *KD, string sequence,kDataFrame* output);
 kDataFrame* kFrameUnion(const vector<kDataFrame*>& input);
 kDataFrame* kFrameIntersect(const vector<kDataFrame*>& input);
