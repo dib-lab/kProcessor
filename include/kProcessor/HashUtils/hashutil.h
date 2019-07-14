@@ -73,12 +73,12 @@ public:
 		return new wrapperHasher(fn,kSize);
 	}
 	uint64_t hash(string key){
-		return fn(key);
+		return fn(kmer::str_to_canonical_int(key));
 	}
 
 	uint64_t hash(uint64_t key){
-		string kmerStr=kmer::int_to_str(key,kSize);
-		return fn(kmerStr);
+		string kmerStr = kmer::int_to_str(key,kSize);
+		return fn(key);
 	}
 
 };
