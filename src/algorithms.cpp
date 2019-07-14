@@ -292,6 +292,16 @@ namespace kProcessor {
 
     }
 
+    void parseSequences(kmerDecoder * KD, kDataFrame* output){
+        while (!KD->end()) {
+            KD->next_chunk();
+            for (const auto &seq : *KD->getKmers()) {
+                for (const auto &kmer : seq.second) {
+                    output->insert(kmer);
+                }
+            }
+        }
+    }
 
     void parseSequences(string seqFileName, int nThreads, kDataFrame *output) {
 //  if(dynamic_cast<kDataFrameMQF*>(output))
