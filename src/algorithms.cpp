@@ -471,6 +471,46 @@ namespace kProcessor {
         }
     }
 
+    kmerDecoder* initialize_kmerDecoder(std::string mode, std::map<std::string, int> params){
+        // for avoiding case sensitivity issues.
+        transform(mode.begin(), mode.end(), mode.begin(), ::tolower);
+
+        if (mode == "kmers") {
+            if (params.find("k_size") != params.end()) {
+                return new Kmers(params["k_size"]);
+            } else {
+                std::cerr << "kmerDecoder Kmers parameters {k_size} validation failed" << std::endl;
+                exit(1);
+            }
+        } else if (mode == "skipmers") {
+            bool check_k = (params.find("k_size") != params.end());
+            bool check_m = (params.find("m") != params.end());
+            bool check_n = (params.find("n") != params.end());
+
+            if (check_k && check_m && check_n) {
+                return new Skipmers(params["m"], params["n"], params["k_size"]);
+            } else {
+                std::cerr << "kmerDecoder Skipmers parameters {k_size, m, n} validation failed" << std::endl;
+                exit(1);
+            }
+        } else if (mode == "minimizers") {
+            bool check_k = (params.find("k_size") != params.end());
+            bool check_w = (params.find("w") != params.end());
+
+            if (check_k && check_w) {
+                return new Minimizers(params["k_size"], params["w"]);
+            } else {
+                std::cerr << "kmerDecoder Skipmers parameters {k_size, w} validation failed" << std::endl;
+                exit(1);
+            }
+
+        }else{
+            std::cerr << "supported kmerDecoder modes: {kmers, skipmers, minimizers}" << std::endl;
+            exit(1);
+        }
+    }
+
+
     colored_kDataFrame *index(kmerDecoder *KD, string names_fileName, uint64_t Q) {
         flat_hash_map<string, string> namesMap;
         flat_hash_map<string, uint64_t> tagsMap;
