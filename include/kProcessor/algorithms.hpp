@@ -44,7 +44,7 @@ inline uint64_t estimateMemory(uint64_t nslots,uint64_t slotSize, uint64_t fcoun
 void parseSequences(string seqFileName,int nThreads,kDataFrame* output);
 
 /// Load the kmers in the input string into the output kDataframe.
-void parseSequencesFromString(string sequence,kDataFrame* output);
+void parseSequencesFromString(kmerDecoder *KD, string sequence,kDataFrame* output);
 
 /// Applies a function on all the kmers in the input kDataframe. The output is another kDataframe with the transformed kmers.
 kDataFrame* transform(kDataFrame* input,kmerRow (*fn)(kmerRow i));

@@ -315,12 +315,14 @@ namespace kProcessor {
         }
     }
 
-    void parseSequencesFromString(string sequence, kDataFrame *output) {
-        int k = output->getkSize();
-        for (int i = 0; i < sequence.size() - k + 1; i++) {
-            string kmer = sequence.substr(i, k);
+    void parseSequencesFromString(kmerDecoder *KD, string sequence, kDataFrame *output) {
+        std::vector<std::string> kmers;
+        KD->seq_to_kmers(sequence, kmers);
+
+        for(const auto &kmer : kmers){
             output->insert(kmer);
         }
+
     }
 
 
