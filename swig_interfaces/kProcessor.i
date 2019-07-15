@@ -19,9 +19,12 @@ using namespace std; // Extremly important
 /*  ~~~~COMMENT TO DISABLE namesMap interface~~~~  */
 /*  ~~~~WORKS ONLY IN SWIG4.0 ~~~~  */
 %include std_unordered_map.i
-%template(MAPsi) unordered_map<uint32_t, std::string>;
-%template(MAPis) unordered_map<std::string, uint32_t>;
+/*
+%template(MAPsi) unordered_map<int, std::string>;
+%template(MAPis) unordered_map<std::string, int>;
+*/
 %template(kmerDecoderParams) map<string, int>;
+%include "swig_interfaces/modules/custom_unordered_maps.i"
 
 /*Just copy/paste the snippet I'm interested in to be wrapped!*/
 
