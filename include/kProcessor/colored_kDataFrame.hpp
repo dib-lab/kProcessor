@@ -31,6 +31,10 @@ public:
   static colored_kDataFrame* load(string prefix);
   uint64_t getkSize();
 
+  // Converting phmap to unordered_map, mainly for the python interface
+  unordered_map<int, string> names_map();
+  unordered_map<string, int> inverse_names_map();
+
 
 };
 

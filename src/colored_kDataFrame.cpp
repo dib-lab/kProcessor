@@ -86,3 +86,19 @@ colored_kDataFrame* colored_kDataFrame::load(string prefix)
   }
   return res;
 }
+
+unordered_map<int, string> colored_kDataFrame::names_map(){
+    unordered_map<int, string> names_map;
+    for(const auto &item : this->namesMap){
+        names_map[item.first] = item.second;
+    }
+    return names_map;
+}
+
+unordered_map<string, int> colored_kDataFrame::inverse_names_map(){
+    unordered_map<string, int> inv_names_map;
+    for(const auto &item : this->namesMapInv){
+        inv_names_map[item.first] = item.second;
+    }
+    return inv_names_map;
+}
