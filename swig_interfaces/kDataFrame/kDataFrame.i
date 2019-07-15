@@ -72,7 +72,7 @@ The difference between setCount and insert is that setCount set the count to N n
   static kDataFrame* load(string filePath);
   
 /// Get kmer size used in the kDataFrame.  
-  uint64_t getkSize(){return kSize;}
+    uint64_t ksize(){return kSize;}
   
 /// Set the kmer size that will be used in the kDataFrame.  
   void setkSize(uint64_t k){kSize=k;}

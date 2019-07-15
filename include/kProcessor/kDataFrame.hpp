@@ -296,6 +296,10 @@ The difference between setCount and insert is that setCount set the count to N n
 
 
   uint64_t getkSize(){return kSize;}
+
+  // duplicate for easier name in python, getkSize won't be wrapped
+  uint64_t ksize(){return kSize;}
+
   void setkSize(uint64_t k){kSize=k;}
 
 
