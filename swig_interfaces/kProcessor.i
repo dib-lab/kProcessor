@@ -24,7 +24,7 @@ using namespace std; // Extremly important
 %template(MAPis) unordered_map<std::string, int>;
 */
 %template(kmerDecoderParams) map<string, int>;
-%include "swig_interfaces/modules/custom_unordered_maps.i"
+%include "swig_interfaces/modules/custom_typemaps.i"
 
 /*Just copy/paste the snippet I'm interested in to be wrapped!*/
 
