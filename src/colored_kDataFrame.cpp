@@ -32,10 +32,30 @@ void colored_kDataFrame::getSamplesIDForKmer(string kmer,vector<uint32_t>& resul
   }
   colors->getSamples(color,result);
 }
+
+vector<uint32_t> colored_kDataFrame::getSamplesIDForKmer(string kmer)
+{
+    vector<uint32_t> result;
+    uint32_t color=getKmerColor(kmer);
+    if(color==0)
+    {
+        return {};
+    }
+    colors->getSamples(color,result);
+}
+
 void colored_kDataFrame::getSamplesIDForColor(uint32_t color,vector<uint32_t>& result)
 {
   colors->getSamples(color,result);
 }
+
+vector<uint32_t> colored_kDataFrame::getSamplesIDForColor(uint32_t color)
+{
+    vector<uint32_t> result;
+    colors->getSamples(color,result);
+    return result;
+}
+
 void colored_kDataFrame::colorKmer(string kmer,vector<uint32_t> & samplesIds){
   uint64_t color=colorsInv->getColorId(samplesIds);
   if(color==0)

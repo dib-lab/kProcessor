@@ -20,8 +20,10 @@ public:
   void addNewColor(uint32_t color, vector<uint32_t> & samplesIds);
   void setKmerColor(string kmer,uint32_t color);
   uint32_t getKmerColor(string kmer);
-  void getSamplesIDForKmer(string kmer,vector<uint32_t>& result);
-  void getSamplesIDForColor(uint32_t color,vector<uint32_t>& result);
+  vector<uint32_t> getSamplesIDForKmer(string kmer);
+  void getSamplesIDForKmer(string kmer,vector<uint32_t> & result);
+  vector<uint32_t> getSamplesIDForColor(uint32_t color);
+  void getSamplesIDForColor(uint32_t color,vector<uint32_t> & result);
 
   void colorKmer(string kmer,vector<uint32_t> & samplesIds);
 
