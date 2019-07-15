@@ -220,7 +220,6 @@ class kDataFrameMAPIterator:public _kDataFrameIterator{
 private:
   flat_hash_map<uint64_t, uint64_t>::iterator iterator;
   kDataFrameMAP* origin;
-  Hasher * hasher;
 public:
   kDataFrameMAPIterator(flat_hash_map<uint64_t, uint64_t>::iterator,kDataFrameMAP* origin,uint64_t kSize);
   kDataFrameMAPIterator(const kDataFrameMAPIterator&);
