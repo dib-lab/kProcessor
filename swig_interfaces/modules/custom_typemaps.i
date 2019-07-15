@@ -18,4 +18,13 @@
     }
 }
 
+%typemap(out) std::vector<uint32_t> {
+    int ln = $1.size();
+    $result = PyList_New(0);
+    std::vector<uint32_t>::iterator iter;
+    for (int i = 0; i < ln ; i++) {
+        PyList_Append($result, PyInt_FromLong($1[i]));
+    }
+}
+
 /*----------------------------------------------*/
