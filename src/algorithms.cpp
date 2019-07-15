@@ -455,6 +455,8 @@ namespace kProcessor {
 
     kmerDecoder* initialize_kmerDecoder(std::string filename, int chunkSize, std::string mode, std::map<std::string, int> params){
 
+        std::string func_name = "wrong parameters in initialize_kmerDecoder() : \n";
+
         // for avoiding case sensitivity issues.
         transform(mode.begin(), mode.end(), mode.begin(), ::tolower);
 
@@ -462,7 +464,7 @@ namespace kProcessor {
             if (params.find("k_size") != params.end()) {
                 return new Kmers(filename, chunkSize, params["k_size"]);
             } else {
-                std::cerr << "kmerDecoder Kmers parameters {k_size} validation failed" << std::endl;
+                std::cerr << func_name << "kmerDecoder Kmers parameters {k_size} validation failed" << std::endl;
                 exit(1);
             }
         } else if (mode == "skipmers") {
@@ -473,7 +475,7 @@ namespace kProcessor {
             if (check_k && check_m && check_n) {
                 return new Skipmers(filename, chunkSize, params["m"], params["n"], params["k_size"]);
             } else {
-                std::cerr << "kmerDecoder Skipmers parameters {k_size, m, n} validation failed" << std::endl;
+                std::cerr << func_name << "kmerDecoder Skipmers parameters {k_size, m, n} validation failed" << std::endl;
                 exit(1);
             }
         } else if (mode == "minimizers") {
@@ -483,17 +485,20 @@ namespace kProcessor {
             if (check_k && check_w) {
                 return new Minimizers(filename, chunkSize, params["k_size"], params["w"]);
             } else {
-                std::cerr << "kmerDecoder Skipmers parameters {k_size, w} validation failed" << std::endl;
+                std::cerr << func_name << "kmerDecoder Skipmers parameters {k_size, w} validation failed" << std::endl;
                 exit(1);
             }
 
         }else{
-            std::cerr << "supported kmerDecoder modes: {kmers, skipmers, minimizers}" << std::endl;
+            std::cerr << func_name << "supported kmerDecoder modes: {kmers, skipmers, minimizers}" << std::endl;
             exit(1);
         }
     }
 
     kmerDecoder* initialize_kmerDecoder(std::string mode, std::map<std::string, int> params){
+
+        std::string func_name = "wrong parameters in initialize_kmerDecoder() : \n";
+
         // for avoiding case sensitivity issues.
         transform(mode.begin(), mode.end(), mode.begin(), ::tolower);
 
@@ -501,7 +506,7 @@ namespace kProcessor {
             if (params.find("k_size") != params.end()) {
                 return new Kmers(params["k_size"]);
             } else {
-                std::cerr << "kmerDecoder Kmers parameters {k_size} validation failed" << std::endl;
+                std::cerr << func_name << "kmerDecoder Kmers parameters {k_size} validation failed" << std::endl;
                 exit(1);
             }
         } else if (mode == "skipmers") {
@@ -512,7 +517,7 @@ namespace kProcessor {
             if (check_k && check_m && check_n) {
                 return new Skipmers(params["m"], params["n"], params["k_size"]);
             } else {
-                std::cerr << "kmerDecoder Skipmers parameters {k_size, m, n} validation failed" << std::endl;
+                std::cerr << func_name << "kmerDecoder Skipmers parameters {k_size, m, n} validation failed" << std::endl;
                 exit(1);
             }
         } else if (mode == "minimizers") {
@@ -522,12 +527,12 @@ namespace kProcessor {
             if (check_k && check_w) {
                 return new Minimizers(params["k_size"], params["w"]);
             } else {
-                std::cerr << "kmerDecoder Skipmers parameters {k_size, w} validation failed" << std::endl;
+                std::cerr  << func_name << "kmerDecoder Skipmers parameters {k_size, w} validation failed" << std::endl;
                 exit(1);
             }
 
         }else{
-            std::cerr << "supported kmerDecoder modes: {kmers, skipmers, minimizers}" << std::endl;
+            std::cerr << func_name << "supported kmerDecoder modes: {kmers, skipmers, minimizers}" << std::endl;
             exit(1);
         }
     }
