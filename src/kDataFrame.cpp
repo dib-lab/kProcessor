@@ -184,6 +184,7 @@ kDataFrame *kDataFrame::load(string filePath) {
 
 
 kDataFrameMQF::kDataFrameMQF():kDataFrame(){
+    this->class_name = "MQF"; // Temporary until resolving #17
   mqf=new QF();
   qf_init(mqf, (1ULL<<16), 2*kSize, 0,2,0, true, "", 2038074761);
   hasher=(new IntegerHasher(kSize));
@@ -193,6 +194,7 @@ kDataFrameMQF::kDataFrameMQF():kDataFrame(){
 }
 kDataFrameMQF::kDataFrameMQF(uint64_t ksize,uint8_t q,uint8_t fixedCounterSize,uint8_t tagSize,double falsePositiveRate):
 kDataFrame(ksize){
+  this->class_name = "MQF"; // Temporary until resolving #17
   mqf=new QF();
   qf_init(mqf, (1ULL<<q), 2*ksize,tagSize,fixedCounterSize, 0,true, "", 2038074761);
   this->falsePositiveRate=falsePositiveRate;
@@ -208,6 +210,7 @@ kDataFrame(ksize){
 }
 kDataFrameMQF::kDataFrameMQF(uint64_t ksize):
 kDataFrame(ksize){
+  this->class_name = "MQF"; // Temporary until resolving #17
   this->falsePositiveRate=0.0;
   hasher=(new IntegerHasher(kSize));
   hashbits=2*kSize;
@@ -219,6 +222,7 @@ kDataFrame(ksize){
 kDataFrameMQF::kDataFrameMQF(QF* mqf,uint64_t ksize,double falsePositiveRate):
 kDataFrame(ksize)
 {
+    this->class_name = "MQF"; // Temporary until resolving #17
   this->mqf=mqf;
 this->falsePositiveRate=falsePositiveRate;
   if(falsePositiveRate==0){
@@ -255,6 +259,7 @@ kDataFrameMQF::kDataFrameMQF(uint64_t ksize,vector<uint64_t> countHistogram,uint
   ,double falsePositiveRate):
   kDataFrame(ksize)
   {
+      this->class_name = "MQF"; // Temporary until resolving #17
     uint64_t nSlots;
     uint64_t fixedCounterSize;
     uint64_t memory;
@@ -467,12 +472,14 @@ kDataFrameIterator kDataFrameMQF::end(){
 // kDataFrameMAP _____________________________
 
 kDataFrameMAP::kDataFrameMAP(uint64_t ksize) {
+    this->class_name = "MAP"; // Temporary until resolving #17
     this->kSize = ksize;
     hasher=new wrapperHasher<flat_hash_map<uint64_t,uint64_t>::hasher >(MAP.hash_function(),ksize);
     this->MAP=flat_hash_map<uint64_t,uint64_t>(1000);
     // this->hasher = (new IntegerHasher(ksize));
 }
 kDataFrameMAP::kDataFrameMAP() {
+    this->class_name = "MAP"; // Temporary until resolving #17
     this->kSize = 23;
     this->MAP=flat_hash_map<uint64_t,uint64_t>(1000);
     // hasher=new wrapperHasher<flat_hash_map<uint64_t,uint64_t>::hasher >(MAP.hash_function(),kSize);

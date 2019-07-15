@@ -239,7 +239,9 @@ class kDataFrame{
 protected:
   uint64_t kSize;
   Hasher* hasher;
+  string class_name; // Default = MQF, change if MAP. Temporary until resolving #17
 public:
+  virtual string get_class_name(){ return class_name;}  // Temporary until resolving #17
   kDataFrame();
   kDataFrame(uint8_t kSize);
 

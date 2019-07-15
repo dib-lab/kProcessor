@@ -352,7 +352,19 @@ namespace kProcessor {
         }
     };
 
+    inline void terminate_if_kDataFrameMAP(const vector<kDataFrame *> &input){
+        for(const auto & kFrame : input){
+            if (kFrame->get_class_name() == "MAP"){
+                std::cerr
+                << "can't apply set functions kDataFramMAP on kDataFrameMAP.\n"
+                << "use kDataFrameMQF instead." << std::endl;
+                exit(1);
+            }
+        }
+    }
+
     void merge(const vector<kDataFrame *> &input, kDataFrame *res, kmerRow (*fn)(vector<kmerRow> &i)) {
+        terminate_if_kDataFrameMAP(input);
         priority_queue<pair<kmerRow, int>, vector<pair<kmerRow, int> >, CustomKmerRow> Q;
         vector<kDataFrameIterator> iterators(input.size());
         for (int i = 0; i < input.size(); i++) {
