@@ -106,6 +106,10 @@ vector<kDataFrame*> BuildTestFrames()
   {
     framesToBeTested.push_back(new kDataFrameMAP(k));
   }
+  for(auto k:kSizes)
+  {
+    framesToBeTested.push_back(new kDataFrameBMQF(k));
+  }
   return framesToBeTested;
 }
 
@@ -126,7 +130,7 @@ vector<vector<string> > setFunctionsTestInput={{"test.noN.fastq","test2.noN.fast
 
 vector<vector<kDataFrame*> > BuildTestFramesForSetFunctions()
 {
-  vector<vector<kDataFrame*> > framesToBeTested(2);
+  vector<vector<kDataFrame*> > framesToBeTested(3);
   int k=31;
   for(auto file:setFunctionsTestInput[0])
   {
@@ -134,6 +138,8 @@ vector<vector<kDataFrame*> > BuildTestFramesForSetFunctions()
     kProcessor::parseSequences(file,1,framesToBeTested[0].back());
     framesToBeTested[1].push_back(new kDataFrameMAP(k));
     kProcessor::parseSequences(file,1,framesToBeTested[1].back());
+    framesToBeTested[2].push_back(new kDataFrameBMQF(k));
+    kProcessor::parseSequences(file,1,framesToBeTested[2].back());
   }
   return framesToBeTested;
 }
