@@ -550,7 +550,7 @@ namespace kProcessor {
     }
 
 
-    colored_kDataFrame *index(kmerDecoder *KD, string names_fileName, uint64_t Q) {
+    colored_kDataFrame *index(kmerDecoder *KD, string names_fileName, kDataFrame *frame) {
         flat_hash_map<string, string> namesMap;
         flat_hash_map<string, uint64_t> tagsMap;
         flat_hash_map<string, uint64_t> groupNameMap;
@@ -583,17 +583,9 @@ namespace kProcessor {
         string kmer;
         uint64_t tagBits = 0;
         uint64_t maxTagValue = (1ULL << tagBits) - 1;
-        kDataFrame *frame;
+       //  kDataFrame *frame;
         int kSize = KD->get_kSize();
 
-        if (kSize < 17) {
-            frame = new kDataFrameMAP(kSize);
-        } else if (kSize > 17 && kSize <= 31) {
-            frame = new kDataFrameMQF(kSize, Q, 2, tagBits, 0);
-        } else {
-            std::cerr << "can't proceed with kSize > 31" << std::endl;
-            exit(1);
-        }
 
         uint64_t lastTag = 0;
         readID = 0;
