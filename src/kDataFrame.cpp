@@ -192,6 +192,42 @@ kDataFrameMQF::kDataFrameMQF():kDataFrame(){
   hashbits=2*kSize;
   range=(1ULL<<hashbits);
 }
+
+kDataFrameMQF::kDataFrameMQF(uint64_t ksize, uint8_t q, int mode) : kDataFrame(ksize) {
+
+    this->class_name = "MQF"; // Temporary until resolving #17
+
+    // Mode 0: Murmar Hashing | Irreversible
+    // Mode 1: Integer Hashing | Reversible | Full Hashing
+    // Mode 2: Q Hashing | Reversible | Hashing only the Q
+    // Mode 3: TwoBitsHashing | Not considered hashing, just store the two bits representation
+
+    switch (mode) {
+        case 0:
+            hasher = (new MumurHasher(2038074761));
+            break;
+        case 1:
+            hasher = (new IntegerHasher(kSize));
+            break;
+        case 2:
+            hasher = (new QHasher(kSize, q));
+            break;
+        case 3:
+            hasher = (new TwoBitsHasher(kSize));
+            break;
+        default:
+            hasher = (new IntegerHasher(kSize));
+            break;
+    }
+
+    mqf = new QF();
+    qf_init(mqf, (1ULL << q), 2 * ksize, 0, 2, 0, true, "", 2038074761);
+    this->falsePositiveRate = falsePositiveRate;
+    hashbits = 2 * kSize;
+    range = (1ULL << hashbits);
+
+}
+
 kDataFrameMQF::kDataFrameMQF(uint64_t ksize,uint8_t q,uint8_t fixedCounterSize,uint8_t tagSize,double falsePositiveRate):
 kDataFrame(ksize){
   this->class_name = "MQF"; // Temporary until resolving #17
