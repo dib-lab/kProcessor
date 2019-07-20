@@ -346,3 +346,22 @@ string QHasher::Ihash(uint64_t key) {
     _2bit = merge_Q_R(Qval, R);
     return kmer::int_to_str(_2bit, kSize);
 }
+
+
+// _________ TwoBitsHasher
+
+TwoBitsHasher::TwoBitsHasher(uint64_t kSize) {
+    this->kSize = kSize;
+}
+
+uint64_t TwoBitsHasher::hash(string key) {
+    return kmer::str_to_canonical_int(key);
+}
+
+uint64_t TwoBitsHasher::hash(uint64_t key) {
+    return key;
+}
+
+string TwoBitsHasher::Ihash(uint64_t key) {
+    return kmer::int_to_str(key, this->kSize);
+}

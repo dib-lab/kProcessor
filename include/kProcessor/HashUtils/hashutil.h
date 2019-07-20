@@ -90,6 +90,19 @@ public:
     string Ihash(uint64_t key);
 };
 
+// TwoBitsHasher
+
+class TwoBitsHasher: public Hasher{
+private:
+    uint64_t kSize;
+public:
+    TwoBitsHasher(uint64_t kSize);
+    Hasher* clone() { return new TwoBitsHasher(kSize);}
+    uint64_t hash(string key);
+    uint64_t hash(uint64_t key);
+    string Ihash(uint64_t key);
+};
+
 template<class hashFnType>
 class wrapperHasher: public Hasher{
 private:
