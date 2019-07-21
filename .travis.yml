@@ -24,6 +24,7 @@ branches:
   only:
   - master
   - development
+  - bufferedMQF_integration
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)
