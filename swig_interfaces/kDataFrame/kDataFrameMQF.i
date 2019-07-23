@@ -3,6 +3,7 @@ class kDataFrameMQF: public kDataFrame{
 public:
   kDataFrameMQF();
   kDataFrameMQF(uint64_t kSize);
+  kDataFrameMQF(uint64_t ksize, uint8_t q, int mode);
   kDataFrameMQF(uint64_t ksize,uint8_t q,uint8_t fixedCounterSize,uint8_t tagSize,double falsePositiveRate);
 
   ~kDataFrameMQF(){
