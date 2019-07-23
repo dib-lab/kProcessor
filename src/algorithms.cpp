@@ -551,6 +551,12 @@ namespace kProcessor {
 
 
     colored_kDataFrame *index(kmerDecoder *KD, string names_fileName, kDataFrame *frame) {
+
+        if (KD->get_kSize() != (int)frame->ksize()) {
+            std::cerr << "kmerDecoder kSize must be equal to kDataFrame kSize" << std::endl;
+            exit(1);
+        }
+
         flat_hash_map<string, string> namesMap;
         flat_hash_map<string, uint64_t> tagsMap;
         flat_hash_map<string, uint64_t> groupNameMap;
