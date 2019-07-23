@@ -222,7 +222,7 @@ void kDataFrameMQF::reserve(uint64_t n) {
     QF *old = mqf;
     mqf = new QF();
     uint64_t q = (uint64_t) ceil(log2((double) n * 1.4));
-    std::cout << "[DEBUG] Q: " << q << std::endl;
+//    std::cerr << "[DEBUG] Q: " << q << std::endl;
     qf_init(mqf, (1ULL << q), hashbits, 0, 2, 0, true, "", 2038074761);
     if (old != NULL) {
         qf_migrate(old, mqf);
@@ -355,7 +355,7 @@ bool kDataFrameMQF::insert(string kmer) {
     if (load_factor() > 0.9)
         reserve(mqf->metadata->nslots);
     uint64_t hash = hasher->hash(kmer) % mqf->metadata->range;
-    cout << "Inserting kmer: " << kmer << ", Hash: " << hash << endl;
+    // cout << "Inserting kmer: " << kmer << ", Hash: " << hash << endl;
     try {
         qf_insert(mqf, hash, 1, false, false);
     }
