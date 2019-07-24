@@ -12,7 +12,7 @@
  *****************************
  */
 
-kDataFrameMAPIterator::kDataFrameMAPIterator(flat_hash_map<uint64_t, uint64_t>::iterator it, kDataFrameMAP *origin,
+kDataFrameMAPIterator::kDataFrameMAPIterator(std::map<uint64_t, uint64_t>::iterator it, kDataFrameMAP *origin,
                                              uint64_t kSize)
         : _kDataFrameIterator(kSize) {
     iterator = it;
@@ -75,16 +75,16 @@ kDataFrameMAPIterator::~kDataFrameMAPIterator() {
 kDataFrameMAP::kDataFrameMAP(uint64_t ksize) {
     this->class_name = "MAP"; // Temporary until resolving #17
     this->kSize = ksize;
-    hasher = new wrapperHasher<flat_hash_map<uint64_t, uint64_t>::hasher>(MAP.hash_function(), ksize);
-    this->MAP = flat_hash_map<uint64_t, uint64_t>(1000);
+//    hasher = new wrapperHasher<std::map<uint64_t, uint64_t>::hasher>(MAP.hash_function(), ksize);
+//    this->MAP = std::map<uint64_t, uint64_t>(1000);
     // this->hasher = (new IntegerHasher(ksize));
 }
 
 kDataFrameMAP::kDataFrameMAP() {
     this->class_name = "MAP"; // Temporary until resolving #17
     this->kSize = 23;
-    this->MAP = flat_hash_map<uint64_t, uint64_t>(1000);
-    // hasher=new wrapperHasher<flat_hash_map<uint64_t,uint64_t>::hasher >(MAP.hash_function(),kSize);
+//    this->MAP = std::map<uint64_t, uint64_t>(1000);
+    // hasher=new wrapperHasher<std::map<uint64_t,uint64_t>::hasher >(MAP.hash_function(),kSize);
     // this->hasher = (new IntegerHasher(23));
 }
 
@@ -132,11 +132,13 @@ uint64_t kDataFrameMAP::max_size() {
 }
 
 float kDataFrameMAP::load_factor() {
-    return this->MAP.load_factor();
+    return 1;
+//    return this->MAP.load_factor();
 }
 
 float kDataFrameMAP::max_load_factor() {
-    return this->MAP.max_load_factor();
+    return 1;
+    //    return this->MAP.max_load_factor();
 }
 
 
@@ -146,7 +148,7 @@ void kDataFrameMAP::save(string filePath) {
     ofstream file(filePath + ".extra");
     file << kSize << endl;
 
-    std::ofstream os(filePath + ".phmap", std::ios::binary);
+    std::ofstream os(filePath + ".map", std::ios::binary);
     cereal::BinaryOutputArchive archive(os);
     archive(this->MAP);
 
@@ -163,7 +165,7 @@ kDataFrame *kDataFrameMAP::load(string filePath) {
     kDataFrameMAP *KMAP = new kDataFrameMAP(kSize);
 
     // Load the hashMap into the kDataFrameMAP
-    std::ifstream os(filePath + ".phmap", std::ios::binary);
+    std::ifstream os(filePath + ".map", std::ios::binary);
     cereal::BinaryInputArchive iarchive(os);
     iarchive(KMAP->MAP);
 
@@ -175,7 +177,7 @@ kDataFrame *kDataFrameMAP::getTwin() {
 }
 
 void kDataFrameMAP::reserve(uint64_t n) {
-    this->MAP.reserve(n);
+//    this->MAP.reserve(n);
 }
 
 kDataFrameIterator kDataFrameMAP::begin() {

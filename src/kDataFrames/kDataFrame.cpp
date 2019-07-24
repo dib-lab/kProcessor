@@ -34,8 +34,10 @@ bool kDataFrame::insert(kmerRow k) {
 kDataFrame *kDataFrame::load(string filePath) {
     if (fileExists(filePath + ".mqf"))
         return kDataFrameMQF::load(filePath);
-    else if (fileExists(filePath + ".phmap"))
+    else if (fileExists(filePath + ".map"))
         return kDataFrameMAP::load(filePath);
+    else if (fileExists(filePath + ".phmap"))
+        return kDataFramePHMAP::load(filePath);
     else
         throw std::runtime_error("Could not open kDataFrame file");
 }

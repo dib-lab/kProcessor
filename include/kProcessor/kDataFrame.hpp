@@ -14,6 +14,7 @@ using namespace std;
 
 class kDataFrame;
 class kDataFrameMAP;
+class kDataFramePHMAP;
 
 
 class kmerRow{
@@ -216,24 +217,6 @@ public:
    ~kDataFrameMQFIterator();
 };
 
-class kDataFrameMAPIterator:public _kDataFrameIterator{
-private:
-  flat_hash_map<uint64_t, uint64_t>::iterator iterator;
-  kDataFrameMAP* origin;
-public:
-  kDataFrameMAPIterator(flat_hash_map<uint64_t, uint64_t>::iterator,kDataFrameMAP* origin,uint64_t kSize);
-  kDataFrameMAPIterator(const kDataFrameMAPIterator&);
-  kDataFrameMAPIterator& operator ++ (int);
-  _kDataFrameIterator* clone();
-  uint64_t getHashedKmer();
-  string getKmer();
-  uint64_t getKmerCount();
-  bool setKmerCount(uint64_t count);
-  void endIterator();
-  bool operator ==(const _kDataFrameIterator& other);
-  bool operator !=(const _kDataFrameIterator& other);
-   ~kDataFrameMAPIterator();
-};
 
 class kDataFrame{
 protected:
@@ -373,12 +356,34 @@ public:
   kDataFrameIterator end();
 };
 
+
+// kDataFrameMAPIterator
+
+class kDataFrameMAPIterator:public _kDataFrameIterator{
+private:
+    std::map<uint64_t, uint64_t>::iterator iterator;
+    kDataFrameMAP* origin;
+public:
+    kDataFrameMAPIterator(std::map<uint64_t, uint64_t>::iterator,kDataFrameMAP* origin,uint64_t kSize);
+    kDataFrameMAPIterator(const kDataFrameMAPIterator&);
+    kDataFrameMAPIterator& operator ++ (int);
+    _kDataFrameIterator* clone();
+    uint64_t getHashedKmer();
+    string getKmer();
+    uint64_t getKmerCount();
+    bool setKmerCount(uint64_t count);
+    void endIterator();
+    bool operator ==(const _kDataFrameIterator& other);
+    bool operator !=(const _kDataFrameIterator& other);
+    ~kDataFrameMAPIterator();
+};
+
 // kDataFrameMAP _____________________________
 
 class kDataFrameMAP : public kDataFrame
 {
 private:
-  flat_hash_map<uint64_t, uint64_t> MAP;
+  std::map<uint64_t, uint64_t> MAP;
 public:
   kDataFrameMAP();
   kDataFrameMAP(uint64_t ksize);
@@ -405,6 +410,89 @@ public:
   static kDataFrame *load(string filePath);
 
     ~kDataFrameMAP() {
+        this->MAP.clear();
+    }
+};
+
+
+// kDataFramePHMAPIterator
+
+class kDataFramePHMAPIterator : public _kDataFrameIterator {
+private:
+    flat_hash_map<uint64_t, uint64_t>::iterator iterator;
+    kDataFramePHMAP *origin;
+public:
+    kDataFramePHMAPIterator(flat_hash_map<uint64_t, uint64_t>::iterator, kDataFramePHMAP *origin, uint64_t kSize);
+
+    kDataFramePHMAPIterator(const kDataFramePHMAPIterator &);
+
+    kDataFramePHMAPIterator &operator++(int);
+
+    _kDataFrameIterator *clone();
+
+    uint64_t getHashedKmer();
+
+    string getKmer();
+
+    uint64_t getKmerCount();
+
+    bool setKmerCount(uint64_t count);
+
+    void endIterator();
+
+    bool operator==(const _kDataFrameIterator &other);
+
+    bool operator!=(const _kDataFrameIterator &other);
+
+    ~kDataFramePHMAPIterator();
+};
+
+
+// kDataFramePHMAP _____________________________
+
+class kDataFramePHMAP : public kDataFrame {
+private:
+    flat_hash_map<uint64_t, uint64_t> MAP;
+public:
+    kDataFramePHMAP();
+
+    kDataFramePHMAP(uint64_t ksize);
+
+    kDataFrame *getTwin();
+
+    void reserve(uint64_t n);
+
+    inline bool kmerExist(string kmer);
+
+    bool setCount(string kmer, uint64_t count);
+
+    bool insert(string kmer);
+
+    bool insert(string kmer, uint64_t count);
+
+    uint64_t count(string kmer);
+
+    bool erase(string kmer);
+
+    uint64_t size();
+
+    uint64_t max_size();
+
+    float load_factor();
+
+    float max_load_factor();
+
+    kDataFrameIterator begin();
+
+    kDataFrameIterator end();
+
+    uint64_t bucket(string kmer);
+
+    void save(string filePath);
+
+    static kDataFrame *load(string filePath);
+
+    ~kDataFramePHMAP() {
         this->MAP.clear();
     }
 };
