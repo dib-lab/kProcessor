@@ -21,9 +21,9 @@ if os.path.exists('MANIFEST'):
     os.remove('MANIFEST')
 
 try:
-    from distutils.core import setup, Extension
-except ImportError:
     from setuptools import setup, Extension
+except ImportError:
+    from distutils.core import setup, Extension    
 
 try:
     with open('README.md') as f:
