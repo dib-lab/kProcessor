@@ -21,9 +21,9 @@ if os.path.exists('MANIFEST'):
     os.remove('MANIFEST')
 
 try:
-    from setuptools import setup, Extension
-except ImportError:
     from distutils.core import setup, Extension
+except ImportError:
+    from setuptools import setup, Extension
 
 try:
     with open('README.md') as f:
@@ -105,7 +105,7 @@ classifiers = [
 ]
 
 setup(name='kProcessor',
-      version='0.1',
+      version='0.2',
       author="M. Abuelanin",
       author_email='mabuelanin@gmail.com',
       description="""kProcessor Python interface""",
