@@ -73,7 +73,7 @@ kDataFramePHMAPIterator::~kDataFramePHMAPIterator() {
  */
 
 kDataFramePHMAP::kDataFramePHMAP(uint64_t ksize) {
-    this->class_name = "MAP"; // Temporary until resolving #17
+    this->class_name = "PHMAP"; // Temporary until resolving #17
     this->kSize = ksize;
     hasher = new wrapperHasher<flat_hash_map<uint64_t, uint64_t>::hasher>(MAP.hash_function(), ksize);
     this->MAP = flat_hash_map<uint64_t, uint64_t>(1000);
@@ -81,7 +81,7 @@ kDataFramePHMAP::kDataFramePHMAP(uint64_t ksize) {
 }
 
 kDataFramePHMAP::kDataFramePHMAP() {
-    this->class_name = "MAP"; // Temporary until resolving #17
+    this->class_name = "PHMAP"; // Temporary until resolving #17
     this->kSize = 23;
     this->MAP = flat_hash_map<uint64_t, uint64_t>(1000);
     // hasher=new wrapperHasher<flat_hash_map<uint64_t,uint64_t>::hasher >(MAP.hash_function(),kSize);
