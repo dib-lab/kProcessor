@@ -194,7 +194,7 @@ kDataFrameMQF::kDataFrameMQF(uint64_t ksize) :
     hashbits = 2 * kSize;
     range = (1ULL << hashbits);
     mqf = NULL;
-    reserve(10000);
+    reserve(1000000);
 }
 
 kDataFrameMQF::kDataFrameMQF(QF *mqf, uint64_t ksize, double falsePositiveRate) :
