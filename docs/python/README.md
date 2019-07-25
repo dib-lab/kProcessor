@@ -4,7 +4,13 @@
 
 ### Requirements
 
-`sudo apt-get install g++ swig cmake python3-dev zlib1g-dev libghc-bzlib-dev python3-distutils` |
+`sudo apt-get install g++ swig cmake python3-dev zlib1g-dev libghc-bzlib-dev python3-distutils`
+
+## Install from PyPi
+
+`pip install kProcessor`
+
+## Install Manually
 
 ### Clone
 
@@ -34,3 +40,15 @@ python3 setup.py install
 ```bash
 python3 setup.py bdist_wheel
 ```
+
+---
+
+## Documentation
+
+- [kDataFrame](./kDataFrame.markdown)
+- [colored_kDataFrame](./coloredKDataFrame.markdown)
+- [kDataFrame Iterator](./kDataFrameIterator.markdown)
+- [kmerDecoder](./kmerDecoder.markdown)
+- [kmer counting](./kmerCounting.markdown)
+- [Indexing](./indexing.markdown)
+- [set functions](./setFunctions.markdown)
