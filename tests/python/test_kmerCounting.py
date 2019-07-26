@@ -44,6 +44,10 @@ class TestkmerCounting(unittest.TestCase):
         KF_PHMAP = params_PHMAP.new_kf(self.ksize)
         KF_MAP = params_MAP.new_kf(self.ksize)
 
+        self.assertFalse(KF_MQF.size())
+        self.assertFalse(KF_PHMAP.size())
+        self.assertFalse(KF_MAP.size())
+
         # kmerCounting
         kp.parseSequences(KD_MQF, KF_MQF)
         kp.parseSequences(KD_PHMAP, KF_PHMAP)

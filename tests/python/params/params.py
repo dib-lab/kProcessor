@@ -38,17 +38,10 @@ class test_params:
         return self.new_kf(self.kSize)
 
     def test_build_kDataFrames(self):
-        new_kf = None
-        if self.kDataFrameType == "MQF":
-            new_kf = kp.kDataFrameMQF
-        elif self.kDataFrameType == "MAP":
-            new_kf = kp.kDataFrameMAP
-        elif self.kDataFrameType == "PHMAP":
-            new_kf = kp.kDataFramePHMAP
 
         for fastq in self.fastqFiles:
             KD = kp.initialize_kmerDecoder(fastq, 1000, "kmers", {"k_size": self.kSize})
-            KF = new_kf(self.kSize)
+            KF = self.new_kf(self.kSize)
             kp.parseSequences(KD, KF)
             self.kDataFrames.append(KF)
 
