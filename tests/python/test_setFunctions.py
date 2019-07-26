@@ -5,8 +5,7 @@ import random
 import kProcessor as kp
 from params import test_params
 
-
-class TestKDataFrameMQF(unittest.TestCase):
+class TestSetFunctions(unittest.TestCase):
     params = test_params(kSize=21, kDataFrameType="MQF")
     params.Hasher = kp.IntegerHasher(21)
 

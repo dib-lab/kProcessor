@@ -22,6 +22,8 @@ class test_params:
         self.fasta_file = os.path.join(self.test_data_path, "test1.fa")
         self.names_file = os.path.join(self.test_data_path, "test1.fa.names")
 
+        self.small_fasta_file = os.path.join(self.test_data_path, "small.fa")
+
         fastq_files = ["test.noN.fastq", "test2.noN.fastq", "test2.noN.fastq"]
         self.fastqFiles = [os.path.join(self.test_data_path, fastq) for fastq in fastq_files]
 
@@ -33,6 +35,7 @@ class test_params:
             self.new_kf = kp.kDataFramePHMAP
 
         # self.test_build_kDataFrames()
+
 
     def create_new_kf(self):
         return self.new_kf(self.kSize)
