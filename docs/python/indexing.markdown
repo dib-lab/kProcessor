@@ -96,9 +96,7 @@ chunk_size = 10000
 KD = kp.initialize_kmerDecoder(fasta_file, chunk_size, "kmers", {"k_size" : kmer_size})
 
 # 2 - Instantiate kDataFrame
-hashing_mode = 1 # Integer Hashing
-Q_size = 28
-KF = kp.kDataFrameMQF(kmer_size, Q, hashing_mode)
+KF = kp.kDataFrameMQF(kmer_size)
 
 # 3- Perform indexing, store the kmers with their colors in the KF object and the colors information will be returned as a colored_kDataFrame (cfk)
 cfk = kp.index(KD, names_file, KF)
