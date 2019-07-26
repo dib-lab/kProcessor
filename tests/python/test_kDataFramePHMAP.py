@@ -6,7 +6,7 @@ import kProcessor as kp
 from params import test_params
 
 
-class TestKDataFrameMQF(unittest.TestCase):
+class TestKDataFramePHMAP(unittest.TestCase):
     params = test_params(kSize=21, kDataFrameType="PHMAP")
     params.Hasher = kp.TwoBitsHasher(21)
 
