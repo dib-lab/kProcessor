@@ -10,7 +10,7 @@ A color is a term used to represent all the targets *(indexed sequences)* that a
 
 - kmer `AATTTT` found in `seq1`
 - kmer `GGGGGG` found in `seq2`
-- kmer `GGGGGG` found in `seq3`
+- kmer `GCTGGG` found in `seq3`
 - kmer `AACCGT` found in `seq1` & `seq2`
 - kmer `GGTTAA` found in `seq2` & `seq3`
 
