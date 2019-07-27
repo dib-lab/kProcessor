@@ -2301,20 +2301,24 @@ _onDiskMQF<bitsPerSlot>::_onDiskMQF( uint64_t nslots, uint64_t key_bits, uint64_
 
 /* The caller should call onDiskMQF_init on the dest QF before calling this function.
  */
-template<uint64_t bitsPerSlot>
-void _onDiskMQF<bitsPerSlot>::copy(onDiskMQF *dest)
-{
-	// _onDiskMQF<bitsPerSlot>* qf=this;
-	throw std::logic_error("not implemented yet");
-	// memcpy(dest->mem, src->mem, sizeof(qfmem));
-	// memcpy(dest->metadata, src->metadata, sizeof(qfmetadata));
-	// //memcpy(dest->blocks, src->blocks, src->metadata->size);
-  //
-	// if(src->metadata->tags_map!=NULL){
-	// 	dest->metadata->tags_map=
-	// 	new std::map<uint64_t, std::vector<int> >(*src->metadata->tags_map);
-	// }
-}
+ template<uint64_t bitsPerSlot>
+ void _onDiskMQF<bitsPerSlot>::copy(onDiskMQF *dest)
+ {
+    // ( onDiskMQF *&qf, uint64_t nslots, uint64_t key_bits, uint64_t tag_bits,uint64_t fixed_counter_size ,const char * path)
+ 	_onDiskMQF<bitsPerSlot>* src=this;
+   // dest = new _onDiskMQF(uint64_t nslots, uint64_t key_bits, uint64_t tag_bits,uint64_t fixed_counter_size,const char * path);
+   init(dest, src->metadata->nslots, src->metadata->key_bits, src->metadata->tag_bits, src->metadata->fixed_counter_size, "");
+   // throw std::logic_error("not implemented yet");
+ 	memcpy(dest->mem, src->mem, sizeof(qfmem));
+ 	memcpy(dest->metadata, src->metadata, sizeof(qfmetadata));
+ 	// memcpy(dest->blocks, src->blocks, src->metadata->size);
+
+ 	if(src->metadata->tags_map!=NULL){
+ 		dest->metadata->tags_map=
+ 		new std::map<uint64_t, std::vector<int> >(*src->metadata->tags_map);
+ 	}
+ }
+
 
 /* free up the memory if the QF is in memory.
  * else unmap the mapped memory from pagecache.
