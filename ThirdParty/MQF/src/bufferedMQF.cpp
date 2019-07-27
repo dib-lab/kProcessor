@@ -32,6 +32,7 @@ void bufferedMQF_destroy(bufferedMQF *qf){
 
 void bufferedMQF_copy(bufferedMQF *dest, bufferedMQF *src){
 	qf_copy(dest->memoryBuffer,src->memoryBuffer);
+  // ERROR FLAG: copy(dest->disk)
 	src->disk->copy(dest->disk);
 }
 

@@ -525,7 +525,7 @@ void kDataFrameBMQF::reserve(uint64_t n)
   bufferedMQF_init(bufferedmqf, (1ULL<<q), (1ULL<<q), hashbits, 0,2, "");
   if(old!=NULL)
   {
-
+    // ERROR FLAG: bufferedMQF_copy(bufferedmqf,old)
     bufferedMQF_copy(bufferedmqf,old);
     bufferedMQF_destroy(old);
     delete old;
@@ -667,8 +667,10 @@ bool kDataFrameBMQF::insert(string kmer,uint64_t count){
   return true;
 }
 bool kDataFrameBMQF::insert(string kmer){
-  if(load_factor()>0.9)
+  if(load_factor()>0.9){
+    // ERROR FLAG: reserve(bufferedmqf->memoryBuffer->metadata->nslots)
     reserve(bufferedmqf->memoryBuffer->metadata->nslots);
+  }
   uint64_t hash=hasher->hash(kmer)% bufferedmqf->memoryBuffer->metadata->range;
   try{
     bufferedMQF_insert(bufferedmqf,hash,1,false,false);
