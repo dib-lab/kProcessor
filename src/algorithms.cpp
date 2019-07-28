@@ -610,7 +610,8 @@ namespace kProcessor {
 
                 auto it = namesMap.find(readName);
                 if (it == namesMap.end()) {
-                    cout << "read " << readName << "dont have group. Please check the group names file." << endl;
+                    continue;
+                    // cout << "read " << readName << "dont have group. Please check the group names file." << endl;
                 }
                 string groupName = it->second;
 
