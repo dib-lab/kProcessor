@@ -483,8 +483,10 @@ namespace kProcessor {
             bool check_k = (params.find("k_size") != params.end());
             bool check_m = (params.find("m") != params.end());
             bool check_n = (params.find("n") != params.end());
+            bool check_orf = (params.find("orf") != params.end());
 
             if (check_k && check_m && check_n) {
+                if(check_orf) return new Skipmers(filename, chunkSize, params["m"], params["n"], params["k_size"], params["orf"]);
                 return new Skipmers(filename, chunkSize, params["m"], params["n"], params["k_size"]);
             } else {
                 std::cerr << func_name << "kmerDecoder Skipmers parameters {k_size, m, n} validation failed" << std::endl;
@@ -525,8 +527,10 @@ namespace kProcessor {
             bool check_k = (params.find("k_size") != params.end());
             bool check_m = (params.find("m") != params.end());
             bool check_n = (params.find("n") != params.end());
+            bool check_orf = (params.find("orf") != params.end());
 
             if (check_k && check_m && check_n) {
+                if(check_orf) return new Skipmers(params["m"], params["n"], params["k_size"], params["orf"]);
                 return new Skipmers(params["m"], params["n"], params["k_size"]);
             } else {
                 std::cerr << func_name << "kmerDecoder Skipmers parameters {k_size, m, n} validation failed" << std::endl;
