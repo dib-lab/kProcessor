@@ -105,7 +105,7 @@ classifiers = [
 ]
 
 setup(name='kProcessor',
-      version='0.2',
+      version='0.3',
       author="M. Abuelanin",
       author_email='mabuelanin@gmail.com',
       description="""kProcessor Python interface""",
