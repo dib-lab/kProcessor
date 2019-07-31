@@ -569,9 +569,18 @@ namespace kProcessor {
         uint64_t readID = 0, groupID = 1;
         ifstream namesFile(names_fileName.c_str());
         string seqName, groupName;
+        string line;
         priority_queue<uint64_t, vector<uint64_t>, std::greater<uint64_t>> freeColors;
         flat_hash_map<string, uint64_t> groupCounter;
-        while (namesFile >> seqName >> groupName) {
+//        while (namesFile >> seqName >> groupName) {
+        while (std::getline(namesFile, line)) {
+            std::vector<string> tokens;
+            std::istringstream iss(line);
+            std::string token;
+            while(std::getline(iss, token, '\t'))   // but we can specify a different one
+                tokens.push_back(token);
+            seqName = tokens[0];
+            groupName = tokens[1];
             namesMap.insert(make_pair(seqName, groupName));
             auto it = groupNameMap.find(groupName);
             groupCounter[groupName]++;
