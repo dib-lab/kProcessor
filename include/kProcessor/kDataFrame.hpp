@@ -4,8 +4,7 @@
 #include <HashUtils/hashutil.h>
 #include <vector>
 #include <stdint.h>
-#include "gqf.hpp"
-#include "bufferedMQF.h"
+#include "gqf.h"
 #include "Utils/kmer.h"
 #include <map>
 #include <unordered_map>

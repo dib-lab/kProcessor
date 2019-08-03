@@ -37,7 +37,7 @@ file(GLOB kProcessorLibSrc "src/*.cpp" "src/KmerDecoder/*.cpp"
 add_library(${LIBRARY_NAME} STATIC
     ${kProcessorLibSrc}
     )
-target_link_libraries(kProcessor lMQF)
+target_link_libraries(kProcessor MQF)
 target_link_libraries (kProcessor ${SEQAN_LIBRARIES})
 target_link_libraries(kProcessor sdsl)
 
