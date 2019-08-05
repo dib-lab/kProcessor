@@ -132,7 +132,8 @@ vector<vector<kDataFrame*> > BuildTestFramesForSetFunctions()
   {
     framesToBeTested[0].push_back(new kDataFrameMQF(k));
     kProcessor::parseSequences(file,1,framesToBeTested[0].back());
-    framesToBeTested[1].push_back(new kDataFrameMAP(k));
+    framesToBeTested[1].push_back(new kDataFrameMQF(k)); // Temporary until resolving #17
+    framesToBeTested[1].push_back(new kDataFrameMAP(k)); // Set functions should now work fine on sorted map
     kProcessor::parseSequences(file,1,framesToBeTested[1].back());
   }
   return framesToBeTested;
@@ -544,13 +545,16 @@ INSTANTIATE_TEST_SUITE_P(testIndexing,
 TEST_P(indexingTest,index)
 {
   string filename=GetParam();
-  colored_kDataFrame* res= kProcessor::index(filename,filename+".names",25);
+  int chunkSize = 1000;
+
+  kDataFrame *KF = new kDataFrameMQF(25, 28, 1);
+  kmerDecoder *KMERS = kProcessor::initialize_kmerDecoder(filename, chunkSize, "kmers", {{"k_size", 25}});
+  colored_kDataFrame* res= kProcessor::index(KMERS, filename+".names", KF);
 
   seqan::SeqFileIn seqIn2(filename.c_str());
   seqan::StringSet<seqan::CharString> ids;
   seqan::StringSet<seqan::CharString> reads;
   uint64_t kSize=res->getkSize();
-  int chunkSize=1000;
   int readCount=0;
   int correct=0,wrong=0;
   vector<uint32_t> colors;
@@ -587,14 +591,16 @@ TEST_P(indexingTest,index)
 TEST_P(indexingTest,saveAndLoad)
 {
   string filename=GetParam();
-  colored_kDataFrame* res1= kProcessor::index(filename,filename+".names",25);
+  int chunkSize = 1000;
+  kDataFrame *KF = new kDataFrameMQF(25, 28, 1);
+  kmerDecoder *KMERS = kProcessor::initialize_kmerDecoder(filename, chunkSize, "kmers", {{"k_size", 25}});
+  colored_kDataFrame* res1= kProcessor::index(KMERS,filename+".names", KF);
   res1->save("tmp.coloredKdataFrame");
   colored_kDataFrame* res=colored_kDataFrame::load("tmp.coloredKdataFrame");
   seqan::SeqFileIn seqIn2(filename.c_str());
   seqan::StringSet<seqan::CharString> ids;
   seqan::StringSet<seqan::CharString> reads;
   uint64_t kSize=res->getkSize();
-  int chunkSize=1000;
   int readCount=0;
   int correct=0,wrong=0;
   vector<uint32_t> colors;

@@ -32,10 +32,30 @@ void colored_kDataFrame::getSamplesIDForKmer(string kmer,vector<uint32_t>& resul
   }
   colors->getSamples(color,result);
 }
+
+vector<uint32_t> colored_kDataFrame::getSamplesIDForKmer(string kmer)
+{
+    vector<uint32_t> result;
+    uint32_t color=getKmerColor(kmer);
+    if(color==0)
+    {
+        return {};
+    }
+    colors->getSamples(color,result);
+}
+
 void colored_kDataFrame::getSamplesIDForColor(uint32_t color,vector<uint32_t>& result)
 {
   colors->getSamples(color,result);
 }
+
+vector<uint32_t> colored_kDataFrame::getSamplesIDForColor(uint32_t color)
+{
+    vector<uint32_t> result;
+    colors->getSamples(color,result);
+    return result;
+}
+
 void colored_kDataFrame::colorKmer(string kmer,vector<uint32_t> & samplesIds){
   uint64_t color=colorsInv->getColorId(samplesIds);
   if(color==0)
@@ -85,4 +105,20 @@ colored_kDataFrame* colored_kDataFrame::load(string prefix)
     res->namesMapInv[name]=color;
   }
   return res;
+}
+
+unordered_map<int, string> colored_kDataFrame::names_map(){
+    unordered_map<int, string> names_map;
+    for(const auto &item : this->namesMap){
+        names_map[item.first] = item.second;
+    }
+    return names_map;
+}
+
+unordered_map<string, int> colored_kDataFrame::inverse_names_map(){
+    unordered_map<string, int> inv_names_map;
+    for(const auto &item : this->namesMapInv){
+        inv_names_map[item.first] = item.second;
+    }
+    return inv_names_map;
 }

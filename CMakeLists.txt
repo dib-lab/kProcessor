@@ -12,6 +12,8 @@ cmake_minimum_required (VERSION 3.0.0)
 # Name of project and that it is C/C++.
 project (kProcessor C CXX)
 
+# IMPORTANT == -FPIC #SDSL-LINKING
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 enable_testing()
 
@@ -20,17 +22,19 @@ include_directories("ThirdParty/CLI")
 include_directories("ThirdParty/MQF/include")
 include_directories("ThirdParty/json")
 include_directories("ThirdParty/sdsl-lite/include")
-
+include_directories("ThirdParty/kmerDecoder/include")
+include_directories("ThirdParty/kmerDecoder/lib/parallel_hashmap")
+include_directories("ThirdParty/cereal/include")
 
 add_subdirectory(ThirdParty/MQF/)
 add_subdirectory(ThirdParty/sdsl-lite/)
-
+add_subdirectory(ThirdParty/kmerDecoder)
 
 set(LIBRARY_NAME
     kProcessor
 )
-file(GLOB kProcessorLibSrc "src/*.cpp" "src/KmerDecoder/*.cpp"
-"src/HashUtils/*.cpp" "src/Utils/*.cpp")
+file(GLOB kProcessorLibSrc "src/*.cpp" "src/kDataFrames/*.cpp" "src/KmerDecoder/*.cpp"
+        "src/HashUtils/*.cpp" "src/Utils/*.cpp")
 
 
 add_library(${LIBRARY_NAME} STATIC
@@ -38,7 +42,10 @@ add_library(${LIBRARY_NAME} STATIC
     )
 target_link_libraries(kProcessor MQF)
 target_link_libraries (kProcessor ${SEQAN_LIBRARIES})
+
+#set_property(TARGET sdsl PROPERTY POSITION_INDEPENDENT_CODE ON)
 target_link_libraries(kProcessor sdsl)
+target_link_libraries(kProcessor kmerDecoder)
 
 target_include_directories(${LIBRARY_NAME} PRIVATE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/${LIBRARY_NAME}>
