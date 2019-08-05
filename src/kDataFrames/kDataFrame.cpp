@@ -15,10 +15,14 @@ inline bool fileExists(const std::string &name) {
 
 kDataFrame::kDataFrame() {
     kSize = 31;
+    isStatic=false;
+    isKmersOrderComputed=false;
 }
 
 kDataFrame::kDataFrame(uint8_t k_size) {
     kSize = k_size;
+    isStatic=false;
+    isKmersOrderComputed=false;
 
 }
 
@@ -31,7 +35,7 @@ bool kDataFrame::insert(kmerRow k) {
 }
 
 
-kDataFrame *kDataFrame::load(string filePath) {
+kDataFrame * kDataFrame::load(string filePath) {
     if (fileExists(filePath + ".mqf"))
         return kDataFrameMQF::load(filePath);
     else if (fileExists(filePath + ".map"))
@@ -40,4 +44,43 @@ kDataFrame *kDataFrame::load(string filePath) {
         return kDataFramePHMAP::load(filePath);
     else
         throw std::runtime_error("Could not open kDataFrame file");
+}
+template void kDataFrame::addColumn<int>(string columnName);
+template void kDataFrame::addColumn<double>(string columnName);
+template void kDataFrame::addColumn<bool>(string columnName);
+
+template int kDataFrame::getKmerColumnValue<int>(string columnName,string kmer);
+template double kDataFrame::getKmerColumnValue<double>(string columnName,string kmer);
+template bool kDataFrame::getKmerColumnValue<bool>(string columnName,string kmer);
+
+template void kDataFrame::setKmerColumnValue<int>(string columnName,string kmer, int value);
+template void kDataFrame::setKmerColumnValue<double>(string columnName,string kmer, double value);
+template void kDataFrame::setKmerColumnValue<bool>(string columnName,string kmer, bool value);
+
+template<typename T>
+void kDataFrame::addColumn(string columnName)
+{
+  if(!isKmersOrderComputed)
+  {
+    this->preprocessKmerOrder();
+    isKmersOrderComputed=true;
+    isStatic=true;
+  }
+  columns[columnName]=new vector<T>(this->size());
+
+}
+
+template<typename T>
+T kDataFrame::getKmerColumnValue(string columnName,string kmer)
+{
+  uint64_t kmerOrder=getkmerOrder(kmer);  
+  vector<T>* col=any_cast<vector<T>* >(columns[columnName]);
+  return (*col)[kmerOrder];
+}
+template<typename T>
+void kDataFrame::setKmerColumnValue(string columnName,string kmer,T value)
+{
+  uint64_t kmerOrder=getkmerOrder(kmer);
+  vector<T>* col=any_cast<vector<T>* >(columns[columnName]);
+  (*col)[kmerOrder]=value;
 }

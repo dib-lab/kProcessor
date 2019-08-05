@@ -8,6 +8,7 @@
 #include "Utils/kmer.h"
 #include <iostream>
 #include <parallel_hashmap/phmap.h>
+#include <any>
 
 using phmap::flat_hash_map;
 using namespace std;
@@ -223,6 +224,12 @@ protected:
   uint64_t kSize;
   Hasher* hasher;
   string class_name; // Default = MQF, change if MAP. Temporary until resolving #17
+  bool isStatic;
+  bool isKmersOrderComputed;
+  unordered_map<string, any> columns;
+
+  virtual void preprocessKmerOrder()=0;
+  virtual uint64_t getkmerOrder(string kmer)=0;
 public:
   virtual string get_class_name(){ return class_name;}  // Temporary until resolving #17
   kDataFrame();
@@ -287,9 +294,18 @@ The difference between setCount and insert is that setCount set the count to N n
 
   void setkSize(uint64_t k){kSize=k;}
 
+  template<typename T>
+  void addColumn(string columnName);
 
+  template<typename T>
+  T getKmerColumnValue(string columnName,string kmer);
+
+  template<typename T>
+  void setKmerColumnValue(string columnName,string kmer, T value);
 
 };
+
+
 
 class kDataFrameMQF: public kDataFrame{
 
@@ -300,6 +316,9 @@ private:
   __uint128_t range;
   static bool isEnough(vector<uint64_t> histogram,uint64_t noSlots,uint64_t fixedSizeCounter,uint64_t slotSize);
   friend class kDataframeMQF;
+protected:
+  void preprocessKmerOrder();
+  uint64_t getkmerOrder(string kmer);
 public:
   kDataFrameMQF();
   kDataFrameMQF(uint64_t kSize);
@@ -384,6 +403,9 @@ class kDataFrameMAP : public kDataFrame
 {
 private:
   std::map<uint64_t, uint64_t> MAP;
+protected:
+  void preprocessKmerOrder();
+  uint64_t getkmerOrder(string kmer);
 public:
   kDataFrameMAP();
   kDataFrameMAP(uint64_t ksize);
@@ -421,6 +443,9 @@ class kDataFramePHMAPIterator : public _kDataFrameIterator {
 private:
     flat_hash_map<uint64_t, uint64_t>::iterator iterator;
     kDataFramePHMAP *origin;
+protected:
+    void preprocessKmerOrder();
+    uint64_t getkmerOrder(string kmer);
 public:
     kDataFramePHMAPIterator(flat_hash_map<uint64_t, uint64_t>::iterator, kDataFramePHMAP *origin, uint64_t kSize);
 
@@ -453,6 +478,9 @@ public:
 class kDataFramePHMAP : public kDataFrame {
 private:
     flat_hash_map<uint64_t, uint64_t> MAP;
+protected:
+    void preprocessKmerOrder();
+    uint64_t getkmerOrder(string kmer);
 public:
     kDataFramePHMAP();
 

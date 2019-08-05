@@ -189,3 +189,12 @@ kDataFrameIterator kDataFramePHMAP::end() {
             (_kDataFrameIterator *) new kDataFramePHMAPIterator(MAP.end(), this, kSize),
             (kDataFrame *) this));
 }
+
+void kDataFramePHMAP::preprocessKmerOrder()
+{
+  throw"not Implemented yet";
+}
+uint64_t kDataFramePHMAP::getkmerOrder(string kmer)
+{
+  throw "not Implemented yet";
+}
