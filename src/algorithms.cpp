@@ -11,7 +11,7 @@
 #include <stdexcept>
 #include <math.h>
 #include <deque>
-#include <gqf.hpp>
+#include <gqf.h>
 #include <queue>
 #include <functional>
 #include <limits>

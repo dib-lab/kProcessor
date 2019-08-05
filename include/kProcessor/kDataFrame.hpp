@@ -4,7 +4,7 @@
 #include <HashUtils/hashutil.h>
 #include <vector>
 #include <stdint.h>
-#include "gqf.hpp"
+#include "gqf.h"
 #include "Utils/kmer.h"
 #include <iostream>
 #include <parallel_hashmap/phmap.h>

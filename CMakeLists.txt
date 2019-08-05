@@ -40,7 +40,7 @@ file(GLOB kProcessorLibSrc "src/*.cpp" "src/kDataFrames/*.cpp" "src/KmerDecoder/
 add_library(${LIBRARY_NAME} STATIC
     ${kProcessorLibSrc}
     )
-target_link_libraries(kProcessor lMQF)
+target_link_libraries(kProcessor MQF)
 target_link_libraries (kProcessor ${SEQAN_LIBRARIES})
 
 #set_property(TARGET sdsl PROPERTY POSITION_INDEPENDENT_CODE ON)
