@@ -20,7 +20,11 @@ kDataFrameMQFIterator::kDataFrameMQFIterator(QF *mqf, uint64_t kSize, Hasher *h)
     qf_iterator(mqf, qfi, 0);
     this->hasher = h;
 }
-
+kDataFrameMQFIterator::kDataFrameMQFIterator(QFi *mqfIt, uint64_t kSize, Hasher *h)
+        : _kDataFrameIterator(kSize) {
+    qfi = mqfIt;
+    this->hasher = h;
+}
 kDataFrameMQFIterator::kDataFrameMQFIterator(const kDataFrameMQFIterator &other) :
         _kDataFrameIterator(other.kSize) {
     qfi = new QFi();
@@ -115,7 +119,13 @@ kDataFrameIterator kDataFrameMQF::end() {
     it->endIterator();
     return (kDataFrameIterator(it, (kDataFrame *) this));
 }
-
+kDataFrameIterator kDataFrameMQF::find(string kmer) {
+    QFi* mqfIt = new QFi();
+    uint64_t hash = hasher->hash(kmer) % mqf->metadata->range;
+    qfi_find(mqf,mqfIt,hash);
+    kDataFrameMQFIterator *it = new kDataFrameMQFIterator(mqfIt, kSize, hasher);
+    return (kDataFrameIterator(it, (kDataFrame *) this));
+}
 
 /*
  *********************

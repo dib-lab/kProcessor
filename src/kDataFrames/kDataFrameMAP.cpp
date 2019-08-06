@@ -191,12 +191,8 @@ kDataFrameIterator kDataFrameMAP::end() {
             (_kDataFrameIterator *) new kDataFrameMAPIterator(MAP.end(), this, kSize),
             (kDataFrame *) this));
 }
-
-void kDataFrameMAP::preprocessKmerOrder()
-{
-  throw"not Implemented yet";
-}
-uint64_t kDataFrameMAP::getkmerOrder(string kmer)
-{
-  throw "not Implemented yet";
+kDataFrameIterator kDataFrameMAP::find(string kmer) {
+  return *(new kDataFrameIterator(
+          (_kDataFrameIterator *) new kDataFrameMAPIterator(MAP.find(kmer::str_to_canonical_int(kmer)), this, kSize),
+          (kDataFrame *) this));
 }

@@ -205,6 +205,7 @@ private:
   Hasher* hasher;
 public:
   kDataFrameMQFIterator(QF*,uint64_t kSize,Hasher* h);
+  kDataFrameMQFIterator(QFi*,uint64_t kSize,Hasher* h);
   kDataFrameMQFIterator(const kDataFrameMQFIterator&);
   kDataFrameMQFIterator& operator ++ (int);
   _kDataFrameIterator* clone();
@@ -228,8 +229,10 @@ protected:
   bool isKmersOrderComputed;
   unordered_map<string, any> columns;
 
-  virtual void preprocessKmerOrder()=0;
-  virtual uint64_t getkmerOrder(string kmer)=0;
+  unordered_map<string,uint32_t> orderCheckpoints;
+
+  virtual void preprocessKmerOrder();
+  virtual uint64_t getkmerOrder(string kmer);
 public:
   virtual string get_class_name(){ return class_name;}  // Temporary until resolving #17
   kDataFrame();
@@ -278,6 +281,8 @@ The difference between setCount and insert is that setCount set the count to N n
   virtual kDataFrameIterator begin()=0;
 ///Returns an iterator at the end of the kDataFrame.
   virtual kDataFrameIterator end()=0;
+///Returns an iterator at the specific kmer.
+  virtual kDataFrameIterator find(string kmer)=0;
 
   virtual void save(string filePath)=0;
 /// Returns the  hash function used by kDataframe.
@@ -373,6 +378,7 @@ public:
 
   kDataFrameIterator begin();
   kDataFrameIterator end();
+  kDataFrameIterator find(string kmer);
 };
 
 
@@ -403,9 +409,6 @@ class kDataFrameMAP : public kDataFrame
 {
 private:
   std::map<uint64_t, uint64_t> MAP;
-protected:
-  void preprocessKmerOrder();
-  uint64_t getkmerOrder(string kmer);
 public:
   kDataFrameMAP();
   kDataFrameMAP(uint64_t ksize);
@@ -426,6 +429,7 @@ public:
   float max_load_factor();
   kDataFrameIterator begin();
   kDataFrameIterator end();
+  kDataFrameIterator find(string kmer);
 
   uint64_t bucket(string kmer);
   void save(string filePath);
@@ -443,9 +447,6 @@ class kDataFramePHMAPIterator : public _kDataFrameIterator {
 private:
     flat_hash_map<uint64_t, uint64_t>::iterator iterator;
     kDataFramePHMAP *origin;
-protected:
-    void preprocessKmerOrder();
-    uint64_t getkmerOrder(string kmer);
 public:
     kDataFramePHMAPIterator(flat_hash_map<uint64_t, uint64_t>::iterator, kDataFramePHMAP *origin, uint64_t kSize);
 
@@ -478,9 +479,6 @@ public:
 class kDataFramePHMAP : public kDataFrame {
 private:
     flat_hash_map<uint64_t, uint64_t> MAP;
-protected:
-    void preprocessKmerOrder();
-    uint64_t getkmerOrder(string kmer);
 public:
     kDataFramePHMAP();
 
@@ -513,6 +511,7 @@ public:
     kDataFrameIterator begin();
 
     kDataFrameIterator end();
+    kDataFrameIterator find(string kmer);
 
     uint64_t bucket(string kmer);
 
