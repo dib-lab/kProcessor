@@ -1,8 +1,8 @@
-bin_PROGRAMS = ntcard nthll
+noinst_LIBRARIES = libntcard.a
 
-ntcard_CPPFLAGS = -I$(top_srcdir)/Common
+libntcard_a_CPPFLAGS = -I$(top_srcdir)/Common
 
-ntcard_SOURCES = \
+libntcard_a_SOURCES = \
         Common/Uncompress.cpp \
         Common/Uncompress.h \
         Common/SignalHandler.cpp \
@@ -12,20 +12,8 @@ ntcard_SOURCES = \
         Common/Fcontrol.h \
         Common/nthash.hpp \
         Common/ntHashIterator.hpp \
-        ntcard.cpp
+        libntcard.cpp
 
-nthll_CPPFLAGS = -I$(top_srcdir)/Common
-
-nthll_SOURCES = \
-        Common/Uncompress.cpp \
-        Common/Uncompress.h \
-        Common/SignalHandler.cpp \
-        Common/SignalHandler.h \
-        Common/Fcontrol.cpp \
-        Common/Fcontrol.h \
-        Common/nthash.hpp \
-        Common/ntHashIterator.hpp \
-        nthll.cpp
 
 dist_doc_DATA = \
 	ChangeLog \
