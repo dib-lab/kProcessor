@@ -3,7 +3,7 @@ AC_INIT(NTCARD, 1.1.0, hmohamadi@bcgsc.ca, ntcard,
 		https://github.com/bcgsc/ntCard)
 # add 'foreign' to allow README.md instead of README
 AM_INIT_AUTOMAKE([foreign subdir-objects])
-AC_CONFIG_SRCDIR([ntcard.cpp])
+AC_CONFIG_SRCDIR([libntcard.cpp])
 AC_CONFIG_HEADER([config.h])
 
 if test -z $CXXFLAGS; then
