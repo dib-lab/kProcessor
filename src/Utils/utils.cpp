@@ -1,6 +1,6 @@
 #include <stdint.h>
 #include <string>
-#include <gqf.hpp>
+#include <gqf.h>
 #include <seqan/seq_io.h>
 #include <sys/stat.h>
 #include <vector>

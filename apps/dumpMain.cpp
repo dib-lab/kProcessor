@@ -3,7 +3,7 @@
 #include "CLI11.hpp"
 #include <vector>
 #include <stdint.h>
-#include <gqf.hpp>
+#include <gqf.h>
 #include "algorithms.hpp"
 #include "Utils/kmer.h"
 #include "Utils/utils.hpp"
