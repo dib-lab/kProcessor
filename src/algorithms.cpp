@@ -488,8 +488,10 @@ namespace kProcessor {
             bool check_k = (params.find("k_size") != params.end());
             bool check_m = (params.find("m") != params.end());
             bool check_n = (params.find("n") != params.end());
+            bool check_orf = (params.find("orf") != params.end());
 
             if (check_k && check_m && check_n) {
+                if(check_orf) return new Skipmers(filename, chunkSize, params["m"], params["n"], params["k_size"], params["orf"]);
                 return new Skipmers(filename, chunkSize, params["m"], params["n"], params["k_size"]);
             } else {
                 std::cerr << func_name << "kmerDecoder Skipmers parameters {k_size, m, n} validation failed" << std::endl;
@@ -530,8 +532,10 @@ namespace kProcessor {
             bool check_k = (params.find("k_size") != params.end());
             bool check_m = (params.find("m") != params.end());
             bool check_n = (params.find("n") != params.end());
+            bool check_orf = (params.find("orf") != params.end());
 
             if (check_k && check_m && check_n) {
+                if(check_orf) return new Skipmers(params["m"], params["n"], params["k_size"], params["orf"]);
                 return new Skipmers(params["m"], params["n"], params["k_size"]);
             } else {
                 std::cerr << func_name << "kmerDecoder Skipmers parameters {k_size, m, n} validation failed" << std::endl;
@@ -570,9 +574,18 @@ namespace kProcessor {
         uint64_t readID = 0, groupID = 1;
         ifstream namesFile(names_fileName.c_str());
         string seqName, groupName;
+        string line;
         priority_queue<uint64_t, vector<uint64_t>, std::greater<uint64_t>> freeColors;
         flat_hash_map<string, uint64_t> groupCounter;
-        while (namesFile >> seqName >> groupName) {
+//        while (namesFile >> seqName >> groupName) {
+        while (std::getline(namesFile, line)) {
+            std::vector<string> tokens;
+            std::istringstream iss(line);
+            std::string token;
+            while(std::getline(iss, token, '\t'))   // but we can specify a different one
+                tokens.push_back(token);
+            seqName = tokens[0];
+            groupName = tokens[1];
             namesMap.insert(make_pair(seqName, groupName));
             auto it = groupNameMap.find(groupName);
             groupCounter[groupName]++;
@@ -611,7 +624,8 @@ namespace kProcessor {
 
                 auto it = namesMap.find(readName);
                 if (it == namesMap.end()) {
-                    cout << "read " << readName << "dont have group. Please check the group names file." << endl;
+                    continue;
+                    // cout << "read " << readName << "dont have group. Please check the group names file." << endl;
                 }
                 string groupName = it->second;
 
