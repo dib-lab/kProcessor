@@ -317,6 +317,8 @@ namespace kProcessor {
 //    loadIntoMQF(seqFileName,output->getkSize(),nThreads, output->getHasher(),((kDataFrameMQF*)output)->getMQF(),NULL);
 //    return;
 //  }
+        vector<uint64_t> countHistogram= estimateKmersHistogram(seqFileName, output->getkSize() ,1);
+        output->reserve(countHistogram);
         FastqReaderSqueker reader(seqFileName);
         deque<pair<string, string> > reads;
         int k = output->getkSize();

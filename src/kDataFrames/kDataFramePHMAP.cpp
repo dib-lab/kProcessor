@@ -79,6 +79,19 @@ kDataFramePHMAP::kDataFramePHMAP(uint64_t ksize) {
     this->MAP = flat_hash_map<uint64_t, uint64_t>(1000);
     // this->hasher = (new IntegerHasher(ksize));
 }
+kDataFramePHMAP::kDataFramePHMAP(uint64_t ksize,vector<uint64_t> kmersHistogram) {
+    this->class_name = "PHMAP"; // Temporary until resolving #17
+    this->kSize = ksize;
+    hasher = new wrapperHasher<flat_hash_map<uint64_t, uint64_t>::hasher>(MAP.hash_function(), ksize);
+
+    uint64_t countSum=0;
+    for(auto h:kmersHistogram)
+      countSum+=h;
+    reserve(countSum);
+//    hasher = new wrapperHasher<std::map<uint64_t, uint64_t>::hasher>(MAP.hash_function(), ksize);
+//    this->MAP = std::map<uint64_t, uint64_t>(1000);
+    // this->hasher = (new IntegerHasher(ksize));
+}
 
 kDataFramePHMAP::kDataFramePHMAP() {
     this->class_name = "PHMAP"; // Temporary until resolving #17
@@ -177,7 +190,13 @@ kDataFrame *kDataFramePHMAP::getTwin() {
 void kDataFramePHMAP::reserve(uint64_t n) {
     this->MAP.reserve(n);
 }
+void kDataFramePHMAP::reserve(vector<uint64_t> countHistogram) {
+    uint64_t countSum=0;
+    for(auto h:countHistogram)
+      countSum+=h;
+    reserve(countSum);
 
+}
 kDataFrameIterator kDataFramePHMAP::begin() {
     return *(new kDataFrameIterator(
             (_kDataFrameIterator *) new kDataFramePHMAPIterator(MAP.begin(), this, kSize),

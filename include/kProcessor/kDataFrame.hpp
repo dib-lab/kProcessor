@@ -228,14 +228,17 @@ public:
   kDataFrame();
   kDataFrame(uint8_t kSize);
 
+
   virtual ~kDataFrame(){
 
   }
 /// creates a new kDataframe using the same parameters as the current kDataFrame.
 /*! It is like clone but without copying the data */
   virtual kDataFrame* getTwin()=0;
-/// request a capacity change so that the kDataFrame can approximately at least n kmers
+/// request a capacity change so that the kDataFrame can approximately hold at least n kmers
   virtual void reserve (uint64_t n )=0;
+/// request a capacity change so that the kDataFrame can approximately hold kmers with countHistogram distribution
+  virtual void reserve (vector<uint64_t> countHistogram)=0;
 /// insert the kmer one time in the kDataFrame, or increment the kmer count if it is already exists.
 /*! Returns bool value indicating whether the kmer is inserted or not*/
   virtual bool insert(string kmer)=0;
@@ -312,12 +315,14 @@ public:
   //count histogram is array where count of kmers repeated n times is found at index n. index 0 holds number of distinct kmers.
   kDataFrameMQF(uint64_t ksize,vector<uint64_t> countHistogram,uint8_t tagSize
     ,double falsePositiveRate);
+  kDataFrameMQF(uint64_t kSize,vector<uint64_t> kmersHistogram);
+
   ~kDataFrameMQF(){
     qf_destroy(mqf);
     delete mqf;
   }
   void reserve (uint64_t n);
-
+  void reserve (vector<uint64_t> countHistogram);
   kDataFrame* getTwin();
 
   static uint64_t estimateMemory(uint64_t nslots,uint64_t slotSize,
@@ -387,8 +392,10 @@ private:
 public:
   kDataFrameMAP();
   kDataFrameMAP(uint64_t ksize);
+  kDataFrameMAP(uint64_t kSize,vector<uint64_t> kmersHistogram);
   kDataFrame* getTwin();
   void reserve (uint64_t n);
+  void reserve (vector<uint64_t> countHistogram);
 
   inline bool kmerExist(string kmer);
 
@@ -457,10 +464,12 @@ public:
     kDataFramePHMAP();
 
     kDataFramePHMAP(uint64_t ksize);
+    kDataFramePHMAP(uint64_t kSize,vector<uint64_t> kmersHistogram);
 
     kDataFrame *getTwin();
 
     void reserve(uint64_t n);
+    void reserve (vector<uint64_t> countHistogram);
 
     inline bool kmerExist(string kmer);
 
