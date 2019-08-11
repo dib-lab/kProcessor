@@ -11,7 +11,8 @@ class kDataFrameTest : public ::testing::TestWithParam<kDataFrame* >{
 
 class algorithmsTest : public ::testing::TestWithParam<tuple<kDataFrame*,string> >{
 };
-
+class estimateTest : public ::testing::TestWithParam<string >{
+};
 //string is the name of color table class
 //and the first integer is the number of samples and the second one is the number of colors
 class colorsTableTest : public ::testing::TestWithParam<tuple<string, uint64_t,uint64_t> >{

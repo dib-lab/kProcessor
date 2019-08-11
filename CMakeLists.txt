@@ -25,10 +25,23 @@ include_directories("ThirdParty/sdsl-lite/include")
 include_directories("ThirdParty/kmerDecoder/include")
 include_directories("ThirdParty/kmerDecoder/lib/parallel_hashmap")
 include_directories("ThirdParty/cereal/include")
+include_directories("ThirdParty/ntCard/include")
 
 add_subdirectory(ThirdParty/MQF/)
 add_subdirectory(ThirdParty/sdsl-lite/)
 add_subdirectory(ThirdParty/kmerDecoder)
+
+include(ExternalProject)
+ExternalProject_Add(
+  libntcard_a
+  SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/ntCard
+  CONFIGURE_COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/ntCard/autogen.sh && ${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/ntCard/configure --prefix=${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/ntCard/
+  PREFIX ${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/ntCard
+  BUILD_COMMAND make
+  BUILD_IN_SOURCE 1
+)
+set(ntcardLib "${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/ntCard/libntcard.a")
+
 
 set(LIBRARY_NAME
     kProcessor
@@ -40,9 +53,11 @@ file(GLOB kProcessorLibSrc "src/*.cpp" "src/kDataFrames/*.cpp" "src/KmerDecoder/
 add_library(${LIBRARY_NAME} STATIC
     ${kProcessorLibSrc}
     )
+
+
 target_link_libraries(kProcessor MQF)
 target_link_libraries (kProcessor ${SEQAN_LIBRARIES})
-
+target_link_libraries (kProcessor ${ntcardLib}  -ldl)
 #set_property(TARGET sdsl PROPERTY POSITION_INDEPENDENT_CODE ON)
 target_link_libraries(kProcessor sdsl)
 target_link_libraries(kProcessor kmerDecoder)
