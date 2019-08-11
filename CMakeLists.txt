@@ -40,6 +40,7 @@ ExternalProject_Add(
   BUILD_COMMAND make
   BUILD_IN_SOURCE 1
 )
+set(ntcardLib "${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/ntCard/libntcard.a")
 
 
 set(LIBRARY_NAME
@@ -52,9 +53,11 @@ file(GLOB kProcessorLibSrc "src/*.cpp" "src/kDataFrames/*.cpp" "src/KmerDecoder/
 add_library(${LIBRARY_NAME} STATIC
     ${kProcessorLibSrc}
     )
+
+
 target_link_libraries(kProcessor MQF)
 target_link_libraries (kProcessor ${SEQAN_LIBRARIES})
-target_link_libraries (kProcessor  "${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/ntCard/libntcard.a" -ldl)
+target_link_libraries (kProcessor ${ntcardLib}  -ldl)
 #set_property(TARGET sdsl PROPERTY POSITION_INDEPENDENT_CODE ON)
 target_link_libraries(kProcessor sdsl)
 target_link_libraries(kProcessor kmerDecoder)

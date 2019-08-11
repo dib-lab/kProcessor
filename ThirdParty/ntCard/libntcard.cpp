@@ -246,94 +246,100 @@ void outCompact(const std::vector<unsigned> &kList, const size_t totalKmers[], c
     histFile.close();
 }
 
-int main(int argc, char** argv) {
+int main_ntCard(string inputFile,unsigned myK, uint32_t cov, int nThreads,string prefix) {
 
     double sTime = omp_get_wtime();
 
     vector<unsigned> kList;
-    bool die = false;
-    for (int c; (c = getopt_long(argc, argv, shortopts, longopts, NULL)) != -1;) {
-        std::istringstream arg(optarg != NULL ? optarg : "");
-        switch (c) {
-        case '?':
-            die = true;
-            break;
-        case 't':
-            arg >> opt::nThrd;
-            break;
-        case 's':
-            arg >> opt::sBits;
-            break;
-        case 'r':
-            arg >> opt::rBits;
-            break;
-        case 'c':
-            arg >> opt::covMax;
-            if(opt::covMax>65535)
-                opt::covMax = 65535;
-            break;
-        case 'p':
-            arg >> opt::prefix;
-            break;
-        case 'o':
-            arg >> opt::output;
-            break;
-        case 'k':
-        {
-            std::string token;
-            while(getline(arg, token, ',')) {
-                unsigned myK;
-                std::stringstream ss(token);
-                ss >> myK;
-                kList.push_back(myK);
-                ++opt::nK;
-            }
-            break;
-        }
-        case OPT_HELP:
-            std::cerr << USAGE_MESSAGE;
-            exit(EXIT_SUCCESS);
-        case OPT_VERSION:
-            std::cerr << VERSION_MESSAGE;
-            exit(EXIT_SUCCESS);
-        }
-        if (optarg != NULL && !arg.eof()) {
-            std::cerr << PROGRAM ": invalid option: `-"
-                      << (char)c << optarg << "'\n";
-            exit(EXIT_FAILURE);
-        }
-    }
-    if (argc - optind < 1) {
-        std::cerr << PROGRAM ": missing arguments\n";
-        die = true;
-    }
+    opt::prefix =  prefix;
+    opt::covMax = cov;
+    opt::nThrd =  nThreads;
 
-    if (opt::nK == 0) {
-        std::cerr << PROGRAM ": missing argument -k ... \n";
-        die = true;
-    }
-
-    if (opt::prefix.empty() && opt::output.empty()) {
-        std::cerr << PROGRAM ": missing argument -p/-o ... \n";
-        die = true;
-    }
-
-    if (die) {
-        std::cerr << "Try `" << PROGRAM << " --help' for more information.\n";
-        exit(EXIT_FAILURE);
-    }
+    // for (int c; (c = getopt_long(argc, argv, shortopts, longopts, NULL)) != -1;) {
+    //     std::istringstream arg(optarg != NULL ? optarg : "");
+    //     switch (c) {
+    //     case '?':
+    //         die = true;
+    //         break;
+    //     case 't':
+    //         arg >> opt::nThrd;
+    //         break;
+    //     case 's':
+    //         arg >> opt::sBits;
+    //         break;
+    //     case 'r':
+    //         arg >> opt::rBits;
+    //         break;
+    //     case 'c':
+    //         arg >> opt::covMax;
+    //         if(opt::covMax>65535)
+    //             opt::covMax = 65535;
+    //         break;
+    //     case 'p':
+    //         arg >> opt::prefix;
+    //         break;
+    //     case 'o':
+    //         arg >> opt::output;
+    //         break;
+    //     case 'k':
+    //     {
+    //         std::string token;
+    //         while(getline(arg, token, ',')) {
+    //             unsigned myK;
+    //             std::stringstream ss(token);
+    //             ss >> myK;
+    //             kList.push_back(myK);
+    //             ++opt::nK;
+    //         }
+    //         break;
+    //     }
+    //     case OPT_HELP:
+    //         std::cerr << USAGE_MESSAGE;
+    //         exit(EXIT_SUCCESS);
+    //     case OPT_VERSION:
+    //         std::cerr << VERSION_MESSAGE;
+    //         exit(EXIT_SUCCESS);
+    //     }
+    //     if (optarg != NULL && !arg.eof()) {
+    //         std::cerr << PROGRAM ": invalid option: `-"
+    //                   << (char)c << optarg << "'\n";
+    //         exit(EXIT_FAILURE);
+    //     }
+    // }
+    // if (argc - optind < 1) {
+    //     std::cerr << PROGRAM ": missing arguments\n";
+    //     die = true;
+    // }
+    //
+    // if (opt::nK == 0) {
+    //     std::cerr << PROGRAM ": missing argument -k ... \n";
+    //     die = true;
+    // }
+    //
+    // if (opt::prefix.empty() && opt::output.empty()) {
+    //     std::cerr << PROGRAM ": missing argument -p/-o ... \n";
+    //     die = true;
+    // }
+    //
+    // if (die) {
+    //     std::cerr << "Try `" << PROGRAM << " --help' for more information.\n";
+    //     exit(EXIT_FAILURE);
+    // }
     vector<string> inFiles;
-    for (int i = optind; i < argc; ++i) {
-        string file(argv[i]);
-        if(file[0]=='@') {
-            string inName;
-            ifstream inList(file.substr(1,file.length()).c_str());
-            while(getline(inList,inName))
-                inFiles.push_back(inName);
-        }
-        else
-            inFiles.push_back(file);
-    }
+    inFiles.push_back(inputFile);
+    kList.push_back(myK);
+    ++opt::nK;
+    // for (int i = optind; i < argc; ++i) {
+    //     string file(argv[i]);
+    //     if(file[0]=='@') {
+    //         string inName;
+    //         ifstream inList(file.substr(1,file.length()).c_str());
+    //         while(getline(inList,inName))
+    //             inFiles.push_back(inName);
+    //     }
+    //     else
+    //         inFiles.push_back(file);
+    // }
 
     size_t totalSize=0;
     for (unsigned file_i = 0; file_i < inFiles.size(); ++file_i)
@@ -346,7 +352,6 @@ int main(int argc, char** argv) {
     opt::rBuck = ((size_t)1) << opt::rBits;
     opt::sMask = (((size_t)1) << (opt::sBits-1))-1;
     uint16_t *t_Counter = new uint16_t [opt::nK*opt::nSamp*opt::rBuck]();
-
 #ifdef _OPENMP
     omp_set_num_threads(opt::nThrd);
 #endif
@@ -381,6 +386,7 @@ int main(int argc, char** argv) {
 
     delete [] t_Counter;
 
-    std::cerr << "Runtime(sec): " <<setprecision(4) << fixed << omp_get_wtime() - sTime << "\n";
+    sTime++;
+  //  std::cerr << "Runtime(sec): " <<setprecision(4) << fixed << omp_get_wtime() - sTime << "\n";
     return 0;
 }

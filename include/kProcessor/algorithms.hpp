@@ -40,6 +40,7 @@ inline uint64_t estimateMemory(uint64_t nslots,uint64_t slotSize, uint64_t fcoun
 
    }
 
+vector<uint64_t> estimateKmersHistogram(string fileName, int kSize ,int threads);
 /// Load the kmers in the input file into the output kDataframe. Input File can be of formats: fastq,fasta, sam, and bam.
 void parseSequences(string seqFileName,int nThreads,kDataFrame* output);
 

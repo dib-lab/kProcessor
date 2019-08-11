@@ -122,6 +122,11 @@ INSTANTIATE_TEST_SUITE_P(testcounting,
                         ::testing::ValuesIn(fastqFiles)
                       ));
 
+INSTANTIATE_TEST_SUITE_P(testntCard,
+                         estimateTest,
+                         ::testing::ValuesIn(fastqFiles)
+                                            );
+
 vector<vector<string> > setFunctionsTestInput={{"test.noN.fastq","test2.noN.fastq","test2.noN.fastq"}};
 
 vector<vector<kDataFrame*> > BuildTestFramesForSetFunctions()
@@ -131,10 +136,10 @@ vector<vector<kDataFrame*> > BuildTestFramesForSetFunctions()
   for(auto file:setFunctionsTestInput[0])
   {
     framesToBeTested[0].push_back(new kDataFrameMQF(k));
-    kProcessor::parseSequences(file,1,framesToBeTested[0].back());
+  //  kProcessor::parseSequences(file,1,framesToBeTested[0].back());
     framesToBeTested[1].push_back(new kDataFrameMQF(k)); // Temporary until resolving #17
     framesToBeTested[1].push_back(new kDataFrameMAP(k)); // Set functions should now work fine on sorted map
-    kProcessor::parseSequences(file,1,framesToBeTested[1].back());
+  //  kProcessor::parseSequences(file,1,framesToBeTested[1].back());
   }
   return framesToBeTested;
 }
@@ -429,6 +434,20 @@ TEST_P(algorithmsTest,parsingTest)
 
   }
   seqan::close(seqIn);
+}
+
+TEST_P(estimateTest,estimateTestTest)
+{
+  string fileName=GetParam();
+  int kSize=31;
+  vector<uint64_t> res= kProcessor::estimateKmersHistogram(fileName,kSize,4);
+  ifstream gold((fileName+".ntCardRes").c_str());
+  uint64_t g;
+  int i=0;
+  while(gold>>g)
+  {
+    ASSERT_EQ(g,res[i++]);
+  }
 }
 
 TEST_P(setFunctionsTest,unioinTest)

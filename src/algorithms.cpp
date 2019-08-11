@@ -12,10 +12,13 @@
 #include <math.h>
 #include <deque>
 #include <gqf.h>
+#include <string>
 #include <queue>
 #include <functional>
 #include <limits>
 #include <parallel_hashmap/phmap.h>
+#include "ntcard.hpp"
+#include <cstdio>
 
 using std::string;
 using std::vector;
@@ -703,6 +706,24 @@ namespace kProcessor {
         }
         return res;
     }
-
+vector<uint64_t> estimateKmersHistogram(string fileName, int kSize ,int threads)
+{
+   std::string tmpFile = "tmp."+to_string(rand()%1000000);
+   main_ntCard(fileName,kSize,1000,threads,tmpFile);
+   string output=tmpFile+"_k"+to_string(kSize)+".hist";
+   string tag;
+   uint64_t count;
+   vector<uint64_t> res(1000);
+   ifstream resultFile(output);
+   resultFile>>tag>>count;
+   resultFile>>tag>>count;
+   for(int i=0;i<1000;i++)
+   {
+     resultFile>>tag>>res[i];
+   }
+   resultFile.close();
+   remove(output.c_str());
+   return res;
+}
 
 } // End of namespace kProcessor
