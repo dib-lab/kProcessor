@@ -9,7 +9,7 @@
 #define KmerCounter_HPP
 #include <stdint.h>
 #include <string>
-#include <gqf.hpp>
+#include <gqf.h>
 #include "HashUtils/hashutil.h"
 #include "kDataFrame.hpp"
 #include <math.h>

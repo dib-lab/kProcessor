@@ -56,7 +56,7 @@ LINK_ARGS = [
 
 LIBRARIES_DIRS = [
     "build",
-    "build/ThirdParty/MQF",
+    "build/ThirdParty/MQF/src",
     "build/ThirdParty/sdsl-lite/lib",
     "build/ThirdParty/kmerDecoder"
 ]
@@ -64,7 +64,7 @@ LIBRARIES_DIRS = [
 LIBRARIES = [
     'kProcessor',
     'sdsl',
-    'lMQF',
+    'MQF',
     'kmerDecoder'
 ]
 
