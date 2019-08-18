@@ -15,7 +15,7 @@
 ### Clone
 
 ```bash
-git clone --recursive --branch development https://github.com/dib-lab/kProcessor.git kProcessor
+git clone --recursive --branch devel https://github.com/dib-lab/kProcessor.git kProcessor
 cd kProcessor
 ```
 
