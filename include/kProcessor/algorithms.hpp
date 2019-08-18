@@ -52,6 +52,8 @@ void parseSequencesFromString(kmerDecoder *KD, string sequence,kDataFrame* outpu
 
 /// Applies a function on all the kmers in the input kDataframe. The output is another kDataframe with the transformed kmers.
 kDataFrame* transform(kDataFrame* input,kmerRow (*fn)(kmerRow i));
+/// filter the kmers in the kdatafram. The output is another kDataframe with the filtered kmers.
+kDataFrame* filter(kDataFrame* input,bool (*fn)(kmerRow i));
 
 /*! Merge the a list of kDataframes into a one.
  *
