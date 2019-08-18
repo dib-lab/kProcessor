@@ -294,6 +294,17 @@ namespace kProcessor {
         return res;
 
     }
+    kDataFrame *filter(kDataFrame *input, bool (*fn)(kmerRow it)) {
+      kDataFrame *res = input->getTwin();
+      kDataFrameIterator it = input->begin();
+      while (it != input->end()) {
+        if(fn(*it))
+          res->insert(*it);
+        it++;
+      }
+      return res;
+
+    }
 
     void parseSequences(kmerDecoder * KD, kDataFrame* output){
         if (KD->get_kSize() != (int)output->getkSize()){
