@@ -435,6 +435,33 @@ TEST_P(kDataFrameTest,transformFilterLessThan5)
 
 }
 
+TEST_P(kDataFrameTest,aggregateSum)
+{
+
+    kDataFrame* kframe=GetParam();
+    EXPECT_EQ(kframe->empty(), true);
+    unordered_map<string,int>* kmers=kmersGen.getKmers((int)kframe->getkSize());
+    uint64_t goldSum=0;
+    for(auto k:*kmers)
+    {
+      kframe->insert(k.first,k.second);
+      goldSum+=k.second;
+      if(kframe->load_factor()>=kframe->max_load_factor()*0.8){
+        break;
+      }
+    }
+    int checkedKmers=0;
+    any initial=(uint64_t)0;
+    any sum=kProcessor::aggregate(kframe,initial,[](kmerRow k,any v)
+    {
+      uint64_t tmp=any_cast<uint64_t>(v);
+      any result=tmp+k.count;
+      return result;
+    });
+    ASSERT_EQ(any_cast<uint64_t>(sum),goldSum);
+
+
+}
 
 TEST_P(algorithmsTest,parsingTest)
 {
