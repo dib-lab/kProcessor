@@ -20,6 +20,7 @@
 #include "ntcard.hpp"
 #include <cstdio>
 
+
 using std::string;
 using std::vector;
 using std::cerr;
@@ -304,6 +305,14 @@ namespace kProcessor {
       }
       return res;
 
+    }
+    any aggregate(kDataFrame *input, any initial ,any (*fn)(kmerRow it,any v)) {
+      kDataFrameIterator it = input->begin();
+      while (it != input->end()) {
+        initial=fn(*it,initial);
+        it++;
+      }
+      return initial;
     }
 
     void parseSequences(kmerDecoder * KD, kDataFrame* output){
