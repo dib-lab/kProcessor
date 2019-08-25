@@ -76,4 +76,28 @@ The difference between setCount and insert is that setCount set the count to N n
   
 /// Set the kmer size that will be used in the kDataFrame.  
   void setkSize(uint64_t k){kSize=k;}
+
+
+  template<typename T>
+  void addColumn(string columnName);
+
+  template<typename T>
+  T getKmerColumnValue(string columnName,string kmer);
+
+  template<typename T>
+  void setKmerColumnValue(string columnName,string kmer, T value);
+
 };
+
+
+%template(addColumn_int) kDataFrame::addColumn<int>;
+%template(addColumn_bool) kDataFrame::addColumn<bool>;
+%template(addColumn_float) kDataFrame::addColumn<float>;
+
+%template(getKmerColumnValue_int) kDataFrame::getKmerColumnValue<int>;
+%template(getKmerColumnValue_bool) kDataFrame::getKmerColumnValue<bool>;
+%template(getKmerColumnValue_float) kDataFrame::getKmerColumnValue<float>;
+
+%template(setKmerColumnValue_int) kDataFrame::setKmerColumnValue<int>;
+%template(setKmerColumnValue_bool) kDataFrame::setKmerColumnValue<bool>;
+%template(setKmerColumnValue_float) kDataFrame::setKmerColumnValue<float>;
