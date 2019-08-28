@@ -90,14 +90,16 @@ The difference between setCount and insert is that setCount set the count to N n
 };
 
 
-%template(addColumn_int) kDataFrame::addColumn<int>;
-%template(addColumn_bool) kDataFrame::addColumn<bool>;
-%template(addColumn_float) kDataFrame::addColumn<float>;
+%extend kDataFrame {
+    %template(addColumn_int) addColumn<int>;
+    %template(addColumn_bool) addColumn<bool>;
+    %template(addColumn_double) addColumn<double>;
 
-%template(getKmerColumnValue_int) kDataFrame::getKmerColumnValue<int>;
-%template(getKmerColumnValue_bool) kDataFrame::getKmerColumnValue<bool>;
-%template(getKmerColumnValue_float) kDataFrame::getKmerColumnValue<float>;
+    %template(getKmerColumnValue_int) getKmerColumnValue<int>;
+    %template(getKmerColumnValue_bool) getKmerColumnValue<bool>;
+    %template(getKmerColumnValue_double) getKmerColumnValue<double>;
 
-%template(setKmerColumnValue_int) kDataFrame::setKmerColumnValue<int>;
-%template(setKmerColumnValue_bool) kDataFrame::setKmerColumnValue<bool>;
-%template(setKmerColumnValue_float) kDataFrame::setKmerColumnValue<float>;
+    %template(setKmerColumnValue_int) setKmerColumnValue<int>;
+    %template(setKmerColumnValue_bool) setKmerColumnValue<bool>;
+    %template(setKmerColumnValue_double) setKmerColumnValue<double>;
+};
