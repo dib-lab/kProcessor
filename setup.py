@@ -14,10 +14,8 @@ from distutils.spawn import find_executable
 import sys
 import os
 
-print(sys.argv)
-
-if sys.version_info[:2] < (3, 5) or sys.version_info[:2] > (3, 6):
-    raise RuntimeError("Python version == 3.6 required.")
+if sys.version_info[:2] < (3, 5) or sys.version_info[:2] > (3, 7):
+    raise RuntimeError("Python version == (3.6 | 3.7) required.")
 
 if os.path.exists('MANIFEST'):
     os.remove('MANIFEST')
@@ -25,7 +23,7 @@ if os.path.exists('MANIFEST'):
 try:
     from setuptools import setup, Extension
 except ImportError:
-    from distutils.core import setup, Extension
+    from distutils.core import setup, Extension    
 
 try:
     with open('README.md') as f:
@@ -34,64 +32,43 @@ except IOError:
     readme = ''
 
 SOURCES = [
-    'src/algorithms.cpp',
-    'src/kDataFrame.cpp',
-    'src/Utils/kmer.cpp',
-    'src/HashUtils/hashutil.cpp',
-    'src/KmerDecoder/FastqReader.cpp',
-    'ThirdParty/MQF/src/gqf.cpp',
-    'ThirdParty/MQF/src/utils.cpp',
     'swig_interfaces/kProcessor.i',
 ]
 
 if not find_executable('swig'):
     sys.exit("Error:  Building this module requires 'swig' to be installed")
 
-
 INCLUDES = [
     'include/kProcessor',
-    'ThirdParty/CLI',
     'ThirdParty/MQF/include',
-    'ThirdParty/seqan/include',
-    'ThirdParty/TBB/include',
-]
-
-COMPILE_ARGS = [
-    '-Wall',
-    "-lgomp",
-    '-Wextra',
-    '-std=c++14',
-    '-fPIC',
-    '-fopenmp',
-    '-W',
-    '-Wall',
-    '-pedantic',
-    '-lrt',
-    '-lpthread',
-    '-lbz2',
-    '-lz',
-    '-DSEQAN_HAS_ZLIB=1',
-    '-DSEQAN_HAS_BZIP2=1',
-    '-DSEQAN_HAS_OPENMP=1',
-    "-DSEQAN_HAS_EXECINFO=1"
+    'ThirdParty/sdsl-lite/include',
+    'ThirdParty/kmerDecoder/include',
+    'ThirdParty/kmerDecoder/lib/seqan/include',
+    'ThirdParty/kmerDecoder/lib/parallel-hashmap'
 ]
 
 LINK_ARGS = [
     "-fopenmp",
     "-lgomp",
     "-lbz2",
+    "-lz",
 ]
 
 LIBRARIES_DIRS = [
-    '/usr/lib/x86_64-linux-gnu/'
+    "build",
+    "build/ThirdParty/MQF/src",
+    "build/ThirdParty/sdsl-lite/lib",
+    "build/ThirdParty/kmerDecoder"
 ]
 
 LIBRARIES = [
-    'z',
+    'kProcessor',
+    'sdsl',
+    'MQF',
+    'kmerDecoder'
 ]
 
 SWIG_OPTS = [
-    '-DSWIGWORDSIZE64',
     '-c++',
     '-py3',
     '-outdir',
@@ -109,14 +86,14 @@ class CustomBuild(build):
 
 
 kProcessor_module = Extension('_kProcessor',
-                          sources=SOURCES,
-                          include_dirs=INCLUDES,
-      #                    library_dirs=LIBRARIES_DIRS,
-                          libraries=LIBRARIES,
-                          extra_compile_args=COMPILE_ARGS,
-                          extra_link_args=LINK_ARGS,
-                          swig_opts=SWIG_OPTS,                          
-                          )
+                              library_dirs=LIBRARIES_DIRS,
+                              libraries=LIBRARIES,
+                              sources=SOURCES,
+                              include_dirs=INCLUDES,
+                              extra_link_args=LINK_ARGS,
+                              extra_compile_args = ["-O3", "-Ofast"],
+                              swig_opts=SWIG_OPTS,
+                              )
 
 classifiers = [
     "License :: OSI Approved :: Apache Software License",
@@ -125,17 +102,18 @@ classifiers = [
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.6",
+    "Programming Language :: Python :: 3.7",
 ]
 
 setup(name='kProcessor',
-      version='0.1',
+      version='0.3',
       author="M. Abuelanin",
       author_email='mabuelanin@gmail.com',
       description="""kProcessor Python interface""",
       ext_modules=[kProcessor_module],
       py_modules=['kProcessor'],
       url='https://github.com/dib-lab/kProcessor',
-      python_requires='>=3.6, <3.7',
+      python_requires='>=3.6',
       cmdclass={'build': CustomBuild},
       license='BSD 3-Clause',
       long_description_content_type='text/markdown',
@@ -143,8 +121,7 @@ setup(name='kProcessor',
       classifiers=classifiers,
       include_package_data=True,
       project_urls={
-        'Bug Reports': 'https://github.com/dib-lab/kProcessor/issues',
-        'Say Thanks!': 'https://saythanks.io/to/mr-eyes',
-        'Source': 'https://github.com/dib-lab/kProcessor',
-        },
+          'Bug Reports': 'https://github.com/dib-lab/kProcessor/issues',
+          'Source': 'https://github.com/dib-lab/kProcessor',
+      },
       )

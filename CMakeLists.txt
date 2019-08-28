@@ -12,34 +12,55 @@ cmake_minimum_required (VERSION 3.0.0)
 # Name of project and that it is C/C++.
 project (kProcessor C CXX)
 
+# IMPORTANT == -FPIC #SDSL-LINKING
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 enable_testing()
 
-add_subdirectory(ThirdParty/MQF/)
+
 include_directories("ThirdParty/CLI")
 include_directories("ThirdParty/MQF/include")
 include_directories("ThirdParty/json")
 include_directories("ThirdParty/sdsl-lite/include")
+include_directories("ThirdParty/kmerDecoder/include")
+include_directories("ThirdParty/kmerDecoder/lib/parallel_hashmap")
+include_directories("ThirdParty/cereal/include")
+include_directories("ThirdParty/ntCard/include")
 
-
-
-
+add_subdirectory(ThirdParty/MQF/)
 add_subdirectory(ThirdParty/sdsl-lite/)
+add_subdirectory(ThirdParty/kmerDecoder)
+
+include(ExternalProject)
+ExternalProject_Add(
+  libntcard_a
+  SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/ntCard
+  CONFIGURE_COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/ntCard/autogen.sh && ${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/ntCard/configure --prefix=${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/ntCard/
+  PREFIX ${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/ntCard
+  BUILD_COMMAND make
+  BUILD_IN_SOURCE 1
+)
+set(ntcardLib "${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/ntCard/libntcard.a")
 
 
 set(LIBRARY_NAME
     kProcessor
 )
-file(GLOB kProcessorLibSrc "src/*.cpp" "src/KmerDecoder/*.cpp"
-"src/HashUtils/*.cpp" "src/Utils/*.cpp")
+file(GLOB kProcessorLibSrc "src/*.cpp" "src/kDataFrames/*.cpp" "src/KmerDecoder/*.cpp"
+        "src/HashUtils/*.cpp" "src/Utils/*.cpp")
 
 
 add_library(${LIBRARY_NAME} STATIC
     ${kProcessorLibSrc}
     )
+
+
 target_link_libraries(kProcessor MQF)
 target_link_libraries (kProcessor ${SEQAN_LIBRARIES})
+target_link_libraries (kProcessor ${ntcardLib}  -ldl)
+#set_property(TARGET sdsl PROPERTY POSITION_INDEPENDENT_CODE ON)
 target_link_libraries(kProcessor sdsl)
+target_link_libraries(kProcessor kmerDecoder)
 
 target_include_directories(${LIBRARY_NAME} PRIVATE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/${LIBRARY_NAME}>
@@ -71,7 +92,7 @@ set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${SEQAN_CXX_FLAGS}")
 
 message(STATUS "DEF: ${SEQAN_DEFINITIONS}")
 
-set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -std=c++14 -fPIC -fopenmp -W -Wall -pedantic -fpermissive")
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -std=c++17 -fPIC -fopenmp -W -Wall -pedantic")
 
 message(STATUS "FLAGS: ${CMAKE_CXX_FLAGS}")
 

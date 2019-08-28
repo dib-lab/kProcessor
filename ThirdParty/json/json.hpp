@@ -469,6 +469,14 @@ class other_error : public exception
     #endif
 #endif
 
+// C++ language standard detection
+#if (defined(__cplusplus) && __cplusplus >= 201703L) || (defined(_HAS_CXX17) && _HAS_CXX17 == 1) // fix for issue #464
+    #define JSON_HAS_CPP_17
+    #define JSON_HAS_CPP_14
+#elif (defined(__cplusplus) && __cplusplus >= 201402L) || (defined(_HAS_CXX14) && _HAS_CXX14 == 1)
+    #define JSON_HAS_CPP_14
+#endif
+
 // disable float-equal warnings on GCC/clang
 #if defined(__clang__) || defined(__GNUC__) || defined(__GNUG__)
     #pragma GCC diagnostic push
@@ -493,7 +501,11 @@ class other_error : public exception
 // allow for portable nodiscard warnings
 #if defined(__has_cpp_attribute)
     #if __has_cpp_attribute(nodiscard)
-        #define JSON_NODISCARD [[nodiscard]]
+        #if defined(__clang__) && !defined(JSON_HAS_CPP_17) // issue #1535
+            #define JSON_NODISCARD
+        #else
+            #define JSON_NODISCARD [[nodiscard]]
+        #endif
     #elif __has_cpp_attribute(gnu::warn_unused_result)
         #define JSON_NODISCARD [[gnu::warn_unused_result]]
     #else
@@ -544,14 +556,6 @@ class other_error : public exception
 #else
     #define JSON_LIKELY(x)      x
     #define JSON_UNLIKELY(x)    x
-#endif
-
-// C++ language standard detection
-#if (defined(__cplusplus) && __cplusplus >= 201703L) || (defined(_HAS_CXX17) && _HAS_CXX17 == 1) // fix for issue #464
-    #define JSON_HAS_CPP_17
-    #define JSON_HAS_CPP_14
-#elif (defined(__cplusplus) && __cplusplus >= 201402L) || (defined(_HAS_CXX14) && _HAS_CXX14 == 1)
-    #define JSON_HAS_CPP_14
 #endif
 
 /*!
@@ -1055,10 +1059,19 @@ struct is_constructible_object_type_impl <
     using object_t = typename BasicJsonType::object_t;
 
     static constexpr bool value =
-        (std::is_constructible<typename ConstructibleObjectType::key_type, typename object_t::key_type>::value and
-         std::is_same<typename object_t::mapped_type, typename ConstructibleObjectType::mapped_type>::value) or
-        (has_from_json<BasicJsonType, typename ConstructibleObjectType::mapped_type>::value or
-         has_non_default_from_json<BasicJsonType, typename ConstructibleObjectType::mapped_type >::value);
+        (std::is_default_constructible<ConstructibleObjectType>::value and
+         (std::is_move_assignable<ConstructibleObjectType>::value or
+          std::is_copy_assignable<ConstructibleObjectType>::value) and
+         (std::is_constructible<typename ConstructibleObjectType::key_type,
+          typename object_t::key_type>::value and
+          std::is_same <
+          typename object_t::mapped_type,
+          typename ConstructibleObjectType::mapped_type >::value)) or
+        (has_from_json<BasicJsonType,
+         typename ConstructibleObjectType::mapped_type>::value or
+         has_non_default_from_json <
+         BasicJsonType,
+         typename ConstructibleObjectType::mapped_type >::value);
 };
 
 template <typename BasicJsonType, typename ConstructibleObjectType>
@@ -1141,20 +1154,24 @@ struct is_constructible_array_type_impl <
     BasicJsonType, ConstructibleArrayType,
     enable_if_t<not std::is_same<ConstructibleArrayType,
     typename BasicJsonType::value_type>::value and
-    is_detected<value_type_t, ConstructibleArrayType>::value and
-    is_detected<iterator_t, ConstructibleArrayType>::value and
-    is_complete_type<
-    detected_t<value_type_t, ConstructibleArrayType>>::value >>
+    std::is_default_constructible<ConstructibleArrayType>::value and
+(std::is_move_assignable<ConstructibleArrayType>::value or
+ std::is_copy_assignable<ConstructibleArrayType>::value) and
+is_detected<value_type_t, ConstructibleArrayType>::value and
+is_detected<iterator_t, ConstructibleArrayType>::value and
+is_complete_type<
+detected_t<value_type_t, ConstructibleArrayType>>::value >>
 {
     static constexpr bool value =
         // This is needed because json_reverse_iterator has a ::iterator type,
-        // furthermore, std::back_insert_iterator (and other iterators) have a base class `iterator`...
-        // Therefore it is detected as a ConstructibleArrayType.
-        // The real fix would be to have an Iterable concept.
-        not is_iterator_traits <
-        iterator_traits<ConstructibleArrayType >>::value and
+        // furthermore, std::back_insert_iterator (and other iterators) have a
+        // base class `iterator`... Therefore it is detected as a
+        // ConstructibleArrayType. The real fix would be to have an Iterable
+        // concept.
+        not is_iterator_traits<iterator_traits<ConstructibleArrayType>>::value and
 
-        (std::is_same<typename ConstructibleArrayType::value_type, typename BasicJsonType::array_t::value_type>::value or
+        (std::is_same<typename ConstructibleArrayType::value_type,
+         typename BasicJsonType::array_t::value_type>::value or
          has_from_json<BasicJsonType,
          typename ConstructibleArrayType::value_type>::value or
          has_non_default_from_json <
@@ -1407,6 +1424,7 @@ void from_json(const BasicJsonType& j, std::forward_list<T, Allocator>& l)
     {
         JSON_THROW(type_error::create(302, "type must be array, but is " + std::string(j.type_name())));
     }
+    l.clear();
     std::transform(j.rbegin(), j.rend(),
                    std::front_inserter(l), [](const BasicJsonType & i)
     {
@@ -1425,6 +1443,16 @@ void from_json(const BasicJsonType& j, std::valarray<T>& l)
     }
     l.resize(j.size());
     std::copy(j.m_value.array->begin(), j.m_value.array->end(), std::begin(l));
+}
+
+template <typename BasicJsonType, typename T, std::size_t N>
+auto from_json(const BasicJsonType& j, T (&arr)[N])
+-> decltype(j.template get<T>(), void())
+{
+    for (std::size_t i = 0; i < N; ++i)
+    {
+        arr[i] = j.at(i).template get<T>();
+    }
 }
 
 template<typename BasicJsonType>
@@ -1453,14 +1481,16 @@ auto from_json_array_impl(const BasicJsonType& j, ConstructibleArrayType& arr, p
 {
     using std::end;
 
-    arr.reserve(j.size());
+    ConstructibleArrayType ret;
+    ret.reserve(j.size());
     std::transform(j.begin(), j.end(),
-                   std::inserter(arr, end(arr)), [](const BasicJsonType & i)
+                   std::inserter(ret, end(ret)), [](const BasicJsonType & i)
     {
         // get<BasicJsonType>() returns *this, this won't call a from_json
         // method when value_type is BasicJsonType
         return i.template get<typename ConstructibleArrayType::value_type>();
     });
+    arr = std::move(ret);
 }
 
 template <typename BasicJsonType, typename ConstructibleArrayType>
@@ -1469,14 +1499,16 @@ void from_json_array_impl(const BasicJsonType& j, ConstructibleArrayType& arr,
 {
     using std::end;
 
+    ConstructibleArrayType ret;
     std::transform(
-        j.begin(), j.end(), std::inserter(arr, end(arr)),
+        j.begin(), j.end(), std::inserter(ret, end(ret)),
         [](const BasicJsonType & i)
     {
         // get<BasicJsonType>() returns *this, this won't call a from_json
         // method when value_type is BasicJsonType
         return i.template get<typename ConstructibleArrayType::value_type>();
     });
+    arr = std::move(ret);
 }
 
 template <typename BasicJsonType, typename ConstructibleArrayType,
@@ -1510,15 +1542,17 @@ void from_json(const BasicJsonType& j, ConstructibleObjectType& obj)
         JSON_THROW(type_error::create(302, "type must be object, but is " + std::string(j.type_name())));
     }
 
+    ConstructibleObjectType ret;
     auto inner_object = j.template get_ptr<const typename BasicJsonType::object_t*>();
     using value_type = typename ConstructibleObjectType::value_type;
     std::transform(
         inner_object->begin(), inner_object->end(),
-        std::inserter(obj, obj.begin()),
+        std::inserter(ret, ret.begin()),
         [](typename BasicJsonType::object_t::value_type const & p)
     {
         return value_type(p.first, p.second.template get<typename ConstructibleObjectType::mapped_type>());
     });
+    obj = std::move(ret);
 }
 
 // overload for arithmetic types, not chosen for basic_json template arguments
@@ -1590,6 +1624,7 @@ void from_json(const BasicJsonType& j, std::map<Key, Value, Compare, Allocator>&
     {
         JSON_THROW(type_error::create(302, "type must be array, but is " + std::string(j.type_name())));
     }
+    m.clear();
     for (const auto& p : j)
     {
         if (JSON_UNLIKELY(not p.is_array()))
@@ -1609,6 +1644,7 @@ void from_json(const BasicJsonType& j, std::unordered_map<Key, Value, Hash, KeyE
     {
         JSON_THROW(type_error::create(302, "type must be array, but is " + std::string(j.type_name())));
     }
+    m.clear();
     for (const auto& p : j)
     {
         if (JSON_UNLIKELY(not p.is_array()))
@@ -7786,6 +7822,29 @@ class iter_impl
     */
 
     /*!
+    @brief const copy constructor
+    @param[in] other const iterator to copy from
+    @note This copy constuctor had to be defined explicitely to circumvent a bug
+          occuring on msvc v19.0 compiler (VS 2015) debug build. For more
+          information refer to: https://github.com/nlohmann/json/issues/1608
+    */
+    iter_impl(const iter_impl<const BasicJsonType>& other) noexcept
+        : m_object(other.m_object), m_it(other.m_it) {}
+
+    /*!
+    @brief converting assignment
+    @param[in] other const iterator to copy from
+    @return const/non-const iterator
+    @note It is not checked whether @a other is initialized.
+    */
+    iter_impl& operator=(const iter_impl<const BasicJsonType>& other) noexcept
+    {
+        m_object = other.m_object;
+        m_it = other.m_it;
+        return *this;
+    }
+
+    /*!
     @brief converting constructor
     @param[in] other  non-const iterator to copy from
     @note It is not checked whether @a other is initialized.
@@ -7795,7 +7854,7 @@ class iter_impl
 
     /*!
     @brief converting assignment
-    @param[in,out] other  non-const iterator to copy from
+    @param[in] other  non-const iterator to copy from
     @return const/non-const iterator
     @note It is not checked whether @a other is initialized.
     */
@@ -8409,6 +8468,7 @@ class json_reverse_iterator : public std::reverse_iterator<Base>
 
 #include <algorithm> // all_of
 #include <cassert> // assert
+#include <cctype> // isdigit
 #include <numeric> // accumulate
 #include <string> // string
 #include <utility> // move
@@ -8779,7 +8839,7 @@ class json_pointer
         // j which will be overwritten by a primitive value
         for (const auto& reference_token : reference_tokens)
         {
-            switch (result->m_type)
+            switch (result->type())
             {
                 case detail::value_t::null:
                 {
@@ -8856,14 +8916,14 @@ class json_pointer
         for (const auto& reference_token : reference_tokens)
         {
             // convert null values to arrays or objects before continuing
-            if (ptr->m_type == detail::value_t::null)
+            if (ptr->is_null())
             {
                 // check if reference token is a number
                 const bool nums =
                     std::all_of(reference_token.begin(), reference_token.end(),
-                                [](const char x)
+                                [](const unsigned char x)
                 {
-                    return x >= '0' and x <= '9';
+                    return std::isdigit(x);
                 });
 
                 // change value to array for numbers or "-" or to object otherwise
@@ -8872,7 +8932,7 @@ class json_pointer
                        : detail::value_t::object;
             }
 
-            switch (ptr->m_type)
+            switch (ptr->type())
             {
                 case detail::value_t::object:
                 {
@@ -8931,7 +8991,7 @@ class json_pointer
         using size_type = typename BasicJsonType::size_type;
         for (const auto& reference_token : reference_tokens)
         {
-            switch (ptr->m_type)
+            switch (ptr->type())
             {
                 case detail::value_t::object:
                 {
@@ -8996,7 +9056,7 @@ class json_pointer
         using size_type = typename BasicJsonType::size_type;
         for (const auto& reference_token : reference_tokens)
         {
-            switch (ptr->m_type)
+            switch (ptr->type())
             {
                 case detail::value_t::object:
                 {
@@ -9055,7 +9115,7 @@ class json_pointer
         using size_type = typename BasicJsonType::size_type;
         for (const auto& reference_token : reference_tokens)
         {
-            switch (ptr->m_type)
+            switch (ptr->type())
             {
                 case detail::value_t::object:
                 {
@@ -9100,6 +9160,77 @@ class json_pointer
         }
 
         return *ptr;
+    }
+
+    /*!
+    @throw parse_error.106   if an array index begins with '0'
+    @throw parse_error.109   if an array index was not a number
+    */
+    bool contains(const BasicJsonType* ptr) const
+    {
+        using size_type = typename BasicJsonType::size_type;
+        for (const auto& reference_token : reference_tokens)
+        {
+            switch (ptr->type())
+            {
+                case detail::value_t::object:
+                {
+                    if (not ptr->contains(reference_token))
+                    {
+                        // we did not find the key in the object
+                        return false;
+                    }
+
+                    ptr = &ptr->operator[](reference_token);
+                    break;
+                }
+
+                case detail::value_t::array:
+                {
+                    if (JSON_UNLIKELY(reference_token == "-"))
+                    {
+                        // "-" always fails the range check
+                        return false;
+                    }
+
+                    // error condition (cf. RFC 6901, Sect. 4)
+                    if (JSON_UNLIKELY(reference_token.size() > 1 and reference_token[0] == '0'))
+                    {
+                        JSON_THROW(detail::parse_error::create(106, 0,
+                                                               "array index '" + reference_token +
+                                                               "' must not begin with '0'"));
+                    }
+
+                    JSON_TRY
+                    {
+                        const auto idx = static_cast<size_type>(array_index(reference_token));
+                        if (idx >= ptr->size())
+                        {
+                            // index out of range
+                            return false;
+                        }
+
+                        ptr = &ptr->operator[](idx);
+                        break;
+                    }
+                    JSON_CATCH(std::invalid_argument&)
+                    {
+                        JSON_THROW(detail::parse_error::create(109, 0, "array index '" + reference_token + "' is not a number"));
+                    }
+                    break;
+                }
+
+                default:
+                {
+                    // we do not expect primitive values if there is still a
+                    // reference token to process
+                    return false;
+                }
+            }
+        }
+
+        // no reference token left means we found a primitive value
+        return true;
     }
 
     /*!
@@ -9223,7 +9354,7 @@ class json_pointer
                         const BasicJsonType& value,
                         BasicJsonType& result)
     {
-        switch (value.m_type)
+        switch (value.type())
         {
             case detail::value_t::array:
             {
@@ -10754,19 +10885,19 @@ class binary_writer
 
             case value_t::number_unsigned:
             {
-                if (j.m_value.number_unsigned <= (std::numeric_limits<std::int8_t>::max)())
+                if (j.m_value.number_unsigned <= static_cast<std::uint64_t>((std::numeric_limits<std::int8_t>::max)()))
                 {
                     return 'i';
                 }
-                if (j.m_value.number_unsigned <= (std::numeric_limits<std::uint8_t>::max)())
+                if (j.m_value.number_unsigned <= static_cast<std::uint64_t>((std::numeric_limits<std::uint8_t>::max)()))
                 {
                     return 'U';
                 }
-                if (j.m_value.number_unsigned <= (std::numeric_limits<std::int16_t>::max)())
+                if (j.m_value.number_unsigned <= static_cast<std::uint64_t>((std::numeric_limits<std::int16_t>::max)()))
                 {
                     return 'I';
                 }
-                if (j.m_value.number_unsigned <= (std::numeric_limits<std::int32_t>::max)())
+                if (j.m_value.number_unsigned <= static_cast<std::uint64_t>((std::numeric_limits<std::int32_t>::max)()))
                 {
                     return 'l';
                 }
@@ -15449,6 +15580,19 @@ class basic_json
         return v;
     }
 
+    template <
+        typename T, std::size_t N,
+        typename Array = T (&)[N],
+        detail::enable_if_t <
+            detail::has_from_json<basic_json_t, Array>::value, int > = 0 >
+    Array get_to(T (&v)[N]) const
+    noexcept(noexcept(JSONSerializer<Array>::from_json(
+                          std::declval<const basic_json_t&>(), v)))
+    {
+        JSONSerializer<Array>::from_json(*this, v);
+        return v;
+    }
+
 
     /*!
     @brief get a pointer value (implicit)
@@ -16140,6 +16284,8 @@ class basic_json
     @return copy of the element at key @a key or @a default_value if @a key
     is not found
 
+    @throw type_error.302 if @a default_value does not match the type of the
+    value at @a key
     @throw type_error.306 if the JSON value is not an object; in that case,
     using `value()` with a key makes no sense.
 
@@ -16213,6 +16359,8 @@ class basic_json
     @return copy of the element at key @a key or @a default_value if @a key
     is not found
 
+    @throw type_error.302 if @a default_value does not match the type of the
+    value at @a ptr
     @throw type_error.306 if the JSON value is not an object; in that case,
     using `value()` with a key makes no sense.
 
@@ -16749,13 +16897,46 @@ class basic_json
     @liveexample{The following code shows an example for `contains()`.,contains}
 
     @sa @ref find(KeyT&&) -- returns an iterator to an object element
+    @sa @ref contains(const json_pointer&) const -- checks the existence for a JSON pointer
 
     @since version 3.6.0
     */
-    template<typename KeyT>
-    bool contains(KeyT&& key) const
+    template<typename KeyT, typename std::enable_if<
+                 not std::is_same<KeyT, json_pointer>::value, int>::type = 0>
+    bool contains(KeyT && key) const
     {
         return is_object() and m_value.object->find(std::forward<KeyT>(key)) != m_value.object->end();
+    }
+
+    /*!
+    @brief check the existence of an element in a JSON object given a JSON pointer
+
+    Check wehther the given JSON pointer @a ptr can be resolved in the current
+    JSON value.
+
+    @note This method can be executed on any JSON value type.
+
+    @param[in] ptr JSON pointer to check its existence.
+
+    @return true if the JSON pointer can be resolved to a stored value, false
+    otherwise.
+
+    @post If `j.contains(ptr)` returns true, it is safe to call `j[ptr]`.
+
+    @throw parse_error.106   if an array index begins with '0'
+    @throw parse_error.109   if an array index was not a number
+
+    @complexity Logarithmic in the size of the JSON object.
+
+    @liveexample{The following code shows an example for `contains()`.,contains_json_pointer}
+
+    @sa @ref contains(KeyT &&) const -- checks the existence of a key
+
+    @since version 3.7.0
+    */
+    bool contains(const json_pointer& ptr) const
+    {
+        return ptr.contains(this);
     }
 
     /// @}
@@ -17700,6 +17881,8 @@ class basic_json
     @param[in] args arguments to forward to a constructor of @ref basic_json
     @tparam Args compatible types to create a @ref basic_json object
 
+    @return reference to the inserted element
+
     @throw type_error.311 when called on a type other than JSON array or
     null; example: `"cannot use emplace_back() with number"`
 
@@ -17709,10 +17892,10 @@ class basic_json
     elements to a JSON array. Note how the `null` value was silently converted
     to a JSON array.,emplace_back}
 
-    @since version 2.0.8
+    @since version 2.0.8, returns reference since 3.7.0
     */
     template<class... Args>
-    void emplace_back(Args&& ... args)
+    reference emplace_back(Args&& ... args)
     {
         // emplace_back only works for null objects or arrays
         if (JSON_UNLIKELY(not(is_null() or is_array())))
@@ -17729,7 +17912,12 @@ class basic_json
         }
 
         // add element to array (perfect forwarding)
+#ifdef JSON_HAS_CPP_17
+        return m_value.array->emplace_back(std::forward<Args>(args)...);
+#else
         m_value.array->emplace_back(std::forward<Args>(args)...);
+        return m_value.array->back();
+#endif
     }
 
     /*!
@@ -18498,25 +18686,25 @@ class basic_json
                     return (*lhs.m_value.array) < (*rhs.m_value.array);
 
                 case value_t::object:
-                    return *lhs.m_value.object < *rhs.m_value.object;
+                    return (*lhs.m_value.object) < (*rhs.m_value.object);
 
                 case value_t::null:
                     return false;
 
                 case value_t::string:
-                    return *lhs.m_value.string < *rhs.m_value.string;
+                    return (*lhs.m_value.string) < (*rhs.m_value.string);
 
                 case value_t::boolean:
-                    return lhs.m_value.boolean < rhs.m_value.boolean;
+                    return (lhs.m_value.boolean) < (rhs.m_value.boolean);
 
                 case value_t::number_integer:
-                    return lhs.m_value.number_integer < rhs.m_value.number_integer;
+                    return (lhs.m_value.number_integer) < (rhs.m_value.number_integer);
 
                 case value_t::number_unsigned:
-                    return lhs.m_value.number_unsigned < rhs.m_value.number_unsigned;
+                    return (lhs.m_value.number_unsigned) < (rhs.m_value.number_unsigned);
 
                 case value_t::number_float:
-                    return lhs.m_value.number_float < rhs.m_value.number_float;
+                    return (lhs.m_value.number_float) < (rhs.m_value.number_float);
 
                 default:
                     return false;
@@ -20717,6 +20905,21 @@ class basic_json
 
     /// @}
 };
+
+/*!
+@brief user-defined to_string function for JSON values
+
+This function implements a user-defined to_string  for JSON objects.
+
+@param[in] j  a JSON object
+@return a std::string object
+*/
+
+NLOHMANN_BASIC_JSON_TPL_DECLARATION
+std::string to_string(const NLOHMANN_BASIC_JSON_TPL& j)
+{
+    return j.dump();
+}
 } // namespace nlohmann
 
 ///////////////////////

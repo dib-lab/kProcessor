@@ -61,6 +61,48 @@ public:
 	string Ihash(uint64_t key);
 };
 
+class QHasher: public Hasher{
+private:
+    uint64_t mask;
+    uint64_t kSize;
+    unsigned int Q = 28;
+    unsigned int key_remainder_bits;
+
+public:
+    QHasher(uint64_t kSize);
+    QHasher(uint64_t kSize, int _Q);
+    Hasher* clone() { return new QHasher(kSize, Q);}
+
+    // To set the Q if not initialized
+    void set_Q(int _Q);
+
+    uint64_t merge_Q_R(uint64_t &_Q, uint64_t &R);
+    void split_Q_R(uint64_t key,uint64_t &_Q,uint64_t &R);
+
+    uint64_t normal_hash(string key);
+    uint64_t normal_hash(uint64_t key);
+    uint64_t normal_Ihash(uint64_t key);
+
+
+
+    uint64_t hash(string key);
+    uint64_t hash(uint64_t key);
+    string Ihash(uint64_t key);
+};
+
+// TwoBitsHasher
+
+class TwoBitsHasher: public Hasher{
+private:
+    uint64_t kSize;
+public:
+    TwoBitsHasher(uint64_t kSize);
+    Hasher* clone() { return new TwoBitsHasher(kSize);}
+    uint64_t hash(string key);
+    uint64_t hash(uint64_t key);
+    string Ihash(uint64_t key);
+};
+
 template<class hashFnType>
 class wrapperHasher: public Hasher{
 private:
@@ -73,12 +115,12 @@ public:
 		return new wrapperHasher(fn,kSize);
 	}
 	uint64_t hash(string key){
-		return fn(key);
+		return fn(kmer::str_to_canonical_int(key));
 	}
 
 	uint64_t hash(uint64_t key){
-		string kmerStr=kmer::int_to_str(key,kSize);
-		return fn(kmerStr);
+		string kmerStr = kmer::int_to_str(key,kSize);
+		return fn(key);
 	}
 
 };

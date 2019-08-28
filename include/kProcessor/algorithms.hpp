@@ -15,7 +15,9 @@
 #include <math.h>
 #include <vector>
 #include "colored_kDataFrame.hpp"
-
+#include <map>
+#include "kmerDecoder.hpp"
+#include <any>
 
 
 namespace kProcessor{
@@ -39,14 +41,22 @@ inline uint64_t estimateMemory(uint64_t nslots,uint64_t slotSize, uint64_t fcoun
 
    }
 
+vector<uint64_t> estimateKmersHistogram(string fileName, int kSize ,int threads);
 /// Load the kmers in the input file into the output kDataframe. Input File can be of formats: fastq,fasta, sam, and bam.
 void parseSequences(string seqFileName,int nThreads,kDataFrame* output);
 
+/// Load the kmers in the input file into the output kDataframe. Input File can be of formats: fastq,fasta.
+void parseSequences(kmerDecoder * KD, kDataFrame* output);
+
 /// Load the kmers in the input string into the output kDataframe.
-void parseSequencesFromString(string sequence,kDataFrame* output);
+void parseSequencesFromString(kmerDecoder *KD, string sequence,kDataFrame* output);
 
 /// Applies a function on all the kmers in the input kDataframe. The output is another kDataframe with the transformed kmers.
 kDataFrame* transform(kDataFrame* input,kmerRow (*fn)(kmerRow i));
+/// filter the kmers in the kdataframe. The output is another kDataframe with the filtered kmers.
+kDataFrame* filter(kDataFrame* input,bool (*fn)(kmerRow i));
+/// aggregate all the kmers in the kdataframe into a single value. The output is one value.
+any aggregate(kDataFrame *input, any initial ,any (*fn)(kmerRow it,any v));
 
 /*! Merge the a list of kDataframes into a one.
  *
@@ -65,8 +75,14 @@ kDataFrame* kFrameIntersect(const vector<kDataFrame*>& input);
 /// Calculate the difference of the kDataframes. The result kDataframe will have only kmers that exists in the first kDataframe and not in any of the rest input kDataframes. The count of the kmers equals to the count in the first kDataframe.
 kDataFrame* kFrameDiff(const vector<kDataFrame*>& input);
 
-colored_kDataFrame* index(string seqFileName,string namesFiles,uint64_t kSize);
+/// Initialize kmerDecoder to decode kmers from a FASTA/Q file with predefined mode.
+kmerDecoder* initialize_kmerDecoder(std::string filename, int chunkSize, std::string mode, std::map<std::string, int> params);
 
+/// Initialize kmerDecoder to decode kmers from a sequence string with predefined mode.
+kmerDecoder* initialize_kmerDecoder(std::string mode, std::map<std::string, int> params);
+
+/// Perform indexing to a sequences file with predefined kmers decoding mode, returns a colored kDataframe.
+colored_kDataFrame *index(kmerDecoder *KD, string names_fileName, kDataFrame *frame);
 
 }
 #endif

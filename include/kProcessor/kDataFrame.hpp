@@ -6,13 +6,15 @@
 #include <stdint.h>
 #include "gqf.h"
 #include "Utils/kmer.h"
-#include <map>
-#include <unordered_map>
 #include <iostream>
+#include <parallel_hashmap/phmap.h>
+
+using phmap::flat_hash_map;
 using namespace std;
 
 class kDataFrame;
 class kDataFrameMAP;
+class kDataFramePHMAP;
 
 
 class kmerRow{
@@ -215,32 +217,17 @@ public:
    ~kDataFrameMQFIterator();
 };
 
-class kDataFrameMAPIterator:public _kDataFrameIterator{
-private:
-  unordered_map<string, uint64_t>::iterator iterator;
-  kDataFrameMAP* origin;
-public:
-  kDataFrameMAPIterator(unordered_map<string, uint64_t>::iterator,kDataFrameMAP* origin,uint64_t kSize);
-  kDataFrameMAPIterator(const kDataFrameMAPIterator&);
-  kDataFrameMAPIterator& operator ++ (int);
-  _kDataFrameIterator* clone();
-  uint64_t getHashedKmer();
-  string getKmer();
-  uint64_t getKmerCount();
-  bool setKmerCount(uint64_t count);
-  void endIterator();
-  bool operator ==(const _kDataFrameIterator& other);
-  bool operator !=(const _kDataFrameIterator& other);
-   ~kDataFrameMAPIterator();
-};
 
 class kDataFrame{
 protected:
   uint64_t kSize;
   Hasher* hasher;
+  string class_name; // Default = MQF, change if MAP. Temporary until resolving #17
 public:
+  virtual string get_class_name(){ return class_name;}  // Temporary until resolving #17
   kDataFrame();
   kDataFrame(uint8_t kSize);
+
 
   virtual ~kDataFrame(){
 
@@ -248,8 +235,10 @@ public:
 /// creates a new kDataframe using the same parameters as the current kDataFrame.
 /*! It is like clone but without copying the data */
   virtual kDataFrame* getTwin()=0;
-/// request a capacity change so that the kDataFrame can approximately at least n kmers
+/// request a capacity change so that the kDataFrame can approximately hold at least n kmers
   virtual void reserve (uint64_t n )=0;
+/// request a capacity change so that the kDataFrame can approximately hold kmers with countHistogram distribution
+  virtual void reserve (vector<uint64_t> countHistogram)=0;
 /// insert the kmer one time in the kDataFrame, or increment the kmer count if it is already exists.
 /*! Returns bool value indicating whether the kmer is inserted or not*/
   virtual bool insert(string kmer)=0;
@@ -295,6 +284,10 @@ The difference between setCount and insert is that setCount set the count to N n
 
 
   uint64_t getkSize(){return kSize;}
+
+  // duplicate for easier name in python, getkSize won't be wrapped
+  uint64_t ksize(){return kSize;}
+
   void setkSize(uint64_t k){kSize=k;}
 
 
@@ -315,16 +308,21 @@ public:
   kDataFrameMQF(uint64_t kSize);
   kDataFrameMQF(uint64_t ksize,uint8_t q,uint8_t fixedCounterSize,uint8_t tagSize
     ,double falsePositiveRate);
+
+  kDataFrameMQF(uint64_t ksize, uint8_t q, int mode);
+
   kDataFrameMQF(QF* mqf,uint64_t ksize,double falsePositiveRate);
   //count histogram is array where count of kmers repeated n times is found at index n. index 0 holds number of distinct kmers.
   kDataFrameMQF(uint64_t ksize,vector<uint64_t> countHistogram,uint8_t tagSize
     ,double falsePositiveRate);
+  kDataFrameMQF(uint64_t kSize,vector<uint64_t> kmersHistogram);
+
   ~kDataFrameMQF(){
     qf_destroy(mqf);
     delete mqf;
   }
   void reserve (uint64_t n);
-
+  void reserve (vector<uint64_t> countHistogram);
   kDataFrame* getTwin();
 
   static uint64_t estimateMemory(uint64_t nslots,uint64_t slotSize,
@@ -361,6 +359,28 @@ public:
 
   kDataFrameIterator begin();
   kDataFrameIterator end();
+};
+
+
+// kDataFrameMAPIterator
+
+class kDataFrameMAPIterator:public _kDataFrameIterator{
+private:
+    std::map<uint64_t, uint64_t>::iterator iterator;
+    kDataFrameMAP* origin;
+public:
+    kDataFrameMAPIterator(std::map<uint64_t, uint64_t>::iterator,kDataFrameMAP* origin,uint64_t kSize);
+    kDataFrameMAPIterator(const kDataFrameMAPIterator&);
+    kDataFrameMAPIterator& operator ++ (int);
+    _kDataFrameIterator* clone();
+    uint64_t getHashedKmer();
+    string getKmer();
+    uint64_t getKmerCount();
+    bool setKmerCount(uint64_t count);
+    void endIterator();
+    bool operator ==(const _kDataFrameIterator& other);
+    bool operator !=(const _kDataFrameIterator& other);
+    ~kDataFrameMAPIterator();
 };
 
 // kDataFrameBMQF _____________________________
@@ -431,12 +451,14 @@ public:
 class kDataFrameMAP : public kDataFrame
 {
 private:
-  unordered_map<string, uint64_t> MAP;
+  std::map<uint64_t, uint64_t> MAP;
 public:
   kDataFrameMAP();
   kDataFrameMAP(uint64_t ksize);
+  kDataFrameMAP(uint64_t kSize,vector<uint64_t> kmersHistogram);
   kDataFrame* getTwin();
   void reserve (uint64_t n);
+  void reserve (vector<uint64_t> countHistogram);
 
   inline bool kmerExist(string kmer);
 
@@ -458,6 +480,91 @@ public:
   static kDataFrame *load(string filePath);
 
     ~kDataFrameMAP() {
+        this->MAP.clear();
+    }
+};
+
+
+// kDataFramePHMAPIterator
+
+class kDataFramePHMAPIterator : public _kDataFrameIterator {
+private:
+    flat_hash_map<uint64_t, uint64_t>::iterator iterator;
+    kDataFramePHMAP *origin;
+public:
+    kDataFramePHMAPIterator(flat_hash_map<uint64_t, uint64_t>::iterator, kDataFramePHMAP *origin, uint64_t kSize);
+
+    kDataFramePHMAPIterator(const kDataFramePHMAPIterator &);
+
+    kDataFramePHMAPIterator &operator++(int);
+
+    _kDataFrameIterator *clone();
+
+    uint64_t getHashedKmer();
+
+    string getKmer();
+
+    uint64_t getKmerCount();
+
+    bool setKmerCount(uint64_t count);
+
+    void endIterator();
+
+    bool operator==(const _kDataFrameIterator &other);
+
+    bool operator!=(const _kDataFrameIterator &other);
+
+    ~kDataFramePHMAPIterator();
+};
+
+
+// kDataFramePHMAP _____________________________
+
+class kDataFramePHMAP : public kDataFrame {
+private:
+    flat_hash_map<uint64_t, uint64_t> MAP;
+public:
+    kDataFramePHMAP();
+
+    kDataFramePHMAP(uint64_t ksize);
+    kDataFramePHMAP(uint64_t kSize,vector<uint64_t> kmersHistogram);
+
+    kDataFrame *getTwin();
+
+    void reserve(uint64_t n);
+    void reserve (vector<uint64_t> countHistogram);
+
+    inline bool kmerExist(string kmer);
+
+    bool setCount(string kmer, uint64_t count);
+
+    bool insert(string kmer);
+
+    bool insert(string kmer, uint64_t count);
+
+    uint64_t count(string kmer);
+
+    bool erase(string kmer);
+
+    uint64_t size();
+
+    uint64_t max_size();
+
+    float load_factor();
+
+    float max_load_factor();
+
+    kDataFrameIterator begin();
+
+    kDataFrameIterator end();
+
+    uint64_t bucket(string kmer);
+
+    void save(string filePath);
+
+    static kDataFrame *load(string filePath);
+
+    ~kDataFramePHMAP() {
         this->MAP.clear();
     }
 };
