@@ -133,7 +133,7 @@ vector<vector<kDataFrame*> > BuildTestFramesForSetFunctions()
     framesToBeTested[0].push_back(new kDataFrameMQF(k));
     kProcessor::parseSequences(file,1,framesToBeTested[0].back());
     framesToBeTested[1].push_back(new kDataFrameMQF(k)); // Temporary until resolving #17
-    framesToBeTested[1].push_back(new kDataFrameMAP(k)); // Set functions should now work fine on sorted map
+    // framesToBeTested[1].push_back(new kDataFrameMAP(k)); // Set functions should now work fine on sorted map
     kProcessor::parseSequences(file,1,framesToBeTested[1].back());
   }
   return framesToBeTested;
