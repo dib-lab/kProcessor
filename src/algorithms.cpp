@@ -302,7 +302,7 @@ namespace kProcessor {
             KD->next_chunk();
             for (const auto &seq : *KD->getKmers()) {
                 for (const auto &kmer : seq.second) {
-                    output->insert(kmer);
+                    output->insert(kmer.hash);
                 }
             }
         }
@@ -336,11 +336,11 @@ namespace kProcessor {
             exit(1);
         }
 
-        std::vector<std::string> kmers;
+        std::vector<kmer_row> kmers;
         KD->seq_to_kmers(sequence, kmers);
 
         for (const auto &kmer : kmers) {
-            output->insert(kmer);
+            output->insert(kmer.hash);
         }
 
     }
@@ -553,6 +553,12 @@ namespace kProcessor {
         }
     }
 
+    kmerDecoder* initialize_kmerDecoder(int kSize, int hash_mode){
+        // Mode 0: Murmar Hashing | Irreversible
+        // Mode 1: Integer Hashing | Reversible | Full Hashing
+        // Mode 2: TwoBitsHashing | Not considered hashing, just store the two bits representation
+        return new Kmers(kSize, hash_mode);
+    }
 
     colored_kDataFrame *index(kmerDecoder *KD, string names_fileName, kDataFrame *frame) {
 
@@ -632,7 +638,7 @@ namespace kProcessor {
                 convertMap.insert(make_pair(readTag, readTag));
                 //    cout<<readName<<"   "<<seq.size()<<endl;
                 for (const auto &kmer : seq.second) {
-                    uint64_t currentTag = frame->count(kmer);
+                    uint64_t currentTag = frame->count(kmer.str);
                     auto itc = convertMap.find(currentTag);
                     if (itc == convertMap.end()) {
                         vector<uint32_t> colors = legend->find(currentTag)->second;
@@ -684,11 +690,11 @@ namespace kProcessor {
                         colorsCount[itc->second]++;
                     }
 
-                    frame->setCount(kmer, itc->second);
-                    if (frame->count(kmer) != itc->second) {
+                    frame->setCount(kmer.str, itc->second);
+                    if (frame->count(kmer.str) != itc->second) {
                         //frame->setC(kmer,itc->second);
-                        cout << "Error Founded " << kmer << " from sequence " << readName << " expected "
-                             << itc->second << " found " << frame->count(kmer) << endl;
+                        cout << "Error Founded " << kmer.str << " from sequence " << readName << " expected "
+                             << itc->second << " found " << frame->count(kmer.str) << endl;
                         return NULL;
                     }
                 }

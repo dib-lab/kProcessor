@@ -104,6 +104,17 @@ bool kDataFramePHMAP::insert(string kmerS) {
 }
 
 
+bool kDataFramePHMAP::insert(uint64_t kmer, uint64_t count) {
+    this->MAP[kmer] += count;
+    return true;
+}
+
+bool kDataFramePHMAP::insert(uint64_t kmer) {
+    this->MAP[kmer] = 1;
+    return true;
+}
+
+
 bool kDataFramePHMAP::setCount(string kmerS, uint64_t tag) {
     this->MAP[kmer::str_to_canonical_int(kmerS)] = tag;
     return true;

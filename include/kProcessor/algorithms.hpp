@@ -75,6 +75,9 @@ kmerDecoder* initialize_kmerDecoder(std::string filename, int chunkSize, std::st
 /// Initialize kmerDecoder to decode kmers from a sequence string with predefined mode.
 kmerDecoder* initialize_kmerDecoder(std::string mode, std::map<std::string, int> params);
 
+// Initialize kmerDecoder to hash and Ihash single kmer.
+kmerDecoder* initialize_kmerDecoder(int kmer_size, int hash_mode = 1);
+
 /// Perform indexing to a sequences file with predefined kmers decoding mode, returns a colored kDataframe.
 colored_kDataFrame *index(kmerDecoder *KD, string names_fileName, kDataFrame *frame);
 
