@@ -33,8 +33,7 @@ add_subdirectory(ThirdParty/kmerDecoder)
 set(LIBRARY_NAME
     kProcessor
 )
-file(GLOB kProcessorLibSrc "src/*.cpp" "src/kDataFrames/*.cpp" "src/KmerDecoder/*.cpp"
-        "src/HashUtils/*.cpp" "src/Utils/*.cpp")
+file(GLOB kProcessorLibSrc "src/*.cpp" "src/kDataFrames/*.cpp" "src/KmerDecoder/*.cpp" "src/Utils/*.cpp")
 
 
 add_library(${LIBRARY_NAME} STATIC
