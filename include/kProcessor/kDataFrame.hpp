@@ -242,6 +242,12 @@ public:
 /// insert the kmer N time in the kDataFrame, or increment the kmer count with N if it is already exists.
 /*! Returns bool value indicating whether the kmer is inserted or not*/
   virtual bool insert(string kmer,uint64_t N)=0;
+/// insert the hashed kmer one time in the kDataFrame, or increment the kmer count if it is already exists.
+/*! Returns bool value indicating whether the kmer is inserted or not*/
+    virtual bool insert(uint64_t kmer)=0;
+/// insert the hashed kmer N time in the kDataFrame, or increment the kmer count with N if it is already exists.
+/*! Returns bool value indicating whether the hashed kmer is inserted or not*/
+    virtual bool insert(uint64_t kmer,uint64_t N)=0;
   /// insert the kmer in the kmer row time in the kDataFrame, or increment the kmer count with the count in the row if it is already exists.
   /*! Returns bool value indicating whether the kmer is inserted or not*/
   bool insert(kmerRow k);
@@ -332,6 +338,8 @@ public:
   bool setCount(string kmer,uint64_t count);
   bool insert(string kmer,uint64_t count);
   bool insert(string kmer);
+  bool insert(uint64_t kmer, uint64_t count);
+  bool insert(uint64_t kmer);
   uint64_t count(string kmer);
 
 
@@ -395,6 +403,8 @@ public:
   bool setCount(string kmer, uint64_t count);
   bool insert(string kmer);
   bool insert(string kmer, uint64_t count);
+  bool insert(uint64_t kmer, uint64_t count);
+  bool insert(uint64_t kmer);
   uint64_t count(string kmer);
   bool erase(string kmer);
 
@@ -469,6 +479,10 @@ public:
     bool insert(string kmer);
 
     bool insert(string kmer, uint64_t count);
+
+    bool insert(uint64_t kmer, uint64_t count);
+
+    bool insert(uint64_t kmer);
 
     uint64_t count(string kmer);
 
