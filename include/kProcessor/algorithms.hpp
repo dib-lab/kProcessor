@@ -17,6 +17,7 @@
 #include "colored_kDataFrame.hpp"
 #include <map>
 #include "kmerDecoder.hpp"
+#include <any>
 
 
 namespace kProcessor{
@@ -40,6 +41,7 @@ inline uint64_t estimateMemory(uint64_t nslots,uint64_t slotSize, uint64_t fcoun
 
    }
 
+vector<uint64_t> estimateKmersHistogram(string fileName, int kSize ,int threads);
 /// Load the kmers in the input file into the output kDataframe. Input File can be of formats: fastq,fasta, sam, and bam.
 void parseSequences(string seqFileName,int nThreads,kDataFrame* output);
 
@@ -51,6 +53,10 @@ void parseSequencesFromString(kmerDecoder *KD, string sequence,kDataFrame* outpu
 
 /// Applies a function on all the kmers in the input kDataframe. The output is another kDataframe with the transformed kmers.
 kDataFrame* transform(kDataFrame* input,kmerRow (*fn)(kmerRow i));
+/// filter the kmers in the kdataframe. The output is another kDataframe with the filtered kmers.
+kDataFrame* filter(kDataFrame* input,bool (*fn)(kmerRow i));
+/// aggregate all the kmers in the kdataframe into a single value. The output is one value.
+any aggregate(kDataFrame *input, any initial ,any (*fn)(kmerRow it,any v));
 
 /*! Merge the a list of kDataframes into a one.
  *

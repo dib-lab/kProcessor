@@ -122,6 +122,11 @@ INSTANTIATE_TEST_SUITE_P(testcounting,
                         ::testing::ValuesIn(fastqFiles)
                       ));
 
+INSTANTIATE_TEST_SUITE_P(testntCard,
+                         estimateTest,
+                         ::testing::ValuesIn(fastqFiles)
+                                            );
+
 vector<vector<string> > setFunctionsTestInput={{"test.noN.fastq","test2.noN.fastq","test2.noN.fastq"}};
 
 vector<vector<kDataFrame*> > BuildTestFramesForSetFunctions()
@@ -131,7 +136,7 @@ vector<vector<kDataFrame*> > BuildTestFramesForSetFunctions()
   for(auto file:setFunctionsTestInput[0])
   {
     framesToBeTested[0].push_back(new kDataFrameMQF(k));
-    kProcessor::parseSequences(file,1,framesToBeTested[0].back());
+//    kProcessor::parseSequences(file,1,framesToBeTested[0].back());
     framesToBeTested[1].push_back(new kDataFrameMQF(k)); // Temporary until resolving #17
     // framesToBeTested[1].push_back(new kDataFrameMAP(k)); // Set functions should now work fine on sorted map
 ///    kProcessor::parseSequences(file,1,framesToBeTested[1].back());
@@ -401,6 +406,62 @@ TEST_P(kDataFrameTest,transformPlus10)
 
 }
 
+TEST_P(kDataFrameTest,transformFilterLessThan5)
+{
+
+    kDataFrame* kframe=GetParam();
+    EXPECT_EQ(kframe->empty(), true);
+    unordered_map<string,int>* kmers=kmersGen.getKmers((int)kframe->getkSize());
+    for(auto k:*kmers)
+    {
+      kframe->insert(k.first,k.second);
+      if(kframe->load_factor()>=kframe->max_load_factor()*0.8){
+        break;
+      }
+    }
+    int checkedKmers=0;
+    kDataFrame* kframe2=kProcessor::filter(kframe,[](kmerRow k)
+    {
+      return k.count>=5;
+    });
+    kDataFrameIterator it=kframe2->begin();
+    while(it!=kframe2->end())
+    {
+      string kmer=it.getKmer();
+      uint64_t count=it.getKmerCount();
+      ASSERT_GE(count,5);
+      it++;
+    }
+
+}
+
+TEST_P(kDataFrameTest,aggregateSum)
+{
+
+    kDataFrame* kframe=GetParam();
+    EXPECT_EQ(kframe->empty(), true);
+    unordered_map<string,int>* kmers=kmersGen.getKmers((int)kframe->getkSize());
+    uint64_t goldSum=0;
+    for(auto k:*kmers)
+    {
+      kframe->insert(k.first,k.second);
+      goldSum+=k.second;
+      if(kframe->load_factor()>=kframe->max_load_factor()*0.8){
+        break;
+      }
+    }
+    int checkedKmers=0;
+    any initial=(uint64_t)0;
+    any sum=kProcessor::aggregate(kframe,initial,[](kmerRow k,any v)
+    {
+      uint64_t tmp=any_cast<uint64_t>(v);
+      any result=tmp+k.count;
+      return result;
+    });
+    ASSERT_EQ(any_cast<uint64_t>(sum),goldSum);
+
+
+}
 
 TEST_P(algorithmsTest,parsingTest)
 {
@@ -429,6 +490,20 @@ TEST_P(algorithmsTest,parsingTest)
 
   }
   seqan::close(seqIn);
+}
+
+TEST_P(estimateTest,estimateTestTest)
+{
+  string fileName=GetParam();
+  int kSize=31;
+  vector<uint64_t> res= kProcessor::estimateKmersHistogram(fileName,kSize,4);
+  ifstream gold((fileName+".ntCardRes").c_str());
+  uint64_t g;
+  int i=0;
+  while(gold>>g)
+  {
+    ASSERT_EQ(g,res[i++]);
+  }
 }
 
 TEST_P(setFunctionsTest,unioinTest)

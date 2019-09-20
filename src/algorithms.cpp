@@ -12,10 +12,14 @@
 #include <math.h>
 #include <deque>
 #include <gqf.h>
+#include <string>
 #include <queue>
 #include <functional>
 #include <limits>
 #include <parallel_hashmap/phmap.h>
+#include "ntcard.hpp"
+#include <cstdio>
+
 
 using std::string;
 using std::vector;
@@ -291,6 +295,25 @@ namespace kProcessor {
         return res;
 
     }
+    kDataFrame *filter(kDataFrame *input, bool (*fn)(kmerRow it)) {
+      kDataFrame *res = input->getTwin();
+      kDataFrameIterator it = input->begin();
+      while (it != input->end()) {
+        if(fn(*it))
+          res->insert(*it);
+        it++;
+      }
+      return res;
+
+    }
+    any aggregate(kDataFrame *input, any initial ,any (*fn)(kmerRow it,any v)) {
+      kDataFrameIterator it = input->begin();
+      while (it != input->end()) {
+        initial=fn(*it,initial);
+        it++;
+      }
+      return initial;
+    }
 
     void parseSequences(kmerDecoder * KD, kDataFrame* output){
         if (KD->get_kSize() != (int)output->getkSize()){
@@ -314,6 +337,8 @@ namespace kProcessor {
 //    loadIntoMQF(seqFileName,output->getkSize(),nThreads, output->getHasher(),((kDataFrameMQF*)output)->getMQF(),NULL);
 //    return;
 //  }
+        vector<uint64_t> countHistogram= estimateKmersHistogram(seqFileName, output->getkSize() ,1);
+        output->reserve(countHistogram);
         FastqReaderSqueker reader(seqFileName);
         deque<pair<string, string> > reads;
         int k = output->getkSize();
@@ -723,6 +748,24 @@ namespace kProcessor {
         }
         return res;
     }
-
+vector<uint64_t> estimateKmersHistogram(string fileName, int kSize ,int threads)
+{
+   std::string tmpFile = "tmp."+to_string(rand()%1000000);
+   main_ntCard(fileName,kSize,1000,threads,tmpFile);
+   string output=tmpFile+"_k"+to_string(kSize)+".hist";
+   string tag;
+   uint64_t count;
+   vector<uint64_t> res(1000);
+   ifstream resultFile(output);
+   resultFile>>tag>>count;
+   resultFile>>tag>>count;
+   for(int i=0;i<1000;i++)
+   {
+     resultFile>>tag>>res[i];
+   }
+   resultFile.close();
+   remove(output.c_str());
+   return res;
+}
 
 } // End of namespace kProcessor

@@ -79,7 +79,17 @@ kDataFrameMAP::kDataFrameMAP(uint64_t ksize) {
 //    this->MAP = std::map<uint64_t, uint64_t>(1000);
     // this->hasher = (new IntegerHasher(ksize));
 }
-
+kDataFrameMAP::kDataFrameMAP(uint64_t ksize,vector<uint64_t> kmersHistogram) {
+    this->class_name = "MAP"; // Temporary until resolving #17
+    this->kSize = ksize;
+    uint64_t countSum=0;
+    for(auto h:kmersHistogram)
+      countSum+=h;
+    reserve(countSum);
+//    hasher = new wrapperHasher<std::map<uint64_t, uint64_t>::hasher>(MAP.hash_function(), ksize);
+//    this->MAP = std::map<uint64_t, uint64_t>(1000);
+    // this->hasher = (new IntegerHasher(ksize));
+}
 kDataFrameMAP::kDataFrameMAP() {
     this->class_name = "MAP"; // Temporary until resolving #17
     this->kSize = 23;
@@ -187,6 +197,9 @@ kDataFrame *kDataFrameMAP::getTwin() {
 }
 
 void kDataFrameMAP::reserve(uint64_t n) {
+//    this->MAP.reserve(n);
+}
+void kDataFrameMAP::reserve(vector<uint64_t> countHistogram) {
 //    this->MAP.reserve(n);
 }
 
