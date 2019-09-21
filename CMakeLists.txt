@@ -27,6 +27,8 @@ include_directories("ThirdParty/kmerDecoder/lib/parallel_hashmap")
 include_directories("ThirdParty/cereal/include")
 include_directories("ThirdParty/ntCard/include")
 
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -std=c++17 -fPIC -fopenmp -W -Wall -pedantic -O3 -Ofast")
+
 add_subdirectory(ThirdParty/MQF/)
 add_subdirectory(ThirdParty/sdsl-lite/)
 add_subdirectory(ThirdParty/kmerDecoder)
@@ -90,8 +92,6 @@ add_definitions (${SEQAN_DEFINITIONS})
 set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${SEQAN_CXX_FLAGS}")
 
 message(STATUS "DEF: ${SEQAN_DEFINITIONS}")
-
-set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -std=c++17 -fPIC -fopenmp -W -Wall -pedantic")
 
 message(STATUS "FLAGS: ${CMAKE_CXX_FLAGS}")
 
