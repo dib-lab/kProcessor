@@ -39,12 +39,13 @@ if not find_executable('swig'):
     sys.exit("Error:  Building this module requires 'swig' to be installed")
 
 INCLUDES = [
+    'ThirdParty/ntCard/include',
     'include/kProcessor',
     'ThirdParty/MQF/include',
     'ThirdParty/sdsl-lite/include',
     'ThirdParty/kmerDecoder/include',
     'ThirdParty/kmerDecoder/lib/seqan/include',
-    'ThirdParty/kmerDecoder/lib/parallel-hashmap'
+    'ThirdParty/kmerDecoder/lib/parallel-hashmap',
 ]
 
 LINK_ARGS = [
@@ -52,20 +53,24 @@ LINK_ARGS = [
     "-lgomp",
     "-lbz2",
     "-lz",
+    "-ldl",
 ]
 
 LIBRARIES_DIRS = [
     "build",
     "build/ThirdParty/MQF/src",
+    "ThirdParty/ntCard",
     "build/ThirdParty/sdsl-lite/lib",
-    "build/ThirdParty/kmerDecoder"
+    "build/ThirdParty/kmerDecoder",
+
 ]
 
 LIBRARIES = [
     'kProcessor',
     'sdsl',
     'MQF',
-    'kmerDecoder'
+    'ntcard',
+    'kmerDecoder',
 ]
 
 SWIG_OPTS = [
@@ -91,7 +96,7 @@ kProcessor_module = Extension('_kProcessor',
                               sources=SOURCES,
                               include_dirs=INCLUDES,
                               extra_link_args=LINK_ARGS,
-                              extra_compile_args = ["-O3", "-Ofast"],
+                              extra_compile_args = ["-O3", "-Ofast", "-std=c++17"],
                               swig_opts=SWIG_OPTS,
                               )
 
