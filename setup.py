@@ -112,8 +112,8 @@ classifiers = [
 
 setup(name='kProcessor',
       version='0.3',
-      author="M. Abuelanin",
-      author_email='mabuelanin@gmail.com',
+      author="Tamer Mansour, Mostafa Shokrof, Mohamed Abuelanin",
+      author_email='drtamermansour@gmail.com, mostafa.shokrof@gmail.com, mabuelanin@gmail.com',
       description="""kProcessor Python interface""",
       ext_modules=[kProcessor_module],
       py_modules=['kProcessor'],
