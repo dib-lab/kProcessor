@@ -60,28 +60,28 @@ class TestkmerDecoder(unittest.TestCase):
 
         self.assertEqual(KF_seq.size(), KF_file.size())
 
-    def test_minimizers(self):
-        KD_params = {
-            "mode": "minimizers",
-            "params": {
-                "k_size": 5,
-                "w": 10,
-            }
-        }
-
-        KD_seq = kp.initialize_kmerDecoder(KD_params["mode"], KD_params["params"])
-        KF_seq = kp.kDataFramePHMAP(KD_params["params"]["k_size"])
-
-
-        KD_file = kp.initialize_kmerDecoder(self.generic_params.small_fasta_file, 1, KD_params["mode"], KD_params["params"])
-        KF_file = kp.kDataFramePHMAP(KD_params["params"]["k_size"])
-
-        kp.parseSequences(KD_file, KF_file)
-        self.assertFalse(KF_file.empty())
-
-        kp.parseSequencesFromString(KD_seq, self.seq, KF_seq)
-        self.assertFalse(KF_seq.empty())
-
-        self.assertEqual(KF_seq.size(), KF_file.size())
+    # def test_minimizers(self):
+    #     KD_params = {
+    #         "mode": "minimizers",
+    #         "params": {
+    #             "k_size": 5,
+    #             "w": 10,
+    #         }
+    #     }
+    #
+    #     KD_seq = kp.initialize_kmerDecoder(KD_params["mode"], KD_params["params"])
+    #     KF_seq = kp.kDataFramePHMAP(KD_params["params"]["k_size"])
+    #
+    #
+    #     KD_file = kp.initialize_kmerDecoder(self.generic_params.small_fasta_file, 1, KD_params["mode"], KD_params["params"])
+    #     KF_file = kp.kDataFramePHMAP(KD_params["params"]["k_size"])
+    #
+    #     kp.parseSequences(KD_file, KF_file)
+    #     self.assertFalse(KF_file.empty())
+    #
+    #     kp.parseSequencesFromString(KD_seq, self.seq, KF_seq)
+    #     self.assertFalse(KF_seq.empty())
+    #
+    #     self.assertEqual(KF_seq.size(), KF_file.size())
 
 
