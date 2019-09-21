@@ -6,5 +6,6 @@ kDataFrame* kFrameIntersect(const vector<kDataFrame*>& input);
 kDataFrame* kFrameDiff(const vector<kDataFrame*>& input);
 kmerDecoder* initialize_kmerDecoder(std::string filename, int chunkSize, std::string mode, std::map<std::string, int> params);
 kmerDecoder* initialize_kmerDecoder(std::string mode, std::map<std::string, int> params);
+kmerDecoder* initialize_kmerDecoder(int kSize, int hash_mode);
 colored_kDataFrame *index(kmerDecoder *KD, string names_fileName, kDataFrame *frame);
 }
