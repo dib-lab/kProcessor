@@ -64,9 +64,9 @@ The difference between setCount and insert is that setCount set the count to N n
   virtual void save(string filePath)=0;
   
 /// Returns the  hash function used by kDataframe.
-  Hasher* getHasher(){
-    return hasher;
-  };
+    kmerDecoder* getkmerDecoder(){
+        return KD;
+    };
   
 /// Load the kDataFrame from a file.
   static kDataFrame* load(string filePath);

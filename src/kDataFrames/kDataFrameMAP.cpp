@@ -75,12 +75,14 @@ kDataFrameMAPIterator::~kDataFrameMAPIterator() {
 kDataFrameMAP::kDataFrameMAP(uint64_t ksize) {
     this->class_name = "MAP"; // Temporary until resolving #17
     this->kSize = ksize;
+    KD = new Kmers(ksize, 2);
 //    hasher = new wrapperHasher<std::map<uint64_t, uint64_t>::hasher>(MAP.hash_function(), ksize);
 //    this->MAP = std::map<uint64_t, uint64_t>(1000);
     // this->hasher = (new IntegerHasher(ksize));
 }
 kDataFrameMAP::kDataFrameMAP(uint64_t ksize,vector<uint64_t> kmersHistogram) {
     this->class_name = "MAP"; // Temporary until resolving #17
+    KD = new Kmers(ksize, 2);
     this->kSize = ksize;
     uint64_t countSum=0;
     for(auto h:kmersHistogram)
@@ -93,6 +95,7 @@ kDataFrameMAP::kDataFrameMAP(uint64_t ksize,vector<uint64_t> kmersHistogram) {
 kDataFrameMAP::kDataFrameMAP() {
     this->class_name = "MAP"; // Temporary until resolving #17
     this->kSize = 23;
+    KD = new Kmers(this->kSize, 2);
 //    this->MAP = std::map<uint64_t, uint64_t>(1000);
     // hasher=new wrapperHasher<std::map<uint64_t,uint64_t>::hasher >(MAP.hash_function(),kSize);
     // this->hasher = (new IntegerHasher(23));
@@ -104,12 +107,12 @@ inline bool kDataFrameMAP::kmerExist(string kmerS) {
 
 
 bool kDataFrameMAP::insert(string kmerS, uint64_t count) {
-    this->MAP[kmer::str_to_canonical_int(kmerS)] += count;
+    this->MAP[KD->hash_kmer(kmerS)] += count;
     return true;
 }
 
 bool kDataFrameMAP::insert(string kmerS) {
-    this->MAP[kmer::str_to_canonical_int(kmerS)] = 1;
+    this->MAP[KD->hash_kmer(kmerS)] = 1;
     return true;
 }
 
@@ -125,12 +128,21 @@ bool kDataFrameMAP::insert(uint64_t kmer) {
 
 
 bool kDataFrameMAP::setCount(string kmerS, uint64_t tag) {
-    this->MAP[kmer::str_to_canonical_int(kmerS)] = tag;
+    this->MAP[KD->hash_kmer(kmerS)] = tag;
+    return true;
+}
+
+bool kDataFrameMAP::setCount(uint64_t kmerS, uint64_t tag) {
+    this->MAP[kmerS] = tag;
     return true;
 }
 
 uint64_t kDataFrameMAP::count(string kmerS) {
-    return this->MAP[kmer::str_to_canonical_int(kmerS)];
+    return this->MAP[KD->hash_kmer(kmerS)];
+}
+
+uint64_t kDataFrameMAP::count(uint64_t kmerS) {
+    return this->MAP[kmerS];
 }
 
 uint64_t kDataFrameMAP::bucket(string kmerS) {
@@ -140,7 +152,11 @@ uint64_t kDataFrameMAP::bucket(string kmerS) {
 
 
 bool kDataFrameMAP::erase(string kmerS) {
-    return this->MAP.erase(kmer::str_to_canonical_int(kmerS));
+    return this->MAP.erase(KD->hash_kmer(kmerS));
+}
+
+bool kDataFrameMAP::erase(uint64_t kmer) {
+    return this->MAP.erase(kmer);
 }
 
 uint64_t kDataFrameMAP::size() {

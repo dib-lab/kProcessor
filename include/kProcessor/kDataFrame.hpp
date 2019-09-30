@@ -1,13 +1,12 @@
 #ifndef _kDataFRAME_H_
 #define _kDataFRAME_H_
 
-#include <HashUtils/hashutil.h>
 #include <vector>
 #include <stdint.h>
 #include "gqf.h"
-#include "Utils/kmer.h"
 #include <iostream>
 #include <parallel_hashmap/phmap.h>
+#include "kmerDecoder.hpp"
 
 using phmap::flat_hash_map;
 using namespace std;
@@ -201,9 +200,9 @@ public:
 class kDataFrameMQFIterator:public _kDataFrameIterator{
 private:
   QFi* qfi;
-  Hasher* hasher;
+  kmerDecoder * KD;
 public:
-  kDataFrameMQFIterator(QF*,uint64_t kSize,Hasher* h);
+  kDataFrameMQFIterator(QF*,uint64_t kSize,kmerDecoder* KD);
   kDataFrameMQFIterator(const kDataFrameMQFIterator&);
   kDataFrameMQFIterator& operator ++ (int);
   _kDataFrameIterator* clone();
@@ -221,7 +220,7 @@ public:
 class kDataFrame{
 protected:
   uint64_t kSize;
-  Hasher* hasher;
+  kmerDecoder * KD;
   string class_name; // Default = MQF, change if MAP. Temporary until resolving #17
 public:
   virtual string get_class_name(){ return class_name;}  // Temporary until resolving #17
@@ -258,11 +257,14 @@ public:
 /*! Returns bool value indicating whether the kmer is inserted or not.
 The difference between setCount and insert is that setCount set the count to N no matter the previous kmer count was*/
   virtual bool setCount(string kmer,uint64_t N)=0;
+  virtual bool setCount(uint64_t kmer,uint64_t N)=0;
 /// returns the count of the kmer in the kDataFrame, i.e. the number of times the kmer is inserted in the kdataFrame.
   virtual uint64_t count(string kmer)=0;
+  virtual uint64_t count(uint64_t kmer)=0;
 // Removes  a kmer from the kDataFrame
 /*! Returns bool value indicating whether the kmer is erased or not*/
   virtual bool erase(string kmer)=0;
+  virtual bool erase(uint64_t kmer)=0;
 
 /// Returns the number of kmers in the kDataframe.
   virtual uint64_t size()=0;
@@ -282,10 +284,11 @@ The difference between setCount and insert is that setCount set the count to N n
   virtual kDataFrameIterator end()=0;
 
   virtual void save(string filePath)=0;
-/// Returns the  hash function used by kDataframe.
-  Hasher* getHasher(){
-    return hasher;
+/// Returns the kmerDecoder used by kDataframe.
+  kmerDecoder* getkmerDecoder(){
+    return KD;
   };
+
   static kDataFrame* load(string filePath);
 
 
@@ -341,14 +344,17 @@ public:
 
 
   bool setCount(string kmer,uint64_t count);
+  bool setCount(uint64_t kmer, uint64_t count);
   bool insert(string kmer,uint64_t count);
   bool insert(string kmer);
   bool insert(uint64_t kmer, uint64_t count);
   bool insert(uint64_t kmer);
   uint64_t count(string kmer);
+  uint64_t count(uint64_t kmer);
 
 
   bool erase(string kmer);
+  bool erase(uint64_t kmer);
 
   uint64_t size();
 /// max_size function returns the estimated maximum number of kmers that the kDataframeMQF can hold.
@@ -376,6 +382,7 @@ class kDataFrameMAPIterator:public _kDataFrameIterator{
 private:
     std::map<uint64_t, uint64_t>::iterator iterator;
     kDataFrameMAP* origin;
+    kmerDecoder * KD;
 public:
     kDataFrameMAPIterator(std::map<uint64_t, uint64_t>::iterator,kDataFrameMAP* origin,uint64_t kSize);
     kDataFrameMAPIterator(const kDataFrameMAPIterator&);
@@ -408,12 +415,15 @@ public:
   inline bool kmerExist(string kmer);
 
   bool setCount(string kmer, uint64_t count);
+  bool setCount(uint64_t kmer, uint64_t count);
   bool insert(string kmer);
   bool insert(string kmer, uint64_t count);
   bool insert(uint64_t kmer, uint64_t count);
   bool insert(uint64_t kmer);
   uint64_t count(string kmer);
+  uint64_t count(uint64_t kmerS);
   bool erase(string kmer);
+  bool erase(uint64_t kmer);
 
   uint64_t size();
   uint64_t max_size();
@@ -438,6 +448,7 @@ class kDataFramePHMAPIterator : public _kDataFrameIterator {
 private:
     flat_hash_map<uint64_t, uint64_t>::iterator iterator;
     kDataFramePHMAP *origin;
+    kmerDecoder * KD;
 public:
     kDataFramePHMAPIterator(flat_hash_map<uint64_t, uint64_t>::iterator, kDataFramePHMAP *origin, uint64_t kSize);
 
@@ -484,6 +495,7 @@ public:
     inline bool kmerExist(string kmer);
 
     bool setCount(string kmer, uint64_t count);
+    bool setCount(uint64_t kmer, uint64_t count);
 
     bool insert(string kmer);
 
@@ -494,8 +506,10 @@ public:
     bool insert(uint64_t kmer);
 
     uint64_t count(string kmer);
+    uint64_t count(uint64_t kmer);
 
     bool erase(string kmer);
+    bool erase(uint64_t kmer);
 
     uint64_t size();
 
