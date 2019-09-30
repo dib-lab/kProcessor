@@ -3,7 +3,6 @@
 #include "Utils/kmer.h"
 #include <fstream>
 #include <seqan/seq_io.h>
-#include "HashUtils/hashutil.h"
 #include <seqan/parallel.h>
 #include "KmerDecoder/FastqReader.hpp"
 #include <limits>
@@ -489,6 +488,11 @@ namespace kProcessor {
         return res;
     }
 
+    
+    void kmerDecoder_setHashing(kmerDecoder * KD, int hash_mode, bool canonical){
+        KD->setHashingMode(hash_mode, canonical);
+    }
+
 
     kmerDecoder* initialize_kmerDecoder(std::string filename, int chunkSize, std::string mode, std::map<std::string, int> params){
 
@@ -663,7 +667,7 @@ namespace kProcessor {
                 convertMap.insert(make_pair(readTag, readTag));
                 //    cout<<readName<<"   "<<seq.size()<<endl;
                 for (const auto &kmer : seq.second) {
-                    uint64_t currentTag = frame->count(kmer.str);
+                    uint64_t currentTag = frame->count(kmer.hash);
                     auto itc = convertMap.find(currentTag);
                     if (itc == convertMap.end()) {
                         vector<uint32_t> colors = legend->find(currentTag)->second;
@@ -715,11 +719,11 @@ namespace kProcessor {
                         colorsCount[itc->second]++;
                     }
 
-                    frame->setCount(kmer.str, itc->second);
-                    if (frame->count(kmer.str) != itc->second) {
+                    frame->setCount(kmer.hash, itc->second);
+                    if (frame->count(kmer.hash) != itc->second) {
                         //frame->setC(kmer,itc->second);
                         cout << "Error Founded " << kmer.str << " from sequence " << readName << " expected "
-                             << itc->second << " found " << frame->count(kmer.str) << endl;
+                             << itc->second << " found " << frame->count(kmer.hash) << endl;
                         return NULL;
                     }
                 }

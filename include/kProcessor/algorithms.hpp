@@ -10,13 +10,11 @@
 #include <stdint.h>
 #include <string>
 #include <gqf.h>
-#include "HashUtils/hashutil.h"
 #include "kDataFrame.hpp"
 #include <math.h>
 #include <vector>
 #include "colored_kDataFrame.hpp"
 #include <map>
-#include "kmerDecoder.hpp"
 #include <any>
 
 
@@ -83,6 +81,14 @@ kmerDecoder* initialize_kmerDecoder(std::string mode, std::map<std::string, int>
 
 // Initialize kmerDecoder to hash and Ihash single kmer.
 kmerDecoder* initialize_kmerDecoder(int kmer_size, int hash_mode = 1);
+
+/* set hashing mode for kmerDecoder object
+ *
+ * Mode 0: Murmar Hashing | Irreversible
+ * Mode 1: Integer Hashing | Reversible | Full Hashing
+ * Mode 2: TwoBitsHashing | Not considered hashing, just store the two bits representation
+*/
+ void kmerDecoder_setHashing(kmerDecoder * KD, int hash_mode, bool canonical = true);
 
 /// Perform indexing to a sequences file with predefined kmers decoding mode, returns a colored kDataframe.
 colored_kDataFrame *index(kmerDecoder *KD, string names_fileName, kDataFrame *frame);
