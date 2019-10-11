@@ -60,8 +60,3 @@ Please also see `recipes of using the python API <recipes.html>`_.
 .. automodule:: kProcessor.kmerRow
    :members:
 
-``JustTest``: TESTING PURPOSE
-=============================
-
-.. automodule:: kProcessor.just_test
-   :members:
