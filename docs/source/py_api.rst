@@ -14,7 +14,6 @@ Please also see `recipes of using the python API <recipes.html>`_.
 .. automodule:: kProcessor.kDataFrame
    :members:
    :private-members:
-   :show-inheritance:
 
 
 ``kDataFrameIterator``: The abstract base class for defining a kDataFrame iterator
@@ -23,15 +22,12 @@ Please also see `recipes of using the python API <recipes.html>`_.
 .. automodule:: kProcessor.kDataFrameIterator
    :members:
    :private-members:
-   :show-inheritance:
-
 
 ``kDataFrameMQF``: subclass derived from ``kDataFrame``
 =======================================================
 
 .. automodule:: kProcessor.kDataFrameMQF
    :members:
-
 
 ``kDataFrameMAP``: subclass derived from ``kDataFrame``
 =======================================================
@@ -46,6 +42,12 @@ Please also see `recipes of using the python API <recipes.html>`_.
 .. automodule:: kProcessor.kDataFramePHMAP
    :members:
 
+
+``colored_kDataFrame``: colored kDataFrame that holds the source sequence of each Kmer
+======================================================================================
+
+.. automodule:: kProcessor.colored_kDataFrame
+   :members:
 
 ``Algorithms``: Algorithmic and other miscellaneous functions
 =============================================================

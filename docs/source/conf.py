@@ -14,6 +14,10 @@ import os
 import sys
 sys.path.insert(0, os.path.abspath('../..'))
 
+
+autodoc_docstring_signature = True
+autodoc_inherit_docstrings = False
+
 # Add types of source files
 source_suffix = {
     '.rst': 'restructuredtext',
