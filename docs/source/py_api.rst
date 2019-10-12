@@ -54,11 +54,3 @@ Please also see `recipes of using the python API <recipes.html>`_.
 
 .. automodule:: kProcessor.algorithms
    :members:
-
-
-``kmerRow``: A container for holding Kmer information
-=====================================================
-
-.. automodule:: kProcessor.kmerRow
-   :members:
-

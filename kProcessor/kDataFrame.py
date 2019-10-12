@@ -44,7 +44,7 @@ class kDataFrame:
         :param N: Kmer count (Optional, Default = 1)
         :type N: integer
         :return: Boolean value indicating whether the kmer is inserted or not
-        :rtype: boolean
+        :rtype: bool
         """
 
         pass
@@ -57,7 +57,7 @@ class kDataFrame:
         :param N: Kmer count
         :type N: integer
         :return: Boolean value indicating whether the kmer is inserted or not
-        :rtype: boolean
+        :rtype: bool
         """
         pass
 
@@ -77,7 +77,7 @@ class kDataFrame:
         :param kmer: The kmer to be erased
         :type kmer: string
         :return: Boolean value indicating whether the kmer is erased or not
-        :rtype: boolean
+        :rtype: bool
         """
         pass
 
@@ -130,8 +130,10 @@ class kDataFrame:
 
     def end(self):
         """ Instantiate a kDataFrameIterator object pointing to the last kmer position
+
         :return: An iterator at the end of the kDataFrame.
         :rtype: :class:`kProcessor.kDataFrameIterator`
+
         """
         pass
 
@@ -145,6 +147,7 @@ class kDataFrame:
         """ Get the kmerDecoder instance object that's initialized in the kDataFrame
 
         :return: The kmerDecoder instance used by kDataframe
+        :rtype: kmerDecoder
         """
         pass
 
