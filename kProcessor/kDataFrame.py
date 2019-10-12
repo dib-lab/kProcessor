@@ -137,7 +137,7 @@ class kDataFrame:
 
     def save(self):
         """
-        Save the kDataFrame on the disk in a form of binary file alongside other meta data files.
+        Save the kDataFrame on the disk in a form of binary file alongside other metadata files.
         """
         pass
 
