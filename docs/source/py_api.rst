@@ -49,8 +49,16 @@ Please also see `recipes of using the python API <recipes.html>`_.
 .. automodule:: kProcessor.colored_kDataFrame
    :members:
 
-``Algorithms``: Algorithmic and other miscellaneous functions
+
+``Set Functions``: Function like intersection & union
+=====================================================
+
+.. automodule:: kProcessor.set_function
+   :members:
+
+
+``Sequence parsing``: Reading sequence kmers into kDataFrames
 =============================================================
 
-.. automodule:: kProcessor.algorithms
+.. automodule:: kProcessor.seqs_to_kmers
    :members:
