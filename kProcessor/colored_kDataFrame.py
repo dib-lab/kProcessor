@@ -73,3 +73,15 @@ class colored_kDataFrame(kDataFrame):
         :rtype: dict
         """
 
+    @staticmethod
+    def load(prefix):
+        """
+        Load colored_kDataFrame file from disk.
+
+        :param prefix: file path
+        :type prefix: string
+        :return: :class:`kProcessor.colored_kDataFrame`
+        """
+
+        pass
+
