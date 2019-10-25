@@ -122,3 +122,7 @@ unordered_map<string, int> colored_kDataFrame::inverse_names_map(){
     }
     return inv_names_map;
 }
+
+kDataFrame * colored_kDataFrame::getkDataFrame() {
+    return this->frame;
+}

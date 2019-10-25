@@ -37,6 +37,8 @@ public:
   unordered_map<int, string> names_map();
   unordered_map<string, int> inverse_names_map();
 
+  // Get the kDataFrame of the colored_kDataFrame
+  kDataFrame * getkDataFrame();
 
 };
 
