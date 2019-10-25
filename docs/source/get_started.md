@@ -2,24 +2,26 @@
 
 ## Installation  
 
-### Requirements
+### Install from Pypi
 
-`sudo apt-get install g++ swig cmake python3-dev zlib1g-dev libghc-bzlib-dev python3-distutils`
-
-## Install from PyPi
+> You will need to have the [pip](https://pypi.org/project/pip/) python package manager installed.
 
 `pip install kProcessor`
 
-## Install Manually
+### Install Manually
 
-### Clone
+#### Requirements
+
+`sudo apt-get install g++ swig cmake python3-dev zlib1g-dev libghc-bzlib-dev python3-distutils`
+
+#### Clone
 
 ```bash
 git clone --recursive --branch devel https://github.com/dib-lab/kProcessor.git kProcessor
 cd kProcessor
 ```
 
-### Build kProcessorLib
+#### Build kProcessorLib
 
 ```bash
 mkdir build
@@ -29,15 +31,10 @@ make
 cd ..
 ```
 
-### Install kProcessor Python Package
+#### Install kProcessor Python Package
 
 ```bash
 python3 setup.py install
 ```
 
-### Optional (Build wheel package)
-
-```bash
-python3 setup.py bdist_wheel
-```
-
+## Quick Start
