@@ -80,8 +80,16 @@ class colored_kDataFrame(kDataFrame):
 
         :param prefix: file path
         :type prefix: string
-        :return: :class:`kProcessor.colored_kDataFrame`
+        :return: Colored kDataFrame that has been serialized on disk.
+        :rtype: :class:`kProcessor.colored_kDataFrame`
         """
 
         pass
 
+    def get_kDataFrame(self):
+        """
+        Get the kDataFrame object that holds the kmers alongside their colors.
+
+        :return: the embedded kDataFrame inside the colored_kDataFrame.
+        :rtype: :class:`kProcessor.kDataFrame`
+        """
