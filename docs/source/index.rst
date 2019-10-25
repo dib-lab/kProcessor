@@ -1,9 +1,6 @@
 Welcome to kProcessor's documentation!
 ======================================
 
-Introduction
-============
-Write the introduction here.
 
 
 .. include:: ../../README.rst
