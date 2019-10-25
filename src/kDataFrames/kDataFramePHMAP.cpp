@@ -17,13 +17,14 @@ kDataFramePHMAPIterator::kDataFramePHMAPIterator(flat_hash_map<uint64_t, uint64_
         : _kDataFrameIterator(kSize) {
     iterator = it;
     this->origin = origin;
-    KD = new Kmers(kSize, 2);
+    this->KD = (new Kmers(kSize));
 }
 
 kDataFramePHMAPIterator::kDataFramePHMAPIterator(const kDataFramePHMAPIterator &other) :
         _kDataFrameIterator(other.kSize) {
     iterator = other.iterator;
     this->origin = other.origin;
+    this->KD = other.KD;
 }
 
 _kDataFrameIterator *kDataFramePHMAPIterator::clone() {
