@@ -19,20 +19,16 @@ class TestkmerDecoder(unittest.TestCase):
             }
         }
 
-        KD_seq = kp.initialize_kmerDecoder(KD_params["mode"], KD_params["params"])
         KF_seq = kp.kDataFramePHMAP(KD_params["params"]["k_size"])
-
-
-        KD_file = kp.initialize_kmerDecoder(self.generic_params.small_fasta_file, 1, KD_params["mode"], KD_params["params"])
         KF_file = kp.kDataFramePHMAP(KD_params["params"]["k_size"])
 
-        kp.parseSequences(KD_file, KF_file)
+
+        # void parseSequencesFromFile(kDataFrame * output, string mode, std::map<std::string, int> params, string filename, int chunk_size = 1000);
+        kp.parseSequencesFromFile(KF_file, KD_params["mode"], KD_params["params"], self.generic_params.small_fasta_file, 1)
         self.assertFalse(KF_file.empty())
 
-        kp.parseSequencesFromString(KD_seq, self.seq, KF_seq)
+        kp.parseSequencesFromString(KF_seq,KD_params["mode"], KD_params["params"], self.seq)
         self.assertFalse(KF_seq.empty())
-
-        self.assertEqual(KF_seq.size(), KF_file.size())
 
 
     def test_skipmers(self):
@@ -45,17 +41,15 @@ class TestkmerDecoder(unittest.TestCase):
             }
         }
 
-        KD_seq = kp.initialize_kmerDecoder(KD_params["mode"], KD_params["params"])
+
         KF_seq = kp.kDataFramePHMAP(KD_params["params"]["k_size"])
-
-
-        KD_file = kp.initialize_kmerDecoder(self.generic_params.small_fasta_file, 1, KD_params["mode"], KD_params["params"])
         KF_file = kp.kDataFramePHMAP(KD_params["params"]["k_size"])
 
-        kp.parseSequences(KD_file, KF_file)
+        # void parseSequencesFromFile(kDataFrame * output, string mode, std::map<std::string, int> params, string filename, int chunk_size = 1000);
+        kp.parseSequencesFromFile(KF_file, KD_params["mode"], KD_params["params"], self.generic_params.small_fasta_file, 1)
         self.assertFalse(KF_file.empty())
 
-        kp.parseSequencesFromString(KD_seq, self.seq, KF_seq)
+        kp.parseSequencesFromString(KF_seq,KD_params["mode"], KD_params["params"], self.seq)
         self.assertFalse(KF_seq.empty())
 
         self.assertEqual(KF_seq.size(), KF_file.size())
