@@ -53,7 +53,7 @@ Please also see `recipes of using the python API <recipes.html>`_.
 ``Set Functions``: Function like intersection & union
 =====================================================
 
-.. automodule:: kProcessor.set_function
+.. automodule:: kProcessor.set_functions
    :members:
 
 
