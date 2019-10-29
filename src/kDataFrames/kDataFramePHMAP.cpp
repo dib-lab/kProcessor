@@ -82,6 +82,16 @@ kDataFramePHMAP::kDataFramePHMAP(uint64_t ksize) {
     this->MAP = flat_hash_map<uint64_t, uint64_t>(1000);
     // this->hasher = (new IntegerHasher(ksize));
 }
+
+kDataFramePHMAP::kDataFramePHMAP(uint64_t ksize, int mode) {
+    this->class_name = "PHMAP"; // Temporary until resolving #17
+    this->kSize = ksize;
+    KD = new Kmers(kSize, mode);
+//    hasher = new wrapperHasher<flat_hash_map<uint64_t, uint64_t>::hasher>(MAP.hash_function(), ksize);
+    this->MAP = flat_hash_map<uint64_t, uint64_t>(1000);
+    // this->hasher = (new IntegerHasher(ksize));
+}
+
 kDataFramePHMAP::kDataFramePHMAP(uint64_t ksize,vector<uint64_t> kmersHistogram) {
     this->class_name = "PHMAP"; // Temporary until resolving #17
     this->kSize = ksize;

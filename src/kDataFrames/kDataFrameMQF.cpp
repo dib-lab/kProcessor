@@ -188,6 +188,17 @@ kDataFrameMQF::kDataFrameMQF(uint64_t ksize, uint8_t q, uint8_t fixedCounterSize
 
 }
 
+kDataFrameMQF::kDataFrameMQF(uint64_t ksize, int mode) :
+    kDataFrame(ksize) {
+    this->class_name = "MQF"; // Temporary until resolving #17
+    this->falsePositiveRate = 0.0;
+    KD = new Kmers(ksize, mode);
+    hashbits = 2 * kSize;
+    range = (1ULL << hashbits);
+    mqf = NULL;
+    reserve(1000000);
+}
+
 kDataFrameMQF::kDataFrameMQF(uint64_t ksize) :
         kDataFrame(ksize) {
     this->class_name = "MQF"; // Temporary until resolving #17

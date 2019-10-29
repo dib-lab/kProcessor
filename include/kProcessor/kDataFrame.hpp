@@ -315,6 +315,7 @@ private:
 public:
   kDataFrameMQF();
   kDataFrameMQF(uint64_t kSize);
+  kDataFrameMQF(uint64_t kSize, int mode);
   kDataFrameMQF(uint64_t ksize,uint8_t q,uint8_t fixedCounterSize,uint8_t tagSize
     ,double falsePositiveRate);
 
@@ -485,6 +486,7 @@ public:
     kDataFramePHMAP();
 
     kDataFramePHMAP(uint64_t ksize);
+    kDataFramePHMAP(uint64_t ksize, int mode);
     kDataFramePHMAP(uint64_t kSize,vector<uint64_t> kmersHistogram);
 
     kDataFrame *getTwin();
