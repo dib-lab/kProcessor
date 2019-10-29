@@ -6,14 +6,13 @@ class kDataFrameMAP(kDataFrame):
     The abstract base class defining a kDataFrameMAP.
     """
 
-    def __init__(kSize):
-        """kDataFrameMAP constructor.
-
-        Instantiate a kDataFrameMAP object with predefined kmer size.
-
+    def __init__(self, kSize):
+        """
         :param kSize: Kmer Size
         :type kSize: integer
-        :return: Void
+        :return: :class:`kProcessor.kDataFrameMAP`
+
+        .. note:: Read more about the usage of kDataFrameMAP in the FAQ page.
 
         """
         pass

@@ -2,21 +2,28 @@
 from kProcessor.kDataFrame import kDataFrame
 
 class kDataFrameMQF(kDataFrame):
-    """
-    The abstract base class defining a kDataFrameMQF.
+    """The abstract base class defining a kDataFrameMQF.
     """
 
-    def __init__(kSize):
-        """kDataFrameMQF constructor.
-
-        Instantiate a kDataFrameMQF object with predefined kmer size.
+    def __init__(self, kSize, mode=1):
+        """Instantiate a kDataFrameMQF object with predefined kmer size.
 
         :param kSize: Kmer Size
         :type kSize: integer
-        :return: Void
+        :param mode: Hashing mode for the kDataFrameMQF, default  = 1
+        :type mode: integer
+        :return: :class:`kProcessor.kDataFrameMQF`
+
+        Instantiation Example:
+            >>> import kProcessor as kp
+            >>> KF_MQF = kp.kDataFrameMQF(31) # kSize = 31, Hashing Mode = 1
+            >>> KF2_MQF = kp.kDataFrameMQF(31, 0) # kSize = 31, Hashing Mode = 0
+
+        .. note:: Read more about hashing modes in the FAQ page.
 
         """
         pass
+
 
     def getTwin(self):
         """creates a new ``kDataFrameMQF`` using the same parameters as the current ``kDataFrameMQF``.

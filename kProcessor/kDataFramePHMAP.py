@@ -6,17 +6,26 @@ class kDataFramePHMAP(kDataFrame):
     The abstract base class defining a kDataFramePHMAP.
     """
 
-    def __init__(kSize):
-        """kDataFramePHMAP constructor.
-
-        Instantiate a kDataFramePHMAP object with predefined kmer size.
+    def __init__(self, kSize, mode=1):
+        """Instantiate a kDataFramePHMAP object with predefined kmer size.
 
         :param kSize: Kmer Size
         :type kSize: integer
-        :return: Void
+        :param mode: Hashing mode for the kDataFramePHMAP, default  = 1
+        :type mode: integer
+        :return: :class:`kProcessor.kDataFramePHMAP`
+
+        Instantiation Example:
+            >>> import kProcessor as kp
+            >>> KF_MQF = kp.kDataFramePHMAP(31) # kSize = 31, Hashing Mode = 1
+            >>> KF2_MQF = kp.kDataFramePHMAP(31, 0) # kSize = 31, Hashing Mode = 0
+
+
+        .. note:: Read more about hashing modes in the FAQ page.
 
         """
         pass
+
 
     def getTwin(self):
         """creates a new ``kDataFramePHMAP`` using the same parameters as the current ``kDataFramePHMAP``.
