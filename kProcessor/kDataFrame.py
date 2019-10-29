@@ -7,18 +7,6 @@ class kDataFrame:
     The abstract base class defining a kDataFrame.
     """
 
-    def __init__(kSize):
-        """kDataFrame constructor.
-
-        Instantiate a kDataFrame object with predefined kmer size.
-
-        :param kSize: Kmer Size
-        :type kSize: integer
-        :return: Void
-
-        """
-        pass
-
     def getTwin(self):
         """creates a new ``kDataframe`` using the same parameters as the current ``kDataFrame``.
 
