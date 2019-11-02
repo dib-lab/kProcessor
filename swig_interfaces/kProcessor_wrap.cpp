@@ -13211,7 +13211,7 @@ fail:
 }
 
 
-SWIGINTERN PyObject *_wrap_colored_kDataFrame_setKmerColor(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+SWIGINTERN PyObject *_wrap_colored_kDataFrame_setColor(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   colored_kDataFrame *arg1 = (colored_kDataFrame *) 0 ;
   std::string arg2 ;
@@ -13222,27 +13222,27 @@ SWIGINTERN PyObject *_wrap_colored_kDataFrame_setKmerColor(PyObject *SWIGUNUSEDP
   int ecode3 = 0 ;
   PyObject *swig_obj[3] ;
   
-  if (!SWIG_Python_UnpackTuple(args, "colored_kDataFrame_setKmerColor", 3, 3, swig_obj)) SWIG_fail;
+  if (!SWIG_Python_UnpackTuple(args, "colored_kDataFrame_setColor", 3, 3, swig_obj)) SWIG_fail;
   res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_colored_kDataFrame, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "colored_kDataFrame_setKmerColor" "', argument " "1"" of type '" "colored_kDataFrame *""'"); 
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "colored_kDataFrame_setColor" "', argument " "1"" of type '" "colored_kDataFrame *""'"); 
   }
   arg1 = reinterpret_cast< colored_kDataFrame * >(argp1);
   {
     std::string *ptr = (std::string *)0;
     int res = SWIG_AsPtr_std_string(swig_obj[1], &ptr);
     if (!SWIG_IsOK(res) || !ptr) {
-      SWIG_exception_fail(SWIG_ArgError((ptr ? res : SWIG_TypeError)), "in method '" "colored_kDataFrame_setKmerColor" "', argument " "2"" of type '" "std::string""'"); 
+      SWIG_exception_fail(SWIG_ArgError((ptr ? res : SWIG_TypeError)), "in method '" "colored_kDataFrame_setColor" "', argument " "2"" of type '" "std::string""'"); 
     }
     arg2 = *ptr;
     if (SWIG_IsNewObj(res)) delete ptr;
   }
   ecode3 = SWIG_AsVal_unsigned_SS_int(swig_obj[2], &val3);
   if (!SWIG_IsOK(ecode3)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "colored_kDataFrame_setKmerColor" "', argument " "3"" of type '" "uint32_t""'");
+    SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "colored_kDataFrame_setColor" "', argument " "3"" of type '" "uint32_t""'");
   } 
   arg3 = static_cast< uint32_t >(val3);
-  (arg1)->setKmerColor(arg2,arg3);
+  (arg1)->setColor(arg2,arg3);
   resultobj = SWIG_Py_Void();
   return resultobj;
 fail:
@@ -19891,7 +19891,7 @@ static PyMethodDef SwigMethods[] = {
 	 { "kDataFramePHMAP_swiginit", kDataFramePHMAP_swiginit, METH_VARARGS, NULL},
 	 { "new_colored_kDataFrame", _wrap_new_colored_kDataFrame, METH_NOARGS, NULL},
 	 { "colored_kDataFrame_addNewColor", _wrap_colored_kDataFrame_addNewColor, METH_VARARGS, NULL},
-	 { "colored_kDataFrame_setKmerColor", _wrap_colored_kDataFrame_setKmerColor, METH_VARARGS, NULL},
+	 { "colored_kDataFrame_setColor", _wrap_colored_kDataFrame_setColor, METH_VARARGS, NULL},
 	 { "colored_kDataFrame_getColor", _wrap_colored_kDataFrame_getColor, METH_VARARGS, NULL},
 	 { "colored_kDataFrame_getKmerSource", _wrap_colored_kDataFrame_getKmerSource, METH_VARARGS, NULL},
 	 { "colored_kDataFrame_getKmerSourceFromColor", _wrap_colored_kDataFrame_getKmerSourceFromColor, METH_VARARGS, NULL},

@@ -25,7 +25,7 @@ returns the color of the kmer
 
 ```python
 
-kmer_color = colored_kDataFrame.getKmerColor(kmer)
+kmer_color = colored_kDataFrame.getColor(kmer)
 
 ```
 

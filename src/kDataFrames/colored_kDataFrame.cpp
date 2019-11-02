@@ -14,7 +14,7 @@ void colored_kDataFrame::addNewColor(uint32_t color, vector<uint32_t> & samplesI
 {
   colors->setColor(color,samplesIds);
 }
-void colored_kDataFrame::setKmerColor(string kmer,uint32_t color)
+void colored_kDataFrame::setColor(string kmer,uint32_t color)
 {
   frame->setCount(kmer,color);
 }
@@ -64,7 +64,7 @@ void colored_kDataFrame::colorKmer(string kmer,vector<uint32_t> & samplesIds){
     colorsInv->setColorId(color,samplesIds);
     colors->setColor(color,samplesIds);
   }
-  setKmerColor(kmer,color);
+  setColor(kmer,color);
 }
 void colored_kDataFrame::setColorTable(colorTable* table){
   colors=table;

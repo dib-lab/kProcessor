@@ -57,8 +57,8 @@ Please also see `recipes of using the python API <recipes.html>`_.
    :members:
 
 
-``Sequence parsing``: Reading sequence kmers into kDataFrames
-=============================================================
+``Input``: Kmer input using File or strings
+=====================================
 
 .. automodule:: kProcessor.seqs_to_kmers
    :members:

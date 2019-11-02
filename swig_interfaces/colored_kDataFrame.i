@@ -2,7 +2,7 @@ class colored_kDataFrame{
 public:
   colored_kDataFrame();
   void addNewColor(uint32_t color, vector<uint32_t> & samplesIds);
-  void setKmerColor(string kmer,uint32_t color);
+  void setColor(string kmer,uint32_t color);
   uint32_t getColor(string kmer);
   vector<uint32_t> getKmerSource(string kmer);
   vector<uint32_t> getKmerSourceFromColor(uint32_t color);

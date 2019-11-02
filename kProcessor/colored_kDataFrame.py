@@ -22,7 +22,7 @@ class colored_kDataFrame(kDataFrame):
     pass
 
 
-    def getKmerColor(self, kmer):
+    def getColor(self, kmer):
         """
         Get the color of the kmer
 

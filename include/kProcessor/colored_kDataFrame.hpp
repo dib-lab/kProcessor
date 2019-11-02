@@ -18,7 +18,7 @@ public:
   flat_hash_map<string,uint32_t> namesMapInv;
   colored_kDataFrame();
   void addNewColor(uint32_t color, vector<uint32_t> & samplesIds);
-  void setKmerColor(string kmer,uint32_t color);
+  void setColor(string kmer,uint32_t color);
   uint32_t getColor(string kmer);
   vector<uint32_t> getKmerSource(string kmer);
   void getKmerSource(string kmer,vector<uint32_t> & result);
