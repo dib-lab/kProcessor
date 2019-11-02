@@ -45,7 +45,7 @@ class colored_kDataFrame(kDataFrame):
         :rtype: list
         """
 
-    def getSamplesIDForColor(self, color):
+    def getKmerSourceFromColor(self, color):
         """
         Get all sample IDs that contains that kmer.
 

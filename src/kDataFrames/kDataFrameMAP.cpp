@@ -137,11 +137,11 @@ bool kDataFrameMAP::setCount(uint64_t kmerS, uint64_t tag) {
     return true;
 }
 
-uint64_t kDataFrameMAP::count(string kmerS) {
+uint64_t kDataFrameMAP::getCount(string kmerS) {
     return this->MAP[KD->hash_kmer(kmerS)];
 }
 
-uint64_t kDataFrameMAP::count(uint64_t kmerS) {
+uint64_t kDataFrameMAP::getCount(uint64_t kmerS) {
     return this->MAP[kmerS];
 }
 

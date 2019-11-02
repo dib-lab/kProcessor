@@ -153,11 +153,11 @@ bool kDataFramePHMAP::setCount(uint64_t kmerS, uint64_t tag) {
     return true;
 }
 
-uint64_t kDataFramePHMAP::count(string kmerS) {
+uint64_t kDataFramePHMAP::getCount(string kmerS) {
     return this->MAP[KD->hash_kmer(kmerS)];
 }
 
-uint64_t kDataFramePHMAP::count(uint64_t kmerS) {
+uint64_t kDataFramePHMAP::getCount(uint64_t kmerS) {
     return this->MAP[kmerS];
 }
 

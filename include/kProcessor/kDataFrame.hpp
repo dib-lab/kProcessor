@@ -259,8 +259,8 @@ The difference between setCount and insert is that setCount set the count to N n
   virtual bool setCount(string kmer,uint64_t N)=0;
   virtual bool setCount(uint64_t kmer,uint64_t N)=0;
 /// returns the count of the kmer in the kDataFrame, i.e. the number of times the kmer is inserted in the kdataFrame.
-  virtual uint64_t count(string kmer)=0;
-  virtual uint64_t count(uint64_t kmer)=0;
+  virtual uint64_t getCount(string kmer)=0;
+  virtual uint64_t getCount(uint64_t kmer)=0;
 // Removes  a kmer from the kDataFrame
 /*! Returns bool value indicating whether the kmer is erased or not*/
   virtual bool erase(string kmer)=0;
@@ -350,8 +350,8 @@ public:
   bool insert(string kmer);
   bool insert(uint64_t kmer, uint64_t count);
   bool insert(uint64_t kmer);
-  uint64_t count(string kmer);
-  uint64_t count(uint64_t kmer);
+  uint64_t getCount(string kmer);
+  uint64_t getCount(uint64_t kmer);
 
 
   bool erase(string kmer);
@@ -421,8 +421,8 @@ public:
   bool insert(string kmer, uint64_t count);
   bool insert(uint64_t kmer, uint64_t count);
   bool insert(uint64_t kmer);
-  uint64_t count(string kmer);
-  uint64_t count(uint64_t kmerS);
+  uint64_t getCount(string kmer);
+  uint64_t getCount(uint64_t kmerS);
   bool erase(string kmer);
   bool erase(uint64_t kmer);
 
@@ -507,8 +507,8 @@ public:
 
     bool insert(uint64_t kmer);
 
-    uint64_t count(string kmer);
-    uint64_t count(uint64_t kmer);
+    uint64_t getCount(string kmer);
+    uint64_t getCount(uint64_t kmer);
 
     bool erase(string kmer);
     bool erase(uint64_t kmer);

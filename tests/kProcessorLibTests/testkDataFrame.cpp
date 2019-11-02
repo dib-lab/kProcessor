@@ -181,7 +181,7 @@ TEST_P(kDataFrameTest,insertOneTime)
     int checkedKmers=0;
     for(auto k:*kmers)
     {
-        int c=kframe->count(k.first);
+        int c=kframe->getCount(k.first);
         EXPECT_GE(c,1);
         if(checkedKmers==insertedKmers)
         {
@@ -211,7 +211,7 @@ TEST_P(kDataFrameTest,insertNTimes)
     int checkedKmers=0;
     for(auto k:*kmers)
     {
-        int c=kframe->count(k.first);
+        int c=kframe->getCount(k.first);
         EXPECT_GE(c,k.second);
         if(checkedKmers==insertedKmers)
         {
@@ -253,7 +253,7 @@ TEST_P(kDataFrameTest,eraseKmers)
     checkedKmers=0;
     for(auto k:*kmers)
     {
-        int c=kframe->count(k.first);
+        int c=kframe->getCount(k.first);
         if(checkedKmers%2==0)
         {
           ASSERT_EQ(c,0);
@@ -287,7 +287,7 @@ TEST_P(kDataFrameTest,autoResize)
     int checkedKmers=0;
     for(auto k:*kmers)
     {
-        int c=kframe->count(k.first);
+        int c=kframe->getCount(k.first);
         EXPECT_GE(c,k.second);
         if(checkedKmers==insertedKmers)
         {
@@ -484,7 +484,7 @@ TEST_P(algorithmsTest,parsingTest)
       for(int i=0;i<seq.size()-kSize+1;i++)
       {
           string kmer=seq.substr(i,kSize);
-          ASSERT_GE(kframe->count(kmer),1);
+          ASSERT_GE(kframe->getCount(kmer),1);
       }
     }
 
@@ -515,7 +515,7 @@ TEST_P(setFunctionsTest,unioinTest)
     auto it=kframe->begin();
     while(it!=kframe->end())
     {
-      int count=unioinResult->count((*it).kmer);
+      int count=unioinResult->getCount((*it).kmer);
       ASSERT_GE(count,((*it).count));
       it++;
     }
@@ -533,7 +533,7 @@ TEST_P(setFunctionsTest,intersectTest)
   {
     for(auto kframe:input)
     {
-      int count=kframe->count((*it).kmer);
+      int count=kframe->getCount((*it).kmer);
       ASSERT_GE(count,((*it).count));
     }
     it++;
@@ -550,11 +550,11 @@ TEST_P(setFunctionsTest,differenceTest)
   auto it=diffResult->begin();
   while(it!=diffResult->end())
   {
-      int count=input[0]->count((*it).kmer);
+      int count=input[0]->getCount((*it).kmer);
       ASSERT_EQ(count,((*it).count));
       for(int i=1;i<input.size();i++)
       {
-        int count=input[i]->count((*it).kmer);
+        int count=input[i]->getCount((*it).kmer);
         ASSERT_EQ(count,0);
       }
       it++;
@@ -651,7 +651,7 @@ TEST_P(indexingTest,index)
       {
         kmer=seq.substr(i,kSize);
         colors.clear();
-        res->getSamplesIDForKmer(kmer,colors);
+        res->getKmerSource(kmer,colors);
         ASSERT_NE(colors.size(),0);
         auto colorIt=colors.end();
         colorIt=find(colors.begin(),colors.end(),sampleID);
@@ -697,7 +697,7 @@ TEST_P(indexingTest,saveAndLoad)
       {
         kmer=seq.substr(i,kSize);
         colors.clear();
-        res->getSamplesIDForKmer(kmer,colors);
+        res->getKmerSource(kmer,colors);
         ASSERT_NE(colors.size(),0);
         auto colorIt=colors.end();
         colorIt=find(colors.begin(),colors.end(),sampleID);

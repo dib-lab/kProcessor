@@ -47,13 +47,13 @@ void parseSequences(string seqFileName,int nThreads,kDataFrame* output);
 void parseSequences(kmerDecoder * KD, kDataFrame* output);
 
 /// Load the kmers in the input file into the output kDataframe. Input File can be of formats: fastq,fasta.
-void parseSequencesFromFile(kDataFrame * output, string mode, std::map<std::string, int> params, string filename, int chunk_size = 1000);
+void countKmersFromFile(kDataFrame * output, string mode, std::map<std::string, int> params, string filename, int chunk_size = 1000);
 
 /// Load the kmers in the input string into the output kDataframe.
-void parseSequencesFromString(kmerDecoder *KD, string sequence,kDataFrame* output);
+void countKmersFromString(kmerDecoder *KD, string sequence,kDataFrame* output);
 
 /// Load the kmers in the input string into the output kDataframe.
-void parseSequencesFromString(kDataFrame * frame, string mode, std::map<std::string, int> params, string sequence);
+void countKmersFromString(kDataFrame * frame, string mode, std::map<std::string, int> params, string sequence);
 
 /// Applies a function on all the kmers in the input kDataframe. The output is another kDataframe with the transformed kmers.
 kDataFrame* transform(kDataFrame* input,kmerRow (*fn)(kmerRow i));

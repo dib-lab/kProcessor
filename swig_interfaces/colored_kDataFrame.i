@@ -3,9 +3,9 @@ public:
   colored_kDataFrame();
   void addNewColor(uint32_t color, vector<uint32_t> & samplesIds);
   void setKmerColor(string kmer,uint32_t color);
-  uint32_t getKmerColor(string kmer);
-  vector<uint32_t> getSamplesIDForKmer(string kmer);
-  vector<uint32_t> getSamplesIDForColor(uint32_t color);
+  uint32_t getColor(string kmer);
+  vector<uint32_t> getKmerSource(string kmer);
+  vector<uint32_t> getKmerSourceFromColor(uint32_t color);
 
   void colorKmer(string kmer,vector<uint32_t> & samplesIds);
 

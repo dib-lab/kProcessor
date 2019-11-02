@@ -23,11 +23,11 @@ class TestkmerDecoder(unittest.TestCase):
         KF_file = kp.kDataFramePHMAP(KD_params["params"]["k_size"])
 
 
-        # void parseSequencesFromFile(kDataFrame * output, string mode, std::map<std::string, int> params, string filename, int chunk_size = 1000);
-        kp.parseSequencesFromFile(KF_file, KD_params["mode"], KD_params["params"], self.generic_params.small_fasta_file, 1)
+        # void countKmersFromFile(kDataFrame * output, string mode, std::map<std::string, int> params, string filename, int chunk_size = 1000);
+        kp.countKmersFromFile(KF_file, KD_params["mode"], KD_params["params"], self.generic_params.small_fasta_file, 1)
         self.assertFalse(KF_file.empty())
 
-        kp.parseSequencesFromString(KF_seq,KD_params["mode"], KD_params["params"], self.seq)
+        kp.countKmersFromString(KF_seq,KD_params["mode"], KD_params["params"], self.seq)
         self.assertFalse(KF_seq.empty())
 
 
@@ -45,11 +45,11 @@ class TestkmerDecoder(unittest.TestCase):
         KF_seq = kp.kDataFramePHMAP(KD_params["params"]["k_size"])
         KF_file = kp.kDataFramePHMAP(KD_params["params"]["k_size"])
 
-        # void parseSequencesFromFile(kDataFrame * output, string mode, std::map<std::string, int> params, string filename, int chunk_size = 1000);
-        kp.parseSequencesFromFile(KF_file, KD_params["mode"], KD_params["params"], self.generic_params.small_fasta_file, 1)
+        # void countKmersFromFile(kDataFrame * output, string mode, std::map<std::string, int> params, string filename, int chunk_size = 1000);
+        kp.countKmersFromFile(KF_file, KD_params["mode"], KD_params["params"], self.generic_params.small_fasta_file, 1)
         self.assertFalse(KF_file.empty())
 
-        kp.parseSequencesFromString(KF_seq,KD_params["mode"], KD_params["params"], self.seq)
+        kp.countKmersFromString(KF_seq,KD_params["mode"], KD_params["params"], self.seq)
         self.assertFalse(KF_seq.empty())
 
         self.assertEqual(KF_seq.size(), KF_file.size())
@@ -73,7 +73,7 @@ class TestkmerDecoder(unittest.TestCase):
     #     kp.parseSequences(KD_file, KF_file)
     #     self.assertFalse(KF_file.empty())
     #
-    #     kp.parseSequencesFromString(KD_seq, self.seq, KF_seq)
+    #     kp.countKmersFromString(KD_seq, self.seq, KF_seq)
     #     self.assertFalse(KF_seq.empty())
     #
     #     self.assertEqual(KF_seq.size(), KF_file.size())

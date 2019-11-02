@@ -354,7 +354,7 @@ namespace kProcessor {
         }
     }
 
-    void parseSequencesFromFile(kDataFrame * output, string mode, std::map<std::string, int> params, string filename, int chunk_size){
+    void countKmersFromFile(kDataFrame * output, string mode, std::map<std::string, int> params, string filename, int chunk_size){
 
         // Initialize kmerDecoder
         params["k_size"] = output->ksize();
@@ -379,7 +379,7 @@ namespace kProcessor {
 
     }
 
-    void parseSequencesFromString(kmerDecoder *KD, string sequence, kDataFrame *output) {
+    void countKmersFromString(kmerDecoder *KD, string sequence, kDataFrame *output) {
         if (KD->get_kSize() != (int)output->getkSize()) {
             std::cerr << "kmerDecoder kSize must be equal to kDataFrame kSize" << std::endl;
             exit(1);
@@ -394,7 +394,7 @@ namespace kProcessor {
 
     }
 
-    void parseSequencesFromString(kDataFrame * frame, string mode, std::map<std::string, int> params, string sequence){
+    void countKmersFromString(kDataFrame * frame, string mode, std::map<std::string, int> params, string sequence){
 
         // Initialize kmerDecoder
         params["k_size"] = frame->ksize();
@@ -717,7 +717,7 @@ namespace kProcessor {
                 convertMap.insert(make_pair(readTag, readTag));
                 //    cout<<readName<<"   "<<seq.size()<<endl;
                 for (const auto &kmer : seq.second) {
-                    uint64_t currentTag = frame->count(kmer.hash);
+                    uint64_t currentTag = frame->getCount(kmer.hash);
                     auto itc = convertMap.find(currentTag);
                     if (itc == convertMap.end()) {
                         vector<uint32_t> colors = legend->find(currentTag)->second;
@@ -770,10 +770,10 @@ namespace kProcessor {
                     }
 
                     frame->setCount(kmer.hash, itc->second);
-                    if (frame->count(kmer.hash) != itc->second) {
+                    if (frame->getCount(kmer.hash) != itc->second) {
                         //frame->setC(kmer,itc->second);
                         cout << "Error Founded " << kmer.str << " from sequence " << readName << " expected "
-                             << itc->second << " found " << frame->count(kmer.hash) << endl;
+                             << itc->second << " found " << frame->getCount(kmer.hash) << endl;
                         return NULL;
                     }
                 }
@@ -892,7 +892,7 @@ namespace kProcessor {
                     convertMap.insert(make_pair(readTag, readTag));
                     //    cout<<readName<<"   "<<seq.size()<<endl;
                     for (const auto &kmer : seq.second) {
-                        uint64_t currentTag = frame->count(kmer.hash);
+                        uint64_t currentTag = frame->getCount(kmer.hash);
                         auto itc = convertMap.find(currentTag);
                         if (itc == convertMap.end()) {
                             vector<uint32_t> colors = legend->find(currentTag)->second;
@@ -945,10 +945,10 @@ namespace kProcessor {
                         }
 
                         frame->setCount(kmer.hash, itc->second);
-                        if (frame->count(kmer.hash) != itc->second) {
+                        if (frame->getCount(kmer.hash) != itc->second) {
                             //frame->setC(kmer,itc->second);
                             cout << "Error Founded " << kmer.str << " from sequence " << readName << " expected "
-                                 << itc->second << " found " << frame->count(kmer.hash) << endl;
+                                 << itc->second << " found " << frame->getCount(kmer.hash) << endl;
                             return NULL;
                         }
                     }

@@ -9,7 +9,7 @@ public:
   bool setCount(string kmer, uint64_t count);
   bool insert(string kmer);
   bool insert(string kmer, uint64_t count);
-  uint64_t count(string kmer);
+  uint64_t getCount(string kmer);
   bool erase(string kmer);
 
   uint64_t size();

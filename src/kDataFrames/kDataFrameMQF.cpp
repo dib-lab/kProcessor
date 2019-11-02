@@ -442,12 +442,12 @@ bool kDataFrameMQF::insert(uint64_t kmer) {
     return true;
 }
 
-uint64_t kDataFrameMQF::count(string kmer) {
+uint64_t kDataFrameMQF::getCount(string kmer) {
     uint64_t hash = KD->hash_kmer(kmer) % mqf->metadata->range;
     return qf_count_key(mqf, hash);
 }
 
-uint64_t kDataFrameMQF::count(uint64_t kmer) {
+uint64_t kDataFrameMQF::getCount(uint64_t kmer) {
     uint64_t hash = kmer % mqf->metadata->range;
     return qf_count_key(mqf, hash);
 }

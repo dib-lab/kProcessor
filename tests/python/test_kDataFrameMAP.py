@@ -30,7 +30,7 @@ class TestKDataFrameMAP(unittest.TestCase):
 
         kf.insert(_kmer, rand_count)
         self.assertFalse(kf.empty())
-        self.assertEqual(kf.count(_kmer), rand_count)
+        self.assertEqual(kf.getCount(_kmer), rand_count)
 
     def test_insertNTimes(self):
         print(self._testMethodName)
@@ -61,7 +61,7 @@ class TestKDataFrameMAP(unittest.TestCase):
 
         # Verify all inserted kmers
         for kmer in kmers_list:
-            c = kFrame.count(kmer[0])
+            c = kFrame.getCount(kmer[0])
             self.assertEqual(c, kmer[1])
 
     def test_eraseKmers(self):
@@ -88,7 +88,7 @@ class TestKDataFrameMAP(unittest.TestCase):
         # Check that all kmers have been erased
         for i in range(len(kFrames)):
             for kmer in kmers_list:
-                self.assertEqual(kFrames[i].count(kmer[0]), 0)
+                self.assertEqual(kFrames[i].getCount(kmer[0]), 0)
 
     def test_iterateOverAllKmers(self):
         print(self._testMethodName)
