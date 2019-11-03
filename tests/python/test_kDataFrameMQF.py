@@ -113,7 +113,7 @@ class TestKDataFrameMQF(unittest.TestCase):
             it = kFrame.begin()
             kframe_kmers_counts = set()
             while it != kFrame.end():
-                count = it.getKmerCount()
+                count = it.getCount()
                 kframe_kmers_counts.add(count)
                 it.next()
 
@@ -154,10 +154,10 @@ class TestKDataFrameMQF(unittest.TestCase):
             it = kFrame.begin()
             kframe_kmers_counts = set()
             while (it != kFrame.end()):
-                count = it.getKmerCount()
+                count = it.getCount()
                 kframe_kmers_counts.add(count)
                 self.assertTrue(it.getHashedKmer() in kmers_hash_values)
-                self.assertTrue(it.getKmerCount() in inserted_counts)
+                self.assertTrue(it.getCount() in inserted_counts)
                 it.next()
 
         shutil.rmtree(my_tmpdir)

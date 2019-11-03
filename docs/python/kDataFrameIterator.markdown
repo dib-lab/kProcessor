@@ -50,7 +50,7 @@ Return the kmer at the current iterator position
 
 ```python
 
-kDataFrameIterator.getKmerCount()
+kDataFrameIterator.getCount()
 
 ```
 
@@ -60,6 +60,6 @@ Set the kmer count at the current iterator position
 
 ```python
 
-kDataFrameIterator.setKmerCount(new_count)
+kDataFrameIterator.setCount(new_count)
 
 ```

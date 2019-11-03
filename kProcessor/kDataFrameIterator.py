@@ -28,7 +28,7 @@ class kDataFrameIterator:
 
         pass
 
-    def getKmerCount(self):
+    def getCount(self):
         """
         Get the count of the kmer at the current iterator position
 
@@ -38,7 +38,7 @@ class kDataFrameIterator:
 
         pass
 
-    def setKmerCount(self):
+    def setCount(self):
         """
         Sets the count of the current kmer
 
