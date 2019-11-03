@@ -7,14 +7,14 @@ class kDataFrame:
     The abstract base class defining a kDataFrame.
     """
 
-    def getTwin(self):
-        """creates a new ``kDataframe`` using the same parameters as the current ``kDataFrame``.
-
-        :return: A shallow copy of the current ``kDataFrame``.
-        :rtype: kDataFrame
-
-        """
-        pass
+    # def getTwin(self):
+    #     """creates a new ``kDataframe`` using the same parameters as the current ``kDataFrame``.
+    #
+    #     :return: A shallow copy of the current ``kDataFrame``.
+    #     :rtype: kDataFrame
+    #
+    #     """
+    #     # pass
 
     def reserve(self, n):
         """Request a capacity change so that the kDataFrame can approximately hold at least n kmers
@@ -47,9 +47,9 @@ class kDataFrame:
         :return: Boolean value indicating whether the kmer is inserted or not
         :rtype: bool
         """
-        pass
+        passtb
 
-    def count(self, kmer):
+    def getCount(self, kmer):
         """retrieve number of times the kmer was inserted in the kdataFrame
 
         :param kmer: The kmer to retrieve its count

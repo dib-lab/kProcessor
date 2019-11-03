@@ -57,7 +57,7 @@ Please also see `recipes of using the python API <recipes.html>`_.
    :members:
 
 
-``Input``: Kmer input using File or strings
+``Kmer input using files or strings``
 =====================================
 
 .. automodule:: kProcessor.seqs_to_kmers

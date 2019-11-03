@@ -45,11 +45,11 @@ string kDataFrameMAPIterator::getKmer() {
     // return iterator->first;
 }
 
-uint64_t kDataFrameMAPIterator::getKmerCount() {
+uint64_t kDataFrameMAPIterator::getCount() {
     return iterator->second;
 }
 
-bool kDataFrameMAPIterator::setKmerCount(uint64_t count) {
+bool kDataFrameMAPIterator::setCount(uint64_t count) {
     iterator->second = count;
 }
 

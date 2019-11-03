@@ -47,11 +47,11 @@ string kDataFramePHMAPIterator::getKmer() {
     // return iterator->first;
 }
 
-uint64_t kDataFramePHMAPIterator::getKmerCount() {
+uint64_t kDataFramePHMAPIterator::getCount() {
     return iterator->second;
 }
 
-bool kDataFramePHMAPIterator::setKmerCount(uint64_t count) {
+bool kDataFramePHMAPIterator::setCount(uint64_t count) {
     iterator->second = count;
 }
 

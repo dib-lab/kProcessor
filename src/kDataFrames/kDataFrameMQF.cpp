@@ -54,13 +54,13 @@ string kDataFrameMQFIterator::getKmer() {
     return KD->ihash_kmer(getHashedKmer());
 }
 
-uint64_t kDataFrameMQFIterator::getKmerCount() {
+uint64_t kDataFrameMQFIterator::getCount() {
     uint64_t key, value, count;
     qfi_get(qfi, &key, &value, &count);
     return count;
 }
 
-bool kDataFrameMQFIterator::setKmerCount(uint64_t count) {
+bool kDataFrameMQFIterator::setCount(uint64_t count) {
     uint64_t key, value, currentCount;
     qfi_get(qfi, &key, &value, &currentCount);
     if (currentCount > count) {

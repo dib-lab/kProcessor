@@ -9758,7 +9758,7 @@ fail:
 }
 
 
-SWIGINTERN PyObject *_wrap_kDataFrameIterator_getKmerCount(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+SWIGINTERN PyObject *_wrap_kDataFrameIterator_getCount(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   kDataFrameIterator *arg1 = (kDataFrameIterator *) 0 ;
   void *argp1 = 0 ;
@@ -9770,10 +9770,10 @@ SWIGINTERN PyObject *_wrap_kDataFrameIterator_getKmerCount(PyObject *SWIGUNUSEDP
   swig_obj[0] = args;
   res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_kDataFrameIterator, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "kDataFrameIterator_getKmerCount" "', argument " "1"" of type '" "kDataFrameIterator *""'"); 
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "kDataFrameIterator_getCount" "', argument " "1"" of type '" "kDataFrameIterator *""'"); 
   }
   arg1 = reinterpret_cast< kDataFrameIterator * >(argp1);
-  result = (uint64_t)(arg1)->getKmerCount();
+  result = (uint64_t)(arg1)->getCount();
   resultobj = SWIG_From_unsigned_SS_long_SS_long(static_cast< unsigned long long >(result));
   return resultobj;
 fail:
@@ -9781,7 +9781,7 @@ fail:
 }
 
 
-SWIGINTERN PyObject *_wrap_kDataFrameIterator_setKmerCount(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+SWIGINTERN PyObject *_wrap_kDataFrameIterator_setCount(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   kDataFrameIterator *arg1 = (kDataFrameIterator *) 0 ;
   uint64_t arg2 ;
@@ -9792,18 +9792,18 @@ SWIGINTERN PyObject *_wrap_kDataFrameIterator_setKmerCount(PyObject *SWIGUNUSEDP
   PyObject *swig_obj[2] ;
   bool result;
   
-  if (!SWIG_Python_UnpackTuple(args, "kDataFrameIterator_setKmerCount", 2, 2, swig_obj)) SWIG_fail;
+  if (!SWIG_Python_UnpackTuple(args, "kDataFrameIterator_setCount", 2, 2, swig_obj)) SWIG_fail;
   res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_kDataFrameIterator, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "kDataFrameIterator_setKmerCount" "', argument " "1"" of type '" "kDataFrameIterator *""'"); 
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "kDataFrameIterator_setCount" "', argument " "1"" of type '" "kDataFrameIterator *""'"); 
   }
   arg1 = reinterpret_cast< kDataFrameIterator * >(argp1);
   ecode2 = SWIG_AsVal_unsigned_SS_long_SS_long(swig_obj[1], &val2);
   if (!SWIG_IsOK(ecode2)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "kDataFrameIterator_setKmerCount" "', argument " "2"" of type '" "uint64_t""'");
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "kDataFrameIterator_setCount" "', argument " "2"" of type '" "uint64_t""'");
   } 
   arg2 = static_cast< uint64_t >(val2);
-  result = (bool)(arg1)->setKmerCount(arg2);
+  result = (bool)(arg1)->setCount(arg2);
   resultobj = SWIG_From_bool(static_cast< bool >(result));
   return resultobj;
 fail:
@@ -19792,8 +19792,8 @@ static PyMethodDef SwigMethods[] = {
 	 { "kDataFrameIterator___ne__", _wrap_kDataFrameIterator___ne__, METH_VARARGS, NULL},
 	 { "kDataFrameIterator_getHashedKmer", _wrap_kDataFrameIterator_getHashedKmer, METH_O, NULL},
 	 { "kDataFrameIterator_getKmer", _wrap_kDataFrameIterator_getKmer, METH_O, NULL},
-	 { "kDataFrameIterator_getKmerCount", _wrap_kDataFrameIterator_getKmerCount, METH_O, NULL},
-	 { "kDataFrameIterator_setKmerCount", _wrap_kDataFrameIterator_setKmerCount, METH_VARARGS, NULL},
+	 { "kDataFrameIterator_getCount", _wrap_kDataFrameIterator_getCount, METH_O, NULL},
+	 { "kDataFrameIterator_setCount", _wrap_kDataFrameIterator_setCount, METH_VARARGS, NULL},
 	 { "kDataFrameIterator___ref__", _wrap_kDataFrameIterator___ref__, METH_O, NULL},
 	 { "delete_kDataFrameIterator", _wrap_delete_kDataFrameIterator, METH_O, NULL},
 	 { "kDataFrameIterator_swigregister", kDataFrameIterator_swigregister, METH_O, NULL},

@@ -317,7 +317,7 @@ TEST_P(kDataFrameTest,iterateOverAllKmers)
     while(it!=kframe->end())
     {
       string kmer=it.getKmer();
-      uint64_t count=it.getKmerCount();
+      uint64_t count=it.getCount();
       ASSERT_EQ(count,insertedKmers[kmer]);
       insertedKmers.erase(kmer);
       it++;
@@ -362,7 +362,7 @@ TEST_P(kDataFrameTest,saveAndIterateOverAllKmers)
     while(it!=kframeLoaded->end())
     {
       string kmer=it.getKmer();
-      uint64_t count=it.getKmerCount();
+      uint64_t count=it.getCount();
       ASSERT_EQ(count,insertedKmers[kmer]);
       insertedKmers.erase(kmer);
       it++;
@@ -397,7 +397,7 @@ TEST_P(kDataFrameTest,transformPlus10)
     while(it!=kframe2->end())
     {
       string kmer=it.getKmer();
-      uint64_t count=it.getKmerCount();
+      uint64_t count=it.getCount();
       ASSERT_EQ(count,insertedKmers[kmer]+10);
       insertedKmers.erase(kmer);
       it++;
@@ -428,7 +428,7 @@ TEST_P(kDataFrameTest,transformFilterLessThan5)
     while(it!=kframe2->end())
     {
       string kmer=it.getKmer();
-      uint64_t count=it.getKmerCount();
+      uint64_t count=it.getCount();
       ASSERT_GE(count,5);
       it++;
     }

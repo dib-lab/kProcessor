@@ -78,8 +78,8 @@ public:
   virtual _kDataFrameIterator* clone()=0;
   virtual uint64_t getHashedKmer()=0;
   virtual string getKmer()=0;
-  virtual uint64_t getKmerCount()=0;
-  virtual bool setKmerCount(uint64_t count)=0;
+  virtual uint64_t getCount()=0;
+  virtual bool setCount(uint64_t count)=0;
   virtual bool operator ==(const _kDataFrameIterator& other)=0;
   virtual bool operator !=(const _kDataFrameIterator& other)=0;
   virtual ~_kDataFrameIterator(){};
@@ -178,17 +178,17 @@ public:
     return iterator->getKmer();
   }
   /// Returns the count of the current kmer
-  uint64_t getKmerCount(){
-    return iterator->getKmerCount();
+  uint64_t getCount(){
+    return iterator->getCount();
   }
   /// sets the count of the current kmer
-  bool setKmerCount(uint64_t count){
-    return iterator->setKmerCount(count);
+  bool setCount(uint64_t count){
+    return iterator->setCount(count);
   }
   kmerRow operator*(){
     return kmerRow(iterator->getKmer(),
                    iterator->getHashedKmer(),
-                   iterator->getKmerCount()
+                   iterator->getCount()
                   );
   }
   ~kDataFrameIterator(){
@@ -208,8 +208,8 @@ public:
   _kDataFrameIterator* clone();
   uint64_t getHashedKmer();
   string getKmer();
-  uint64_t getKmerCount();
-  bool setKmerCount(uint64_t count);
+  uint64_t getCount();
+  bool setCount(uint64_t count);
   void endIterator();
   bool operator ==(const _kDataFrameIterator& other);
   bool operator !=(const _kDataFrameIterator& other);
@@ -391,8 +391,8 @@ public:
     _kDataFrameIterator* clone();
     uint64_t getHashedKmer();
     string getKmer();
-    uint64_t getKmerCount();
-    bool setKmerCount(uint64_t count);
+    uint64_t getCount();
+    bool setCount(uint64_t count);
     void endIterator();
     bool operator ==(const _kDataFrameIterator& other);
     bool operator !=(const _kDataFrameIterator& other);
@@ -463,9 +463,9 @@ public:
 
     string getKmer();
 
-    uint64_t getKmerCount();
+    uint64_t getCount();
 
-    bool setKmerCount(uint64_t count);
+    bool setCount(uint64_t count);
 
     void endIterator();
 

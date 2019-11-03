@@ -34,7 +34,7 @@ class colored_kDataFrame(kDataFrame):
         pass
 
 
-    def getSamplesIDForKmer(self, kmer):
+    def getKmerSource(self, kmer):
         """
         Get all sample IDs that contains that kmer.
 
