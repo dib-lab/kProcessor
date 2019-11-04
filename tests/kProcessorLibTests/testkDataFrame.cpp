@@ -75,7 +75,7 @@ TEST_P(colorsTableTest,saveAndLoad)
   uint64_t numSamples=get<1>(GetParam());
   uint64_t numColors=get<2>(GetParam());
   colorTable* table=createColorTables(colorTableName,numSamples,numColors);
-  for(int i=1;i<=numColors;i++)
+  for(uint32_t i=1;i<=numColors;i++)
   {
     table->setColor(i,simColors[i]);
   }
@@ -100,7 +100,7 @@ vector<kDataFrame*> BuildTestFrames()
   vector<int> kSizes={21,31};
   for(auto k:kSizes)
   {
-    framesToBeTested.push_back(new kDataFrameMQF(k));
+   framesToBeTested.push_back(new kDataFrameMQF(k));
   }
   for(auto k:kSizes)
   {
@@ -108,15 +108,30 @@ vector<kDataFrame*> BuildTestFrames()
   }
   for(auto k:kSizes)
   {
-    framesToBeTested.push_back(new kDataFrameBMQF(k));
+  //  framesToBeTested.push_back(new kDataFrameBMQF((uint64_t)k));
   }
   return framesToBeTested;
+}
+
+vector<kDataFrameBMQF*> BuildTestBufferedFrames()
+{
+    vector<kDataFrameBMQF*> framesToBeTested;
+    vector<int> kSizes={21,31};
+    for(auto k:kSizes)
+    {
+        framesToBeTested.push_back(new kDataFrameBMQF((uint64_t)k));
+    }
+    return framesToBeTested;
 }
 
 INSTANTIATE_TEST_SUITE_P(testFrames,
                         kDataFrameTest,
                         ::testing::ValuesIn(BuildTestFrames()));
 
+
+INSTANTIATE_TEST_SUITE_P(testFrames,
+                         kDataFrameBufferedTest,
+                         ::testing::ValuesIn(BuildTestBufferedFrames()));
 
 vector<string> fastqFiles={"test.noN.fastq","test2.noN.fastq","test2.noN.fastq"};
 INSTANTIATE_TEST_SUITE_P(testcounting,
@@ -291,7 +306,7 @@ TEST_P(kDataFrameTest,autoResize)
     int checkedKmers=0;
     for(auto k:*kmers)
     {
-        int c=kframe->count(k.first);
+        uint64_t c=kframe->count(k.first);
         EXPECT_GE(c,k.second);
         if(checkedKmers==insertedKmers)
         {
@@ -308,6 +323,8 @@ TEST_P(kDataFrameTest,iterateOverAllKmers)
     EXPECT_EQ(kframe->empty(), true);
     unordered_map<string,int>* kmers=kmersGen.getKmers((int)kframe->getkSize());
     unordered_map<string,int> insertedKmers;
+    insertedKmers.clear();
+    bool first=true;
     for(auto k:*kmers)
     {
       kframe->insert(k.first,k.second);
@@ -361,7 +378,7 @@ TEST_P(kDataFrameTest,saveAndIterateOverAllKmers)
     string fileName="tmp.kdataframe."+gen_random(4);
     kframe->save(fileName);
     kDataFrame* kframeLoaded=kDataFrame::load(fileName);
-    int checkedKmers=0;
+//    int checkedKmers=0;
     kDataFrameIterator it=kframeLoaded->begin();
     while(it!=kframeLoaded->end())
     {
@@ -712,4 +729,194 @@ TEST_P(indexingTest,saveAndLoad)
 
   }
 
+}
+
+
+TEST_P(kDataFrameBufferedTest,iterateOverAllKmers)
+{
+
+    kDataFrameBMQF* kframe=GetParam();
+    EXPECT_EQ(kframe->empty(), true);
+    unordered_map<string,int>* kmers=kmersGen.getKmers((int)kframe->getkSize());
+    unordered_map<string,int> insertedKmers;
+    insertedKmers.clear();
+    bool first=true;
+    for(auto k:*kmers)
+    {
+        kframe->insert(k.first,k.second);
+        insertedKmers[k.first]+=k.second;
+        if(kframe->load_factor()>=kframe->max_load_factor()*0.8){
+            break;
+        }
+    }
+    int checkedKmers=0;
+    kDataFrameIterator it=kframe->begin();
+    while(it!=kframe->end())
+    {
+        string kmer=it.getKmer();
+        uint64_t count=it.getKmerCount();
+        ASSERT_EQ(count,insertedKmers[kmer]);
+        insertedKmers.erase(kmer);
+        it++;
+    }
+    EXPECT_EQ(insertedKmers.size(),0);
+
+}
+
+TEST_P(kDataFrameBufferedTest,autoResize)
+{
+
+    kDataFrame* kframe=GetParam();
+    EXPECT_EQ(kframe->empty(), true);
+    unordered_map<string,int>* kmers=kmersGen.getKmers((int)kframe->getkSize());
+    unordered_map<string,int> insertedKmers;
+
+    for(auto k:*kmers)
+    {
+        kframe->insert(k.first,k.second);
+        insertedKmers[k.first]+=k.second;
+
+
+    }
+    kDataFrameIterator it=kframe->begin();
+    while(it!=kframe->end())
+    {
+        string kmer=it.getKmer();
+        uint64_t count=it.getKmerCount();
+        ASSERT_EQ(count,insertedKmers[kmer]);
+        insertedKmers.erase(kmer);
+        it++;
+    }
+    EXPECT_EQ(insertedKmers.size(),0);
+}
+
+
+TEST_P(kDataFrameBufferedTest,transformPlus10)
+{
+
+    kDataFrame* kframe=GetParam();
+    EXPECT_EQ(kframe->empty(), true);
+    unordered_map<string,int>* kmers=kmersGen.getKmers((int)kframe->getkSize());
+    unordered_map<string,int> insertedKmers;
+    for(auto k:*kmers)
+    {
+        kframe->insert(k.first,k.second);
+        insertedKmers[k.first]+=k.second;
+        if(kframe->load_factor()>=kframe->max_load_factor()*0.3){
+            break;
+        }
+    }
+    int checkedKmers=0;
+    kDataFrame* kframe2=kProcessor::transform(kframe,[](kmerRow k)
+    {
+        k.count+=10;
+        return k;
+    });
+    kDataFrameIterator it=kframe2->begin();
+    while(it!=kframe2->end())
+    {
+        string kmer=it.getKmer();
+        uint64_t count=it.getKmerCount();
+        ASSERT_EQ(count,insertedKmers[kmer]+10);
+        insertedKmers.erase(kmer);
+        it++;
+    }
+    EXPECT_EQ(insertedKmers.size(),0);
+
+}
+
+TEST_P(kDataFrameBufferedTest,parsingTest)
+{
+ kDataFrame* kframe=GetParam();
+ string fileName="test2.noN.fastq";
+//kDataFrame* kframe=get<0>(GetParam());
+//string fileName=get<1>(GetParam());
+int kSize=kframe->getkSize();
+kProcessor::parseSequences(fileName,1,kframe);
+seqan::SeqFileIn seqIn(fileName.c_str());
+seqan::StringSet<seqan::CharString> ids;
+seqan::StringSet<seqan::CharString> reads;
+int chunkSize=1000;
+unordered_map<string,uint64_t > insertedKmers;
+while(!atEnd(seqIn)){
+clear(reads);
+clear(ids);
+
+seqan::readRecords(ids, reads, seqIn,chunkSize);
+for(int j=0;j<length(reads);j++)
+{
+string seq=string((char*)seqan::toCString(reads[j]));
+for(int i=0;i<seq.size()-kSize+1;i++)
+{
+string kmer=seq.substr(i,kSize);
+kmer=kmer::canonicalKmer(kmer);
+insertedKmers[kmer]++;
+}
+}
+
+}
+seqan::close(seqIn);
+kDataFrameIterator it=kframe->begin();
+while(it!=kframe->end())
+{
+string kmer=it.getKmer();
+uint64_t count=it.getKmerCount();
+if(count != insertedKmers[kmer])
+{
+cout<<kmer<<endl;
+
+}
+ASSERT_EQ(count,insertedKmers[kmer]);
+insertedKmers.erase(kmer);
+it++;
+}
+EXPECT_EQ(insertedKmers.size(),0);
+}
+
+TEST_P(algorithmsTest,parsingTest2)
+{
+   // kDataFrame* kframe=GetParam();
+   // string fileName="test2.noN.fastq";
+   kDataFrame* kframe=get<0>(GetParam());
+    string fileName=get<1>(GetParam());
+    int kSize=kframe->getkSize();
+    kProcessor::parseSequences(fileName,1,kframe);
+    seqan::SeqFileIn seqIn(fileName.c_str());
+    seqan::StringSet<seqan::CharString> ids;
+    seqan::StringSet<seqan::CharString> reads;
+    int chunkSize=1000;
+    unordered_map<string,uint64_t > insertedKmers;
+    while(!atEnd(seqIn)){
+        clear(reads);
+        clear(ids);
+
+        seqan::readRecords(ids, reads, seqIn,chunkSize);
+        for(int j=0;j<length(reads);j++)
+        {
+            string seq=string((char*)seqan::toCString(reads[j]));
+            for(int i=0;i<seq.size()-kSize+1;i++)
+            {
+                string kmer=seq.substr(i,kSize);
+                kmer=kmer::canonicalKmer(kmer);
+                insertedKmers[kmer]++;
+            }
+        }
+
+    }
+    seqan::close(seqIn);
+    kDataFrameIterator it=kframe->begin();
+    while(it!=kframe->end())
+    {
+        string kmer=it.getKmer();
+        uint64_t count=it.getKmerCount();
+        if(count != insertedKmers[kmer])
+        {
+            cout<<kmer<<endl;
+
+        }
+        ASSERT_EQ(count,insertedKmers[kmer]);
+        insertedKmers.erase(kmer);
+        it++;
+    }
+    EXPECT_EQ(insertedKmers.size(),0);
 }

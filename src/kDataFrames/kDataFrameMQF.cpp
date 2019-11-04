@@ -215,7 +215,7 @@ kDataFrameMQF::kDataFrameMQF(QF *mqf, uint64_t ksize, double falsePositiveRate) 
 kDataFrame *kDataFrameMQF::getTwin() {
     uint64_t q = log2(mqf->metadata->nslots);
     return ((kDataFrame *) new kDataFrameMQF(kSize, q, mqf->metadata->fixed_counter_size,
-                                             mqf->metadata->tag_bits, falsePositiveRate));
+                                             mqf->metadata->label_bits, falsePositiveRate));
 }
 
 void kDataFrameMQF::reserve(uint64_t n) {
@@ -262,9 +262,9 @@ kDataFrameMQF::kDataFrameMQF(uint64_t ksize, vector<uint64_t> countHistogram)
         kDataFrameMQF(ksize,countHistogram,0,0.0) {
 }
 uint64_t kDataFrameMQF::estimateMemory(uint64_t nslots, uint64_t slotSize, uint64_t fcounter, uint64_t tagSize) {
-    uint64_t SLOTS_PER_BLOCK = 64;
+    uint64_t SLOTS_PER_BLOCK_2 = 64;
     uint64_t xnslots = nslots + 10 * sqrt((double) nslots);
-    uint64_t nblocks = (xnslots + SLOTS_PER_BLOCK - 1) / SLOTS_PER_BLOCK;
+    uint64_t nblocks = (xnslots + SLOTS_PER_BLOCK_2 - 1) / SLOTS_PER_BLOCK_2;
     uint64_t blocksize = 17;
 
     return ((nblocks) * (blocksize + 8 * (slotSize + fcounter + tagSize))) / 1024;

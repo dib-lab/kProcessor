@@ -8,6 +8,7 @@
 #include "Utils/kmer.h"
 #include <iostream>
 #include <parallel_hashmap/phmap.h>
+#include "bufferedMQF.h"
 
 using phmap::flat_hash_map;
 using namespace std;
@@ -407,6 +408,7 @@ public:
     delete bufferedmqf;
   }
   void reserve (uint64_t n);
+  void reserve (vector<uint64_t> countHistogram);
 
   kDataFrame* getTwin();
 
@@ -568,5 +570,27 @@ public:
         this->MAP.clear();
     }
 };
+
+class kDataFrameBMQFIterator:public _kDataFrameIterator{
+private:
+    bufferedMQFIterator* qfi;
+    Hasher* hasher;
+    bufferedMQF* mqf;
+public:
+    kDataFrameBMQFIterator(bufferedMQF*,uint64_t kSize,Hasher* h);
+    kDataFrameBMQFIterator(const kDataFrameBMQFIterator&);
+    kDataFrameBMQFIterator& operator ++ (int);
+    _kDataFrameIterator* clone();
+    uint64_t getHashedKmer();
+    string getKmer();
+    kDataFrame *getTwin();
+    uint64_t getKmerCount();
+    bool setKmerCount(uint64_t count);
+    void endIterator();
+    bool operator ==(const _kDataFrameIterator& other);
+    bool operator !=(const _kDataFrameIterator& other);
+    ~kDataFrameBMQFIterator();
+};
+
 
 #endif
