@@ -13,43 +13,39 @@ class TestkmerDecoder(unittest.TestCase):
 
     def test_kmers(self):
         KD_params = {
-            "mode": "kmers",
-            "params": {
-                "k_size": 10,
-            }
+            "mode" : 1,
+            "k_size": 10,
         }
 
-        KF_seq = kp.kDataFramePHMAP(KD_params["params"]["k_size"])
-        KF_file = kp.kDataFramePHMAP(KD_params["params"]["k_size"])
+
+        KF_seq = kp.kDataFramePHMAP(KD_params["k_size"])
+        KF_file = kp.kDataFramePHMAP(KD_params["k_size"])
 
 
         # void countKmersFromFile(kDataFrame * output, string mode, std::map<std::string, int> params, string filename, int chunk_size = 1000);
-        kp.countKmersFromFile(KF_file, KD_params["mode"], KD_params["params"], self.generic_params.small_fasta_file, 1)
+        kp.countKmersFromFile(KF_file, KD_params, self.generic_params.small_fasta_file, 1)
         self.assertFalse(KF_file.empty())
 
-        kp.countKmersFromString(KF_seq,KD_params["mode"], KD_params["params"], self.seq)
+        kp.countKmersFromString(KF_seq, KD_params, self.seq)
         self.assertFalse(KF_seq.empty())
 
 
     def test_skipmers(self):
         KD_params = {
-            "mode": "skipmers",
-            "params": {
-                "k_size": 10,
-                "m": 2,
-                "n": 3
-            }
+            "mode": 2,
+            "k_size": 10,
+            "m": 2,
+            "n": 3
         }
 
 
-        KF_seq = kp.kDataFramePHMAP(KD_params["params"]["k_size"])
-        KF_file = kp.kDataFramePHMAP(KD_params["params"]["k_size"])
+        KF_seq = kp.kDataFramePHMAP(KD_params["k_size"])
+        KF_file = kp.kDataFramePHMAP(KD_params["k_size"])
 
-        # void countKmersFromFile(kDataFrame * output, string mode, std::map<std::string, int> params, string filename, int chunk_size = 1000);
-        kp.countKmersFromFile(KF_file, KD_params["mode"], KD_params["params"], self.generic_params.small_fasta_file, 1)
+        kp.countKmersFromFile(KF_file, KD_params, self.generic_params.small_fasta_file, 1)
         self.assertFalse(KF_file.empty())
 
-        kp.countKmersFromString(KF_seq,KD_params["mode"], KD_params["params"], self.seq)
+        kp.countKmersFromString(KF_seq, KD_params, self.seq)
         self.assertFalse(KF_seq.empty())
 
         self.assertEqual(KF_seq.size(), KF_file.size())

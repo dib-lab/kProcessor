@@ -19,9 +19,9 @@ class TestkmerCounting(unittest.TestCase):
         KF_MAP = params_MAP.new_kf(self.ksize)
 
         # kmerCounting
-        kp.countKmersFromFile(KF_MQF, "kmers", {"k_size": self.ksize}, params_MQF.fastqFiles[0], 1000)
-        kp.countKmersFromFile(KF_PHMAP, "kmers", {"k_size": self.ksize}, params_PHMAP.fastqFiles[0], 1000)
-        kp.countKmersFromFile(KF_MAP, "kmers", {"k_size": self.ksize}, params_MAP.fastqFiles[0], 1000)
+        kp.countKmersFromFile(KF_MQF, {"mode": 1, "k_size": self.ksize}, params_MQF.fastqFiles[0], 1000)
+        kp.countKmersFromFile(KF_PHMAP, {"mode": 1, "k_size": self.ksize}, params_PHMAP.fastqFiles[0], 1000)
+        kp.countKmersFromFile(KF_MAP, {"mode": 1, "k_size": self.ksize}, params_MAP.fastqFiles[0], 1000)
 
         self.assertTrue(KF_MQF.size())
         self.assertTrue(KF_PHMAP.size())
@@ -41,9 +41,9 @@ class TestkmerCounting(unittest.TestCase):
         self.assertFalse(KF_MAP.size())
 
         # kmerCounting
-        kp.countKmersFromFile(KF_MQF, "kmers", {"k_size": self.ksize}, params_MQF.fasta_file, 1000)
-        kp.countKmersFromFile(KF_PHMAP, "kmers", {"k_size": self.ksize}, params_PHMAP.fasta_file, 1000)
-        kp.countKmersFromFile(KF_MAP, "kmers", {"k_size": self.ksize}, params_MAP.fasta_file, 1000)
+        kp.countKmersFromFile(KF_MQF, {"mode": 1, "k_size": self.ksize}, params_MQF.fasta_file, 1000)
+        kp.countKmersFromFile(KF_PHMAP, {"mode": 1, "k_size": self.ksize}, params_PHMAP.fasta_file, 1000)
+        kp.countKmersFromFile(KF_MAP, {"mode": 1, "k_size": self.ksize}, params_MAP.fasta_file, 1000)
 
         self.assertTrue(KF_MQF.size())
         self.assertTrue(KF_PHMAP.size())
