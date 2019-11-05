@@ -27,3 +27,72 @@ Moreover, querying the kDataFrame with a similar but not stored kmer can show th
 On the other hand, the reversible hashing mode is slower than the irreversible mode but allows the user to iterate over the kmers in their string representation.
 
 ---
+
+## **2. Sequence Parsing Parameters**
+
+In order to extract the kmers from a sequences file or string in kProcessor, you will need to pass a Python dictionary with the parsing parameters.
+
+### 2.1 Parameters
+
+Keys of the dictionary are *strings* describing the parameter type, values are integers for the parameters values
+
+### 2.2 Modes
+
+There are three modes for decoding the sequences substrings `kmers`, `skipmers`, `minimizers`
+
+#### 2.2.1 kmers
+    
+- Description: Extracts the sequences substrings in the default popular mode "kmers".
+- Parameters: 
+    - "mode" : 1
+    - k_size: total number of bases
+
+#### 2.2.2 skipmers
+
+- Description: A cyclic pattern of picked or skipped positions. [read more about skipmers](https://www.biorxiv.org/content/10.1101/179960v2)
+- Parameters:
+    - "mode" : 2
+    - "k_size": total number of bases 
+    - "m": used bases per cycle
+    - "n": cycle length
+
+#### 2.2.3 minimizers
+
+- Description: short substrings that represents the sequence. [read more about minimizers](https://homolog.us/blogs/bioinfo/2017/10/25/intro-minimizer/)
+- Parameters:
+    - "mode" : 3
+    - "k_size": total number of bases 
+    - "w": window size
+
+### 2.3 Examples
+
+#### 2.3.1 Extract kmers with kmer size 31
+
+```python
+parse_params = {
+    "mode" : 1,
+    "k_size" : 31
+}
+```
+
+#### 2.3.2 Extract skipmers with k = 10, m = 2, n = 3
+
+```python
+parse_params = {
+    "mode" : 2,
+    "k_size" : 10,
+    "m" : 2,
+    "n" : 3
+}
+```
+
+#### 2.3.2 Extract Minimzers with k = 5, w = 10
+
+```python
+parse_params = {
+    "mode" : 3,
+    "k_size" : 5,
+    "w" : 10,
+}
+```
+
