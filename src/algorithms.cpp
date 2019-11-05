@@ -354,16 +354,26 @@ namespace kProcessor {
         }
     }
 
-    void countKmersFromFile(kDataFrame * output, string mode, std::map<std::string, int> params, string filename, int chunk_size){
+    void countKmersFromFile(kDataFrame * kframe, std::map<std::string, int> parse_params, string filename, int chunk_size){
+        // parse_params["mode"] = 1 > Default: Kmers
+        // parse_params["mode"] = 2 > Skipmers
+        // parse_params["mode"] = 3 > Minimizers
 
         // Initialize kmerDecoder
-        params["k_size"] = output->ksize();
-        params["k"] = output->ksize();
-        kmerDecoder * KD = initialize_kmerDecoder(filename, chunk_size, mode, params);
+        std::string mode = "kmers";
+        bool check_mode = (parse_params.find("mode") != parse_params.end());
+        if (check_mode){
+            if (parse_params["mode"] == 2) mode = "skipmers";
+            else if (parse_params["mode"] == 3) mode = "minimizers";
+        }
+
+        parse_params["k_size"] = kframe->ksize();
+        parse_params["k"] = kframe->ksize();
+        kmerDecoder * KD = initialize_kmerDecoder(filename, chunk_size, mode, parse_params);
 
         // Clone the hashing
 
-        kmerDecoder_setHashing(KD, output->KD->hash_mode, output->KD->canonical);
+        kmerDecoder_setHashing(KD, kframe->KD->hash_mode, kframe->KD->canonical);
 
         // Processing
 
@@ -371,7 +381,7 @@ namespace kProcessor {
             KD->next_chunk();
             for (const auto &seq : *KD->getKmers()) {
                 for (const auto &kmer : seq.second) {
-                    output->insert(kmer.hash);
+                    kframe->insert(kmer.hash);
                 }
             }
         }
@@ -394,12 +404,23 @@ namespace kProcessor {
 
     }
 
-    void countKmersFromString(kDataFrame * frame, string mode, std::map<std::string, int> params, string sequence){
+    void countKmersFromString(kDataFrame * frame, std::map<std::string, int> parse_params, string sequence){
+
+        // parse_params["mode"] = 1 > Default: Kmers
+        // parse_params["mode"] = 2 > Skipmers
+        // parse_params["mode"] = 3 > Minimizers
 
         // Initialize kmerDecoder
-        params["k_size"] = frame->ksize();
-        params["k"] = frame->ksize();
-        kmerDecoder * KD = initialize_kmerDecoder(mode, params);
+        std::string mode = "kmers";
+        bool check_mode = (parse_params.find("mode") != parse_params.end());
+        if (check_mode){
+            if (parse_params["mode"] == 2) mode = "skipmers";
+            else if (parse_params["mode"] == 3) mode = "minimizers";
+        }
+
+        parse_params["k_size"] = frame->ksize();
+        parse_params["k"] = frame->ksize();
+        kmerDecoder * KD = initialize_kmerDecoder(mode, parse_params);
 
         // Clone the hashing
 
@@ -544,7 +565,7 @@ namespace kProcessor {
     }
 
 
-    kmerDecoder* initialize_kmerDecoder(std::string filename, int chunkSize, std::string mode, std::map<std::string, int> params){
+    kmerDecoder* initialize_kmerDecoder(std::string filename, int chunkSize, std::string mode, std::map<std::string, int> parse_params){
 
         std::string func_name = "wrong parameters in initialize_kmerDecoder() : \n";
 
@@ -552,31 +573,31 @@ namespace kProcessor {
         transform(mode.begin(), mode.end(), mode.begin(), ::tolower);
 
         if (mode == "kmers") {
-            if (params.find("k_size") != params.end()) {
-                return new Kmers(filename, chunkSize, params["k_size"]);
+            if (parse_params.find("k_size") != parse_params.end()) {
+                return new Kmers(filename, chunkSize, parse_params["k_size"]);
             } else {
                 std::cerr << func_name << "kmerDecoder Kmers parameters {k_size} validation failed" << std::endl;
                 exit(1);
             }
         } else if (mode == "skipmers") {
-            bool check_k = (params.find("k_size") != params.end());
-            bool check_m = (params.find("m") != params.end());
-            bool check_n = (params.find("n") != params.end());
-            bool check_orf = (params.find("orf") != params.end());
+            bool check_k = (parse_params.find("k_size") != parse_params.end());
+            bool check_m = (parse_params.find("m") != parse_params.end());
+            bool check_n = (parse_params.find("n") != parse_params.end());
+            bool check_orf = (parse_params.find("orf") != parse_params.end());
 
             if (check_k && check_m && check_n) {
-                if(check_orf) return new Skipmers(filename, chunkSize, params["m"], params["n"], params["k_size"], params["orf"]);
-                return new Skipmers(filename, chunkSize, params["m"], params["n"], params["k_size"]);
+                if(check_orf) return new Skipmers(filename, chunkSize, parse_params["m"], parse_params["n"], parse_params["k_size"], parse_params["orf"]);
+                return new Skipmers(filename, chunkSize, parse_params["m"], parse_params["n"], parse_params["k_size"]);
             } else {
                 std::cerr << func_name << "kmerDecoder Skipmers parameters {k_size, m, n} validation failed" << std::endl;
                 exit(1);
             }
         } else if (mode == "minimizers") {
-            bool check_k = (params.find("k_size") != params.end());
-            bool check_w = (params.find("w") != params.end());
+            bool check_k = (parse_params.find("k_size") != parse_params.end());
+            bool check_w = (parse_params.find("w") != parse_params.end());
 
             if (check_k && check_w) {
-                return new Minimizers(filename, chunkSize, params["k_size"], params["w"]);
+                return new Minimizers(filename, chunkSize, parse_params["k_size"], parse_params["w"]);
             } else {
                 std::cerr << func_name << "kmerDecoder Skipmers parameters {k_size, w} validation failed" << std::endl;
                 exit(1);
@@ -588,7 +609,7 @@ namespace kProcessor {
         }
     }
 
-    kmerDecoder* initialize_kmerDecoder(std::string mode, std::map<std::string, int> params){
+    kmerDecoder* initialize_kmerDecoder(std::string mode, std::map<std::string, int> parse_params){
 
         std::string func_name = "wrong parameters in initialize_kmerDecoder() : \n";
 
@@ -596,31 +617,31 @@ namespace kProcessor {
         transform(mode.begin(), mode.end(), mode.begin(), ::tolower);
 
         if (mode == "kmers") {
-            if (params.find("k_size") != params.end()) {
-                return new Kmers(params["k_size"]);
+            if (parse_params.find("k_size") != parse_params.end()) {
+                return new Kmers(parse_params["k_size"]);
             } else {
                 std::cerr << func_name << "kmerDecoder Kmers parameters {k_size} validation failed" << std::endl;
                 exit(1);
             }
         } else if (mode == "skipmers") {
-            bool check_k = (params.find("k_size") != params.end());
-            bool check_m = (params.find("m") != params.end());
-            bool check_n = (params.find("n") != params.end());
-            bool check_orf = (params.find("orf") != params.end());
+            bool check_k = (parse_params.find("k_size") != parse_params.end());
+            bool check_m = (parse_params.find("m") != parse_params.end());
+            bool check_n = (parse_params.find("n") != parse_params.end());
+            bool check_orf = (parse_params.find("orf") != parse_params.end());
 
             if (check_k && check_m && check_n) {
-                if(check_orf) return new Skipmers(params["m"], params["n"], params["k_size"], params["orf"]);
-                return new Skipmers(params["m"], params["n"], params["k_size"]);
+                if(check_orf) return new Skipmers(parse_params["m"], parse_params["n"], parse_params["k_size"], parse_params["orf"]);
+                return new Skipmers(parse_params["m"], parse_params["n"], parse_params["k_size"]);
             } else {
                 std::cerr << func_name << "kmerDecoder Skipmers parameters {k_size, m, n} validation failed" << std::endl;
                 exit(1);
             }
         } else if (mode == "minimizers") {
-            bool check_k = (params.find("k_size") != params.end());
-            bool check_w = (params.find("w") != params.end());
+            bool check_k = (parse_params.find("k_size") != parse_params.end());
+            bool check_w = (parse_params.find("w") != parse_params.end());
 
             if (check_k && check_w) {
-                return new Minimizers(params["k_size"], params["w"]);
+                return new Minimizers(parse_params["k_size"], parse_params["w"]);
             } else {
                 std::cerr  << func_name << "kmerDecoder Skipmers parameters {k_size, w} validation failed" << std::endl;
                 exit(1);
@@ -803,12 +824,23 @@ namespace kProcessor {
         return res;
     }
 
-    colored_kDataFrame * index(kDataFrame * frame, string mode, std::map<std::string, int> params, string filename, int chunk_size, string names_fileName){
+    colored_kDataFrame * index(kDataFrame * frame, std::map<std::string, int> parse_params, string filename, int chunk_size, string names_fileName){
+
+        // parse_params["mode"] = 1 > Default: Kmers
+        // parse_params["mode"] = 2 > Skipmers
+        // parse_params["mode"] = 3 > Minimizers
 
         // Initialize kmerDecoder
-        params["k_size"] = frame->ksize();
-        params["k"] = frame->ksize();
-        kmerDecoder * KD = initialize_kmerDecoder(filename, chunk_size, mode, params);
+        std::string mode = "kmers";
+        bool check_mode = (parse_params.find("mode") != parse_params.end());
+        if (check_mode){
+            if (parse_params["mode"] == 2) mode = "skipmers";
+            else if (parse_params["mode"] == 3) mode = "minimizers";
+        }
+
+        parse_params["k_size"] = frame->ksize();
+        parse_params["k"] = frame->ksize();
+        kmerDecoder * KD = initialize_kmerDecoder(filename, chunk_size, mode, parse_params);
 
         // Clone the hashing
 

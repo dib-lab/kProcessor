@@ -3,9 +3,9 @@ namespace kProcessor{
 kDataFrame* kFrameUnion(const vector<kDataFrame*>& input);
 kDataFrame* kFrameIntersect(const vector<kDataFrame*>& input);
 kDataFrame* kFrameDiff(const vector<kDataFrame*>& input);
-void countKmersFromString(kDataFrame * frame, string mode, std::map<std::string, int> params, string sequence);
-void countKmersFromFile(kDataFrame * output, string mode, std::map<std::string, int> params, string filename, int chunk_size = 1000);
-colored_kDataFrame * index(kDataFrame *frame, string mode, std::map<std::string, int> params, string filename, int chunks, string names_fileName);
+void countKmersFromString(kDataFrame * kframe, std::map<std::string, int> params, string sequence);
+void countKmersFromFile(kDataFrame * kframe, std::map<std::string, int> params, string filename, int chunk_size = 1000);
+colored_kDataFrame * index(kDataFrame *kframe, std::map<std::string, int> params, string filename, int chunks, string names_fileName);
 
 //void parseSequences(kmerDecoder * KD, kDataFrame* output);
 //void countKmersFromString(kmerDecoder *KD, string sequence,kDataFrame* output);
