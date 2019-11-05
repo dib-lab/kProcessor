@@ -468,7 +468,7 @@ TEST_P(algorithmsTest,parsingTest)
   kDataFrame* kframe=get<0>(GetParam());
   string fileName=get<1>(GetParam());
   int kSize=kframe->getkSize();
-  kProcessor::parseSequences(fileName,1,kframe);
+  kProcessor::countKmersFromFile(kframe, {{"mode", 1}}, fileName, 1000); // Mode 1 : kmers, KmerSize will be cloned from the kFrame
   seqan::SeqFileIn seqIn(fileName.c_str());
   seqan::StringSet<seqan::CharString> ids;
   seqan::StringSet<seqan::CharString> reads;
