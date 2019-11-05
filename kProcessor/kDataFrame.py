@@ -7,6 +7,7 @@ class kDataFrame:
     The abstract base class defining a kDataFrame.
     """
 
+    # Will publish it later after cloning kmerDecoder settings.
     # def getTwin(self):
     #     """creates a new ``kDataframe`` using the same parameters as the current ``kDataFrame``.
     #
@@ -21,11 +22,14 @@ class kDataFrame:
 
         :param n: Minimum number of kmers
         :type n: integer
+
+         .. note:: Read more about the usage of `reserve(n)` in the FAQ page.
+
         """
         pass
 
     def insert(self, kmer, N = 1):
-        """insert the kmer N time in the kDataFrame, or increment the kmer count with N if it is already exists.
+        """Insert the kmer N time in the kDataFrame, or increment the kmer count with N if it is already exists.
 
         :param kmer: The Kmer to increment its count
         :type kmer: string
@@ -38,7 +42,7 @@ class kDataFrame:
         pass
 
     def setCount(self, kmer, N):
-        """set the kmer's count to N time in the kDataFrame
+        """Set the kmer's count to N time in the kDataFrame
 
         :param kmer: The Kmer to set its count
         :type kmer: string
@@ -47,10 +51,10 @@ class kDataFrame:
         :return: Boolean value indicating whether the kmer is inserted or not
         :rtype: bool
         """
-        passtb
+        pass
 
     def getCount(self, kmer):
-        """retrieve number of times the kmer was inserted in the kdataFrame
+        """Retrieve number of times the kmer was inserted in the kDataFrame
 
         :param kmer: The kmer to retrieve its count
         :type kmer: string
@@ -70,7 +74,7 @@ class kDataFrame:
         pass
 
     def size(self):
-        """ Number of kmers in the kDataFrame
+        """Number of kmers in the kDataFrame
 
         :return: The number of kmers in the kDataframe
         :rtype: integer
@@ -78,22 +82,25 @@ class kDataFrame:
         pass
 
     def max_size(self):
-        """ Maximum number of kmers that the kDataframe can hold.
+        """Maximum number of kmers that the kDataframe can hold.
 
         :return: The maximum number of kmers that the kDataframe can hold.
         :rtype: integer
         """
+
         pass
 
     def empty(self):
-        """ Check whether the kDataFrame is empty of kmers or not.
+        """Check whether the kDataFrame is empty of kmers or not.
 
         :return: Boolean value indicating whether the kDataFrame is empty, i.e. whether its size is 0
+        :rtype: boolean
+
         """
         pass
 
     def load_factor(self):
-        """ Retrieving the load factor of the kDataFrame
+        """Retrieving the current load factor of the kDataFrame in percentage to indicate how full is it.
 
         :return: The current load factor in the kDataFrame.
         :rtype: integer
@@ -101,7 +108,7 @@ class kDataFrame:
         pass
 
     def max_load_factor(self):
-        """ Retrieving the maximum load factor of the kDataFrame
+        """ Retrieving the maximum load factor of the kDataFrame in percentage.
 
         :return: The maximum load factor in the kDataFrame.
         :rtype: integer
@@ -127,17 +134,11 @@ class kDataFrame:
 
     def save(self):
         """
-        Save the kDataFrame on the disk in a form of binary file alongside other metadata files.
+        Serialize the kDataFrame on the disk in a form of binary file alongside other metadata files.
         """
+
         pass
 
-    def getKmerDecoder(self):
-        """ Get the kmerDecoder instance object that's initialized in the kDataFrame
-
-        :return: The kmerDecoder instance used by kDataframe
-        :rtype: kmerDecoder
-        """
-        pass
 
     @staticmethod
     def load(filePath):
@@ -158,16 +159,9 @@ class kDataFrame:
         pass
 
     def kSize(self):
-        """
-        Get the kmer size of the kDataFrame
+        """Get the kmer size of the kDataFrame
 
         :return: kmer size
         :rtype: integer
-        """
-        pass
-
-    def setkSize(self, k):
-        """
-        set the kmer size of the kDataFrame
         """
         pass

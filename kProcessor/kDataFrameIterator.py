@@ -6,6 +6,9 @@ class kDataFrameIterator:
     def next(self):
         """
         Increment the iterator to the next kmer
+
+        :return: kDataFrame Iterator pointing to the new kmer position
+        :rtype: :class:`kProcessor.kDataFrameIterator`
         """
 
     def getKmer(self):
