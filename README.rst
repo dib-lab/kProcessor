@@ -22,4 +22,4 @@ b.    **Kmers, sequences or sequence files:** Any kDataframe can parse ACGT sequ
 .. image:: https://travis-ci.org/dib-lab/kProcessor.svg?branch=master
     :target: https://travis-ci.org/dib-lab/kProcessor
 
-.. image:: _static/images/kDataFrame.png
+.. .. image:: _static/images/kDataFrame.png
