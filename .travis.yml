@@ -52,16 +52,18 @@ install:
   - cmake ..
   - make
   - cd ${BACK}
+  - echo "******** Running kProcessor CPP Test Cases ********"
+  - cd ./build/tests/kProcessorLibTests
+  - ./testKprocessorLib
+
+
+script:
+  - cd ${BACK}
   - echo "******** Building Python Interface ********"
   - $(which python) setup.py bdist_wheel
   - cd dist/
   - $(which python) -m pip install kProcessor*whl
   - cd ${BACK}
-
-script:
-  - echo "******** Running kProcessor CPP Test Cases ********"
-  - cd ./build/tests/kProcessorLibTests
-  - ./testKprocessorLib
   - echo "******** Running Python Interface Test Cases ********"
   - echo "Python version $(which python)"
   - cd ${BACK}
