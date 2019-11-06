@@ -32,9 +32,9 @@ void estimateMemRequirement(std::string ntcardFilename,
 
 inline uint64_t estimateMemory(uint64_t nslots,uint64_t slotSize, uint64_t fcounter, uint64_t tagSize)
    {
-     uint64_t SLOTS_PER_BLOCK=64;
+     uint64_t SLOTS_PER_BLOCK_t=64;
      uint64_t xnslots = nslots + 10*sqrt((double)nslots);
-   	uint64_t nblocks = (xnslots + SLOTS_PER_BLOCK - 1) / SLOTS_PER_BLOCK;
+   	uint64_t nblocks = (xnslots + SLOTS_PER_BLOCK_t - 1) / SLOTS_PER_BLOCK_t;
      uint64_t blocksize=17;
 
      return ((nblocks)*(blocksize+8*(slotSize+fcounter+tagSize)))/1024;

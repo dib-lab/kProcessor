@@ -8,6 +8,7 @@
 #include "Utils/kmer.h"
 #include <iostream>
 #include <parallel_hashmap/phmap.h>
+#include "bufferedMQF.h"
 
 using phmap::flat_hash_map;
 using namespace std;
@@ -383,6 +384,70 @@ public:
     ~kDataFrameMAPIterator();
 };
 
+// kDataFrameBMQF _____________________________
+
+class kDataFrameBMQF: public kDataFrame{
+
+private:
+  bufferedMQF* bufferedmqf;
+  double falsePositiveRate;
+  uint64_t hashbits;
+  __uint128_t range;
+  static bool isEnough(vector<uint64_t> histogram,uint64_t noSlots,uint64_t fixedSizeCounter,uint64_t slotSize);
+  friend class kDataframeBMQF;
+public:
+  kDataFrameBMQF();
+  kDataFrameBMQF(uint64_t kSize);
+  kDataFrameBMQF(uint64_t ksize,uint8_t q,uint8_t fixedCounterSize,uint8_t tagSize,double falsePositiveRate);
+  kDataFrameBMQF(bufferedMQF* bufferedmqf,uint64_t ksize,double falsePositiveRate);
+  //count histogram is array where count of kmers repeated n times is found at index n. index 0 holds number of distinct kmers.
+  kDataFrameBMQF(uint64_t ksize,vector<uint64_t> countHistogram,uint8_t tagSize
+    ,double falsePositiveRate);
+  ~kDataFrameBMQF(){
+    bufferedMQF_destroy(bufferedmqf);
+    delete bufferedmqf;
+  }
+  void reserve (uint64_t n);
+  void reserve (vector<uint64_t> countHistogram);
+
+  kDataFrame* getTwin();
+
+  static uint64_t estimateMemory(uint64_t nslots,uint64_t slotSize,
+    uint64_t fcounter, uint64_t tagSize);
+
+
+  static void estimateParameters(vector<uint64_t> countHistogram,
+    uint64_t numHashBits,uint64_t tagSize,
+  uint64_t *res_noSlots,uint64_t *res_fixedSizeCounter, uint64_t *res_memory);
+
+
+  bool setCount(string kmer,uint64_t count);
+  bool insert(string kmer,uint64_t count);
+  bool insert(string kmer);
+  uint64_t count(string kmer);
+
+
+  bool erase(string kmer);
+
+  uint64_t size();
+/// max_size function returns the estimated maximum number of kmers that the kDataframeBMQF can hold.
+/*! The number of kmers is estimated as if all the kmers repeated 2^(fixed counter size)-1 times.*/
+  uint64_t max_size();
+  float load_factor();
+  float max_load_factor();
+
+
+  bufferedMQF* getBMQF(){
+    return bufferedmqf;
+  }
+
+  void save(string filePath);
+  static kDataFrame* load(string filePath);
+
+  kDataFrameIterator begin();
+  kDataFrameIterator end();
+};
+
 // kDataFrameMAP _____________________________
 
 class kDataFrameMAP : public kDataFrame
@@ -505,5 +570,27 @@ public:
         this->MAP.clear();
     }
 };
+
+class kDataFrameBMQFIterator:public _kDataFrameIterator{
+private:
+    bufferedMQFIterator* qfi;
+    Hasher* hasher;
+    bufferedMQF* mqf;
+public:
+    kDataFrameBMQFIterator(bufferedMQF*,uint64_t kSize,Hasher* h);
+    kDataFrameBMQFIterator(const kDataFrameBMQFIterator&);
+    kDataFrameBMQFIterator& operator ++ (int);
+    _kDataFrameIterator* clone();
+    uint64_t getHashedKmer();
+    string getKmer();
+    kDataFrame *getTwin();
+    uint64_t getKmerCount();
+    bool setKmerCount(uint64_t count);
+    void endIterator();
+    bool operator ==(const _kDataFrameIterator& other);
+    bool operator !=(const _kDataFrameIterator& other);
+    ~kDataFrameBMQFIterator();
+};
+
 
 #endif

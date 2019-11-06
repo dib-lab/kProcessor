@@ -9,6 +9,9 @@ using namespace std;
 class kDataFrameTest : public ::testing::TestWithParam<kDataFrame* >{
 };
 
+class kDataFrameBufferedTest : public ::testing::TestWithParam<kDataFrameBMQF* >{
+};
+
 class algorithmsTest : public ::testing::TestWithParam<tuple<kDataFrame*,string> >{
 };
 class estimateTest : public ::testing::TestWithParam<string >{
@@ -53,7 +56,7 @@ public:
       {
         uint64_t kmerInt=rand()%range;
         string kmerStr=kmer::int_to_str(kmerInt,kSize);
-        uint64_t kmerCount=(rand()%1000)+1;
+//        uint64_t kmerCount=(rand()%1000)+1;
         db[kSize]->insert(make_pair(kmerStr,kmerInt));
       }
       it=db.find(kSize);
