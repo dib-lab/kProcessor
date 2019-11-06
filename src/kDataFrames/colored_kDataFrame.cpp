@@ -22,6 +22,12 @@ uint32_t colored_kDataFrame::getColor(string kmer)
 {
   return frame->getCount(kmer);
 }
+
+uint32_t colored_kDataFrame::getColor(uint64_t kmer)
+{
+    return frame->getCount(kmer);
+}
+
 void colored_kDataFrame::getKmerSource(string kmer,vector<uint32_t>& result)
 {
   uint32_t color=getColor(kmer);
@@ -31,6 +37,17 @@ void colored_kDataFrame::getKmerSource(string kmer,vector<uint32_t>& result)
     return;
   }
   colors->getSamples(color,result);
+}
+
+void colored_kDataFrame::getKmerSource(uint64_t kmer,vector<uint32_t>& result)
+{
+    uint32_t color=getColor(kmer);
+    result.clear();
+    if(color==0)
+    {
+        return;
+    }
+    colors->getSamples(color,result);
 }
 
 vector<uint32_t> colored_kDataFrame::getKmerSource(string kmer)
