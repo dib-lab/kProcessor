@@ -91,7 +91,7 @@ kProcessor_module = Extension('_kProcessor',
                               sources=SOURCES,
                               include_dirs=INCLUDES,
                               extra_link_args=LINK_ARGS,
-                              extra_compile_args = ["-O3", "-Ofast"],
+                              extra_compile_args = ["-O3", "-Ofast","-std=c++17"],
                               swig_opts=SWIG_OPTS,
                               )
 
