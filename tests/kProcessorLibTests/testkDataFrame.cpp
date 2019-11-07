@@ -5,7 +5,6 @@
 #include <stdint.h>
 #include <iostream>
 #include <vector>
-#include <seqan/seq_io.h>
 #include "algorithms.hpp"
 #include <iterator>
 #include <algorithm>
@@ -468,28 +467,19 @@ TEST_P(algorithmsTest,parsingTest)
   kDataFrame* kframe=get<0>(GetParam());
   string fileName=get<1>(GetParam());
   int kSize=kframe->getkSize();
-  kProcessor::countKmersFromFile(kframe, {{"mode", 1}}, fileName, 1000); // Mode 1 : kmers, KmerSize will be cloned from the kFrame
-  seqan::SeqFileIn seqIn(fileName.c_str());
-  seqan::StringSet<seqan::CharString> ids;
-  seqan::StringSet<seqan::CharString> reads;
   int chunkSize=1000;
-  while(!atEnd(seqIn)){
-    clear(reads);
-    clear(ids);
 
-    seqan::readRecords(ids, reads, seqIn,chunkSize);
-    for(int j=0;j<length(reads);j++)
-    {
-      string seq=string((char*)seqan::toCString(reads[j]));
-      for(int i=0;i<seq.size()-kSize+1;i++)
-      {
-          string kmer=seq.substr(i,kSize);
-          ASSERT_GE(kframe->getCount(kmer),1);
-      }
+  kProcessor::countKmersFromFile(kframe, {{"mode", 1}}, fileName, 1000); // Mode 1 : kmers, KmerSize will be cloned from the kFrame
+  kmerDecoder *KMERS = kProcessor::initialize_kmerDecoder(fileName, 1000, "kmers", {{"k_size", kSize}});
+
+    while (!KMERS->end()) {
+        KMERS->next_chunk();
+        for (const auto &seq : *KMERS->getKmers()) {
+            for (const auto &kmer : seq.second) {
+                ASSERT_GE(kframe->getCount(kmer.str),1);
+            }
+        }
     }
-
-  }
-  seqan::close(seqIn);
 }
 
 TEST_P(estimateTest,estimateTestTest)
@@ -626,41 +616,28 @@ TEST_P(indexingTest,index)
   kmerDecoder *KMERS = kProcessor::initialize_kmerDecoder(filename, chunkSize, "kmers", {{"k_size", 25}});
   colored_kDataFrame* res= kProcessor::index(KMERS, filename+".names", KF);
 
-  seqan::SeqFileIn seqIn2(filename.c_str());
-  seqan::StringSet<seqan::CharString> ids;
-  seqan::StringSet<seqan::CharString> reads;
-  uint64_t kSize=res->getkSize();
-  int readCount=0;
-  int correct=0,wrong=0;
-  vector<uint32_t> colors;
-  string kmer;
-  while(!atEnd(seqIn2)){
-    clear(reads);
-    clear(ids);
-    seqan::readRecords(ids, reads, seqIn2,chunkSize);
-    for(int j=0;j<length(reads);j++){
-      string readName=string((char*)seqan::toCString(ids[j]));
-      uint32_t sampleID=res->namesMapInv[readName];
-      ASSERT_NE(sampleID,0);
+    uint64_t kSize=res->getkSize();
+    int readCount=0;
+    int correct=0,wrong=0;
+    vector<uint32_t> colors;
 
 
-      string seq=string((char*)seqan::toCString(reads[j]));
-      if(seq.size()<kSize)
-        continue;
-      for (int i = 0; i < seq.size() - kSize + 1; i++)
-      {
-        kmer=seq.substr(i,kSize);
-        colors.clear();
-        res->getKmerSource(kmer,colors);
-        ASSERT_NE(colors.size(),0);
-        auto colorIt=colors.end();
-        colorIt=find(colors.begin(),colors.end(),sampleID);
-        ASSERT_NE(colorIt,colors.end());
-
-      }
+    while (!KMERS->end()) {
+            KMERS->next_chunk();
+            for (const auto &seq : *KMERS->getKmers()) {
+                string readName = seq.first;
+                uint32_t sampleID = res->namesMapInv[readName];
+                ASSERT_NE(sampleID, 0);
+                for (const auto &kmer : seq.second) {
+                    colors.clear();
+                    res->getKmerSource(kmer.str, colors);
+                    ASSERT_NE(colors.size(),0);
+                    auto colorIt=colors.end();
+                    colorIt=find(colors.begin(),colors.end(),sampleID);
+                    ASSERT_NE(colorIt,colors.end());
+                }
+            }
     }
-
-  }
 
 }
 TEST_P(indexingTest,saveAndLoad)
@@ -672,40 +649,27 @@ TEST_P(indexingTest,saveAndLoad)
   colored_kDataFrame* res1= kProcessor::index(KMERS,filename+".names", KF);
   res1->save("tmp.coloredKdataFrame");
   colored_kDataFrame* res=colored_kDataFrame::load("tmp.coloredKdataFrame");
-  seqan::SeqFileIn seqIn2(filename.c_str());
-  seqan::StringSet<seqan::CharString> ids;
-  seqan::StringSet<seqan::CharString> reads;
+
   uint64_t kSize=res->getkSize();
   int readCount=0;
   int correct=0,wrong=0;
   vector<uint32_t> colors;
-  string kmer;
-  while(!atEnd(seqIn2)){
-    clear(reads);
-    clear(ids);
-    seqan::readRecords(ids, reads, seqIn2,chunkSize);
-    for(int j=0;j<length(reads);j++){
-      string readName=string((char*)seqan::toCString(ids[j]));
-      uint32_t sampleID=res->namesMapInv[readName];
-      ASSERT_NE(sampleID,0);
 
-
-      string seq=string((char*)seqan::toCString(reads[j]));
-      if(seq.size()<kSize)
-        continue;
-      for (int i = 0; i < seq.size() - kSize + 1; i++)
-      {
-        kmer=seq.substr(i,kSize);
-        colors.clear();
-        res->getKmerSource(kmer,colors);
-        ASSERT_NE(colors.size(),0);
-        auto colorIt=colors.end();
-        colorIt=find(colors.begin(),colors.end(),sampleID);
-        ASSERT_NE(colorIt,colors.end());
-
-      }
+    while (!KMERS->end()) {
+        KMERS->next_chunk();
+        for (const auto &seq : *KMERS->getKmers()) {
+            string readName = seq.first;
+            uint32_t sampleID = res->namesMapInv[readName];
+            ASSERT_NE(sampleID, 0);
+            for (const auto &kmer : seq.second) {
+                colors.clear();
+                res->getKmerSource(kmer.str, colors);
+                ASSERT_NE(colors.size(),0);
+                auto colorIt=colors.end();
+                colorIt=find(colors.begin(),colors.end(),sampleID);
+                ASSERT_NE(colorIt,colors.end());
+            }
+        }
     }
-
-  }
 
 }
