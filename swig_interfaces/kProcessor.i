@@ -73,7 +73,7 @@ using namespace std; // Extremly important
 /******** HashUtils Interface ************/
 
 %{
-#include "HashUtils/hashutil.h" // including HashUtils
+#include "HashUtils/hashutil.hpp" // including HashUtils
 %}
 
 %include "swig_interfaces/HashUtils/hashutil.i"

@@ -14,16 +14,16 @@
  */
 
 
-kDataFrameMQFIterator::kDataFrameMQFIterator(QF *mqf, uint64_t kSize, Hasher *h)
+kDataFrameMQFIterator::kDataFrameMQFIterator(QF *mqf, uint64_t kSize, kmerDecoder *KD)
         : _kDataFrameIterator(kSize) {
     qfi = new QFi();
     qf_iterator(mqf, qfi, 0);
-    this->hasher = h;
+    this->KD = KD;
 }
-kDataFrameMQFIterator::kDataFrameMQFIterator(QFi *mqfIt, uint64_t kSize, Hasher *h)
+kDataFrameMQFIterator::kDataFrameMQFIterator(QFi *mqfIt, uint64_t kSize, kmerDecoder *KD)
         : _kDataFrameIterator(kSize) {
     qfi = mqfIt;
-    this->hasher = h;
+    this->KD = KD;
 }
 kDataFrameMQFIterator::kDataFrameMQFIterator(const kDataFrameMQFIterator &other) :
         _kDataFrameIterator(other.kSize) {
@@ -35,7 +35,7 @@ kDataFrameMQFIterator::kDataFrameMQFIterator(const kDataFrameMQFIterator &other)
     qfi->cur_length = other.qfi->cur_length;
     qfi->num_clusters = other.qfi->num_clusters;
     qfi->c_info = other.qfi->c_info;
-    hasher = other.hasher;
+    KD = other.KD;
 }
 
 _kDataFrameIterator *kDataFrameMQFIterator::clone() {
@@ -55,16 +55,16 @@ uint64_t kDataFrameMQFIterator::getHashedKmer() {
 }
 
 string kDataFrameMQFIterator::getKmer() {
-    return hasher->Ihash(getHashedKmer());
+    return KD->ihash_kmer(getHashedKmer());
 }
 
-uint64_t kDataFrameMQFIterator::getKmerCount() {
+uint64_t kDataFrameMQFIterator::getCount() {
     uint64_t key, value, count;
     qfi_get(qfi, &key, &value, &count);
     return count;
 }
 
-bool kDataFrameMQFIterator::setKmerCount(uint64_t count) {
+bool kDataFrameMQFIterator::setCount(uint64_t count) {
     uint64_t key, value, currentCount;
     qfi_get(qfi, &key, &value, &currentCount);
     if (currentCount > count) {
@@ -110,20 +110,20 @@ kDataFrameMQFIterator::~kDataFrameMQFIterator() {
 
 kDataFrameIterator kDataFrameMQF::begin() {
     return (kDataFrameIterator(
-            (_kDataFrameIterator *) new kDataFrameMQFIterator(mqf, kSize, hasher),
+            (_kDataFrameIterator *) new kDataFrameMQFIterator(mqf, kSize, KD),
             (kDataFrame *) this));
 }
 
 kDataFrameIterator kDataFrameMQF::end() {
-    kDataFrameMQFIterator *it = new kDataFrameMQFIterator(mqf, kSize, hasher);
+    kDataFrameMQFIterator *it = new kDataFrameMQFIterator(mqf, kSize, KD);
     it->endIterator();
     return (kDataFrameIterator(it, (kDataFrame *) this));
 }
 kDataFrameIterator kDataFrameMQF::find(string kmer) {
     QFi* mqfIt = new QFi();
-    uint64_t hash = hasher->hash(kmer) % mqf->metadata->range;
+    uint64_t hash = KD->hash_kmer(kmer) % mqf->metadata->range;
     qfi_find(mqf,mqfIt,hash);
-    kDataFrameMQFIterator *it = new kDataFrameMQFIterator(mqfIt, kSize, hasher);
+    kDataFrameMQFIterator *it = new kDataFrameMQFIterator(mqfIt, kSize, KD);
     return (kDataFrameIterator(it, (kDataFrame *) this));
 }
 
@@ -138,7 +138,7 @@ kDataFrameMQF::kDataFrameMQF() : kDataFrame() {
     this->class_name = "MQF"; // Temporary until resolving #17
     mqf = new QF();
     qf_init(mqf, (1ULL << 16), 2 * kSize, 0, 2, 32, true, "", 2038074761);
-    hasher = (new IntegerHasher(kSize));
+    KD = (new Kmers(kSize));
     falsePositiveRate = 0;
     hashbits = 2 * kSize;
     range = (1ULL << hashbits);
@@ -150,26 +150,28 @@ kDataFrameMQF::kDataFrameMQF(uint64_t ksize, uint8_t q, int mode) : kDataFrame(k
 
     // Mode 0: Murmar Hashing | Irreversible
     // Mode 1: Integer Hashing | Reversible | Full Hashing
-    // Mode 2: Q Hashing | Reversible | Hashing only the Q
-    // Mode 3: TwoBitsHashing | Not considered hashing, just store the two bits representation
+    // Mode 2: TwoBitsHashing | Not considered hashing, just store the two bits representation
 
-    switch (mode) {
-        case 0:
-            hasher = (new MumurHasher(2038074761));
-            break;
-        case 1:
-            hasher = (new IntegerHasher(kSize));
-            break;
-        case 2:
-            hasher = (new QHasher(kSize, q));
-            break;
-        case 3:
-            hasher = (new TwoBitsHasher(kSize));
-            break;
-        default:
-            hasher = (new IntegerHasher(kSize));
-            break;
-    }
+    KD = new Kmers(ksize, mode);
+
+
+//    switch (mode) {
+//        case 0:
+//            hasher = (new MumurHasher(2038074761));
+//            break;
+//        case 1:
+//            hasher = (new IntegerHasher(kSize));
+//            break;
+//        case 2:
+//            hasher = (new QHasher(kSize, q));
+//            break;
+//        case 3:
+//            hasher = (new TwoBitsHasher(kSize));
+//            break;
+//        default:
+//            hasher = (new IntegerHasher(kSize));
+//            break;
+//    }
 
     mqf = new QF();
     qf_init(mqf, (1ULL << q), 2 * ksize, 0, 2, 32, true, "", 2038074761);
@@ -187,20 +189,31 @@ kDataFrameMQF::kDataFrameMQF(uint64_t ksize, uint8_t q, uint8_t fixedCounterSize
     qf_init(mqf, (1ULL << q), 2 * ksize, tagSize, fixedCounterSize, 32, true, "", 2038074761);
     this->falsePositiveRate = falsePositiveRate;
     if (falsePositiveRate == 0) {
-        hasher = (new IntegerHasher(kSize));
+        KD = (new Kmers(kSize,1));
     } else if (falsePositiveRate < 1) {
-        hasher = (new MumurHasher(2038074761));
+        KD = (new Kmers(kSize, 0));
     }
     hashbits = 2 * kSize;
     range = (1ULL << hashbits);
 
 }
 
+kDataFrameMQF::kDataFrameMQF(uint64_t ksize, int mode) :
+    kDataFrame(ksize) {
+    this->class_name = "MQF"; // Temporary until resolving #17
+    this->falsePositiveRate = 0.0;
+    KD = new Kmers(ksize, mode);
+    hashbits = 2 * kSize;
+    range = (1ULL << hashbits);
+    mqf = NULL;
+    reserve(1000000);
+}
+
 kDataFrameMQF::kDataFrameMQF(uint64_t ksize) :
         kDataFrame(ksize) {
     this->class_name = "MQF"; // Temporary until resolving #17
     this->falsePositiveRate = 0.0;
-    hasher = (new IntegerHasher(kSize));
+    KD = (new Kmers(kSize));
     hashbits = 2 * kSize;
     range = (1ULL << hashbits);
     mqf = NULL;
@@ -213,9 +226,9 @@ kDataFrameMQF::kDataFrameMQF(QF *mqf, uint64_t ksize, double falsePositiveRate) 
     this->mqf = mqf;
     this->falsePositiveRate = falsePositiveRate;
     if (falsePositiveRate == 0) {
-        hasher = (new IntegerHasher(kSize));
+        KD = (new Kmers(kSize));
     } else if (falsePositiveRate < 1) {
-        hasher = (new MumurHasher(2038074761));
+        KD = (new Kmers(kSize, 0));
     }
     hashbits = this->mqf->metadata->key_bits;
     hashbits = 2 * kSize;
@@ -351,7 +364,24 @@ kDataFrameMQF::isEnough(vector<uint64_t> histogram, uint64_t noSlots, uint64_t f
 
 
 bool kDataFrameMQF::setCount(string kmer, uint64_t count) {
-    uint64_t hash = hasher->hash(kmer) % mqf->metadata->range;
+    uint64_t hash = KD->hash_kmer(kmer) % mqf->metadata->range;
+    uint64_t currentCount = qf_count_key(mqf, hash);
+    if (currentCount > count) {
+        qf_remove(mqf, hash, currentCount - count, false, false);
+    } else {
+        try {
+            qf_insert(mqf, hash, count - currentCount, false, false);
+        }
+        catch (overflow_error &e) {
+            reserve(mqf->metadata->nslots);
+            return setCount(kmer, count);
+        }
+    }
+    return true;
+}
+
+bool kDataFrameMQF::setCount(uint64_t kmer, uint64_t count) {
+    uint64_t hash = kmer % mqf->metadata->range;
     uint64_t currentCount = qf_count_key(mqf, hash);
     if (currentCount > count) {
         qf_remove(mqf, hash, currentCount - count, false, false);
@@ -368,7 +398,7 @@ bool kDataFrameMQF::setCount(string kmer, uint64_t count) {
 }
 
 bool kDataFrameMQF::insert(string kmer, uint64_t count) {
-    uint64_t hash = hasher->hash(kmer) % mqf->metadata->range;
+    uint64_t hash = KD->hash_kmer(kmer) % mqf->metadata->range;
     try {
         qf_insert(mqf, hash, count, true, true);
     }
@@ -382,7 +412,7 @@ bool kDataFrameMQF::insert(string kmer, uint64_t count) {
 bool kDataFrameMQF::insert(string kmer) {
     if (load_factor() > 0.9)
         reserve(mqf->metadata->nslots);
-    uint64_t hash = hasher->hash(kmer) % mqf->metadata->range;
+    uint64_t hash = KD->hash_kmer(kmer) % mqf->metadata->range;
     // cout << "Inserting kmer: " << kmer << ", Hash: " << hash << endl;
     try {
         qf_insert(mqf, hash, 1, false, false);
@@ -394,14 +424,55 @@ bool kDataFrameMQF::insert(string kmer) {
     return true;
 }
 
-uint64_t kDataFrameMQF::count(string kmer) {
-    uint64_t hash = hasher->hash(kmer) % mqf->metadata->range;
+
+bool kDataFrameMQF::insert(uint64_t kmer, uint64_t count) {
+    uint64_t hash = kmer % mqf->metadata->range;
+    try {
+        qf_insert(mqf, hash, count, true, true);
+    }
+    catch (overflow_error &e) {
+        reserve(mqf->metadata->nslots);
+        return insert(kmer, count);
+    }
+    return true;
+}
+
+bool kDataFrameMQF::insert(uint64_t kmer) {
+    if (load_factor() > 0.9)
+        reserve(mqf->metadata->nslots);
+    uint64_t hash = kmer % mqf->metadata->range;
+    // cout << "Inserting kmer: " << kmer << ", Hash: " << hash << endl;
+    try {
+        qf_insert(mqf, hash, 1, false, false);
+    }
+    catch (overflow_error &e) {
+        reserve(mqf->metadata->nslots);
+        return insert(kmer);
+    }
+    return true;
+}
+
+uint64_t kDataFrameMQF::getCount(string kmer) {
+    uint64_t hash = KD->hash_kmer(kmer) % mqf->metadata->range;
+    return qf_count_key(mqf, hash);
+}
+
+uint64_t kDataFrameMQF::getCount(uint64_t kmer) {
+    uint64_t hash = kmer % mqf->metadata->range;
     return qf_count_key(mqf, hash);
 }
 
 
 bool kDataFrameMQF::erase(string kmer) {
-    uint64_t hash = hasher->hash(kmer) % mqf->metadata->range;
+    uint64_t hash = KD->hash_kmer(kmer) % mqf->metadata->range;
+    uint64_t currentCount = qf_count_key(mqf, hash);
+
+    qf_remove(mqf, hash, currentCount, false, false);
+    return true;
+}
+
+bool kDataFrameMQF::erase(uint64_t kmer) {
+    uint64_t hash = kmer % mqf->metadata->range;
     uint64_t currentCount = qf_count_key(mqf, hash);
 
     qf_remove(mqf, hash, currentCount, false, false);
@@ -456,6 +527,6 @@ void kDataFrameMQF::preprocessKmerOrder()
 }
 uint64_t kDataFrameMQF::getkmerOrder(string kmer)
 {
-  uint64_t hash = hasher->hash(kmer) % mqf->metadata->range;
+  uint64_t hash = KD->hash_kmer(kmer) % mqf->metadata->range;
   return itemOrder(mqf,hash);
 }

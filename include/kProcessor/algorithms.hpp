@@ -10,13 +10,11 @@
 #include <stdint.h>
 #include <string>
 #include <gqf.h>
-#include "HashUtils/hashutil.h"
 #include "kDataFrame.hpp"
 #include <math.h>
 #include <vector>
 #include "colored_kDataFrame.hpp"
 #include <map>
-#include "kmerDecoder.hpp"
 #include <any>
 
 
@@ -48,8 +46,14 @@ void parseSequences(string seqFileName,int nThreads,kDataFrame* output);
 /// Load the kmers in the input file into the output kDataframe. Input File can be of formats: fastq,fasta.
 void parseSequences(kmerDecoder * KD, kDataFrame* output);
 
+/// Load the kmers in the input file into the output kDataframe. Input File can be of formats: fastq,fasta.
+void countKmersFromFile(kDataFrame * kframe, std::map<std::string, int> parse_params, string filename, int chunk_size = 1000);
+
 /// Load the kmers in the input string into the output kDataframe.
-void parseSequencesFromString(kmerDecoder *KD, string sequence,kDataFrame* output);
+void countKmersFromString(kmerDecoder *KD, string sequence,kDataFrame* output);
+
+/// Load the kmers in the input string into the output kDataframe.
+void countKmersFromString(kDataFrame * frame, std::map<std::string, int> parse_params, string sequence);
 
 /// Applies a function on all the kmers in the input kDataframe. The output is another kDataframe with the transformed kmers.
 kDataFrame* transform(kDataFrame* input,kmerRow (*fn)(kmerRow i));
@@ -76,13 +80,28 @@ kDataFrame* kFrameIntersect(const vector<kDataFrame*>& input);
 kDataFrame* kFrameDiff(const vector<kDataFrame*>& input);
 
 /// Initialize kmerDecoder to decode kmers from a FASTA/Q file with predefined mode.
-kmerDecoder* initialize_kmerDecoder(std::string filename, int chunkSize, std::string mode, std::map<std::string, int> params);
+kmerDecoder* initialize_kmerDecoder(std::string filename, int chunkSize, std::string mode, std::map<std::string, int> parse_params);
 
 /// Initialize kmerDecoder to decode kmers from a sequence string with predefined mode.
-kmerDecoder* initialize_kmerDecoder(std::string mode, std::map<std::string, int> params);
+kmerDecoder* initialize_kmerDecoder(std::string mode, std::map<std::string, int> parse_params);
+
+// Initialize kmerDecoder to hash and Ihash single kmer.
+kmerDecoder* initialize_kmerDecoder(int kmer_size, int hash_mode = 1);
+
+/* set hashing mode for kmerDecoder object
+ *
+ * Mode 0: Murmar Hashing | Irreversible
+ * Mode 1: Integer Hashing | Reversible | Full Hashing
+ * Mode 2: TwoBitsHashing | Not considered hashing, just store the two bits representation
+*/
+ void kmerDecoder_setHashing(kmerDecoder * KD, int hash_mode, bool canonical = true);
 
 /// Perform indexing to a sequences file with predefined kmers decoding mode, returns a colored kDataframe.
 colored_kDataFrame *index(kmerDecoder *KD, string names_fileName, kDataFrame *frame);
+
+/// Index function without needing the kmerDecoder
+    colored_kDataFrame *
+    index(kDataFrame *frame, std::map<std::string, int> parse_params, string filename, int chunks, string names_fileName);
 
 }
 #endif

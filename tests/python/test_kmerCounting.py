@@ -14,18 +14,14 @@ class TestkmerCounting(unittest.TestCase):
         params_PHMAP = test_params(self.ksize, "PHMAP")
         params_MAP = test_params(self.ksize, "MAP")
 
-        KD_MQF = kp.initialize_kmerDecoder(params_MQF.fastqFiles[0], 1000, "kmers", {"k_size": self.ksize})
-        KD_PHMAP = kp.initialize_kmerDecoder(params_PHMAP.fastqFiles[0], 1000, "kmers", {"k_size": self.ksize})
-        KD_MAP = kp.initialize_kmerDecoder(params_MAP.fastqFiles[0], 1000, "kmers", {"k_size": self.ksize})
-
         KF_MQF = params_MQF.new_kf(self.ksize)
         KF_PHMAP = params_PHMAP.new_kf(self.ksize)
         KF_MAP = params_MAP.new_kf(self.ksize)
 
         # kmerCounting
-        kp.parseSequences(KD_MQF, KF_MQF)
-        kp.parseSequences(KD_PHMAP, KF_PHMAP)
-        kp.parseSequences(KD_MAP, KF_MAP)
+        kp.countKmersFromFile(KF_MQF, {"mode": 1, "k_size": self.ksize}, params_MQF.fastqFiles[0], 1000)
+        kp.countKmersFromFile(KF_PHMAP, {"mode": 1, "k_size": self.ksize}, params_PHMAP.fastqFiles[0], 1000)
+        kp.countKmersFromFile(KF_MAP, {"mode": 1, "k_size": self.ksize}, params_MAP.fastqFiles[0], 1000)
 
         self.assertTrue(KF_MQF.size())
         self.assertTrue(KF_PHMAP.size())
@@ -36,10 +32,6 @@ class TestkmerCounting(unittest.TestCase):
         params_PHMAP = test_params(self.ksize, "PHMAP")
         params_MAP = test_params(self.ksize, "MAP")
 
-        KD_MQF = kp.initialize_kmerDecoder(params_MQF.fasta_file, 1000, "kmers", {"k_size": self.ksize})
-        KD_PHMAP = kp.initialize_kmerDecoder(params_PHMAP.fasta_file, 1000, "kmers", {"k_size": self.ksize})
-        KD_MAP = kp.initialize_kmerDecoder(params_MAP.fasta_file, 1000, "kmers", {"k_size": self.ksize})
-
         KF_MQF = params_MQF.new_kf(self.ksize)
         KF_PHMAP = params_PHMAP.new_kf(self.ksize)
         KF_MAP = params_MAP.new_kf(self.ksize)
@@ -49,9 +41,9 @@ class TestkmerCounting(unittest.TestCase):
         self.assertFalse(KF_MAP.size())
 
         # kmerCounting
-        kp.parseSequences(KD_MQF, KF_MQF)
-        kp.parseSequences(KD_PHMAP, KF_PHMAP)
-        kp.parseSequences(KD_MAP, KF_MAP)
+        kp.countKmersFromFile(KF_MQF, {"mode": 1, "k_size": self.ksize}, params_MQF.fasta_file, 1000)
+        kp.countKmersFromFile(KF_PHMAP, {"mode": 1, "k_size": self.ksize}, params_PHMAP.fasta_file, 1000)
+        kp.countKmersFromFile(KF_MAP, {"mode": 1, "k_size": self.ksize}, params_MAP.fasta_file, 1000)
 
         self.assertTrue(KF_MQF.size())
         self.assertTrue(KF_PHMAP.size())

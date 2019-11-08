@@ -65,17 +65,17 @@ public:
     return iterator->getKmer();
   }
   /// Returns the count of the current kmer
-  uint64_t getKmerCount(){
-    return iterator->getKmerCount();
+  uint64_t getCount(){
+    return iterator->getCount();
   }
   /// sets the count of the current kmer
-  bool setKmerCount(uint64_t count){
-    return iterator->setKmerCount(count);
+  bool setCount(uint64_t count){
+    return iterator->setCount(count);
   }
   kmerRow operator*(){
     return kmerRow(iterator->getKmer(),
                    iterator->getHashedKmer(),
-                   iterator->getKmerCount()
+                   iterator->getCount()
                   );
   }
   ~kDataFrameIterator(){

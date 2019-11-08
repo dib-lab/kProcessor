@@ -25,7 +25,7 @@ returns the color of the kmer
 
 ```python
 
-kmer_color = colored_kDataFrame.getKmerColor(kmer)
+kmer_color = colored_kDataFrame.getColor(kmer)
 
 ```
 
@@ -35,7 +35,7 @@ return a list of samples IDs associated with this color
 
 ```python
 
-samples_list = colored_kDataFrame.getSamplesIDForColor(color)
+samples_list = colored_kDataFrame.getKmerSourceFromColor(color)
 
 ```
 

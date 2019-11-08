@@ -18,12 +18,14 @@ public:
   flat_hash_map<string,uint32_t> namesMapInv;
   colored_kDataFrame();
   void addNewColor(uint32_t color, vector<uint32_t> & samplesIds);
-  void setKmerColor(string kmer,uint32_t color);
-  uint32_t getKmerColor(string kmer);
-  vector<uint32_t> getSamplesIDForKmer(string kmer);
-  void getSamplesIDForKmer(string kmer,vector<uint32_t> & result);
-  vector<uint32_t> getSamplesIDForColor(uint32_t color);
-  void getSamplesIDForColor(uint32_t color,vector<uint32_t> & result);
+  void setColor(string kmer,uint32_t color);
+  uint32_t getColor(string kmer);
+  uint32_t getColor(uint64_t kmer);
+  vector<uint32_t> getKmerSource(string kmer);
+  void getKmerSource(string kmer,vector<uint32_t> & result);
+  void getKmerSource(uint64_t kmer,vector<uint32_t> & result);
+  vector<uint32_t> getKmerSourceFromColor(uint32_t color);
+  void getKmerSourceFromColor(uint32_t color,vector<uint32_t> & result);
 
   void colorKmer(string kmer,vector<uint32_t> & samplesIds);
 
@@ -37,6 +39,8 @@ public:
   unordered_map<int, string> names_map();
   unordered_map<string, int> inverse_names_map();
 
+  // Get the kDataFrame of the colored_kDataFrame
+  kDataFrame * getkDataFrame();
 
 };
 

@@ -3,6 +3,7 @@ class kDataFrameMQF: public kDataFrame{
 public:
   kDataFrameMQF();
   kDataFrameMQF(uint64_t kSize);
+  kDataFrameMQF(uint64_t kSize, int mode);
   kDataFrameMQF(uint64_t ksize, uint8_t q, int mode);
   kDataFrameMQF(uint64_t ksize,uint8_t q,uint8_t fixedCounterSize,uint8_t tagSize,double falsePositiveRate);
 
@@ -18,7 +19,7 @@ public:
   bool setCount(string kmer,uint64_t count);
   bool insert(string kmer,uint64_t count);
   bool insert(string kmer);
-  uint64_t count(string kmer);
+  uint64_t getCount(string kmer);
   bool erase(string kmer);
 
   uint64_t size();

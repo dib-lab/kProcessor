@@ -17,12 +17,14 @@ kDataFramePHMAPIterator::kDataFramePHMAPIterator(flat_hash_map<uint64_t, uint64_
         : _kDataFrameIterator(kSize) {
     iterator = it;
     this->origin = origin;
+    this->KD = (new Kmers(kSize));
 }
 
 kDataFramePHMAPIterator::kDataFramePHMAPIterator(const kDataFramePHMAPIterator &other) :
         _kDataFrameIterator(other.kSize) {
     iterator = other.iterator;
     this->origin = other.origin;
+    this->KD = other.KD;
 }
 
 _kDataFrameIterator *kDataFramePHMAPIterator::clone() {
@@ -41,15 +43,15 @@ uint64_t kDataFramePHMAPIterator::getHashedKmer() {
 }
 
 string kDataFramePHMAPIterator::getKmer() {
-    return kmer::int_to_str(iterator->first, this->kSize);
+    return KD->ihash_kmer(iterator->first);
     // return iterator->first;
 }
 
-uint64_t kDataFramePHMAPIterator::getKmerCount() {
+uint64_t kDataFramePHMAPIterator::getCount() {
     return iterator->second;
 }
 
-bool kDataFramePHMAPIterator::setKmerCount(uint64_t count) {
+bool kDataFramePHMAPIterator::setCount(uint64_t count) {
     iterator->second = count;
 }
 
@@ -75,14 +77,26 @@ kDataFramePHMAPIterator::~kDataFramePHMAPIterator() {
 kDataFramePHMAP::kDataFramePHMAP(uint64_t ksize) {
     this->class_name = "PHMAP"; // Temporary until resolving #17
     this->kSize = ksize;
-    hasher = new wrapperHasher<flat_hash_map<uint64_t, uint64_t>::hasher>(MAP.hash_function(), ksize);
+    KD = new Kmers(kSize, 2);
+//    hasher = new wrapperHasher<flat_hash_map<uint64_t, uint64_t>::hasher>(MAP.hash_function(), ksize);
     this->MAP = flat_hash_map<uint64_t, uint64_t>(1000);
     // this->hasher = (new IntegerHasher(ksize));
 }
+
+kDataFramePHMAP::kDataFramePHMAP(uint64_t ksize, int mode) {
+    this->class_name = "PHMAP"; // Temporary until resolving #17
+    this->kSize = ksize;
+    KD = new Kmers(kSize, mode);
+//    hasher = new wrapperHasher<flat_hash_map<uint64_t, uint64_t>::hasher>(MAP.hash_function(), ksize);
+    this->MAP = flat_hash_map<uint64_t, uint64_t>(1000);
+    // this->hasher = (new IntegerHasher(ksize));
+}
+
 kDataFramePHMAP::kDataFramePHMAP(uint64_t ksize,vector<uint64_t> kmersHistogram) {
     this->class_name = "PHMAP"; // Temporary until resolving #17
     this->kSize = ksize;
-    hasher = new wrapperHasher<flat_hash_map<uint64_t, uint64_t>::hasher>(MAP.hash_function(), ksize);
+    KD = new Kmers(kSize, 2);
+//    hasher = new wrapperHasher<flat_hash_map<uint64_t, uint64_t>::hasher>(MAP.hash_function(), ksize);
 
     uint64_t countSum=0;
     for(auto h:kmersHistogram)
@@ -97,33 +111,54 @@ kDataFramePHMAP::kDataFramePHMAP() {
     this->class_name = "PHMAP"; // Temporary until resolving #17
     this->kSize = 23;
     this->MAP = flat_hash_map<uint64_t, uint64_t>(1000);
+    KD = new Kmers(kSize, 2);
     // hasher=new wrapperHasher<flat_hash_map<uint64_t,uint64_t>::hasher >(MAP.hash_function(),kSize);
     // this->hasher = (new IntegerHasher(23));
 }
 
 inline bool kDataFramePHMAP::kmerExist(string kmerS) {
-    return (this->MAP.find(kmer::str_to_canonical_int(kmerS)) == this->MAP.end()) ? 0 : 1;
+    return (this->MAP.find(KD->hash_kmer(kmerS)) == this->MAP.end()) ? 0 : 1;
 }
 
 
 bool kDataFramePHMAP::insert(string kmerS, uint64_t count) {
-    this->MAP[kmer::str_to_canonical_int(kmerS)] += count;
+    this->MAP[KD->hash_kmer(kmerS)] += count;
     return true;
 }
 
 bool kDataFramePHMAP::insert(string kmerS) {
-    this->MAP[kmer::str_to_canonical_int(kmerS)] = 1;
+    this->MAP[KD->hash_kmer(kmerS)] = 1;
+    return true;
+}
+
+
+bool kDataFramePHMAP::insert(uint64_t kmer, uint64_t count) {
+    this->MAP[kmer] += count;
+    return true;
+}
+
+bool kDataFramePHMAP::insert(uint64_t kmer) {
+    this->MAP[kmer] = 1;
     return true;
 }
 
 
 bool kDataFramePHMAP::setCount(string kmerS, uint64_t tag) {
-    this->MAP[kmer::str_to_canonical_int(kmerS)] = tag;
+    this->MAP[KD->hash_kmer(kmerS)] = tag;
     return true;
 }
 
-uint64_t kDataFramePHMAP::count(string kmerS) {
-    return this->MAP[kmer::str_to_canonical_int(kmerS)];
+bool kDataFramePHMAP::setCount(uint64_t kmerS, uint64_t tag) {
+    this->MAP[kmerS] = tag;
+    return true;
+}
+
+uint64_t kDataFramePHMAP::getCount(string kmerS) {
+    return this->MAP[KD->hash_kmer(kmerS)];
+}
+
+uint64_t kDataFramePHMAP::getCount(uint64_t kmerS) {
+    return this->MAP[kmerS];
 }
 
 uint64_t kDataFramePHMAP::bucket(string kmerS) {
@@ -133,7 +168,11 @@ uint64_t kDataFramePHMAP::bucket(string kmerS) {
 
 
 bool kDataFramePHMAP::erase(string kmerS) {
-    return this->MAP.erase(kmer::str_to_canonical_int(kmerS));
+    return this->MAP.erase(KD->hash_kmer(kmerS));
+}
+
+bool kDataFramePHMAP::erase(uint64_t kmer) {
+    return this->MAP.erase(kmer);
 }
 
 uint64_t kDataFramePHMAP::size() {

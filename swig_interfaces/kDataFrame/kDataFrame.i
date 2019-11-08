@@ -32,7 +32,7 @@ The difference between setCount and insert is that setCount set the count to N n
   virtual bool setCount(string kmer,uint64_t N)=0;
   
 /// returns the count of the kmer in the kDataFrame, i.e. the number of times the kmer is inserted in the kdataFrame.
-  virtual uint64_t count(string kmer)=0;
+  virtual uint64_t getCount(string kmer)=0;
   
 // Removes  a kmer from the kDataFrame
 /*! Returns bool value indicating whether the kmer is erased or not*/
@@ -64,9 +64,9 @@ The difference between setCount and insert is that setCount set the count to N n
   virtual void save(string filePath)=0;
   
 /// Returns the  hash function used by kDataframe.
-  Hasher* getHasher(){
-    return hasher;
-  };
+    kmerDecoder* getkmerDecoder(){
+        return KD;
+    };
   
 /// Load the kDataFrame from a file.
   static kDataFrame* load(string filePath);

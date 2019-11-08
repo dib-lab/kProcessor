@@ -14,17 +14,23 @@ void colored_kDataFrame::addNewColor(uint32_t color, vector<uint32_t> & samplesI
 {
   colors->setColor(color,samplesIds);
 }
-void colored_kDataFrame::setKmerColor(string kmer,uint32_t color)
+void colored_kDataFrame::setColor(string kmer,uint32_t color)
 {
   frame->setCount(kmer,color);
 }
-uint32_t colored_kDataFrame::getKmerColor(string kmer)
+uint32_t colored_kDataFrame::getColor(string kmer)
 {
-  return frame->count(kmer);
+  return frame->getCount(kmer);
 }
-void colored_kDataFrame::getSamplesIDForKmer(string kmer,vector<uint32_t>& result)
+
+uint32_t colored_kDataFrame::getColor(uint64_t kmer)
 {
-  uint32_t color=getKmerColor(kmer);
+    return frame->getCount(kmer);
+}
+
+void colored_kDataFrame::getKmerSource(string kmer,vector<uint32_t>& result)
+{
+  uint32_t color=getColor(kmer);
   result.clear();
   if(color==0)
   {
@@ -33,10 +39,21 @@ void colored_kDataFrame::getSamplesIDForKmer(string kmer,vector<uint32_t>& resul
   colors->getSamples(color,result);
 }
 
-vector<uint32_t> colored_kDataFrame::getSamplesIDForKmer(string kmer)
+void colored_kDataFrame::getKmerSource(uint64_t kmer,vector<uint32_t>& result)
+{
+    uint32_t color=getColor(kmer);
+    result.clear();
+    if(color==0)
+    {
+        return;
+    }
+    colors->getSamples(color,result);
+}
+
+vector<uint32_t> colored_kDataFrame::getKmerSource(string kmer)
 {
     vector<uint32_t> result;
-    uint32_t color=getKmerColor(kmer);
+    uint32_t color=getColor(kmer);
     if(color==0)
     {
         return {};
@@ -44,12 +61,12 @@ vector<uint32_t> colored_kDataFrame::getSamplesIDForKmer(string kmer)
     colors->getSamples(color,result);
 }
 
-void colored_kDataFrame::getSamplesIDForColor(uint32_t color,vector<uint32_t>& result)
+void colored_kDataFrame::getKmerSourceFromColor(uint32_t color,vector<uint32_t>& result)
 {
   colors->getSamples(color,result);
 }
 
-vector<uint32_t> colored_kDataFrame::getSamplesIDForColor(uint32_t color)
+vector<uint32_t> colored_kDataFrame::getKmerSourceFromColor(uint32_t color)
 {
     vector<uint32_t> result;
     colors->getSamples(color,result);
@@ -64,7 +81,7 @@ void colored_kDataFrame::colorKmer(string kmer,vector<uint32_t> & samplesIds){
     colorsInv->setColorId(color,samplesIds);
     colors->setColor(color,samplesIds);
   }
-  setKmerColor(kmer,color);
+  setColor(kmer,color);
 }
 void colored_kDataFrame::setColorTable(colorTable* table){
   colors=table;
@@ -121,4 +138,8 @@ unordered_map<string, int> colored_kDataFrame::inverse_names_map(){
         inv_names_map[item.first] = item.second;
     }
     return inv_names_map;
+}
+
+kDataFrame * colored_kDataFrame::getkDataFrame() {
+    return this->frame;
 }

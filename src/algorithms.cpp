@@ -3,7 +3,6 @@
 #include "Utils/kmer.h"
 #include <fstream>
 #include <seqan/seq_io.h>
-#include "HashUtils/hashutil.h"
 #include <seqan/parallel.h>
 #include "KmerDecoder/FastqReader.hpp"
 #include <limits>
@@ -325,7 +324,7 @@ namespace kProcessor {
             KD->next_chunk();
             for (const auto &seq : *KD->getKmers()) {
                 for (const auto &kmer : seq.second) {
-                    output->insert(kmer);
+                    output->insert(kmer.hash);
                 }
             }
         }
@@ -355,17 +354,88 @@ namespace kProcessor {
         }
     }
 
-    void parseSequencesFromString(kmerDecoder *KD, string sequence, kDataFrame *output) {
+    void countKmersFromFile(kDataFrame * kframe, std::map<std::string, int> parse_params, string filename, int chunk_size){
+        // parse_params["mode"] = 1 > Default: Kmers
+        // parse_params["mode"] = 2 > Skipmers
+        // parse_params["mode"] = 3 > Minimizers
+
+        // Initialize kmerDecoder
+        std::string mode = "kmers";
+        bool check_mode = (parse_params.find("mode") != parse_params.end());
+        if (check_mode){
+            if (parse_params["mode"] == 2) mode = "skipmers";
+            else if (parse_params["mode"] == 3) mode = "minimizers";
+        }
+
+        parse_params["k_size"] = kframe->ksize();
+        parse_params["k"] = kframe->ksize();
+        kmerDecoder * KD = initialize_kmerDecoder(filename, chunk_size, mode, parse_params);
+
+        // Clone the hashing
+
+        kmerDecoder_setHashing(KD, kframe->KD->hash_mode, kframe->KD->canonical);
+
+        // Processing
+
+        while (!KD->end()) {
+            KD->next_chunk();
+            for (const auto &seq : *KD->getKmers()) {
+                for (const auto &kmer : seq.second) {
+                    kframe->insert(kmer.hash);
+                }
+            }
+        }
+
+
+    }
+
+    void countKmersFromString(kmerDecoder *KD, string sequence, kDataFrame *output) {
         if (KD->get_kSize() != (int)output->getkSize()) {
             std::cerr << "kmerDecoder kSize must be equal to kDataFrame kSize" << std::endl;
             exit(1);
         }
 
-        std::vector<std::string> kmers;
+        std::vector<kmer_row> kmers;
         KD->seq_to_kmers(sequence, kmers);
 
         for (const auto &kmer : kmers) {
-            output->insert(kmer);
+            output->insert(kmer.hash);
+        }
+
+    }
+
+    void countKmersFromString(kDataFrame * frame, std::map<std::string, int> parse_params, string sequence){
+
+        // parse_params["mode"] = 1 > Default: Kmers
+        // parse_params["mode"] = 2 > Skipmers
+        // parse_params["mode"] = 3 > Minimizers
+
+        // Initialize kmerDecoder
+        std::string mode = "kmers";
+        bool check_mode = (parse_params.find("mode") != parse_params.end());
+        if (check_mode){
+            if (parse_params["mode"] == 2) mode = "skipmers";
+            else if (parse_params["mode"] == 3) mode = "minimizers";
+        }
+
+        parse_params["k_size"] = frame->ksize();
+        parse_params["k"] = frame->ksize();
+        kmerDecoder * KD = initialize_kmerDecoder(mode, parse_params);
+
+        // Clone the hashing
+
+        kmerDecoder_setHashing(KD, frame->KD->hash_mode, frame->KD->canonical);
+
+        if (KD->get_kSize() != (int)frame->getkSize()) {
+            std::cerr << "kmerDecoder kSize must be equal to kDataFrame kSize" << std::endl;
+            exit(1);
+        }
+
+        std::vector<kmer_row> kmers;
+        KD->seq_to_kmers(sequence, kmers);
+
+        for (const auto &kmer : kmers) {
+            frame->insert(kmer.hash);
         }
 
     }
@@ -489,8 +559,13 @@ namespace kProcessor {
         return res;
     }
 
+    
+    void kmerDecoder_setHashing(kmerDecoder * KD, int hash_mode, bool canonical){
+        KD->setHashingMode(hash_mode, canonical);
+    }
 
-    kmerDecoder* initialize_kmerDecoder(std::string filename, int chunkSize, std::string mode, std::map<std::string, int> params){
+
+    kmerDecoder* initialize_kmerDecoder(std::string filename, int chunkSize, std::string mode, std::map<std::string, int> parse_params){
 
         std::string func_name = "wrong parameters in initialize_kmerDecoder() : \n";
 
@@ -498,31 +573,31 @@ namespace kProcessor {
         transform(mode.begin(), mode.end(), mode.begin(), ::tolower);
 
         if (mode == "kmers") {
-            if (params.find("k_size") != params.end()) {
-                return new Kmers(filename, chunkSize, params["k_size"]);
+            if (parse_params.find("k_size") != parse_params.end()) {
+                return new Kmers(filename, chunkSize, parse_params["k_size"]);
             } else {
                 std::cerr << func_name << "kmerDecoder Kmers parameters {k_size} validation failed" << std::endl;
                 exit(1);
             }
         } else if (mode == "skipmers") {
-            bool check_k = (params.find("k_size") != params.end());
-            bool check_m = (params.find("m") != params.end());
-            bool check_n = (params.find("n") != params.end());
-            bool check_orf = (params.find("orf") != params.end());
+            bool check_k = (parse_params.find("k_size") != parse_params.end());
+            bool check_m = (parse_params.find("m") != parse_params.end());
+            bool check_n = (parse_params.find("n") != parse_params.end());
+            bool check_orf = (parse_params.find("orf") != parse_params.end());
 
             if (check_k && check_m && check_n) {
-                if(check_orf) return new Skipmers(filename, chunkSize, params["m"], params["n"], params["k_size"], params["orf"]);
-                return new Skipmers(filename, chunkSize, params["m"], params["n"], params["k_size"]);
+                if(check_orf) return new Skipmers(filename, chunkSize, parse_params["m"], parse_params["n"], parse_params["k_size"], parse_params["orf"]);
+                return new Skipmers(filename, chunkSize, parse_params["m"], parse_params["n"], parse_params["k_size"]);
             } else {
                 std::cerr << func_name << "kmerDecoder Skipmers parameters {k_size, m, n} validation failed" << std::endl;
                 exit(1);
             }
         } else if (mode == "minimizers") {
-            bool check_k = (params.find("k_size") != params.end());
-            bool check_w = (params.find("w") != params.end());
+            bool check_k = (parse_params.find("k_size") != parse_params.end());
+            bool check_w = (parse_params.find("w") != parse_params.end());
 
             if (check_k && check_w) {
-                return new Minimizers(filename, chunkSize, params["k_size"], params["w"]);
+                return new Minimizers(filename, chunkSize, parse_params["k_size"], parse_params["w"]);
             } else {
                 std::cerr << func_name << "kmerDecoder Skipmers parameters {k_size, w} validation failed" << std::endl;
                 exit(1);
@@ -534,7 +609,7 @@ namespace kProcessor {
         }
     }
 
-    kmerDecoder* initialize_kmerDecoder(std::string mode, std::map<std::string, int> params){
+    kmerDecoder* initialize_kmerDecoder(std::string mode, std::map<std::string, int> parse_params){
 
         std::string func_name = "wrong parameters in initialize_kmerDecoder() : \n";
 
@@ -542,31 +617,31 @@ namespace kProcessor {
         transform(mode.begin(), mode.end(), mode.begin(), ::tolower);
 
         if (mode == "kmers") {
-            if (params.find("k_size") != params.end()) {
-                return new Kmers(params["k_size"]);
+            if (parse_params.find("k_size") != parse_params.end()) {
+                return new Kmers(parse_params["k_size"]);
             } else {
                 std::cerr << func_name << "kmerDecoder Kmers parameters {k_size} validation failed" << std::endl;
                 exit(1);
             }
         } else if (mode == "skipmers") {
-            bool check_k = (params.find("k_size") != params.end());
-            bool check_m = (params.find("m") != params.end());
-            bool check_n = (params.find("n") != params.end());
-            bool check_orf = (params.find("orf") != params.end());
+            bool check_k = (parse_params.find("k_size") != parse_params.end());
+            bool check_m = (parse_params.find("m") != parse_params.end());
+            bool check_n = (parse_params.find("n") != parse_params.end());
+            bool check_orf = (parse_params.find("orf") != parse_params.end());
 
             if (check_k && check_m && check_n) {
-                if(check_orf) return new Skipmers(params["m"], params["n"], params["k_size"], params["orf"]);
-                return new Skipmers(params["m"], params["n"], params["k_size"]);
+                if(check_orf) return new Skipmers(parse_params["m"], parse_params["n"], parse_params["k_size"], parse_params["orf"]);
+                return new Skipmers(parse_params["m"], parse_params["n"], parse_params["k_size"]);
             } else {
                 std::cerr << func_name << "kmerDecoder Skipmers parameters {k_size, m, n} validation failed" << std::endl;
                 exit(1);
             }
         } else if (mode == "minimizers") {
-            bool check_k = (params.find("k_size") != params.end());
-            bool check_w = (params.find("w") != params.end());
+            bool check_k = (parse_params.find("k_size") != parse_params.end());
+            bool check_w = (parse_params.find("w") != parse_params.end());
 
             if (check_k && check_w) {
-                return new Minimizers(params["k_size"], params["w"]);
+                return new Minimizers(parse_params["k_size"], parse_params["w"]);
             } else {
                 std::cerr  << func_name << "kmerDecoder Skipmers parameters {k_size, w} validation failed" << std::endl;
                 exit(1);
@@ -578,6 +653,12 @@ namespace kProcessor {
         }
     }
 
+    kmerDecoder* initialize_kmerDecoder(int kSize, int hash_mode){
+        // Mode 0: Murmar Hashing | Irreversible
+        // Mode 1: Integer Hashing | Reversible | Full Hashing
+        // Mode 2: TwoBitsHashing | Not considered hashing, just store the two bits representation
+        return new Kmers(kSize, hash_mode);
+    }
 
     colored_kDataFrame *index(kmerDecoder *KD, string names_fileName, kDataFrame *frame) {
 
@@ -657,7 +738,7 @@ namespace kProcessor {
                 convertMap.insert(make_pair(readTag, readTag));
                 //    cout<<readName<<"   "<<seq.size()<<endl;
                 for (const auto &kmer : seq.second) {
-                    uint64_t currentTag = frame->count(kmer);
+                    uint64_t currentTag = frame->getCount(kmer.hash);
                     auto itc = convertMap.find(currentTag);
                     if (itc == convertMap.end()) {
                         vector<uint32_t> colors = legend->find(currentTag)->second;
@@ -709,11 +790,11 @@ namespace kProcessor {
                         colorsCount[itc->second]++;
                     }
 
-                    frame->setCount(kmer, itc->second);
-                    if (frame->count(kmer) != itc->second) {
+                    frame->setCount(kmer.hash, itc->second);
+                    if (frame->getCount(kmer.hash) != itc->second) {
                         //frame->setC(kmer,itc->second);
-                        cout << "Error Founded " << kmer << " from sequence " << readName << " expected "
-                             << itc->second << " found " << frame->count(kmer) << endl;
+                        cout << "Error Founded " << kmer.str << " from sequence " << readName << " expected "
+                             << itc->second << " found " << frame->getCount(kmer.hash) << endl;
                         return NULL;
                     }
                 }
@@ -742,7 +823,195 @@ namespace kProcessor {
         }
         return res;
     }
-vector<uint64_t> estimateKmersHistogram(string fileName, int kSize ,int threads)
+
+    colored_kDataFrame * index(kDataFrame * frame, std::map<std::string, int> parse_params, string filename, int chunk_size, string names_fileName){
+
+        // parse_params["mode"] = 1 > Default: Kmers
+        // parse_params["mode"] = 2 > Skipmers
+        // parse_params["mode"] = 3 > Minimizers
+
+        // Initialize kmerDecoder
+        std::string mode = "kmers";
+        bool check_mode = (parse_params.find("mode") != parse_params.end());
+        if (check_mode){
+            if (parse_params["mode"] == 2) mode = "skipmers";
+            else if (parse_params["mode"] == 3) mode = "minimizers";
+        }
+
+        parse_params["k_size"] = frame->ksize();
+        parse_params["k"] = frame->ksize();
+        kmerDecoder * KD = initialize_kmerDecoder(filename, chunk_size, mode, parse_params);
+
+        // Clone the hashing
+
+        kmerDecoder_setHashing(KD, frame->KD->hash_mode, frame->KD->canonical);
+
+        // Processing
+
+            if (KD->get_kSize() != (int)frame->ksize()) {
+                std::cerr << "kmerDecoder kSize must be equal to kDataFrame kSize" << std::endl;
+                exit(1);
+            }
+
+            flat_hash_map<string, string> namesMap;
+            flat_hash_map<string, uint64_t> tagsMap;
+            flat_hash_map<string, uint64_t> groupNameMap;
+            flat_hash_map<uint64_t, std::vector<uint32_t>> *legend = new flat_hash_map<uint64_t, std::vector<uint32_t>>();
+            flat_hash_map<uint64_t, uint64_t> colorsCount;
+            uint64_t readID = 0, groupID = 1;
+            ifstream namesFile(names_fileName.c_str());
+            string seqName, groupName;
+            string line;
+            priority_queue<uint64_t, vector<uint64_t>, std::greater<uint64_t>> freeColors;
+            flat_hash_map<string, uint64_t> groupCounter;
+//        while (namesFile >> seqName >> groupName) {
+            while (std::getline(namesFile, line)) {
+                std::vector<string> tokens;
+                std::istringstream iss(line);
+                std::string token;
+                while(std::getline(iss, token, '\t'))   // but we can specify a different one
+                    tokens.push_back(token);
+                seqName = tokens[0];
+                groupName = tokens[1];
+                namesMap.insert(make_pair(seqName, groupName));
+                auto it = groupNameMap.find(groupName);
+                groupCounter[groupName]++;
+                if (it == groupNameMap.end()) {
+                    groupNameMap.insert(make_pair(groupName, groupID));
+                    tagsMap.insert(make_pair(to_string(groupID), groupID));
+                    vector<uint32_t> tmp;
+                    tmp.clear();
+                    tmp.push_back(groupID);
+                    legend->insert(make_pair(groupID, tmp));
+                    colorsCount.insert(make_pair(groupID, 0));
+                    groupID++;
+                }
+            }
+
+
+            vector<kDataFrameMQF *> frames;
+            int currIndex = 0;
+            string kmer;
+            uint64_t tagBits = 0;
+            uint64_t maxTagValue = (1ULL << tagBits) - 1;
+            //  kDataFrame *frame;
+            int kSize = KD->get_kSize();
+
+
+            uint64_t lastTag = 0;
+            readID = 0;
+
+            while (!KD->end()) {
+                KD->next_chunk();
+
+                flat_hash_map<uint64_t, uint64_t> convertMap;
+
+                for (const auto &seq : *KD->getKmers()) {
+                    string readName = seq.first;
+
+                    auto it = namesMap.find(readName);
+                    if (it == namesMap.end()) {
+                        continue;
+                        // cout << "read " << readName << "dont have group. Please check the group names file." << endl;
+                    }
+                    string groupName = it->second;
+
+                    uint64_t readTag = groupNameMap.find(groupName)->second;
+
+
+                    convertMap.clear();
+                    convertMap.insert(make_pair(0, readTag));
+                    convertMap.insert(make_pair(readTag, readTag));
+                    //    cout<<readName<<"   "<<seq.size()<<endl;
+                    for (const auto &kmer : seq.second) {
+                        uint64_t currentTag = frame->getCount(kmer.hash);
+                        auto itc = convertMap.find(currentTag);
+                        if (itc == convertMap.end()) {
+                            vector<uint32_t> colors = legend->find(currentTag)->second;
+                            auto tmpiT = find(colors.begin(), colors.end(), readTag);
+                            if (tmpiT == colors.end()) {
+                                colors.push_back(readTag);
+                                sort(colors.begin(), colors.end());
+                            }
+
+                            string colorsString = to_string(colors[0]);
+                            for (int k = 1; k < colors.size(); k++) {
+                                colorsString += ";" + to_string(colors[k]);
+                            }
+
+                            auto itTag = tagsMap.find(colorsString);
+                            if (itTag == tagsMap.end()) {
+                                uint64_t newColor;
+                                if (freeColors.size() == 0) {
+                                    newColor = groupID++;
+                                } else {
+                                    newColor = freeColors.top();
+                                    freeColors.pop();
+                                }
+
+                                tagsMap.insert(make_pair(colorsString, newColor));
+                                legend->insert(make_pair(newColor, colors));
+                                itTag = tagsMap.find(colorsString);
+                                colorsCount[newColor] = 0;
+                                // if(groupID>=maxTagValue){
+                                //   cerr<<"Tag size is not enough. ids reached "<<groupID<<endl;
+                                //   return -1;
+                                // }
+                            }
+                            uint64_t newColor = itTag->second;
+
+                            convertMap.insert(make_pair(currentTag, newColor));
+                            itc = convertMap.find(currentTag);
+                        }
+
+                        if (itc->second != currentTag) {
+
+                            colorsCount[currentTag]--;
+                            if (colorsCount[currentTag] == 0 && currentTag != 0) {
+                                freeColors.push(currentTag);
+                                legend->erase(currentTag);
+                                if (convertMap.find(currentTag) != convertMap.end())
+                                    convertMap.erase(currentTag);
+                            }
+                            colorsCount[itc->second]++;
+                        }
+
+                        frame->setCount(kmer.hash, itc->second);
+                        if (frame->getCount(kmer.hash) != itc->second) {
+                            //frame->setC(kmer,itc->second);
+                            cout << "Error Founded " << kmer.str << " from sequence " << readName << " expected "
+                                 << itc->second << " found " << frame->getCount(kmer.hash) << endl;
+                            return NULL;
+                        }
+                    }
+                    readID += 1;
+                    if (colorsCount[readTag] == 0) {
+                        groupCounter[groupName]--;
+                        if (groupCounter[groupName] == 0) {
+                            freeColors.push(readTag);
+                            legend->erase(readTag);
+                        }
+                    }
+                }
+            }
+            colorTable *colors = new intVectorsTable();
+            for (auto it : *legend) {
+                colors->setColor(it.first, it.second);
+            }
+
+            colored_kDataFrame *res = new colored_kDataFrame();
+            res->setColorTable(colors);
+            res->setkDataFrame(frame);
+            for (auto iit = namesMap.begin(); iit != namesMap.end(); iit++) {
+                uint32_t sampleID = groupNameMap[iit->second];
+                res->namesMap[sampleID] = iit->second;
+                res->namesMapInv[iit->second] = sampleID;
+            }
+            return res;
+        }
+
+
+        vector<uint64_t> estimateKmersHistogram(string fileName, int kSize ,int threads)
 {
    std::string tmpFile = "tmp."+to_string(rand()%1000000);
    main_ntCard(fileName,kSize,1000,threads,tmpFile);
