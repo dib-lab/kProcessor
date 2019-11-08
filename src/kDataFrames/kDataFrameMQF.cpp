@@ -20,7 +20,11 @@ kDataFrameMQFIterator::kDataFrameMQFIterator(QF *mqf, uint64_t kSize, kmerDecode
     qf_iterator(mqf, qfi, 0);
     this->KD = KD;
 }
-
+kDataFrameMQFIterator::kDataFrameMQFIterator(QFi *mqfIt, uint64_t kSize, Hasher *h)
+        : _kDataFrameIterator(kSize) {
+    qfi = mqfIt;
+    this->hasher = h;
+}
 kDataFrameMQFIterator::kDataFrameMQFIterator(const kDataFrameMQFIterator &other) :
         _kDataFrameIterator(other.kSize) {
     qfi = new QFi();
@@ -115,7 +119,13 @@ kDataFrameIterator kDataFrameMQF::end() {
     it->endIterator();
     return (kDataFrameIterator(it, (kDataFrame *) this));
 }
-
+kDataFrameIterator kDataFrameMQF::find(string kmer) {
+    QFi* mqfIt = new QFi();
+    uint64_t hash = hasher->hash(kmer) % mqf->metadata->range;
+    qfi_find(mqf,mqfIt,hash);
+    kDataFrameMQFIterator *it = new kDataFrameMQFIterator(mqfIt, kSize, hasher);
+    return (kDataFrameIterator(it, (kDataFrame *) this));
+}
 
 /*
  *********************
@@ -129,6 +139,8 @@ kDataFrameMQF::kDataFrameMQF() : kDataFrame() {
     mqf = new QF();
     qf_init(mqf, (1ULL << 16), 2 * kSize, 0, 2, 0, true, "", 2038074761);
     KD = (new Kmers(kSize));
+    qf_init(mqf, (1ULL << 16), 2 * kSize, 0, 2, 32, true, "", 2038074761);
+    hasher = (new IntegerHasher(kSize));
     falsePositiveRate = 0;
     hashbits = 2 * kSize;
     range = (1ULL << hashbits);
@@ -164,7 +176,7 @@ kDataFrameMQF::kDataFrameMQF(uint64_t ksize, uint8_t q, int mode) : kDataFrame(k
 //    }
 
     mqf = new QF();
-    qf_init(mqf, (1ULL << q), 2 * ksize, 0, 2, 0, true, "", 2038074761);
+    qf_init(mqf, (1ULL << q), 2 * ksize, 0, 2, 32, true, "", 2038074761);
     this->falsePositiveRate = falsePositiveRate;
     hashbits = 2 * kSize;
     range = (1ULL << hashbits);
@@ -176,7 +188,7 @@ kDataFrameMQF::kDataFrameMQF(uint64_t ksize, uint8_t q, uint8_t fixedCounterSize
         kDataFrame(ksize) {
     this->class_name = "MQF"; // Temporary until resolving #17
     mqf = new QF();
-    qf_init(mqf, (1ULL << q), 2 * ksize, tagSize, fixedCounterSize, 0, true, "", 2038074761);
+    qf_init(mqf, (1ULL << q), 2 * ksize, tagSize, fixedCounterSize, 32, true, "", 2038074761);
     this->falsePositiveRate = falsePositiveRate;
     if (falsePositiveRate == 0) {
         KD = (new Kmers(kSize,1));
@@ -228,7 +240,7 @@ kDataFrameMQF::kDataFrameMQF(QF *mqf, uint64_t ksize, double falsePositiveRate) 
 kDataFrame *kDataFrameMQF::getTwin() {
     uint64_t q = log2(mqf->metadata->nslots);
     return ((kDataFrame *) new kDataFrameMQF(kSize, q, mqf->metadata->fixed_counter_size,
-                                             mqf->metadata->tag_bits, falsePositiveRate));
+                                             mqf->metadata->label_bits, falsePositiveRate));
 }
 
 void kDataFrameMQF::reserve(uint64_t n) {
@@ -236,7 +248,7 @@ void kDataFrameMQF::reserve(uint64_t n) {
     mqf = new QF();
     uint64_t q = (uint64_t) ceil(log2((double) n * 1.4));
 //    std::cerr << "[DEBUG] Q: " << q << std::endl;
-    qf_init(mqf, (1ULL << q), hashbits, 0, 2, 0, true, "", 2038074761);
+    qf_init(mqf, (1ULL << q), hashbits, 0, 2, 32, true, "", 2038074761);
     if (old != NULL) {
         qf_migrate(old, mqf);
         qf_destroy(old);
@@ -268,16 +280,16 @@ kDataFrameMQF::kDataFrameMQF(uint64_t ksize, vector<uint64_t> countHistogram, ui
     uint64_t memory;
     kDataFrameMQF::estimateParameters(countHistogram, 2 * ksize, tagSize,
                                       &nSlots, &fixedCounterSize, &memory);
-    qf_init(mqf, nSlots, 2 * ksize, tagSize, fixedCounterSize, 0, true, "", 2038074761);
+    qf_init(mqf, nSlots, 2 * ksize, tagSize, fixedCounterSize, 32, true, "", 2038074761);
 }
 kDataFrameMQF::kDataFrameMQF(uint64_t ksize, vector<uint64_t> countHistogram)
         :
         kDataFrameMQF(ksize,countHistogram,0,0.0) {
 }
 uint64_t kDataFrameMQF::estimateMemory(uint64_t nslots, uint64_t slotSize, uint64_t fcounter, uint64_t tagSize) {
-    uint64_t SLOTS_PER_BLOCK = 64;
+    uint64_t SLOTS_PER_BLOCK_2 = 64;
     uint64_t xnslots = nslots + 10 * sqrt((double) nslots);
-    uint64_t nblocks = (xnslots + SLOTS_PER_BLOCK - 1) / SLOTS_PER_BLOCK;
+    uint64_t nblocks = (xnslots + SLOTS_PER_BLOCK_2 - 1) / SLOTS_PER_BLOCK_2;
     uint64_t blocksize = 17;
 
     return ((nblocks) * (blocksize + 8 * (slotSize + fcounter + tagSize))) / 1024;
@@ -509,4 +521,14 @@ kDataFrame *kDataFrameMQF::load(string filePath) {
     QF *mqf = new QF();
     qf_deserialize(mqf, (filePath + ".mqf").c_str());
     return new kDataFrameMQF(mqf, filekSize, 0);
+}
+
+void kDataFrameMQF::preprocessKmerOrder()
+{
+  qf_ComputeItemsOrder(mqf);
+}
+uint64_t kDataFrameMQF::getkmerOrder(string kmer)
+{
+  uint64_t hash = hasher->hash(kmer) % mqf->metadata->range;
+  return itemOrder(mqf,hash);
 }
