@@ -247,3 +247,8 @@ kDataFrameIterator kDataFramePHMAP::end() {
             (_kDataFrameIterator *) new kDataFramePHMAPIterator(MAP.end(), this, kSize),
             (kDataFrame *) this));
 }
+kDataFrameIterator kDataFramePHMAP::find(string kmer) {
+  return *(new kDataFrameIterator(
+          (_kDataFrameIterator *) new kDataFramePHMAPIterator(MAP.find(kmer::str_to_canonical_int(kmer)), this, kSize),
+          (kDataFrame *) this));
+}

@@ -8,6 +8,7 @@
 #include "algorithms.hpp"
 #include <iterator>
 #include <algorithm>
+#include <tuple>
 
 
 #include <set>
@@ -322,6 +323,63 @@ TEST_P(kDataFrameTest,iterateOverAllKmers)
       it++;
     }
     EXPECT_EQ(insertedKmers.size(),0);
+
+}
+
+TEST_P(kDataFrameTest,multiColumns)
+{
+
+    kDataFrame* kframe=GetParam();
+    EXPECT_EQ(kframe->empty(), true);
+    unordered_map<string,int>* kmers=kmersGen.getKmers((int)kframe->getkSize());
+    int insertedKmers=0;
+    for(auto k:*kmers)
+    {
+        kframe->insert(k.first,k.second);
+        if(kframe->load_factor()>=kframe->max_load_factor()*0.8)
+        {
+          break;
+        }
+        insertedKmers++;
+    }
+    int checkedKmers=0;
+    kframe->addColumn<int>("intColumn");
+    kframe->addColumn<double>("doubleColumn");
+    kframe->addColumn<bool>("boolColumn");
+
+    map<string,tuple<int,double,bool> > simColumns;
+    kDataFrameIterator it=kframe->begin();
+    while(it!=kframe->end())
+    {
+      string kmer=it.getKmer();
+
+      int randInt=rand()%1000000;
+      double randDouble=(double)(rand()%1000000);
+      bool randBool=rand()%2==0;
+
+      simColumns[kmer]=make_tuple(randInt,randDouble,randBool);
+
+      kframe->setKmerColumnValue<int>("intColumn",kmer,randInt);
+      kframe->setKmerColumnValue<double>("doubleColumn",kmer,randDouble);
+      kframe->setKmerColumnValue<bool>("boolColumn",kmer,randBool);
+      it++;
+    }
+    for(auto simRow:simColumns)
+    {
+      string kmer=simRow.first;
+      int randInt=get<0>(simRow.second);
+      double randDouble=get<1>(simRow.second);
+      bool randBool=get<2>(simRow.second);
+
+      int retInt=kframe->getKmerColumnValue<int>("intColumn",kmer);
+      double retDouble=kframe->getKmerColumnValue<double>("doubleColumn",kmer);
+      bool retBool=kframe->getKmerColumnValue<bool>("boolColumn",kmer);
+
+      ASSERT_EQ(randInt,retInt);
+      ASSERT_EQ(randDouble,retDouble);
+      ASSERT_EQ(randBool,retBool);
+
+    }
 
 }
 

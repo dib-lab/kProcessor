@@ -7,6 +7,7 @@
 #include <iostream>
 #include <parallel_hashmap/phmap.h>
 #include "kmerDecoder.hpp"
+#include <any>
 
 using phmap::flat_hash_map;
 using namespace std;
@@ -203,6 +204,7 @@ private:
   kmerDecoder * KD;
 public:
   kDataFrameMQFIterator(QF*,uint64_t kSize,kmerDecoder* KD);
+  kDataFrameMQFIterator(QFi*,uint64_t kSize,kmerDecoder* KD);
   kDataFrameMQFIterator(const kDataFrameMQFIterator&);
   kDataFrameMQFIterator& operator ++ (int);
   _kDataFrameIterator* clone();
@@ -221,6 +223,14 @@ class kDataFrame{
 protected:
   uint64_t kSize;
   string class_name; // Default = MQF, change if MAP. Temporary until resolving #17
+  bool isStatic;
+  bool isKmersOrderComputed;
+  unordered_map<string, any> columns;
+
+  unordered_map<string,uint32_t> orderCheckpoints;
+
+  virtual void preprocessKmerOrder();
+  virtual uint64_t getkmerOrder(string kmer);
 public:
     kmerDecoder * KD;
   virtual string get_class_name(){ return class_name;}  // Temporary until resolving #17
@@ -282,6 +292,8 @@ The difference between setCount and insert is that setCount set the count to N n
   virtual kDataFrameIterator begin()=0;
 ///Returns an iterator at the end of the kDataFrame.
   virtual kDataFrameIterator end()=0;
+///Returns an iterator at the specific kmer.
+  virtual kDataFrameIterator find(string kmer)=0;
 
   virtual void save(string filePath)=0;
 /// Returns the kmerDecoder used by kDataframe.
@@ -299,9 +311,18 @@ The difference between setCount and insert is that setCount set the count to N n
 
   void setkSize(uint64_t k){kSize=k;}
 
+  template<typename T>
+  void addColumn(string columnName);
 
+  template<typename T>
+  T getKmerColumnValue(string columnName,string kmer);
+
+  template<typename T>
+  void setKmerColumnValue(string columnName,string kmer, T value);
 
 };
+
+
 
 class kDataFrameMQF: public kDataFrame{
 
@@ -312,6 +333,9 @@ private:
   __uint128_t range;
   static bool isEnough(vector<uint64_t> histogram,uint64_t noSlots,uint64_t fixedSizeCounter,uint64_t slotSize);
   friend class kDataframeMQF;
+protected:
+  void preprocessKmerOrder();
+  uint64_t getkmerOrder(string kmer);
 public:
   kDataFrameMQF();
   kDataFrameMQF(uint64_t kSize);
@@ -374,6 +398,7 @@ public:
 
   kDataFrameIterator begin();
   kDataFrameIterator end();
+  kDataFrameIterator find(string kmer);
 };
 
 
@@ -432,6 +457,7 @@ public:
   float max_load_factor();
   kDataFrameIterator begin();
   kDataFrameIterator end();
+  kDataFrameIterator find(string kmer);
 
   uint64_t bucket(string kmer);
   void save(string filePath);
@@ -524,6 +550,7 @@ public:
     kDataFrameIterator begin();
 
     kDataFrameIterator end();
+    kDataFrameIterator find(string kmer);
 
     uint64_t bucket(string kmer);
 
