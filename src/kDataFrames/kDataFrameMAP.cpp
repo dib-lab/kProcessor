@@ -112,7 +112,7 @@ bool kDataFrameMAP::insert(string kmerS, uint64_t count) {
 }
 
 bool kDataFrameMAP::insert(string kmerS) {
-    this->MAP[KD->hash_kmer(kmerS)] = 1;
+    this->MAP[KD->hash_kmer(kmerS)] += 1;
     return true;
 }
 

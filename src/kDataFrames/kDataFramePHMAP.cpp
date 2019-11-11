@@ -127,7 +127,7 @@ bool kDataFramePHMAP::insert(string kmerS, uint64_t count) {
 }
 
 bool kDataFramePHMAP::insert(string kmerS) {
-    this->MAP[KD->hash_kmer(kmerS)] = 1;
+    this->MAP[KD->hash_kmer(kmerS)] += 1;
     return true;
 }
 
@@ -138,7 +138,7 @@ bool kDataFramePHMAP::insert(uint64_t kmer, uint64_t count) {
 }
 
 bool kDataFramePHMAP::insert(uint64_t kmer) {
-    this->MAP[kmer] = 1;
+    this->MAP[kmer] += 1;
     return true;
 }
 
