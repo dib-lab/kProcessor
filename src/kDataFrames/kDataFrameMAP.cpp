@@ -122,7 +122,7 @@ bool kDataFrameMAP::insert(uint64_t kmer, uint64_t count) {
 }
 
 bool kDataFrameMAP::insert(uint64_t kmer) {
-    this->MAP[kmer] = 1;
+    this->MAP[kmer] += 1;
     return true;
 }
 

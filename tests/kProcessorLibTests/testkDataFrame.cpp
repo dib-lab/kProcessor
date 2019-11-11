@@ -106,10 +106,6 @@ vector<kDataFrame*> BuildTestFrames()
   {
     framesToBeTested.push_back(new kDataFrameMAP(k));
   }
-  for(auto k:kSizes)
-  {
-  //  framesToBeTested.push_back(new kDataFrameBMQF((uint64_t)k));
-  }
   return framesToBeTested;
 }
 
@@ -776,7 +772,7 @@ TEST_P(kDataFrameBufferedTest,iterateOverAllKmers)
     while(it!=kframe->end())
     {
         string kmer=it.getKmer();
-        uint64_t count=it.getKmerCount();
+        uint64_t count=it.getCount();
         ASSERT_EQ(count,insertedKmers[kmer]);
         insertedKmers.erase(kmer);
         it++;
@@ -804,7 +800,7 @@ TEST_P(kDataFrameBufferedTest,autoResize)
     while(it!=kframe->end())
     {
         string kmer=it.getKmer();
-        uint64_t count=it.getKmerCount();
+        uint64_t count=it.getCount();
         ASSERT_EQ(count,insertedKmers[kmer]);
         insertedKmers.erase(kmer);
         it++;
@@ -838,7 +834,7 @@ TEST_P(kDataFrameBufferedTest,transformPlus10)
     while(it!=kframe2->end())
     {
         string kmer=it.getKmer();
-        uint64_t count=it.getKmerCount();
+        uint64_t count=it.getCount();
         ASSERT_EQ(count,insertedKmers[kmer]+10);
         insertedKmers.erase(kmer);
         it++;
@@ -882,7 +878,7 @@ kDataFrameIterator it=kframe->begin();
 while(it!=kframe->end())
 {
 string kmer=it.getKmer();
-uint64_t count=it.getKmerCount();
+uint64_t count=it.getCount();
 if(count != insertedKmers[kmer])
 {
 cout<<kmer<<endl;
@@ -897,17 +893,19 @@ EXPECT_EQ(insertedKmers.size(),0);
 
 TEST_P(algorithmsTest,parsingTest2)
 {
-   // kDataFrame* kframe=GetParam();
-   // string fileName="test2.noN.fastq";
-   kDataFrame* kframe=get<0>(GetParam());
+
+    kDataFrame* kframe=get<0>(GetParam());
     string fileName=get<1>(GetParam());
     int kSize=kframe->getkSize();
-    kProcessor::parseSequences(fileName,1,kframe);
+    int chunkSize=1000;
+    unordered_map<string,uint64_t > insertedKmers;
+    kProcessor::countKmersFromFile(kframe, {{"mode", 1}}, fileName, 1000); // Mode 1 : kmers, KmerSize will be cloned from the kFrame
+
     seqan::SeqFileIn seqIn(fileName.c_str());
     seqan::StringSet<seqan::CharString> ids;
     seqan::StringSet<seqan::CharString> reads;
-    int chunkSize=1000;
-    unordered_map<string,uint64_t > insertedKmers;
+
+
     while(!atEnd(seqIn)){
         clear(reads);
         clear(ids);
@@ -930,7 +928,7 @@ TEST_P(algorithmsTest,parsingTest2)
     while(it!=kframe->end())
     {
         string kmer=it.getKmer();
-        uint64_t count=it.getKmerCount();
+        uint64_t count=it.getCount();
         if(count != insertedKmers[kmer])
         {
             cout<<kmer<<endl;

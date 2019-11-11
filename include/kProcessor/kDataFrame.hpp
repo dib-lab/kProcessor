@@ -462,13 +462,24 @@ public:
   uint64_t *res_noSlots,uint64_t *res_fixedSizeCounter, uint64_t *res_memory);
 
 
-  bool setCount(string kmer,uint64_t count);
+
   bool insert(string kmer,uint64_t count);
   bool insert(string kmer);
-  uint64_t count(string kmer);
+  bool insert(uint64_t kmer,uint64_t count);
+  bool insert(uint64_t kmer);
+  bool setCount(string kmer,uint64_t count);
+  bool setCount(uint64_t kmer, uint64_t count);
+
+
+
+
+
+  uint64_t getCount(string kmer);
+  uint64_t getCount(uint64_t kmer);
 
 
   bool erase(string kmer);
+  bool erase(uint64_t kmer);
 
   uint64_t size();
 /// max_size function returns the estimated maximum number of kmers that the kDataframeBMQF can hold.
@@ -487,6 +498,7 @@ public:
 
   kDataFrameIterator begin();
   kDataFrameIterator end();
+  kDataFrameIterator find(string kmer);
 };
 
 // kDataFrameMAP _____________________________
@@ -631,18 +643,19 @@ public:
 class kDataFrameBMQFIterator:public _kDataFrameIterator{
 private:
     bufferedMQFIterator* qfi;
-    Hasher* hasher;
+    kmerDecoder * KD;
     bufferedMQF* mqf;
 public:
-    kDataFrameBMQFIterator(bufferedMQF*,uint64_t kSize,Hasher* h);
+    kDataFrameBMQFIterator(bufferedMQF*,uint64_t kSize,kmerDecoder* h);
     kDataFrameBMQFIterator(const kDataFrameBMQFIterator&);
+    kDataFrameBMQFIterator(bufferedMQF*,bufferedMQFIterator* qfi,uint64_t kSize,kmerDecoder* KD);
     kDataFrameBMQFIterator& operator ++ (int);
     _kDataFrameIterator* clone();
     uint64_t getHashedKmer();
     string getKmer();
     kDataFrame *getTwin();
-    uint64_t getKmerCount();
-    bool setKmerCount(uint64_t count);
+    uint64_t getCount();
+    bool setCount(uint64_t count);
     void endIterator();
     bool operator ==(const _kDataFrameIterator& other);
     bool operator !=(const _kDataFrameIterator& other);
