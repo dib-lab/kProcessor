@@ -450,10 +450,7 @@ namespace kProcessor {
     inline void terminate_if_kDataFrameMAP(const vector<kDataFrame *> &input){
         for(const auto & kFrame : input){
             if (kFrame->get_class_name() == "MAP"){
-                std::cerr
-                << "can't apply set functions kDataFramMAP on kDataFrameMAP.\n"
-                << "use kDataFrameMQF instead." << std::endl;
-                exit(1);
+                throw logic_error("can't apply set functions kDataFramMAP on kDataFrameMAP.");
             }
         }
     }

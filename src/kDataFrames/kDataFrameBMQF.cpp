@@ -209,7 +209,7 @@ bool kDataFrameBMQF::setCount(string kmer,uint64_t count){
         }
         catch(overflow_error & e)
         {
-            reserve(bufferedmqf->memoryBuffer->metadata->nslots);
+            reserve(bufferedmqf->disk->metadata->nslots);
             return setCount(kmer,count);
         }
     }
@@ -231,9 +231,9 @@ bool kDataFrameBMQF::insert(string kmer,uint64_t count){
 bool kDataFrameBMQF::insert(string kmer){
     if(load_factor()>0.9){
         // ERROR FLAG: reserve(bufferedmqf->memoryBuffer->metadata->nslots)
-        reserve(bufferedmqf->memoryBuffer->metadata->nslots);
+        reserve(bufferedmqf->disk->metadata->nslots);
     }
-    uint64_t hash= KD->hash_kmer(kmer) % bufferedmqf->memoryBuffer->metadata->range;
+    uint64_t hash= KD->hash_kmer(kmer) % bufferedmqf->disk->metadata->range;
     try{
         bufferedMQF_insert(bufferedmqf,hash,1,false,false);
     }
@@ -271,7 +271,7 @@ bool kDataFrameBMQF::setCount(uint64_t  hash,uint64_t count){
         }
         catch(overflow_error & e)
         {
-            reserve(bufferedmqf->memoryBuffer->metadata->nslots);
+            reserve(bufferedmqf->disk->metadata->nslots);
             return setCount(hash,count);
         }
     }
@@ -292,7 +292,7 @@ bool kDataFrameBMQF::insert(uint64_t hash,uint64_t count){
 bool kDataFrameBMQF::insert(uint64_t hash){
     if(load_factor()>0.9){
         // ERROR FLAG: reserve(bufferedmqf->memoryBuffer->metadata->nslots)
-        reserve(bufferedmqf->memoryBuffer->metadata->nslots);
+        reserve(bufferedmqf->disk->metadata->nslots);
     }
     try{
         bufferedMQF_insert(bufferedmqf,hash,1,false,false);
