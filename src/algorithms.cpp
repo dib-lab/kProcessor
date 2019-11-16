@@ -360,6 +360,8 @@ namespace kProcessor {
         // parse_params["mode"] = 3 > Minimizers
 
         // Initialize kmerDecoder
+        vector<uint64_t> countHistogram= estimateKmersHistogram(filename, kframe->getkSize() ,1);
+        kframe->reserve(countHistogram);
         std::string mode = "kmers";
         bool check_mode = (parse_params.find("mode") != parse_params.end());
         if (check_mode){

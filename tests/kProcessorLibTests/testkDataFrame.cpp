@@ -125,9 +125,9 @@ INSTANTIATE_TEST_SUITE_P(testFrames,
                         ::testing::ValuesIn(BuildTestFrames()));
 
 
-//INSTANTIATE_TEST_SUITE_P(testFrames,
-//                         kDataFrameBufferedTest,
-//                         ::testing::ValuesIn(BuildTestBufferedFrames()));
+INSTANTIATE_TEST_SUITE_P(testFrames,
+                         kDataFrameBufferedTest,
+                         ::testing::ValuesIn(BuildTestBufferedFrames()));
 
 vector<string> fastqFiles={"test.noN.fastq","test2.noN.fastq","test2.noN.fastq"};
 INSTANTIATE_TEST_SUITE_P(testcounting,
@@ -852,54 +852,54 @@ TEST_P(kDataFrameBufferedTest,transformPlus10)
 
 }
 
-//TEST_P(kDataFrameBufferedTest,parsingTest)
-//{
-//    kDataFrame* kframe=GetParam();
-//    string fileName="test2.noN.fastq";
-////kDataFrame* kframe=get<0>(GetParam());
-////string fileName=get<1>(GetParam());
-//    int kSize=kframe->getkSize();
-//    kProcessor::countKmersFromFile(kframe, {{"mode", 1}}, fileName, 1000); // Mode 1 : kmers, KmerSize will be cloned from the kFrame
-//
-//    seqan::SeqFileIn seqIn(fileName.c_str());
-//    seqan::StringSet<seqan::CharString> ids;
-//    seqan::StringSet<seqan::CharString> reads;
-//    int chunkSize=1000;
-//    unordered_map<string,uint64_t > insertedKmers;
-//    while(!atEnd(seqIn)){
-//        clear(reads);
-//        clear(ids);
-//
-//        seqan::readRecords(ids, reads, seqIn,chunkSize);
-//        for(int j=0;j<length(reads);j++)
-//        {
-//            string seq=string((char*)seqan::toCString(reads[j]));
-//            for(int i=0;i<seq.size()-kSize+1;i++)
-//            {
-//                string kmer=seq.substr(i,kSize);
-//                kmer=kmer::canonicalKmer(kmer);
-//                insertedKmers[kmer]++;
-//            }
-//        }
-//
-//    }
-//    seqan::close(seqIn);
-//    kDataFrameIterator it=kframe->begin();
-//    while(it!=kframe->end())
-//    {
-//        string kmer=it.getKmer();
-//        uint64_t count=it.getCount();
-//        if(count != insertedKmers[kmer])
-//        {
-//            cout<<kmer<<endl;
-//
-//        }
-//        EXPECT_EQ(count,insertedKmers[kmer]);
-//        insertedKmers.erase(kmer);
-//        it++;
-//    }
-//    EXPECT_EQ(insertedKmers.size(),0);
-//}
+TEST_P(kDataFrameBufferedTest,parsingTest)
+{
+    kDataFrame* kframe=GetParam();
+    string fileName="test2.noN.fastq";
+//kDataFrame* kframe=get<0>(GetParam());
+//string fileName=get<1>(GetParam());
+    int kSize=kframe->getkSize();
+    kProcessor::countKmersFromFile(kframe, {{"mode", 1}}, fileName, 1000); // Mode 1 : kmers, KmerSize will be cloned from the kFrame
+
+    seqan::SeqFileIn seqIn(fileName.c_str());
+    seqan::StringSet<seqan::CharString> ids;
+    seqan::StringSet<seqan::CharString> reads;
+    int chunkSize=1000;
+    unordered_map<string,uint64_t > insertedKmers;
+    while(!atEnd(seqIn)){
+        clear(reads);
+        clear(ids);
+
+        seqan::readRecords(ids, reads, seqIn,chunkSize);
+        for(int j=0;j<length(reads);j++)
+        {
+            string seq=string((char*)seqan::toCString(reads[j]));
+            for(int i=0;i<seq.size()-kSize+1;i++)
+            {
+                string kmer=seq.substr(i,kSize);
+                kmer=kmer::canonicalKmer(kmer);
+                insertedKmers[kmer]++;
+            }
+        }
+
+    }
+    seqan::close(seqIn);
+    kDataFrameIterator it=kframe->begin();
+    while(it!=kframe->end())
+    {
+        string kmer=it.getKmer();
+        uint64_t count=it.getCount();
+        if(count != insertedKmers[kmer])
+        {
+            cout<<kmer<<endl;
+
+        }
+        EXPECT_EQ(count,insertedKmers[kmer]);
+        insertedKmers.erase(kmer);
+        it++;
+    }
+    EXPECT_EQ(insertedKmers.size(),0);
+}
 
 TEST_P(algorithmsTest,parsingTest2)
 {
@@ -907,6 +907,7 @@ TEST_P(algorithmsTest,parsingTest2)
     kDataFrame* kframe=get<0>(GetParam());
     string fileName=get<1>(GetParam());
     int kSize=kframe->getkSize();
+    RecordProperty("kdataFrame Type", kframe->get_class_name());
     int chunkSize=1000;
     unordered_map<string,uint64_t > insertedKmers;
     kProcessor::countKmersFromFile(kframe, {{"mode", 1}}, fileName, 1000); // Mode 1 : kmers, KmerSize will be cloned from the kFrame
@@ -941,8 +942,7 @@ TEST_P(algorithmsTest,parsingTest2)
         uint64_t count=it.getCount();
         if(count != insertedKmers[kmer])
         {
-            //cout<<kmer<<endl;
-
+            cout<<kmer<<endl;
         }
         ASSERT_EQ(count,insertedKmers[kmer]);
         insertedKmers.erase(kmer);

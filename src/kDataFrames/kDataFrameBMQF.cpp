@@ -77,6 +77,10 @@ void kDataFrameBMQF::reserve(uint64_t n)
         bufferedMQF_destroy(old);
         delete old;
     }
+    kDataFrameBMQFIterator* it=new kDataFrameBMQFIterator(bufferedmqf,kSize,KD);
+    it->endIterator();
+    endIterator=new  kDataFrameIterator(it,(kDataFrame*)this);
+
 }
 void kDataFrameBMQF::reserve(vector<uint64_t> countHistogram) {
     bufferedMQF* old=bufferedmqf;
@@ -93,6 +97,9 @@ void kDataFrameBMQF::reserve(vector<uint64_t> countHistogram) {
        // qf_destroy(old);
         delete old;
     }
+    kDataFrameBMQFIterator* it=new kDataFrameBMQFIterator(bufferedmqf,kSize,KD);
+    it->endIterator();
+    endIterator=new  kDataFrameIterator(it,(kDataFrame*)this);
 }
 kDataFrameBMQF::kDataFrameBMQF(uint64_t ksize,vector<uint64_t> countHistogram,uint8_t value_bits
         ,double falsePositiveRate):
@@ -366,9 +373,10 @@ kDataFrameIterator kDataFrameBMQF::begin(){
 }
 
 kDataFrameIterator kDataFrameBMQF::end(){
-    kDataFrameBMQFIterator* it=new kDataFrameBMQFIterator(bufferedmqf,kSize,KD);
-    it->endIterator();
-    return (kDataFrameIterator(it,(kDataFrame*)this));
+//    kDataFrameBMQFIterator* it=new kDataFrameBMQFIterator(bufferedmqf,kSize,KD);
+//    it->endIterator();
+//    return (kDataFrameIterator(it,(kDataFrame*)this));
+    return *endIterator;
 }
 
 kDataFrameIterator kDataFrameBMQF::find(string kmer) {

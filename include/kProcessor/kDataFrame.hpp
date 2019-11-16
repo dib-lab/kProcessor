@@ -436,6 +436,7 @@ private:
   __uint128_t range;
   static bool isEnough(vector<uint64_t> histogram,uint64_t noSlots,uint64_t fixedSizeCounter,uint64_t slotSize);
   friend class kDataframeBMQF;
+  kDataFrameIterator* endIterator;
 public:
   kDataFrameBMQF();
   kDataFrameBMQF(uint64_t kSize);
