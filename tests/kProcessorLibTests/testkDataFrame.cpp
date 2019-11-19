@@ -941,7 +941,7 @@ TEST_P(kDataFrameBufferedTest,parsingTest)
 TEST_P(algorithmsTest,parsingTest2)
 {
 
-    kDataFrame* kframe=get<0>(GetParam());
+    kDataFrame* kframe=get<0>(GetParam())->getTwin();
     string fileName=get<1>(GetParam());
     int kSize=kframe->getkSize();
     RecordProperty("kdataFrame Type", kframe->get_class_name());
