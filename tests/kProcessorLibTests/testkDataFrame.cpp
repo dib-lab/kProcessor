@@ -151,10 +151,10 @@ vector<vector<kDataFrame*> > BuildTestFramesForSetFunctions()
   for(auto file:setFunctionsTestInput[0])
   {
     framesToBeTested[0].push_back(new kDataFrameMQF(k));
-   // kProcessor::parseSequences(file,1,framesToBeTested[0].back());
+//    kProcessor::countKmersFromFile(framesToBeTested[0].back(), {{"mode", 1}}, file, 1000); // Mode 1 : kmers, KmerSize will be cloned from the kFrame
+
     framesToBeTested[1].push_back(new kDataFrameMQF(k)); // Temporary until resolving #17
-    framesToBeTested[1].push_back(new kDataFrameMAP(k)); // Set functions should now work fine on sorted map
-    //kProcessor::parseSequences(file,1,framesToBeTested[1].back());
+//    kProcessor::countKmersFromFile(framesToBeTested[1].back(), {{"mode", 1}}, file, 1000); // Mode 1 : kmers, KmerSize will be cloned from the kFrame
   }
   return framesToBeTested;
 }
@@ -941,7 +941,7 @@ TEST_P(kDataFrameBufferedTest,parsingTest)
 TEST_P(algorithmsTest,parsingTest2)
 {
 
-    kDataFrame* kframe=get<0>(GetParam());
+    kDataFrame* kframe=get<0>(GetParam())->getTwin();
     string fileName=get<1>(GetParam());
     int kSize=kframe->getkSize();
     RecordProperty("kdataFrame Type", kframe->get_class_name());
