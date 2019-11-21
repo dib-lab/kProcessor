@@ -88,6 +88,8 @@ kmerDecoder* initialize_kmerDecoder(std::string mode, std::map<std::string, int>
 // Initialize kmerDecoder to hash and Ihash single kmer.
 kmerDecoder* initialize_kmerDecoder(int kmer_size, int hash_mode = 1);
 
+kmerDecoder * initialize_listDecoder(std::string filename);
+
 /* set hashing mode for kmerDecoder object
  *
  * Mode 0: Murmar Hashing | Irreversible

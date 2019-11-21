@@ -354,28 +354,62 @@ namespace kProcessor {
         }
     }
 
+
+    inline void dump(kmerDecoder * KD){
+            while (!KD->end()) {
+                KD->next_chunk();
+
+                for (const auto &seq : *KD->getKmers()) {
+                    std::cout << "Read ID: " << seq.first << std::endl;
+                    for (const auto &kmer : seq.second) {
+                        std::cout << kmer.str << ": " << kmer.hash << std::endl;
+                    }
+                }
+            }
+        }
+        
     void countKmersFromFile(kDataFrame * kframe, std::map<std::string, int> parse_params, string filename, int chunk_size){
         // parse_params["mode"] = 1 > Default: Kmers
         // parse_params["mode"] = 2 > Skipmers
         // parse_params["mode"] = 3 > Minimizers
+        // parse_params["mode"] = 4 > Items
+
+
+        vector<uint64_t> countHistogram;
 
         // Initialize kmerDecoder
-        vector<uint64_t> countHistogram= estimateKmersHistogram(filename, kframe->getkSize() ,1);
-        kframe->reserve(countHistogram);
+        
         std::string mode = "kmers";
         bool check_mode = (parse_params.find("mode") != parse_params.end());
+
         if (check_mode){
             if (parse_params["mode"] == 2) mode = "skipmers";
             else if (parse_params["mode"] == 3) mode = "minimizers";
+            else if (parse_params["mode"] == 4) mode = "items";
         }
 
         parse_params["k_size"] = kframe->ksize();
         parse_params["k"] = kframe->ksize();
-        kmerDecoder * KD = initialize_kmerDecoder(filename, chunk_size, mode, parse_params);
+
+
+        kmerDecoder * KD;
+
+        if(mode == "items"){
+            KD = new Items(filename);
+            kframe->KD = KD;
+        }
+        else{
+            countHistogram= estimateKmersHistogram(filename, kframe->getkSize() ,1);
+            kframe->reserve(countHistogram);
+            KD = initialize_kmerDecoder(filename, chunk_size, mode, parse_params);
+            // Clone the hashing
+            kmerDecoder_setHashing(KD, kframe->KD->hash_mode, kframe->KD->canonical);
+        }
+
 
         // Clone the hashing
 
-        kmerDecoder_setHashing(KD, kframe->KD->hash_mode, kframe->KD->canonical);
+        
 
         // Processing
 
@@ -383,6 +417,7 @@ namespace kProcessor {
             KD->next_chunk();
             for (const auto &seq : *KD->getKmers()) {
                 for (const auto &kmer : seq.second) {
+                    std::cerr << kmer.str << ": " << kmer.hash << std::endl;
                     kframe->insert(kmer.hash);
                 }
             }
@@ -828,6 +863,7 @@ namespace kProcessor {
         // parse_params["mode"] = 1 > Default: Kmers
         // parse_params["mode"] = 2 > Skipmers
         // parse_params["mode"] = 3 > Minimizers
+        // parse_params["mode"] = 4 > Items (listDecoder)
 
         // Initialize kmerDecoder
         std::string mode = "kmers";
@@ -835,22 +871,21 @@ namespace kProcessor {
         if (check_mode){
             if (parse_params["mode"] == 2) mode = "skipmers";
             else if (parse_params["mode"] == 3) mode = "minimizers";
+            else if (parse_params["mode"] == 4) mode = "items";
         }
 
         parse_params["k_size"] = frame->ksize();
         parse_params["k"] = frame->ksize();
-        kmerDecoder * KD = initialize_kmerDecoder(filename, chunk_size, mode, parse_params);
+        kmerDecoder * KD;
 
-        // Clone the hashing
+        if(mode == "items")
+            KD = new Items(filename);
+        else{
+            KD = initialize_kmerDecoder(filename, chunk_size, mode, parse_params);
+            // Clone the hashing
+            kmerDecoder_setHashing(KD, frame->KD->hash_mode, frame->KD->canonical);
+        }
 
-        kmerDecoder_setHashing(KD, frame->KD->hash_mode, frame->KD->canonical);
-
-        // Processing
-
-            if (KD->get_kSize() != (int)frame->ksize()) {
-                std::cerr << "kmerDecoder kSize must be equal to kDataFrame kSize" << std::endl;
-                exit(1);
-            }
 
             flat_hash_map<string, string> namesMap;
             flat_hash_map<string, uint64_t> tagsMap;
