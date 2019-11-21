@@ -43,9 +43,10 @@ INCLUDES = [
     'include/kProcessor',
     'ThirdParty/MQF/include',
     'ThirdParty/sdsl-lite/include',
-    'ThirdParty/kmerDecoder/include',
-    'ThirdParty/kmerDecoder/lib/seqan/include',
-    'ThirdParty/kmerDecoder/lib/parallel-hashmap',
+    'ThirdParty/listDecoder/include',
+    'ThirdParty/listDecoder/lib/seqan/include',
+    'ThirdParty/listDecoder/lib/parallel-hashmap',
+    'ThirdParty/listDecoder/include',
 ]
 
 LINK_ARGS = [
@@ -61,7 +62,7 @@ LIBRARIES_DIRS = [
     "build/ThirdParty/MQF/src",
     "ThirdParty/ntCard",
     "build/ThirdParty/sdsl-lite/lib",
-    "build/ThirdParty/kmerDecoder",
+    "build/ThirdParty/listDecoder",
 
 ]
 

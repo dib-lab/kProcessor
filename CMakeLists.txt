@@ -22,17 +22,15 @@ include_directories("ThirdParty/CLI")
 include_directories("ThirdParty/MQF/include")
 include_directories("ThirdParty/json")
 include_directories("ThirdParty/sdsl-lite/include")
-include_directories("ThirdParty/kmerDecoder/include")
-include_directories("ThirdParty/kmerDecoder/lib/parallel_hashmap")
+include_directories("ThirdParty/listDecoder/include")
+include_directories("ThirdParty/listDecoder/lib/parallel_hashmap")
 include_directories("ThirdParty/cereal/include")
 include_directories("ThirdParty/ntCard/include")
-include_directories("ThirdParty/listDecoder/include")
 
 set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -std=c++17 -fPIC -fopenmp -W -Wall -pedantic -O3 -Ofast")
 
 add_subdirectory(ThirdParty/MQF/)
 add_subdirectory(ThirdParty/sdsl-lite/)
-add_subdirectory(ThirdParty/kmerDecoder)
 add_subdirectory(ThirdParty/listDecoder)
 
 include(ExternalProject)
@@ -63,7 +61,6 @@ target_link_libraries (kProcessor ${ntcardLib}  -ldl)
 #set_property(TARGET sdsl PROPERTY POSITION_INDEPENDENT_CODE ON)
 target_link_libraries(kProcessor sdsl)
 target_link_libraries(kProcessor kmerDecoder)
-target_link_libraries(kProcessor listDecoder)
 
 target_include_directories(${LIBRARY_NAME} PRIVATE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/${LIBRARY_NAME}>
