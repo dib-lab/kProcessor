@@ -4,6 +4,7 @@ public:
   void addNewColor(uint32_t color, vector<uint32_t> & samplesIds);
   void setColor(string kmer,uint32_t color);
   uint32_t getColor(string kmer);
+  uint32_t getColor(uint64_t kmer);
   vector<uint32_t> getKmerSource(string kmer);
   vector<uint32_t> getKmerSourceFromColor(uint32_t color);
 
