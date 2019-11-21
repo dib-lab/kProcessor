@@ -10,3 +10,6 @@
 [submodule "ThirdParty/MQF"]
 	path = ThirdParty/MQF
 	url = https://github.com/dib-lab/MQF.git
+[submodule "ThirdParty/listDecoder"]
+	path = ThirdParty/listDecoder
+	url = https://github.com/mr-eyes/listDecoder
