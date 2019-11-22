@@ -563,6 +563,10 @@ namespace kProcessor {
         KD->setHashingMode(hash_mode, canonical);
     }
 
+    void kmerDecoder_setHashing(kDataFrame * KF, int hash_mode, bool canonical){
+        KF->KD->setHashingMode(hash_mode, canonical);
+    }
+
 
     kmerDecoder* initialize_kmerDecoder(std::string filename, int chunkSize, std::string mode, std::map<std::string, int> parse_params){
 
