@@ -62,6 +62,7 @@ LIBRARIES_DIRS = [
     "ThirdParty/ntCard",
     "build/ThirdParty/sdsl-lite/lib",
     "build/ThirdParty/kmerDecoder",
+    "build/ThirdParty/MQF/ThirdParty/stxxl/lib",
 
 ]
 
@@ -71,6 +72,7 @@ LIBRARIES = [
     'MQF',
     'ntcard',
     'kmerDecoder',
+    'stxxl_debug',
 ]
 
 SWIG_OPTS = [
