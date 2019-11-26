@@ -97,7 +97,7 @@ TEST_P(colorsTableTest,saveAndLoad)
 vector<kDataFrame*> BuildTestFrames()
 {
   vector<kDataFrame*> framesToBeTested;
-  vector<int> kSizes={21,31};
+  vector<int> kSizes={21};
   for(auto k:kSizes)
   {
    framesToBeTested.push_back(new kDataFrameMQF(k));
@@ -112,7 +112,7 @@ vector<kDataFrame*> BuildTestFrames()
 vector<kDataFrameBMQF*> BuildTestBufferedFrames()
 {
     vector<kDataFrameBMQF*> framesToBeTested;
-    vector<int> kSizes={21,31};
+    vector<int> kSizes={21};
     for(auto k:kSizes)
     {
         framesToBeTested.push_back(new kDataFrameBMQF((uint64_t)k));
@@ -129,7 +129,7 @@ INSTANTIATE_TEST_SUITE_P(testFrames,
                          kDataFrameBufferedTest,
                          ::testing::ValuesIn(BuildTestBufferedFrames()));
 
-vector<string> fastqFiles={"test.noN.fastq","test2.noN.fastq"};
+vector<string> fastqFiles={"test.noN.fastq"};
 INSTANTIATE_TEST_SUITE_P(testcounting,
                          algorithmsTest,
                         ::testing::Combine(
@@ -986,5 +986,5 @@ TEST_P(algorithmsTest,parsingTest2)
         it++;
     }
     EXPECT_EQ(insertedKmers.size(),0);
-    //delete kframe;
+    delete kframe;
 }
