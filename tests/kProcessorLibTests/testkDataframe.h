@@ -6,13 +6,13 @@ using namespace std;
 
 
 
-class kDataFrameTest : public ::testing::TestWithParam<kDataFrame* >{
+class kDataFrameTest : public ::testing::TestWithParam<tuple<string,int> >{
 };
 
-class kDataFrameBufferedTest : public ::testing::TestWithParam<kDataFrameBMQF* >{
+class kDataFrameBufferedTest : public ::testing::TestWithParam<int >{
 };
 
-class algorithmsTest : public ::testing::TestWithParam<tuple<kDataFrame*,string> >{
+class algorithmsTest : public ::testing::TestWithParam<tuple<string,int,string> >{
 };
 class estimateTest : public ::testing::TestWithParam<string >{
 };

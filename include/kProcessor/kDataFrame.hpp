@@ -240,7 +240,7 @@ public:
 
 
   virtual ~kDataFrame(){
-
+    delete KD;
   }
 /// creates a new kDataframe using the same parameters as the current kDataFrame.
 /*! It is like clone but without copying the data */
@@ -446,8 +446,8 @@ public:
   kDataFrameBMQF(uint64_t ksize,vector<uint64_t> countHistogram,uint8_t tagSize
     ,double falsePositiveRate);
   ~kDataFrameBMQF(){
-    bufferedMQF_destroy(bufferedmqf);
     delete bufferedmqf;
+    delete endIterator;
   }
   void reserve (uint64_t n);
   void reserve (vector<uint64_t> countHistogram);
