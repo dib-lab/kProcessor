@@ -981,28 +981,15 @@ TEST_P(algorithmsTest,parsingTest2)
     RecordProperty("kdataFrame Type", kframe->get_class_name());
     unordered_map<string,uint64_t > insertedKmers;
     kProcessor::countKmersFromFile(kframe, {{"mode", 1}}, fileName, 1000); // Mode 1 : kmers, KmerSize will be cloned from the kFrame
-
-    seqan::SeqFileIn seqIn(fileName.c_str());
-    seqan::StringSet<seqan::CharString> ids;
-    seqan::StringSet<seqan::CharString> reads;
-
-
-    while(!atEnd(seqIn)){
-        clear(reads);
-        clear(ids);
-
-        seqan::readRecords(ids, reads, seqIn,chunkSize);
-        for(int j=0;j<length(reads);j++)
-        {
-            string seq=string((char*)seqan::toCString(reads[j]));
-            for(int i=0;i<seq.size()-kSize+1;i++)
-            {
-                string kmer=seq.substr(i,kSize);
-                kmer=kmer::canonicalKmer(kmer);
-                insertedKmers[kmer]++;
-            }
-        }
-
+    string goldFileName=fileName.substr(0,fileName.size()-6)+"."+to_string(kSize)+".dsk.txt";
+    cout<<goldFileName<<endl;
+    ifstream kmerCountGoldFile(goldFileName);
+    string kmer;
+    uint64_t  count;
+    while(kmerCountGoldFile>>kmer>>count)
+    {
+        uint64_t kDatframe_count=kframe->getCount(kmer);
+        ASSERT_EQ(count,kDatframe_count);
     }
     kmerCountGoldFile.close();
 //    seqan::SeqFileIn seqIn(fileName.c_str());
