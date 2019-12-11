@@ -440,7 +440,7 @@ kDataFrameBMQFIterator::kDataFrameBMQFIterator(const kDataFrameBMQFIterator &oth
         _kDataFrameIterator(other.kSize) {
     qfi = new bufferedMQFIterator();
     mqf=other.mqf;
-    qfi->bufferIt=new QFi();
+//    qfi->bufferIt=new QFi();
     qfi->bufferIt->qf = other.qfi->bufferIt->qf;
     qfi->bufferIt->run = other.qfi->bufferIt->run;
     qfi->bufferIt->current = other.qfi->bufferIt->current;
@@ -449,7 +449,7 @@ kDataFrameBMQFIterator::kDataFrameBMQFIterator(const kDataFrameBMQFIterator &oth
     qfi->bufferIt->num_clusters = other.qfi->bufferIt->num_clusters;
     qfi->bufferIt->c_info = other.qfi->bufferIt->c_info;
 
-    qfi->diskIt=new onDiskMQF_Namespace::onDiskMQFIterator();
+  //  qfi->diskIt=new onDiskMQF_Namespace::onDiskMQFIterator();
     qfi->diskIt->qf = other.qfi->diskIt->qf;
     qfi->diskIt->run = other.qfi->diskIt->run;
     qfi->diskIt->current = other.qfi->diskIt->current;
@@ -457,6 +457,8 @@ kDataFrameBMQFIterator::kDataFrameBMQFIterator(const kDataFrameBMQFIterator &oth
     qfi->diskIt->cur_length = other.qfi->diskIt->cur_length;
     qfi->diskIt->num_clusters = other.qfi->diskIt->num_clusters;
     qfi->diskIt->c_info = other.qfi->diskIt->c_info;
+
+    qfi->finished=other.qfi->finished;
 
     KD = other.KD;
 }

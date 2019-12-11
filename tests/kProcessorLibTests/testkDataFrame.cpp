@@ -351,13 +351,15 @@ TEST_P(kDataFrameTest,iterateOverAllKmers)
     kDataFrame* kframe=getFrame(GetParam());
     EXPECT_EQ(kframe->empty(), true);
     unordered_map<string,int>* kmers=kmersGen.getKmers((int)kframe->getkSize());
-    unordered_map<string,int> insertedKmers;
-    insertedKmers.clear();
+   // unordered_set<string> insertedKmers;
+//    insertedKmers.clear();
     bool first=true;
+    int numInsertedKmers=0;
     for(auto k:*kmers)
     {
+        numInsertedKmers++;
       kframe->insert(k.first,k.second);
-      insertedKmers[k.first]+=k.second;
+
       if(kframe->load_factor()>=kframe->max_load_factor()*0.8){
         break;
       }
@@ -368,11 +370,12 @@ TEST_P(kDataFrameTest,iterateOverAllKmers)
     {
       string kmer=it.getKmer();
       uint64_t count=it.getCount();
-      ASSERT_EQ(count,insertedKmers[kmer]);
-      insertedKmers.erase(kmer);
+      ASSERT_EQ(count,(*kmers)[kmer]);
+      //insertedKmers.erase(kmer);
       it++;
+      checkedKmers++;
     }
-    EXPECT_EQ(insertedKmers.size(),0);
+    EXPECT_EQ(checkedKmers,numInsertedKmers);
     delete kframe;
 
 }
@@ -454,11 +457,12 @@ TEST_P(kDataFrameTest,saveAndIterateOverAllKmers)
     kDataFrame* kframe=getFrame(GetParam());
     EXPECT_EQ(kframe->empty(), true);
     unordered_map<string,int>* kmers=kmersGen.getKmers((int)kframe->getkSize());
-    unordered_map<string,int> insertedKmers;
+    int numInsertedKmers=0;
+  //  unordered_map<string,int> insertedKmers;
     for(auto k:*kmers)
     {
+      numInsertedKmers++;
       kframe->insert(k.first,k.second);
-      insertedKmers[k.first]+=k.second;
       if(kframe->load_factor()>=kframe->max_load_factor()*0.8){
         break;
       }
@@ -466,17 +470,17 @@ TEST_P(kDataFrameTest,saveAndIterateOverAllKmers)
     string fileName="tmp.kdataframe."+gen_random(4);
     kframe->save(fileName);
     kDataFrame* kframeLoaded=kDataFrame::load(fileName);
-//    int checkedKmers=0;
+    int checkedKmers=0;
     kDataFrameIterator it=kframeLoaded->begin();
     while(it!=kframeLoaded->end())
     {
       string kmer=it.getKmer();
       uint64_t count=it.getCount();
-      ASSERT_EQ(count,insertedKmers[kmer]);
-      insertedKmers.erase(kmer);
+      ASSERT_EQ(count,(*kmers)[kmer]);
+      checkedKmers++;
       it++;
     }
-    EXPECT_EQ(insertedKmers.size(),0);
+    EXPECT_EQ(checkedKmers,numInsertedKmers);
     delete kframe;
 
 }
@@ -488,31 +492,33 @@ TEST_P(kDataFrameTest,transformPlus10)
     kDataFrame* kframe=getFrame(GetParam());
     EXPECT_EQ(kframe->empty(), true);
     unordered_map<string,int>* kmers=kmersGen.getKmers((int)kframe->getkSize());
-    unordered_map<string,int> insertedKmers;
+    //unordered_map<string,int> insertedKmers;
+    int numInsertedkmers=0;
     for(auto k:*kmers)
     {
+      numInsertedkmers++;
       kframe->insert(k.first,k.second);
-      insertedKmers[k.first]+=k.second;
       if(kframe->load_factor()>=kframe->max_load_factor()*0.8){
         break;
       }
+
     }
-    int checkedKmers=0;
     kDataFrame* kframe2=kProcessor::transform(kframe,[](kmerRow k)
     {
       k.count+=10;
       return k;
     });
     kDataFrameIterator it=kframe2->begin();
+    int numCheckedKmers=0;
     while(it!=kframe2->end())
     {
+      numCheckedKmers++;
       string kmer=it.getKmer();
       uint64_t count=it.getCount();
-      ASSERT_EQ(count,insertedKmers[kmer]+10);
-      insertedKmers.erase(kmer);
+      ASSERT_EQ(count,(*kmers)[kmer]+10);
       it++;
     }
-    EXPECT_EQ(insertedKmers.size(),0);
+    EXPECT_EQ(numCheckedKmers,numInsertedkmers);
     delete kframe;
 
 }
@@ -825,55 +831,67 @@ TEST_P(kDataFrameBufferedTest,iterateOverAllKmers)
     kDataFrameBMQF* kframe=(kDataFrameBMQF*)getFrame(make_tuple("BMQF",GetParam()));
     EXPECT_EQ(kframe->empty(), true);
     unordered_map<string,int>* kmers=kmersGen.getKmers((int)kframe->getkSize());
-    unordered_map<string,int> insertedKmers;
-    insertedKmers.clear();
+    int numInsertedKmers=0;
+   // unordered_map<string,int> insertedKmers;
+    //insertedKmers.clear();
+
     for(auto k:*kmers)
     {
+        numInsertedKmers++;
         kframe->insert(k.first,k.second);
-        insertedKmers[k.first]+=k.second;
+      //  insertedKmers[k.first]+=k.second;
         if(kframe->load_factor()>=kframe->max_load_factor()*0.8){
             break;
         }
     }
+
     kDataFrameIterator it=kframe->begin();
+    int testKmers=0;
     while(it!=kframe->end())
     {
         string kmer=it.getKmer();
         uint64_t count=it.getCount();
-        ASSERT_EQ(count,insertedKmers[kmer]);
-        insertedKmers.erase(kmer);
+        ASSERT_EQ(count,(*kmers)[kmer]);
+        //kmers->erase(kmer);
         it++;
+        testKmers++;
+        //if(testKmers%1000==0)
+          //  cout<<testKmers<<endl;
     }
-    EXPECT_EQ(insertedKmers.size(),0);
+    EXPECT_EQ(numInsertedKmers,testKmers);
     delete kframe;
 
 }
 
 TEST_P(kDataFrameBufferedTest,autoResize)
 {
-
     kDataFrameBMQF* kframe=(kDataFrameBMQF*)getFrame(make_tuple("BMQF",GetParam()));
     EXPECT_EQ(kframe->empty(), true);
     unordered_map<string,int>* kmers=kmersGen.getKmers((int)kframe->getkSize());
-    unordered_map<string,int> insertedKmers;
+    //unordered_map<string,int> insertedKmers;
 
+    int numInsertedKmers=0;
     for(auto k:*kmers)
     {
+        numInsertedKmers++;
         kframe->insert(k.first,k.second);
-        insertedKmers[k.first]+=k.second;
+      //  insertedKmers[k.first]+=k.second;
 
 
     }
+
     kDataFrameIterator it=kframe->begin();
+    int testedKmers=0;
     while(it!=kframe->end())
     {
         string kmer=it.getKmer();
         uint64_t count=it.getCount();
-        ASSERT_EQ(count,insertedKmers[kmer]);
-        insertedKmers.erase(kmer);
+        ASSERT_EQ(count,(*kmers)[kmer]);
+        //insertedKmers.erase(kmer);
         it++;
+        testedKmers++;
     }
-    EXPECT_EQ(insertedKmers.size(),0);
+    EXPECT_EQ(numInsertedKmers,testedKmers);
     delete kframe;
 }
 
@@ -979,10 +997,8 @@ TEST_P(algorithmsTest,parsingTest2)
     kDataFrame* kframe=getFrame(make_tuple(kframeType,kSize));
     string fileName=get<2>(GetParam());
     RecordProperty("kdataFrame Type", kframe->get_class_name());
-    unordered_map<string,uint64_t > insertedKmers;
     kProcessor::countKmersFromFile(kframe, {{"mode", 1}}, fileName, 1000); // Mode 1 : kmers, KmerSize will be cloned from the kFrame
     string goldFileName=fileName.substr(0,fileName.size()-6)+"."+to_string(kSize)+".dsk.txt";
-    cout<<goldFileName<<endl;
     ifstream kmerCountGoldFile(goldFileName);
     string kmer;
     uint64_t  count;
