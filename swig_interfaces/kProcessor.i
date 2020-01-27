@@ -12,7 +12,7 @@ using namespace std; // Extremly important
 
 %template(IntVector) vector<int>; /*vector to tuple conversion*/
 
-%import stdint.i            /*This mainly used for converting python int to C++ uint64_t*/
+%include "stdint.i"            /*This mainly used for converting python int to C++ uint64_t*/
 %include std_string.i       /*And this for converting python str to C++ std::string*/
 
 /*  ~~~~ENABLED FOR NOW~~~~~~  */
@@ -23,6 +23,10 @@ using namespace std; // Extremly important
 %template(MAPsi) unordered_map<int, std::string>;
 %template(MAPis) unordered_map<std::string, int>;
 */
+
+%template(batchQuery_sources) std::unordered_map<std::string, std::vector<std::vector<uint32_t>>>;
+%template(colorsList) vector<uint32_t>;
+%template(batchQuery_counts) std::unordered_map<std::string, std::vector<uint32_t>>;
 %template(kmerDecoderParams) map<string, int>;
 %include "swig_interfaces/modules/custom_typemaps.i"
 
@@ -37,7 +41,6 @@ using namespace std; // Extremly important
 %include "swig_interfaces/kDataFrame/kDataFrameMQF.i"
 %include "swig_interfaces/kDataFrame/kDataFrameMAP.i"
 %include "swig_interfaces/kDataFrame/kDataFramePHMAP.i"
-%include "swig_interfaces/kDataFrame/kDataFrameBMQF.i"
 /******** kDataFrame Interface ************/
 
 
@@ -49,7 +52,6 @@ using namespace std; // Extremly important
 
 %include "swig_interfaces/colored_kDataFrame.i"
 
-%template(colorsList) vector<uint32_t>;
 
 /******** colored_kDataFrame Interface ************/
 
@@ -59,6 +61,14 @@ using namespace std; // Extremly important
 #include "colorTable.hpp"
 %}
 %include "swig_interfaces/colorTable.i"
+
+/******** colorTable Interface ************/
+
+%{
+#include "batchQuery.hpp"
+%}
+
+%include "swig_interfaces/batchQuery.i"
 
 /******** colorTable Interface ************/
 
