@@ -28,3 +28,52 @@
 }
 
 /*----------------------------------------------*/
+
+
+//%typemap(out) std::unordered_map<std::string, std::vector<std::vector<uint32_t>>> {
+//
+//    $result = PyDict_New();
+//    std::unordered_map<string, std::vector<std::vector<uint32_t>>> iter;
+//    for (iter = $1.begin(); iter != $1.end(); ++iter) {
+//        std::cout << "Hello Fuckin World!\n";
+//        PyDict_SetItem($result, PyString_FromString(iter->first.c_str()) , iter->second);
+//    }
+//
+//}
+
+// Typemap to convert kmerSources to Python dictionary
+// Thanks to https://stackoverflow.com/a/27507865
+%typemap(out) std::unordered_map<std::string, std::vector<std::vector<uint32_t>>> &{
+    $result = PyDict_New();
+    std::unordered_map<string, std::vector<std::vector<uint32_t>>>::iterator map_iter;
+    for (map_iter = $1.begin(); map_iter != $1.end(); ++map_iter) {
+        for(int i = 0; i < $1->second.size(); ++i){
+            int subLength = $1->second->data()[i].size();
+            npy_intp dims[] = { subLength };
+            PyObject* temp = PyArray_SimpleNewFromData(1, dims, NPY_INT, $1->second->data()[i].data());
+            $result = PyDict_SetItem($result, PyString_FromString(iter->first.c_str()), temp);
+        }
+    }
+}
+
+
+// Typemap to convert kmerSources to Python dictionary
+%typemap(out) std::unordered_map<std::string, std::vector<uint32_t>> &{
+    $result = PyDict_New();
+
+    std::unordered_map<string, std::vector<std::vector<uint32_t>>>::iterator map_iter;
+
+    for (map_iter = $1.begin(); map_iter != $1.end(); ++map_iter) {
+            int len = map_iter->second.size();
+
+            $vec = PyList_New(len);
+
+            for(int i = 0; i < len; i++){
+                PyList_Append($vec, PyInt_FromLong(map_iter->second[i]));
+            }
+
+            $result = PyDict_SetItem($result, PyString_FromString(map_iter->first.c_str()), $vec);
+
+    }
+
+}
