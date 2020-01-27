@@ -360,8 +360,8 @@ namespace kProcessor {
         // parse_params["mode"] = 3 > Minimizers
 
         // Initialize kmerDecoder
-        vector<uint64_t> countHistogram= estimateKmersHistogram(filename, kframe->getkSize() ,1);
-        kframe->reserve(countHistogram);
+      //  vector<uint64_t> countHistogram= estimateKmersHistogram(filename, kframe->getkSize() ,1);
+        kframe->reserve(100000);
         std::string mode = "kmers";
         bool check_mode = (parse_params.find("mode") != parse_params.end());
         if (check_mode){
@@ -387,6 +387,7 @@ namespace kProcessor {
                 }
             }
         }
+        delete KD;
 
 
     }
@@ -524,8 +525,6 @@ namespace kProcessor {
         res->reserve((uint64_t) ((double) numKmers * 1.2));
         merge(input, res, [](vector<kmerRow> &input) -> kmerRow {
             kmerRow res = input[0];
-            //  cout<<"Start"<<endl;
-            //  cout<<input[0].kmer<<endl;
             for (int i = 1; i < input.size(); i++) {
                 //cout<<input[i].kmer<<endl;
                 res.count = min(res.count, input[i].count);
@@ -554,7 +553,6 @@ namespace kProcessor {
                 return kmerRow();
             return res;
         });
-        //cout<<"Size "<<res->size()<<endl;
         return res;
     }
 

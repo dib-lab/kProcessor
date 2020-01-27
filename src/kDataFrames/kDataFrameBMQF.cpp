@@ -5,21 +5,31 @@
 #include <math.h>
 #include <limits>
 #include <sstream>
+#include <cstdlib>
 
 
 kDataFrameBMQF::kDataFrameBMQF():kDataFrame(){
     bufferedmqf=new bufferedMQF();
-    bufferedMQF_init(bufferedmqf, (1ULL<<16), (1ULL<<16), 2*kSize, 0,2, "");
+    int randNum=rand();
+    string fileName="tmp"+to_string(randNum);
+    bufferedMQF_init(bufferedmqf, (1ULL<<16), (1ULL<<16), 2*kSize, 0,2, fileName.c_str());
     KD = (new Kmers(kSize));
     falsePositiveRate=0;
     hashbits=2*kSize;
     range=(1ULL<<hashbits);
+    kDataFrameBMQFIterator* it=new kDataFrameBMQFIterator(bufferedmqf,kSize,KD);
+    it->endIterator();
+    endIterator=new  kDataFrameIterator(it,(kDataFrame*)this);
+
+
 }
 
 kDataFrameBMQF::kDataFrameBMQF(uint64_t ksize,uint8_t q,uint8_t fixedCounterSize,uint8_t value_bits,double falsePositiveRate):
         kDataFrame(ksize){
     bufferedmqf=new bufferedMQF();
-    bufferedMQF_init(bufferedmqf, (1ULL<<q-2), (1ULL<<q), 2*kSize, value_bits,fixedCounterSize, "");
+    int randNum=rand();
+    string fileName="tmp"+to_string(randNum);
+    bufferedMQF_init(bufferedmqf, (1ULL<<q-2), (1ULL<<q), 2*kSize, value_bits,fixedCounterSize, fileName.c_str());
     this->falsePositiveRate=falsePositiveRate;
     if(falsePositiveRate==0){
         KD = (new Kmers(kSize));
@@ -29,6 +39,11 @@ kDataFrameBMQF::kDataFrameBMQF(uint64_t ksize,uint8_t q,uint8_t fixedCounterSize
     }
     hashbits=2*kSize;
     range=(1ULL<<hashbits);
+    kDataFrameBMQFIterator* it=new kDataFrameBMQFIterator(bufferedmqf,kSize,KD);
+    it->endIterator();
+    endIterator=new  kDataFrameIterator(it,(kDataFrame*)this);
+
+
 }
 
 
@@ -39,6 +54,7 @@ kDataFrameBMQF::kDataFrameBMQF(uint64_t ksize):
     hashbits=2*kSize;
     range=(1ULL<<hashbits);
     bufferedmqf=NULL;
+    endIterator=NULL;
     reserve(10000);
 }
 
@@ -56,6 +72,10 @@ kDataFrameBMQF::kDataFrameBMQF(bufferedMQF* bufferedmqf,uint64_t ksize,double fa
     hashbits=this->bufferedmqf->memoryBuffer->metadata->key_bits;
     hashbits=2*kSize;
     range=(1ULL<<hashbits);
+    kDataFrameBMQFIterator* it=new kDataFrameBMQFIterator(bufferedmqf,kSize,KD);
+    it->endIterator();
+    endIterator=new  kDataFrameIterator(it,(kDataFrame*)this);
+
 }
 
 kDataFrame* kDataFrameBMQF::getTwin(){
@@ -69,13 +89,19 @@ void kDataFrameBMQF::reserve(uint64_t n)
     bufferedMQF* old=bufferedmqf;
     bufferedmqf=new bufferedMQF();
     uint64_t q=(uint64_t)ceil(log2((double)n*1.4));
-    bufferedMQF_init(bufferedmqf, (1ULL<<(q-2)), (1ULL<<q), hashbits, 0,2, "");
+    int randNum=rand();
+    string fileName="tmp"+to_string(randNum);
+    bufferedMQF_init(bufferedmqf, (1ULL<<(q-2)), (1ULL<<q), hashbits, 0,2, fileName.c_str());
     if(old!=NULL)
     {
         // ERROR FLAG: bufferedMQF_copy(bufferedmqf,old)
         bufferedMQF_copy(bufferedmqf,old);
-        bufferedMQF_destroy(old);
+        //bufferedMQF_destroy(old);
         delete old;
+    }
+    if(endIterator!=NULL)
+    {
+        delete endIterator;
     }
     kDataFrameBMQFIterator* it=new kDataFrameBMQFIterator(bufferedmqf,kSize,KD);
     it->endIterator();
@@ -91,7 +117,9 @@ void kDataFrameBMQF::reserve(vector<uint64_t> countHistogram) {
     kDataFrameMQF::estimateParameters(countHistogram, 2 * getkSize(), 0,
                                       &nSlots, &fixedCounterSize, &memory);
 //    std::cerr << "[DEBUG] Q: " << q << std::endl;
-    bufferedMQF_init(bufferedmqf, nSlots/2, nSlots, hashbits, 0,2, "");
+    int randNum=rand();
+    string fileName="tmp"+to_string(randNum);
+    bufferedMQF_init(bufferedmqf, nSlots/2, nSlots, hashbits, 0,2, fileName.c_str());
     if (old != NULL) {
         bufferedMQF_migrate(old, bufferedmqf);
        // qf_destroy(old);
@@ -111,7 +139,9 @@ kDataFrameBMQF::kDataFrameBMQF(uint64_t ksize,vector<uint64_t> countHistogram,ui
     kDataFrameBMQF::estimateParameters(countHistogram,2*ksize,value_bits,
                                        &nSlots,&fixedCounterSize,&memory);
     // bufferedMQF_init requires different arguments
-    bufferedMQF_init(bufferedmqf, nSlots, 2*ksize,value_bits,fixedCounterSize, 2,"");
+    int randNum=rand();
+    string fileName="tmp"+to_string(randNum);
+    bufferedMQF_init(bufferedmqf, nSlots, 2*ksize,value_bits,fixedCounterSize, 2,fileName.c_str());
 }
 
 uint64_t kDataFrameBMQF::estimateMemory(uint64_t nslots,uint64_t slotSize, uint64_t fcounter, uint64_t value_bits)
@@ -410,7 +440,7 @@ kDataFrameBMQFIterator::kDataFrameBMQFIterator(const kDataFrameBMQFIterator &oth
         _kDataFrameIterator(other.kSize) {
     qfi = new bufferedMQFIterator();
     mqf=other.mqf;
-    qfi->bufferIt=new QFi();
+//    qfi->bufferIt=new QFi();
     qfi->bufferIt->qf = other.qfi->bufferIt->qf;
     qfi->bufferIt->run = other.qfi->bufferIt->run;
     qfi->bufferIt->current = other.qfi->bufferIt->current;
@@ -419,7 +449,7 @@ kDataFrameBMQFIterator::kDataFrameBMQFIterator(const kDataFrameBMQFIterator &oth
     qfi->bufferIt->num_clusters = other.qfi->bufferIt->num_clusters;
     qfi->bufferIt->c_info = other.qfi->bufferIt->c_info;
 
-    qfi->diskIt=new onDiskMQF_Namespace::onDiskMQFIterator();
+  //  qfi->diskIt=new onDiskMQF_Namespace::onDiskMQFIterator();
     qfi->diskIt->qf = other.qfi->diskIt->qf;
     qfi->diskIt->run = other.qfi->diskIt->run;
     qfi->diskIt->current = other.qfi->diskIt->current;
@@ -427,6 +457,8 @@ kDataFrameBMQFIterator::kDataFrameBMQFIterator(const kDataFrameBMQFIterator &oth
     qfi->diskIt->cur_length = other.qfi->diskIt->cur_length;
     qfi->diskIt->num_clusters = other.qfi->diskIt->num_clusters;
     qfi->diskIt->c_info = other.qfi->diskIt->c_info;
+
+    qfi->finished=other.qfi->finished;
 
     KD = other.KD;
 }
