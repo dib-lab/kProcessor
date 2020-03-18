@@ -41,6 +41,7 @@ using namespace std; // Extremly important
 %include "swig_interfaces/kDataFrame/kDataFrameMQF.i"
 %include "swig_interfaces/kDataFrame/kDataFrameMAP.i"
 %include "swig_interfaces/kDataFrame/kDataFramePHMAP.i"
+%include "swig_interfaces/kDataFrame/kDataFrameBMQF.i"
 /******** kDataFrame Interface ************/
 
 
