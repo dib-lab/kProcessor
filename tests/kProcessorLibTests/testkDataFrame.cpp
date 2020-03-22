@@ -771,7 +771,8 @@ TEST_P(indexingTest,index)
 
     uint64_t kSize=res->getkSize();
     vector<uint32_t> colors;
-
+    delete KMERS;
+    KMERS = kProcessor::initialize_kmerDecoder(filename, chunkSize, "kmers", {{"k_size", 25}});
 
     while (!KMERS->end()) {
             KMERS->next_chunk();
@@ -789,6 +790,7 @@ TEST_P(indexingTest,index)
                 }
             }
     }
+    delete KF,res,KMERS;
 
 }
 TEST_P(indexingTest,saveAndLoad)
