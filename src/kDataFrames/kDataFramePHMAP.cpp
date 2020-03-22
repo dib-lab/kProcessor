@@ -1,7 +1,5 @@
 #include "kDataFrame.hpp"
-#include <cereal/types/unordered_map.hpp>
-#include <cereal/types/memory.hpp>
-#include <cereal/archives/binary.hpp>
+#include "parallel_hashmap/phmap_dump.h"
 #include <iostream>
 #include <fstream>
 #include "Utils/kmer.h"
@@ -197,11 +195,13 @@ void kDataFramePHMAP::save(string filePath) {
     // Write the kmerSize
     ofstream file(filePath + ".extra");
     file << kSize << endl;
-
-    std::ofstream os(filePath + ".phmap", std::ios::binary);
-    cereal::BinaryOutputArchive archive(os);
-    archive(this->MAP);
-
+    file << this->KD->hash_mode << endl;
+    filePath += ".phmap";
+    {   
+        phmap::BinaryOutputArchive ar_out(filePath.c_str());
+        this->MAP.dump(ar_out);
+    }
+    
 }
 
 kDataFrame *kDataFramePHMAP::load(string filePath) {
@@ -209,15 +209,17 @@ kDataFrame *kDataFramePHMAP::load(string filePath) {
     // Load kSize
     ifstream file(filePath + ".extra");
     uint64_t kSize;
+    int hashing_mode;
     file >> kSize;
+    file >> hashing_mode;
 
-    // Initialize kDataFramePHMAP
-    kDataFramePHMAP *KMAP = new kDataFramePHMAP(kSize);
-
-    // Load the hashMap into the kDataFramePHMAP
-    std::ifstream os(filePath + ".phmap", std::ios::binary);
-    cereal::BinaryInputArchive iarchive(os);
-    iarchive(KMAP->MAP);
+    filePath += ".phmap";
+    
+    kDataFramePHMAP *KMAP = new kDataFramePHMAP(kSize, hashing_mode);
+    {
+        phmap::BinaryInputArchive ar_in(filePath.c_str());
+        KMAP->MAP.load(ar_in);
+    }
 
     return KMAP;
 }

@@ -374,6 +374,7 @@ void kDataFrameBMQF::save(string filePath){
     //filePath += ".mqf";
     ofstream file(filePath+".extra");
     file<<kSize<<endl;
+    file << this->KD->hash_mode << endl;
     // uint64_t legendSize=tagsLegend.size();
     // file<<legendSize<<endl;
     // auto it = tagsLegend.begin();
@@ -389,10 +390,16 @@ kDataFrame* kDataFrameBMQF::load(string filePath){
     throw logic_error("Not Implemented yet!");
     ifstream file(filePath+".extra");
     uint64_t filekSize;
+    int hashing_mode;
+    double flasePositiveRate;
     file>>filekSize;
+    file >> hashing_mode;
+    
+    flasePositiveRate = (hashing_mode == 1) ? 0 : 0.5;
+
     bufferedMQF* bufferedmqf=new bufferedMQF();
     qf_deserialize(bufferedmqf->memoryBuffer,(filePath+".mqf").c_str());
-    return new kDataFrameBMQF(bufferedmqf,filekSize,0);
+    return new kDataFrameBMQF(bufferedmqf,filekSize, flasePositiveRate);
 }
 
 kDataFrameIterator kDataFrameBMQF::begin(){

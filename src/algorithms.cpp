@@ -901,10 +901,10 @@ namespace kProcessor {
 
             uint64_t lastTag = 0;
             readID = 0;
-
+            int __batch_count = 0;
             while (!KD->end()) {
                 KD->next_chunk();
-
+                cout << "Processing Chunk(" << ++__batch_count << "): " << chunk_size*__batch_count << " seqs ..." << endl;
                 flat_hash_map<uint64_t, uint64_t> convertMap;
 
                 for (const auto &seq : *KD->getKmers()) {
