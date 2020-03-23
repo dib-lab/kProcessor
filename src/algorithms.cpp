@@ -18,6 +18,7 @@
 #include <parallel_hashmap/phmap.h>
 #include "ntcard.hpp"
 #include <cstdio>
+#include <stack>
 #include <chrono>
 using namespace std::chrono;
 
@@ -1177,7 +1178,7 @@ namespace kProcessor {
             if(!colorStringMap.hasColorID(colorVec))
             {
                 currColor=colorStringMap.getColorID(colorVec);
-                res->addNewColor(currColor,colorVec);
+               // res->addNewColor(currColor,colorVec);
             }
             else{
                 currColor=colorStringMap.getColorID(colorVec);
@@ -1222,6 +1223,38 @@ namespace kProcessor {
             delete currFrame->second;
             currFrame++;
         }
+        vector<uint32_t> color;
+        stack<tuple<colorNode*,uint32_t ,bool> > S;
+        S.push(make_tuple(colorStringMap.root,(uint32_t)0,false));
+        while(S.size()>0)
+        {
+            if(!get<2>(S.top()))
+            {
+                get<2>(S.top())=true;
+                if(get<1>(S.top())!=0)
+                    color.push_back(get<1>(S.top()));
+                if(get<0>(S.top())->currColor!=0)
+                {
+
+                    res->addNewColor(get<0>(S.top())->currColor,color);
+                }
+
+                for(auto it:get<0>(S.top())->edges)
+                {
+                    S.push(make_tuple(it.second,it.first,false));
+                }
+            } else{
+                if(get<1>(S.top())!=0)
+                {
+                    color.pop_back();
+                }
+                S.pop();
+
+            }
+
+
+        }
+
         return res;
 
 
