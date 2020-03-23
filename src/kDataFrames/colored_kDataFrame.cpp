@@ -6,7 +6,7 @@ using namespace std;
 colored_kDataFrame::colored_kDataFrame()
 {
   frame=new kDataFrameMQF();
-  colors=new BitVectorsTable();
+  colors=new intVectorsTable();
   nextAvailableColor=1;
 }
 
@@ -17,6 +17,10 @@ void colored_kDataFrame::addNewColor(uint32_t color, vector<uint32_t> & samplesI
 void colored_kDataFrame::setColor(string kmer,uint32_t color)
 {
   frame->setCount(kmer,color);
+}
+void colored_kDataFrame::setColor(uint64_t kmer,uint32_t color)
+{
+    frame->setCount(kmer,color);
 }
 uint32_t colored_kDataFrame::getColor(string kmer)
 {
@@ -88,6 +92,7 @@ void colored_kDataFrame::setColorTable(colorTable* table){
 }
 void colored_kDataFrame::setkDataFrame(kDataFrame* f)
 {
+    delete frame;
   frame=f;
 }
 uint64_t colored_kDataFrame::getkSize(){
