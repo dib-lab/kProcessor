@@ -1400,7 +1400,7 @@ namespace kProcessor {
                 auto itTag = colorStringMap.find(colorsString);
                 if (itTag == colorStringMap.end()) {
                     colorStringMap[colorsString] = currColor;
-                    res->addNewColor(currColor,colorVec);
+          //          res->addNewColor(currColor,colorVec);
                     currColor++;
                     itTag = colorStringMap.find(colorsString);
                 }
@@ -1417,6 +1417,17 @@ namespace kProcessor {
             currFrame++;
         }
         return res;
+
+        for(auto it: colorStringMap)
+        {
+            std::istringstream iss(it.first);
+            std::string token;
+            vector<uint32_t> c;
+            c.clear();
+            while(std::getline(iss, token, ';'))   // but we can specify a different one
+                c.push_back(atoi(token.c_str()));
+            res->addNewColor(it.second,c);
+        }
 
 
     }
