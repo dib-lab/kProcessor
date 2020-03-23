@@ -801,7 +801,7 @@ TEST_P(indexingTest,indexPriorityQ)
 
     kDataFrame *KF = new kDataFrameMQF(25, 28, 1);
     kmerDecoder *KMERS = kProcessor::initialize_kmerDecoder(filename, chunkSize, "kmers", {{"k_size", 25}});
-    colored_kDataFrame* res= kProcessor::indexPriorityQueue2(KMERS, filename+".names", KF);
+    colored_kDataFrame* res= kProcessor::indexPriorityQueue(KMERS, filename+".names", KF);
 
     uint64_t kSize=res->getkSize();
     vector<uint32_t> colors;
@@ -816,7 +816,7 @@ TEST_P(indexingTest,indexPriorityQ)
             ASSERT_NE(sampleID, 0);
             for (const auto &kmer : seq.second) {
                 colors.clear();
-                res->getKmerSource(kmer.str, colors);
+                res->getKmerSource(kmer.hash, colors);
                 ASSERT_NE(colors.size(),0);
                 auto colorIt=colors.end();
                 colorIt=find(colors.begin(),colors.end(),sampleID);
