@@ -18,6 +18,8 @@
 #include <parallel_hashmap/phmap.h>
 #include "ntcard.hpp"
 #include <cstdio>
+#include <chrono>
+using namespace std::chrono;
 
 
 using std::string;
@@ -1010,8 +1012,381 @@ namespace kProcessor {
             }
             return res;
         }
+        struct colorNode{
+        flat_hash_map<uint32_t, colorNode*> edges;
+        uint32_t currColor;
+        colorNode() {
+            currColor = 0;
+        }
+        };
+        class colorIndex{
+        public:
+            colorNode* root;
+            uint32_t lastColor;
+            colorIndex()
+            {
+                root=new colorNode();
+                lastColor=0;
+            }
+            bool hasColorID(vector<uint32_t>& v)
+            {
+                colorNode* currNode=root;
+                int i=0;
+                while(i<v.size())
+                {
+                    auto it=currNode->edges.find(v[i]);
+                    if(it==currNode->edges.end())
+                        break;
+                    currNode=it->second;
+                    i++;
+                }
+                if(i!=v.size())
+                    return false;
+                return currNode->currColor!=0;
+                }
+            uint32_t getColorID(vector<uint32_t>& v)
+            {
+                colorNode* currNode=root;
+                int i=0;
+                while(i<v.size())
+                {
+                    auto it=currNode->edges.find(v[i]);
+                    if(it==currNode->edges.end())
+                        break;
+                    currNode=it->second;
+                    i++;
+                }
+                for(;i<v.size();i++)
+                {
+                    currNode->edges[v[i]]=new colorNode();
+                    currNode=currNode->edges[v[i]];
+                }
+                if(currNode->currColor==0)
+                    currNode->currColor=++lastColor;
+                return currNode->currColor;
+            }
+    };
+    colored_kDataFrame * indexPriorityQueue(kmerDecoder *KD, string names_fileName, kDataFrame *frame){
+        if (KD->get_kSize() != (int)frame->ksize()) {
+            std::cerr << "kmerDecoder kSize must be equal to kDataFrame kSize" << std::endl;
+            exit(1);
+        }
+
+        ifstream namesFile(names_fileName.c_str());
+        flat_hash_map<string, string> namesMap;
+        colorIndex colorStringMap;
+       // flat_hash_map<string, uint32_t > colorStringMap;
+        colored_kDataFrame *res = new colored_kDataFrame();
+        res->setkDataFrame(frame);
+        string seqName, groupName;
+        string line;
+        uint32_t  currColor=1;
+        while (std::getline(namesFile, line)) {
+            std::vector<string> tokens;
+            std::istringstream iss(line);
+            std::string token;
+            while(std::getline(iss, token, '\t'))   // but we can specify a different one
+                tokens.push_back(token);
+            seqName = tokens[0];
+            groupName = tokens[1];
+            namesMap.insert(make_pair(seqName, groupName));
+            if(res->namesMapInv.find(groupName) == res->namesMapInv.end())
+            {
+                vector<uint32_t> tmp={currColor};
+                currColor=colorStringMap.getColorID(tmp);
+                // colorStringMap.insert(make_pair(to_string(currColor),currColor));
+                res->namesMap[currColor]=groupName;
+                res->namesMapInv[groupName]=currColor;
+
+                res->addNewColor(currColor,tmp);
+
+                currColor++;
+            }
+        }
+        flat_hash_map<string, kDataFrameMAP*> kmersPerGroup;
+        while (!KD->end()) {
+            KD->next_chunk();
+
+            for (const auto &seq : *KD->getKmers()) {
+                string readName = seq.first;
+                auto it = namesMap.find(readName);
+                if (it == namesMap.end()) {
+                    continue;
+                    // cout << "read " << readName << "dont have group. Please check the group names file." << endl;
+                }
+                string groupName = it->second;
 
 
+
+                flat_hash_map<string, kDataFrameMAP*>::iterator currFrame;
+                currFrame=kmersPerGroup.find(groupName);
+                if(currFrame == kmersPerGroup.end())
+                {
+                    kmersPerGroup[groupName]=new kDataFrameMAP(KD->get_kSize());
+                    currFrame=kmersPerGroup.find(groupName);
+                }
+                for (const auto &kmer : seq.second) {
+                    currFrame->second->insert(kmer.hash);
+                }
+
+            }
+        }
+
+
+        auto compare = [](tuple<uint64_t,uint64_t ,kDataFrameIterator*,kDataFrameIterator*>  lhs, tuple<uint64_t,uint64_t ,kDataFrameIterator*,kDataFrameIterator*>  rhs)
+        {
+            if(get<0>(lhs) == get<0>(rhs))
+                return get<1>(lhs) > get<1>(rhs);
+            return get<0>(lhs) > get<0>(rhs);
+        };
+
+        priority_queue<tuple<uint64_t ,uint64_t,kDataFrameIterator*,kDataFrameIterator*> , vector<tuple<uint64_t,uint64_t ,kDataFrameIterator*,kDataFrameIterator*> >,  decltype(compare)> nextKmer(compare);
+
+        flat_hash_map<string, kDataFrameMAP*>::iterator currFrame=kmersPerGroup.begin();
+        while(currFrame!=kmersPerGroup.end())
+        {
+            kDataFrameIterator* it=new kDataFrameIterator(currFrame->second->begin());
+            kDataFrameIterator* itend=new kDataFrameIterator(currFrame->second->end());
+            uint32_t  groupId=res->namesMapInv[currFrame->first];
+            nextKmer.push(make_tuple(it->getHashedKmer(),groupId,it,itend));
+            currFrame++;
+        }
+        uint64_t processedKmers=0;
+        while(nextKmer.size()>0)
+        {
+            vector<uint32_t> colorVec;
+            colorVec.clear();
+            uint64_t currHash=get<0>(nextKmer.top());
+            processedKmers++;
+            while(nextKmer.size()>0 && get<0>(nextKmer.top())==currHash)
+            {
+                auto colorTuple=nextKmer.top();
+                nextKmer.pop();
+                colorVec.push_back(get<1>(colorTuple));
+                get<2>(colorTuple)->next();
+                if(*get<2>(colorTuple)!=*get<3>(colorTuple)) {
+                    get<0>(colorTuple)=get<2>(colorTuple)->getHashedKmer();
+                    nextKmer.push(colorTuple);
+                }
+                else{
+                    delete get<2>(colorTuple);
+                    delete get<3>(colorTuple);
+                }
+            }
+
+            if(!colorStringMap.hasColorID(colorVec))
+            {
+                currColor=colorStringMap.getColorID(colorVec);
+                res->addNewColor(currColor,colorVec);
+            }
+            else{
+                currColor=colorStringMap.getColorID(colorVec);
+            }
+            res->setColor(currHash,currColor);
+//            auto start = high_resolution_clock::now();
+//            //colorStringMap.getColorID(colorVec);
+//            res->setColor(currHash, colorStringMap.getColorID(colorVec));
+//            auto stop = high_resolution_clock::now();
+//            auto duration = duration_cast<microseconds>(stop - start);
+//
+//                            string colorsString = to_string(colorVec[0]);
+//                for (int k = 1; k < colorVec.size(); k++) {
+//                    colorsString += ";" + to_string(colorVec[k]);
+//                }
+                //cout << colorsString<<" "<< duration.count() << "\n";
+//            if(colorVec.size()==1)
+//            {
+//                res->setColor(currHash, colorVec[0]);
+//            }
+//            else {
+//                string colorsString = to_string(colorVec[0]);
+//                for (int k = 1; k < colorVec.size(); k++) {
+//                    colorsString += ";" + to_string(colorVec[k]);
+//                }
+//                auto itTag = colorStringMap.find(colorsString);
+//                if (itTag == colorStringMap.end()) {
+//                    colorStringMap[colorsString] = currColor;
+//                    res->addNewColor(currColor,colorVec);
+//                    currColor++;
+//                    itTag = colorStringMap.find(colorsString);
+//                }
+//
+//                res->setColor(currHash,itTag->second);
+//            }
+        }
+
+
+        currFrame=kmersPerGroup.begin();
+        while(currFrame!=kmersPerGroup.end())
+        {
+            delete currFrame->second;
+            currFrame++;
+        }
+        return res;
+
+
+    }
+
+    colored_kDataFrame * indexPriorityQueue2(kmerDecoder *KD, string names_fileName, kDataFrame *frame){
+        if (KD->get_kSize() != (int)frame->ksize()) {
+            std::cerr << "kmerDecoder kSize must be equal to kDataFrame kSize" << std::endl;
+            exit(1);
+        }
+
+        ifstream namesFile(names_fileName.c_str());
+        flat_hash_map<string, string> namesMap;
+        //colorIndex colorStringMap;
+        flat_hash_map<string, uint32_t > colorStringMap;
+        colored_kDataFrame *res = new colored_kDataFrame();
+        res->setkDataFrame(frame);
+        string seqName, groupName;
+        string line;
+        uint32_t  currColor=1;
+        while (std::getline(namesFile, line)) {
+            std::vector<string> tokens;
+            std::istringstream iss(line);
+            std::string token;
+            while(std::getline(iss, token, '\t'))   // but we can specify a different one
+                tokens.push_back(token);
+            seqName = tokens[0];
+            groupName = tokens[1];
+            namesMap.insert(make_pair(seqName, groupName));
+            if(res->namesMapInv.find(groupName) == res->namesMapInv.end())
+            {
+                vector<uint32_t> tmp={currColor};
+                //currColor=colorStringMap.getColorID(tmp);
+                 colorStringMap.insert(make_pair(to_string(currColor),currColor));
+                res->namesMap[currColor]=groupName;
+                res->namesMapInv[groupName]=currColor;
+
+                res->addNewColor(currColor,tmp);
+
+                currColor++;
+            }
+        }
+        flat_hash_map<string, kDataFrameMAP*> kmersPerGroup;
+        while (!KD->end()) {
+            KD->next_chunk();
+
+            for (const auto &seq : *KD->getKmers()) {
+                string readName = seq.first;
+                auto it = namesMap.find(readName);
+                if (it == namesMap.end()) {
+                    continue;
+                    // cout << "read " << readName << "dont have group. Please check the group names file." << endl;
+                }
+                string groupName = it->second;
+
+
+
+                flat_hash_map<string, kDataFrameMAP*>::iterator currFrame;
+                currFrame=kmersPerGroup.find(groupName);
+                if(currFrame == kmersPerGroup.end())
+                {
+                    kmersPerGroup[groupName]=new kDataFrameMAP(KD->get_kSize());
+                    currFrame=kmersPerGroup.find(groupName);
+                }
+                for (const auto &kmer : seq.second) {
+                    currFrame->second->insert(kmer.hash);
+                }
+
+            }
+        }
+
+
+        auto compare = [](tuple<uint64_t,uint64_t ,kDataFrameIterator*,kDataFrameIterator*>  lhs, tuple<uint64_t,uint64_t ,kDataFrameIterator*,kDataFrameIterator*>  rhs)
+        {
+            if(get<0>(lhs) == get<0>(rhs))
+                return get<1>(lhs) > get<1>(rhs);
+            return get<0>(lhs) > get<0>(rhs);
+        };
+
+        priority_queue<tuple<uint64_t ,uint64_t,kDataFrameIterator*,kDataFrameIterator*> , vector<tuple<uint64_t,uint64_t ,kDataFrameIterator*,kDataFrameIterator*> >,  decltype(compare)> nextKmer(compare);
+
+        flat_hash_map<string, kDataFrameMAP*>::iterator currFrame=kmersPerGroup.begin();
+        while(currFrame!=kmersPerGroup.end())
+        {
+            kDataFrameIterator* it=new kDataFrameIterator(currFrame->second->begin());
+            kDataFrameIterator* itend=new kDataFrameIterator(currFrame->second->end());
+            uint32_t  groupId=res->namesMapInv[currFrame->first];
+            nextKmer.push(make_tuple(it->getHashedKmer(),groupId,it,itend));
+            currFrame++;
+        }
+        uint64_t processedKmers=0;
+        while(nextKmer.size()>0)
+        {
+            vector<uint32_t> colorVec;
+            colorVec.clear();
+            uint64_t currHash=get<0>(nextKmer.top());
+            processedKmers++;
+            while(nextKmer.size()>0 && get<0>(nextKmer.top())==currHash)
+            {
+                auto colorTuple=nextKmer.top();
+                nextKmer.pop();
+                colorVec.push_back(get<1>(colorTuple));
+                get<2>(colorTuple)->next();
+                if(*get<2>(colorTuple)!=*get<3>(colorTuple)) {
+                    get<0>(colorTuple)=get<2>(colorTuple)->getHashedKmer();
+                    nextKmer.push(colorTuple);
+                }
+                else{
+                    delete get<2>(colorTuple);
+                    delete get<3>(colorTuple);
+                }
+            }
+
+//            if(!colorStringMap.hasColorID(colorVec))
+//            {
+//                currColor=colorStringMap.getColorID(colorVec);
+//                res->addNewColor(currColor,colorVec);
+//            }
+//            else{
+//                currColor=colorStringMap.getColorID(colorVec);
+//            }
+//            res->setColor(currHash,currColor);
+//            auto start = high_resolution_clock::now();
+//            //colorStringMap.getColorID(colorVec);
+//            res->setColor(currHash, colorStringMap.getColorID(colorVec));
+//            auto stop = high_resolution_clock::now();
+//            auto duration = duration_cast<microseconds>(stop - start);
+//
+//                            string colorsString = to_string(colorVec[0]);
+//                for (int k = 1; k < colorVec.size(); k++) {
+//                    colorsString += ";" + to_string(colorVec[k]);
+//                }
+            //cout << colorsString<<" "<< duration.count() << "\n";
+            if(colorVec.size()==1)
+            {
+                res->setColor(currHash, colorVec[0]);
+            }
+            else {
+                string colorsString = to_string(colorVec[0]);
+                for (int k = 1; k < colorVec.size(); k++) {
+                    colorsString += ";" + to_string(colorVec[k]);
+                }
+                auto itTag = colorStringMap.find(colorsString);
+                if (itTag == colorStringMap.end()) {
+                    colorStringMap[colorsString] = currColor;
+                    res->addNewColor(currColor,colorVec);
+                    currColor++;
+                    itTag = colorStringMap.find(colorsString);
+                }
+
+                res->setColor(currHash,itTag->second);
+            }
+        }
+
+
+        currFrame=kmersPerGroup.begin();
+        while(currFrame!=kmersPerGroup.end())
+        {
+            delete currFrame->second;
+            currFrame++;
+        }
+        return res;
+
+
+    }
         vector<uint64_t> estimateKmersHistogram(string fileName, int kSize ,int threads)
 {
    std::string tmpFile = "tmp."+to_string(rand()%1000000);

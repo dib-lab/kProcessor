@@ -793,6 +793,43 @@ TEST_P(indexingTest,index)
     delete KF,res,KMERS;
 
 }
+
+TEST_P(indexingTest,indexPriorityQ)
+{
+    string filename=GetParam();
+    int chunkSize = 1000;
+
+    kDataFrame *KF = new kDataFrameMQF(25, 28, 1);
+    kmerDecoder *KMERS = kProcessor::initialize_kmerDecoder(filename, chunkSize, "kmers", {{"k_size", 25}});
+    colored_kDataFrame* res= kProcessor::indexPriorityQueue2(KMERS, filename+".names", KF);
+
+    uint64_t kSize=res->getkSize();
+    vector<uint32_t> colors;
+    delete KMERS;
+    KMERS = kProcessor::initialize_kmerDecoder(filename, chunkSize, "kmers", {{"k_size", 25}});
+
+    while (!KMERS->end()) {
+        KMERS->next_chunk();
+        for (const auto &seq : *KMERS->getKmers()) {
+            string readName = seq.first;
+            uint32_t sampleID = res->namesMapInv[readName];
+            ASSERT_NE(sampleID, 0);
+            for (const auto &kmer : seq.second) {
+                colors.clear();
+                res->getKmerSource(kmer.str, colors);
+                ASSERT_NE(colors.size(),0);
+                auto colorIt=colors.end();
+                colorIt=find(colors.begin(),colors.end(),sampleID);
+                ASSERT_NE(colorIt,colors.end());
+            }
+        }
+    }
+    delete KF;
+    delete res;
+    delete KMERS;
+
+}
+
 TEST_P(indexingTest,saveAndLoad)
 {
   string filename=GetParam();
