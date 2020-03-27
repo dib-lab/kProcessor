@@ -204,7 +204,7 @@ kDataFrame *kDataFrameMAP::load(string filePath) {
         std::cerr << "Error: In the kDataFrameMAP, hashing must be 2:TwoBitsRepresentation mode" << endl;
         exit(1);
     }
-    file.close()
+    file.close();
     // Initialize kDataFrameMAP
     kDataFrameMAP *KMAP = new kDataFrameMAP(kSize);
 
