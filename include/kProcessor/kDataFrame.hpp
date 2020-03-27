@@ -437,10 +437,11 @@ private:
   static bool isEnough(vector<uint64_t> histogram,uint64_t noSlots,uint64_t fixedSizeCounter,uint64_t slotSize);
   friend class kDataframeBMQF;
   kDataFrameIterator* endIterator;
+  string fileName;
 public:
   kDataFrameBMQF();
-  kDataFrameBMQF(uint64_t kSize);
-  kDataFrameBMQF(uint64_t ksize,uint8_t q,uint8_t fixedCounterSize,uint8_t tagSize,double falsePositiveRate);
+  kDataFrameBMQF(uint64_t kSize,string path);
+  kDataFrameBMQF(uint64_t ksize,uint8_t q,uint8_t fixedCounterSize,uint8_t tagSize,double falsePositiveRate,string path);
   kDataFrameBMQF(bufferedMQF* bufferedmqf,uint64_t ksize,double falsePositiveRate);
   //count histogram is array where count of kmers repeated n times is found at index n. index 0 holds number of distinct kmers.
   kDataFrameBMQF(uint64_t ksize,vector<uint64_t> countHistogram,uint8_t tagSize
@@ -500,6 +501,8 @@ public:
   kDataFrameIterator begin();
   kDataFrameIterator end();
   kDataFrameIterator find(string kmer);
+
+  string getFilename();
 };
 
 // kDataFrameMAP _____________________________

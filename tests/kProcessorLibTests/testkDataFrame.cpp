@@ -124,7 +124,9 @@ kDataFrame* getFrame(tuple<string,int> input)
     }
     else if(type=="BMQF")
     {
-        return new kDataFrameBMQF((uint64_t)kSize);
+        int randNum=rand();
+        string fileName="tmp"+to_string(randNum);
+        return new kDataFrameBMQF((uint64_t)kSize,fileName);
     }
     else{
         throw std::logic_error("Unknown kdataframe type");
@@ -138,7 +140,9 @@ vector<kDataFrameBMQF*> BuildTestBufferedFrames()
     vector<int> kSizes={21};
     for(auto k:kSizes)
     {
-        framesToBeTested.push_back(new kDataFrameBMQF((uint64_t)k));
+        int randNum=rand();
+        string fileName="tmp"+to_string(randNum);
+        framesToBeTested.push_back(new kDataFrameBMQF((uint64_t)k,fileName));
     }
     return framesToBeTested;
 }
@@ -896,7 +900,41 @@ TEST_P(kDataFrameBufferedTest,autoResize)
     EXPECT_EQ(numInsertedKmers,testedKmers);
     delete kframe;
 }
+TEST_P(kDataFrameBufferedTest,saveAndIterateOverAllKmers)
+{
 
+    kDataFrameBMQF* kframe=(kDataFrameBMQF*)getFrame(make_tuple("BMQF",GetParam()));
+    string filename=kframe->getFilename();
+    EXPECT_EQ(kframe->empty(), true);
+    unordered_map<string,int>* kmers=kmersGen.getKmers((int)kframe->getkSize());
+    int numInsertedKmers=0;
+    //  unordered_map<string,int> insertedKmers;
+    for(auto k:*kmers)
+    {
+        numInsertedKmers++;
+        kframe->insert(k.first,k.second);
+        if(kframe->load_factor()>=kframe->max_load_factor()*0.8){
+            break;
+        }
+    }
+
+    kframe->save(filename);
+    delete kframe;
+    kDataFrame* kframeLoaded=kDataFrame::load(filename);
+    int checkedKmers=0;
+    kDataFrameIterator it=kframeLoaded->begin();
+    while(it!=kframeLoaded->end())
+    {
+        string kmer=it.getKmer();
+        uint64_t count=it.getCount();
+        ASSERT_EQ(count,(*kmers)[kmer]);
+        checkedKmers++;
+        it++;
+    }
+    EXPECT_EQ(checkedKmers,numInsertedKmers);
+    delete kframe;
+
+}
 
 //TEST_P(kDataFrameBufferedTest,transformPlus10)
 //{
