@@ -501,6 +501,7 @@ void kDataFrameMQF::save(string filePath) {
     ofstream file(filePath + ".extra");
     file << kSize << endl;
     file << this->KD->hash_mode << endl;
+    file.close();
     // uint64_t legendSize=tagsLegend.size();
     // file<<legendSize<<endl;
     // auto it = tagsLegend.begin();
@@ -520,7 +521,7 @@ kDataFrame *kDataFrameMQF::load(string filePath) {
     file >> hashing_mode;
     double flasePositiveRate;
     flasePositiveRate = (hashing_mode == 1) ? 0 : 0.5;
-
+    file.close();
     QF *mqf = new QF();
     qf_deserialize(mqf, (filePath + ".mqf").c_str());
     return new kDataFrameMQF(mqf, filekSize, flasePositiveRate);

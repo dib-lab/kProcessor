@@ -196,6 +196,7 @@ void kDataFramePHMAP::save(string filePath) {
     ofstream file(filePath + ".extra");
     file << kSize << endl;
     file << this->KD->hash_mode << endl;
+    file.close();
     filePath += ".phmap";
     {   
         phmap::BinaryOutputArchive ar_out(filePath.c_str());
@@ -212,7 +213,7 @@ kDataFrame *kDataFramePHMAP::load(string filePath) {
     int hashing_mode;
     file >> kSize;
     file >> hashing_mode;
-
+    file.close();
     filePath += ".phmap";
     
     kDataFramePHMAP *KMAP = new kDataFramePHMAP(kSize, hashing_mode);

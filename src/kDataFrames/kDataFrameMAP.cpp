@@ -184,7 +184,7 @@ void kDataFrameMAP::save(string filePath) {
     ofstream file(filePath + ".extra");
     file << kSize << endl;
     file << 2 << endl;
-
+    file.close();
     std::ofstream os(filePath + ".map", std::ios::binary);
     cereal::BinaryOutputArchive archive(os);
     archive(this->MAP);
@@ -204,7 +204,7 @@ kDataFrame *kDataFrameMAP::load(string filePath) {
         std::cerr << "Error: In the kDataFrameMAP, hashing must be 2:TwoBitsRepresentation mode" << endl;
         exit(1);
     }
-
+    file.close()
     // Initialize kDataFrameMAP
     kDataFrameMAP *KMAP = new kDataFrameMAP(kSize);
 
