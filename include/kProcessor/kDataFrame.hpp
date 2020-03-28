@@ -229,7 +229,7 @@ protected:
   unordered_map<string, any> columns;
 
   unordered_map<string,uint32_t> orderCheckpoints;
-
+  any defaultColumn;
   virtual void preprocessKmerOrder();
   virtual uint64_t getkmerOrder(string kmer);
 public:
@@ -313,13 +313,24 @@ The difference between setCount and insert is that setCount set the count to N n
   void setkSize(uint64_t k){kSize=k;}
 
   template<typename T>
-  void addColumn(string columnName);
+  void addColumn(string columnName, T*);
 
-  template<typename T>
+  template<typename T, typename Container>
   T getKmerColumnValue(string columnName,string kmer);
 
-  template<typename T>
+  template<typename T, typename Container>
   void setKmerColumnValue(string columnName,string kmer, T value);
+
+
+  template<typename T>
+  void changeDefaultColumnType(T*);
+
+  template<typename T, typename Container>
+  T getKmerDefaultColumnValue(string kmer);
+
+  template<typename T, typename Container>
+  void setKmerDefaultColumnValue(string kmer, T value);
+
 
 };
 
