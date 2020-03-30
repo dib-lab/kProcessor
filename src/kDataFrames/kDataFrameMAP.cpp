@@ -178,7 +178,7 @@ float kDataFrameMAP::max_load_factor() {
 }
 
 
-void kDataFrameMAP::save(string filePath) {
+void kDataFrameMAP::serialize(string filePath) {
 
     // Write the kmerSize
     ofstream file(filePath + ".extra");

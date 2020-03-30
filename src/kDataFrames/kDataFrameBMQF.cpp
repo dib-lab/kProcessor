@@ -372,7 +372,7 @@ float kDataFrameBMQF::max_load_factor(){
 }
 
 
-void kDataFrameBMQF::save(string filePath){
+void kDataFrameBMQF::serialize(string filePath){
     if(filePath!=bufferedmqf->filename)
         throw logic_error("kDataframeBMQF has to be saved on the file path that it was created in");
 

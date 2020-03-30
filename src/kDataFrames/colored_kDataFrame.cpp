@@ -100,7 +100,7 @@ uint64_t colored_kDataFrame::getkSize(){
 }
 void colored_kDataFrame::save(string prefix)
 {
-  frame->save(prefix);
+    frame->serialize(prefix);
   colors->save(prefix);
   ofstream namesMapOut(prefix+".namesMap");
   namesMapOut<<namesMap.size()<<endl;

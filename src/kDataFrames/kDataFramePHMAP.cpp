@@ -190,7 +190,7 @@ float kDataFramePHMAP::max_load_factor() {
 }
 
 
-void kDataFramePHMAP::save(string filePath) {
+void kDataFramePHMAP::serialize(string filePath) {
 
     // Write the kmerSize
     ofstream file(filePath + ".extra");

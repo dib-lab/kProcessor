@@ -496,7 +496,7 @@ float kDataFrameMQF::max_load_factor() {
 }
 
 
-void kDataFrameMQF::save(string filePath) {
+void kDataFrameMQF::serialize(string filePath) {
     //filePath += ".mqf";
     ofstream file(filePath + ".extra");
     file << kSize << endl;

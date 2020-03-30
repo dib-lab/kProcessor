@@ -17,13 +17,14 @@ kDataFrame::kDataFrame() {
     kSize = 31;
     isStatic=false;
     isKmersOrderComputed=false;
+    defaultColumn=NULL;
 }
 
 kDataFrame::kDataFrame(uint8_t k_size) {
     kSize = k_size;
     isStatic=false;
     isKmersOrderComputed=false;
-
+    defaultColumn=NULL;
 }
 
 bool kDataFrame::empty() {
@@ -34,18 +35,77 @@ bool kDataFrame::insert(kmerRow k) {
     return this->insert(k.kmer, k.count);
 }
 
+void kDataFrame::save(string filePath)
+{
+    ofstream out(filePath+".multiColumn");
+    out<<"isStatic=\t"<<isStatic<<endl;
+    if(isStatic)
+    {
+        out<<"numColumns=\t"<<columns.size()<<endl;
+        for(auto c:columns)
+        {
+            string filename=filePath+".multiColumn."+c.first;
+            size_t columnType=typeid(*(c.second)).hash_code();
+            out<<c.first<<"\t"<<columnType<<"\t"<<filename<<endl;
+            c.second->serialize(filename);
+        }
+
+    }
+    if(defaultColumn!=NULL)
+    {
+        string filename=filePath+".defaultColumn";
+        size_t columnType=typeid(*(defaultColumn)).hash_code();
+        out<<"default\t"<<columnType<<"\t"<<filename<<endl;
+        defaultColumn->serialize(filename);
+    }
+    else{
+        out<<"default\t"<<0<<"\tNULL"<<endl;
+    }
+    out.close();
+    this->serialize(filePath);
+}
 
 kDataFrame * kDataFrame::load(string filePath) {
+    kDataFrame* res;
     if (fileExists(filePath + ".mqf"))
-        return kDataFrameMQF::load(filePath);
+        res=kDataFrameMQF::load(filePath);
     else if (fileExists(filePath + ".map"))
-        return kDataFrameMAP::load(filePath);
+        res=kDataFrameMAP::load(filePath);
     else if (fileExists(filePath + ".phmap"))
-        return kDataFramePHMAP::load(filePath);
+        res=kDataFramePHMAP::load(filePath);
     else if (fileExists(filePath))
-        return kDataFrameBMQF::load(filePath);
+        res=kDataFrameBMQF::load(filePath);
     else
         throw std::runtime_error("Could not open kDataFrame file");
+
+    ifstream inp(filePath+".multiColumn");
+    string tmp;
+    string name,path;
+    uint64_t type;
+    inp>>tmp>>res->isStatic;
+    if(res->isStatic)
+    {
+        uint32_t numColumns;
+        inp>>tmp>>numColumns;
+        for(int i=0;i<numColumns;i++)
+        {
+            inp>>name>>type>>path;
+            Column* c=Column::getContainerByName(type);
+            c->deserialize(path);
+            res->columns[name]=c;
+        }
+        res->preprocessKmerOrder();
+    }
+    inp>>name>>type>>path;
+    if(type!=0)
+    {
+        Column* c=Column::getContainerByName(type);
+        c->deserialize(path);
+        res->defaultColumn=c;
+    }
+
+    return res;
+
 }
 
 void kDataFrame::preprocessKmerOrder()
@@ -66,6 +126,7 @@ void kDataFrame::preprocessKmerOrder()
     it++;
   }
   orderCheckpoints["THEEND"]=prevOrder;
+  isKmersOrderComputed=true;
 }
 uint64_t kDataFrame::getkmerOrder(string kmer)
 {
@@ -87,25 +148,21 @@ uint64_t kDataFrame::getkmerOrder(string kmer)
 }
 
 
-template void kDataFrame::addColumn<vector<int>  >(string columnName,vector<int>* ptr);
-template void kDataFrame::addColumn<vector<double> >(string columnName,vector<double>* ptr);
-template void kDataFrame::addColumn<vector<bool> >(string columnName,vector<bool>* ptr);
 
-template int kDataFrame::getKmerColumnValue<int,vector<int> >(string columnName,string kmer);
-template double kDataFrame::getKmerColumnValue<double,vector<double> >(string columnName,string kmer);
-template bool kDataFrame::getKmerColumnValue<bool,vector<bool> >(string columnName,string kmer);
+template int kDataFrame::getKmerColumnValue<int, vectorColumn<int> >(string columnName,string kmer);
+template double kDataFrame::getKmerColumnValue<double, vectorColumn<double> >(string columnName,string kmer);
+template bool kDataFrame::getKmerColumnValue<bool, vectorColumn<bool> >(string columnName,string kmer);
 
-template void kDataFrame::setKmerColumnValue<int,vector<int> >(string columnName,string kmer, int value);
-template void kDataFrame::setKmerColumnValue<double, vector<double> >(string columnName,string kmer, double value);
-template void kDataFrame::setKmerColumnValue<bool, vector<bool> >(string columnName,string kmer, bool value);
+template void kDataFrame::setKmerColumnValue<int, vectorColumn<int>  >(string columnName,string kmer, int value);
+template void kDataFrame::setKmerColumnValue<double, vectorColumn<double>  >(string columnName,string kmer, double value);
+template void kDataFrame::setKmerColumnValue<bool, vectorColumn<bool>  >(string columnName,string kmer, bool value);
 
-template<typename T>
-void kDataFrame::addColumn(string columnName,T* ptr)
+
+void kDataFrame::addColumn(string columnName,Column* ptr)
 {
   if(!isKmersOrderComputed)
   {
     this->preprocessKmerOrder();
-    isKmersOrderComputed=true;
     isStatic=true;
   }
   columns[columnName]=ptr;
@@ -114,43 +171,38 @@ void kDataFrame::addColumn(string columnName,T* ptr)
 
 
 
-template<typename T, typename Container>
+template<typename T,typename Container>
 T kDataFrame::getKmerColumnValue(string columnName,string kmer)
 {
   uint64_t kmerOrder=getkmerOrder(kmer);
-  Container* col=any_cast<Container* >(columns[columnName]);
-  return (*col)[kmerOrder];
+  return ((Container*)columns[columnName])->get(kmerOrder);
 }
-template<typename T, typename Container>
+template<typename T,typename Container>
 void kDataFrame::setKmerColumnValue(string columnName,string kmer,T value)
 {
   uint64_t kmerOrder=getkmerOrder(kmer);
-  Container* col=any_cast<Container* >(columns[columnName]);
-  (*col)[kmerOrder]=value;
+  ((Container*)columns[columnName])->insert(value,kmerOrder);
 }
 
-template void kDataFrame::changeDefaultColumnType<vectorColumn<double> >(vectorColumn<double>* ptr);
-template double kDataFrame::getKmerDefaultColumnValue<double,vectorColumn<double> >(string kmer);
-template void kDataFrame::setKmerDefaultColumnValue<double,vectorColumn<double> >(string kmer, double value);
+template double kDataFrame::getKmerDefaultColumnValue<double, vectorColumn<double>  >(string kmer);
+template void kDataFrame::setKmerDefaultColumnValue<double, vectorColumn<double>>(string kmer, double value);
 
 
-template<typename T>
-void kDataFrame::changeDefaultColumnType(T* ptr)
+
+void kDataFrame::changeDefaultColumnType(Column* ptr)
 {
     defaultColumn=ptr;
 }
 
-template<typename T, typename Container>
+template<typename T,typename Container>
 T kDataFrame::getKmerDefaultColumnValue(string kmer)
 {
-    Container* col=any_cast<Container* >(defaultColumn);
-    return col->getWithIndex(getCount(kmer));
+    return ((Container*)defaultColumn)->getWithIndex(getCount(kmer));
 }
 
-template<typename T, typename Container>
+template<typename T,typename Container>
 void kDataFrame::setKmerDefaultColumnValue(string kmer, T value)
 {
-    Container* col=any_cast<Container* >(defaultColumn);
-    uint32_t i=col->insertAndGetIndex(value);
+    uint32_t i=((Container*)defaultColumn)->insertAndGetIndex(value);
     setCount(kmer,i);
 }

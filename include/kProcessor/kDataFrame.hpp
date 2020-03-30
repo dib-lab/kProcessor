@@ -9,6 +9,7 @@
 #include "kmerDecoder.hpp"
 #include <any>
 #include "bufferedMQF.h"
+#include "defaultColumn.hpp"
 
 using phmap::flat_hash_map;
 using namespace std;
@@ -226,10 +227,10 @@ protected:
   string class_name; // Default = MQF, change if MAP. Temporary until resolving #17
   bool isStatic;
   bool isKmersOrderComputed;
-  unordered_map<string, any> columns;
+  unordered_map<string, Column*> columns;
 
   unordered_map<string,uint32_t> orderCheckpoints;
-  any defaultColumn;
+  Column* defaultColumn;
   virtual void preprocessKmerOrder();
   virtual uint64_t getkmerOrder(string kmer);
 public:
@@ -296,13 +297,16 @@ The difference between setCount and insert is that setCount set the count to N n
 ///Returns an iterator at the specific kmer.
   virtual kDataFrameIterator find(string kmer)=0;
 
-  virtual void save(string filePath)=0;
+  virtual void serialize(string filePath)=0;
 /// Returns the kmerDecoder used by kDataframe.
   kmerDecoder* getkmerDecoder(){
     return KD;
   };
 
+
+
   static kDataFrame* load(string filePath);
+  void save(string filePath);
 
 
   uint64_t getkSize(){return kSize;}
@@ -312,23 +316,23 @@ The difference between setCount and insert is that setCount set the count to N n
 
   void setkSize(uint64_t k){kSize=k;}
 
-  template<typename T>
-  void addColumn(string columnName, T*);
 
-  template<typename T, typename Container>
+  void addColumn(string columnName, Column*);
+
+  template<typename T,typename Container>
   T getKmerColumnValue(string columnName,string kmer);
 
-  template<typename T, typename Container>
+  template<typename T,typename Container>
   void setKmerColumnValue(string columnName,string kmer, T value);
 
 
-  template<typename T>
-  void changeDefaultColumnType(T*);
 
-  template<typename T, typename Container>
+  void changeDefaultColumnType(Column*);
+
+  template<typename T,typename Container>
   T getKmerDefaultColumnValue(string kmer);
 
-  template<typename T, typename Container>
+  template<typename T,typename Container>
   void setKmerDefaultColumnValue(string kmer, T value);
 
 
@@ -405,7 +409,7 @@ public:
     return mqf;
   }
 
-  void save(string filePath);
+  void serialize(string filePath);
   static kDataFrame* load(string filePath);
 
   kDataFrameIterator begin();
@@ -506,7 +510,7 @@ public:
     return bufferedmqf;
   }
 
-  void save(string filePath);
+  void serialize(string filePath);
   static kDataFrame* load(string filePath);
 
   kDataFrameIterator begin();
@@ -552,7 +556,7 @@ public:
   kDataFrameIterator find(string kmer);
 
   uint64_t bucket(string kmer);
-  void save(string filePath);
+  void serialize(string filePath);
   static kDataFrame *load(string filePath);
 
     ~kDataFrameMAP() {
@@ -646,7 +650,7 @@ public:
 
     uint64_t bucket(string kmer);
 
-    void save(string filePath);
+    void serialize(string filePath);
 
     static kDataFrame *load(string filePath);
 
