@@ -152,11 +152,19 @@ bool kDataFramePHMAP::setCount(uint64_t kmerS, uint64_t tag) {
 }
 
 uint64_t kDataFramePHMAP::getCount(string kmerS) {
-    return this->MAP[KD->hash_kmer(kmerS)];
+    phmap::flat_hash_map<uint64_t,uint64_t>::const_iterator got = this->MAP.find(KD->hash_kmer(kmerS));
+    if ( got == this->MAP.end() )
+        return 0;
+    else
+        return got->second;
 }
 
 uint64_t kDataFramePHMAP::getCount(uint64_t kmerS) {
-    return this->MAP[kmerS];
+    phmap::flat_hash_map<uint64_t,uint64_t>::const_iterator got = this->MAP.find(kmerS);
+    if ( got == this->MAP.end() )
+        return 0;
+    else
+        return got->second;
 }
 
 uint64_t kDataFramePHMAP::bucket(string kmerS) {
