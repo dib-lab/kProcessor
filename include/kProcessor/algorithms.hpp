@@ -104,8 +104,9 @@ colored_kDataFrame *index(kmerDecoder *KD, string names_fileName, kDataFrame *fr
     colored_kDataFrame *
     index(kDataFrame *frame, std::map<std::string, int> parse_params, string filename, int chunks, string names_fileName);
 
-    colored_kDataFrame * indexPriorityQueue(kmerDecoder *KD, string names_fileName, kDataFrame *frame);
-    colored_kDataFrame * indexPriorityQueue2(kmerDecoder *KD, string names_fileName, kDataFrame *frame);
+    void indexPriorityQueue(vector<kDataFrame*> input, kDataFrame *output);
+    //colored_kDataFrame * indexPriorityQueue(kmerDecoder *KD, string names_fileName, kDataFrame *frame);
+    //colored_kDataFrame * indexPriorityQueue2(kmerDecoder *KD, string names_fileName, kDataFrame *frame);
 
 }
 #endif

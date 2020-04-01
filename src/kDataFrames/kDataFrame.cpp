@@ -158,6 +158,9 @@ template void kDataFrame::setKmerColumnValue<double, vectorColumn<double>  >(str
 template void kDataFrame::setKmerColumnValue<bool, vectorColumn<bool>  >(string columnName,string kmer, bool value);
 
 
+
+
+
 void kDataFrame::addColumn(string columnName,Column* ptr)
 {
   if(!isKmersOrderComputed)
@@ -187,6 +190,15 @@ void kDataFrame::setKmerColumnValue(string columnName,string kmer,T value)
 template double kDataFrame::getKmerDefaultColumnValue<double, vectorColumn<double>  >(string kmer);
 template void kDataFrame::setKmerDefaultColumnValue<double, vectorColumn<double>>(string kmer, double value);
 
+template vector<uint32_t > kDataFrame::getKmerDefaultColumnValue<vector<uint32_t >, colorColumn>(string kmer);
+template void kDataFrame::setKmerDefaultColumnValue<vector<uint32_t >, colorColumn>(string kmer, vector<uint32_t > value);
+
+template double kDataFrame::getKmerDefaultColumnValue<double, vectorColumn<double>  >(uint64_t kmer);
+template void kDataFrame::setKmerDefaultColumnValue<double, vectorColumn<double>>(uint64_t kmer, double value);
+
+template vector<uint32_t > kDataFrame::getKmerDefaultColumnValue<vector<uint32_t >, colorColumn>(uint64_t kmer);
+template void kDataFrame::setKmerDefaultColumnValue<vector<uint32_t >, colorColumn>(uint64_t kmer, vector<uint32_t > value);
+
 
 
 void kDataFrame::changeDefaultColumnType(Column* ptr)
@@ -206,3 +218,17 @@ void kDataFrame::setKmerDefaultColumnValue(string kmer, T value)
     uint32_t i=((Container*)defaultColumn)->insertAndGetIndex(value);
     setCount(kmer,i);
 }
+
+template<typename T,typename Container>
+T kDataFrame::getKmerDefaultColumnValue(uint64_t kmer)
+{
+    return ((Container*)defaultColumn)->getWithIndex(getCount(kmer));
+}
+
+template<typename T,typename Container>
+void kDataFrame::setKmerDefaultColumnValue(uint64_t kmer, T value)
+{
+    uint32_t i=((Container*)defaultColumn)->insertAndGetIndex(value);
+    setCount(kmer,i);
+}
+

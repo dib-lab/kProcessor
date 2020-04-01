@@ -4,7 +4,7 @@
 #include <cereal/types/vector.hpp>
 #include <cereal/types/memory.hpp>
 #include <cereal/archives/binary.hpp>
-
+#include <stack>
 template class vectorColumn<int>;
 template class vectorColumn<bool>;
 template class vectorColumn<double>;
@@ -86,3 +86,59 @@ template <typename  T>
 T vectorColumn<T>::get(uint32_t index){
     return dataV[index];
 }
+
+
+uint32_t  colorColumn::insertAndGetIndex(vector<uint32_t > item){
+    return colorInv.getColorID(item);
+}
+vector<uint32_t > colorColumn::getWithIndex(uint32_t index){
+    return colors[index];
+}
+
+
+
+void colorColumn::serialize(string filename)
+{
+    throw logic_error("not implemented yet");
+}
+void colorColumn::deserialize(string filename)
+{
+    throw logic_error("not implemented yet");
+}
+
+void colorColumn::populateColors(){
+    colors=vector<vector<uint32_t > >(colorInv.lastColor+1);
+    vector<uint32_t> color;
+    stack<tuple<colorNode*,uint32_t ,bool> > S;
+    //S.push(make_tuple(colorInv.root,(uint32_t)0,false));
+    for(auto it:colorInv.root->edges)
+    {
+        S.push(make_tuple(it.second,it.first,false));
+    }
+    while(S.size()>0)
+    {
+        if(!std::get<2>(S.top()))
+        {
+            std::get<2>(S.top())=true;
+            color.push_back(std::get<1>(S.top()));
+            if(std::get<0>(S.top())->currColor!=0)
+            {
+
+                colors[std::get<0>(S.top())->currColor]=color;
+            }
+
+            for(auto it:std::get<0>(S.top())->edges)
+            {
+                S.push(make_tuple(it.second,it.first,false));
+            }
+        } else{
+            color.pop_back();
+            S.pop();
+        }
+
+
+    }
+
+}
+
+
