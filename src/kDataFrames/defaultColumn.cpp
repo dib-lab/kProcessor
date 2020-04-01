@@ -16,13 +16,17 @@ Column* Column::getContainerByName(std::size_t hash)
     {
         return new vectorColumn<int>();
     }
-    if(hash== typeid(vectorColumn<double>).hash_code())
+    else if(hash== typeid(vectorColumn<double>).hash_code())
     {
         return new vectorColumn<double>();
     }
-    if(hash== typeid(vectorColumn<bool>).hash_code())
+    else if(hash== typeid(vectorColumn<bool>).hash_code())
     {
         return new vectorColumn<bool>();
+    }
+    else if(hash== typeid(colorColumn).hash_code())
+    {
+        return new colorColumn();
     }
     else
     {
@@ -99,18 +103,18 @@ vector<uint32_t > colorColumn::getWithIndex(uint32_t index){
 
 void colorColumn::serialize(string filename)
 {
-    throw logic_error("not implemented yet");
+    colorInv.serialize(filename);
 }
 void colorColumn::deserialize(string filename)
 {
-    throw logic_error("not implemented yet");
+    colorInv.deserialize(filename);
+    populateColors();
 }
 
 void colorColumn::populateColors(){
     colors=vector<vector<uint32_t > >(colorInv.lastColor+1);
     vector<uint32_t> color;
     stack<tuple<colorNode*,uint32_t ,bool> > S;
-    //S.push(make_tuple(colorInv.root,(uint32_t)0,false));
     for(auto it:colorInv.root->edges)
     {
         S.push(make_tuple(it.second,it.first,false));
@@ -142,3 +146,133 @@ void colorColumn::populateColors(){
 }
 
 
+colorIndex::~colorIndex()
+{
+    stack<tuple<colorNode*,bool> > S;
+    S.push(make_tuple(root,false));
+
+    while(S.size()>0)
+    {
+        if(!std::get<1>(S.top()))
+        {
+            std::get<1>(S.top())=true;
+            for(auto it:std::get<0>(S.top())->edges)
+            {
+                S.push(make_tuple(it.second,false));
+            }
+        } else{
+            delete std::get<0>(S.top());
+            S.pop();
+        }
+
+
+    }
+}
+bool colorIndex::hasColorID(vector<uint32_t>& v)
+{
+    colorNode* currNode=root;
+    int i=0;
+    while(i<v.size())
+    {
+        auto it=currNode->edges.find(v[i]);
+        if(it==currNode->edges.end())
+            break;
+        currNode=it->second;
+        i++;
+    }
+    if(i!=v.size())
+        return false;
+    return currNode->currColor!=0;
+}
+uint32_t colorIndex::getColorID(vector<uint32_t>& v)
+{
+    colorNode* currNode=root;
+    int i=0;
+    while(i<v.size())
+    {
+        auto it=currNode->edges.find(v[i]);
+        if(it==currNode->edges.end())
+            break;
+        currNode=it->second;
+        i++;
+    }
+    for(;i<v.size();i++)
+    {
+        currNode->edges[v[i]]=new colorNode();
+        currNode=currNode->edges[v[i]];
+    }
+    if(currNode->currColor==0)
+        currNode->currColor=++lastColor;
+    return currNode->currColor;
+}
+void colorIndex::serialize(string fileName)
+{
+    ofstream output(fileName.c_str(), ios::out | ios::binary);
+    output.write((char*)&lastColor, sizeof(uint32_t));
+    stack<tuple<colorNode*,bool> > S;
+    S.push(make_tuple(root,false));
+    uint32_t tmp;
+    while(S.size()>0)
+    {
+        if(!std::get<1>(S.top()))
+        {
+            std::get<1>(S.top())=true;
+
+            tmp=get<0>(S.top())->currColor;
+            output.write((char*)&tmp, sizeof(uint32_t));
+            tmp=get<0>(S.top())->edges.size();
+            output.write((char*)&tmp, sizeof(uint32_t));
+            for(auto it:std::get<0>(S.top())->edges)
+            {
+                tmp=it.first;
+                output.write((char*)&tmp, sizeof(uint32_t));
+            }
+            for(auto it:std::get<0>(S.top())->edges)
+            {
+                S.push(make_tuple(it.second,false));
+            }
+        }else{
+            S.pop();
+        }
+
+
+    }
+
+}
+
+
+void colorIndex::deserialize(string fileName){
+    ifstream rf(fileName.c_str(), ios::out | ios::binary);
+    stack<tuple<colorNode*,bool> > S;
+    rf.read((char *) &(lastColor), sizeof(uint32_t));
+    S.push(make_tuple(root,false));
+    uint32_t tmp;
+
+    while(S.size()>0)
+    {
+        if(!std::get<1>(S.top()))
+        {
+            colorNode* curr=get<0>(S.top());
+            std::get<1>(S.top())=true;
+
+
+            rf.read((char *) &(tmp), sizeof(uint32_t));
+            curr->currColor=tmp;
+
+            uint32_t  noEdges;
+            rf.read((char *) &(noEdges), sizeof(uint32_t));
+
+            for(uint32_t i=0;i<noEdges;i++)
+            {
+                rf.read((char *) &(tmp), sizeof(uint32_t));
+                colorNode* child=new colorNode();
+                curr->edges[tmp]=child;
+                S.push(make_tuple(child,false));
+            }
+        } else{
+            S.pop();
+        }
+
+
+    }
+}

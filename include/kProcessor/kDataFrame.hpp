@@ -240,9 +240,7 @@ public:
   kDataFrame(uint8_t kSize);
 
 
-  virtual ~kDataFrame(){
-    delete KD;
-  }
+  virtual ~kDataFrame();
 /// creates a new kDataframe using the same parameters as the current kDataFrame.
 /*! It is like clone but without copying the data */
   virtual kDataFrame* getTwin()=0;

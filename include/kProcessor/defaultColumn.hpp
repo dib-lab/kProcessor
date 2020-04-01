@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <iostream>
 #include <parallel_hashmap/phmap.h>
+#include <stack>
 
 using phmap::flat_hash_map;
 using namespace std;
@@ -52,11 +53,17 @@ public:
 
 };
 
-struct colorNode{
+class colorNode{
+public:
     flat_hash_map<uint32_t, colorNode*> edges;
     uint32_t currColor;
     colorNode() {
         currColor = 0;
+    }
+    ~colorNode()
+    {
+//        for(auto e:edges)
+//            delete e.second;
     }
 };
 class colorIndex{
@@ -68,43 +75,13 @@ public:
         root=new colorNode();
         lastColor=0;
     }
-    bool hasColorID(vector<uint32_t>& v)
-    {
-        colorNode* currNode=root;
-        int i=0;
-        while(i<v.size())
-        {
-            auto it=currNode->edges.find(v[i]);
-            if(it==currNode->edges.end())
-                break;
-            currNode=it->second;
-            i++;
-        }
-        if(i!=v.size())
-            return false;
-        return currNode->currColor!=0;
-    }
-    uint32_t getColorID(vector<uint32_t>& v)
-    {
-        colorNode* currNode=root;
-        int i=0;
-        while(i<v.size())
-        {
-            auto it=currNode->edges.find(v[i]);
-            if(it==currNode->edges.end())
-                break;
-            currNode=it->second;
-            i++;
-        }
-        for(;i<v.size();i++)
-        {
-            currNode->edges[v[i]]=new colorNode();
-            currNode=currNode->edges[v[i]];
-        }
-        if(currNode->currColor==0)
-            currNode->currColor=++lastColor;
-        return currNode->currColor;
-    }
+    ~colorIndex();
+
+    bool hasColorID(vector<uint32_t>& v);
+    uint32_t getColorID(vector<uint32_t>& v);
+    void serialize(string fileName);
+    void deserialize(string filename);
+
 };
 
 

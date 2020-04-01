@@ -27,6 +27,14 @@ kDataFrame::kDataFrame(uint8_t k_size) {
     defaultColumn=NULL;
 }
 
+kDataFrame::~kDataFrame(){
+    delete KD;
+    if(defaultColumn!=NULL)
+        delete defaultColumn;
+    for(auto c:columns)
+        delete c.second;
+}
+
 bool kDataFrame::empty() {
     return this->size() == 0;
 }

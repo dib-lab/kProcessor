@@ -971,6 +971,51 @@ TEST_P(indexingTest,index)
 
 }
 
+TEST_P(indexingTest,indexPriorityQSaveAndLoad)
+{
+    string filename=GetParam();
+    int chunkSize = 1000;
+
+    kDataFrame *KF = new kDataFrameMQF(25, 28, 1);
+    kmerDecoder *KMERS = kProcessor::initialize_kmerDecoder(filename, chunkSize, "kmers", {{"k_size", 25}});
+
+
+    vector<kDataFrame*> inputFrames;
+    while (!KMERS->end()) {
+        KMERS->next_chunk();
+        for (const auto &seq : *KMERS->getKmers()) {
+            kDataFrame* curr=new kDataFrameMAP(KMERS->get_kSize());
+            for (const auto &kmer : seq.second) {
+                curr->insert(kmer.hash);
+            }
+            inputFrames.push_back(curr);
+        }
+    }
+
+    kProcessor::indexPriorityQueue(inputFrames, KF);
+    string fileName="tmp.kdataframe."+gen_random(4);
+    KF->save(fileName);
+    delete KF;
+    kDataFrame* kframeLoaded=kDataFrame::load(fileName);
+    for(int i=0;i<inputFrames.size();i++)
+    {
+        kDataFrameIterator it=inputFrames[i]->begin();
+        while(it!=inputFrames[i]->end())
+        {
+            vector<uint32_t> colors=kframeLoaded->getKmerDefaultColumnValue<vector<uint32_t >, colorColumn>(it.getHashedKmer());
+            ASSERT_NE(colors.size(),0);
+            auto colorIt=colors.end();
+            colorIt=find(colors.begin(),colors.end(),i);
+            ASSERT_NE(colorIt,colors.end());
+            it.next();
+        }
+    }
+
+    delete kframeLoaded;
+    delete KMERS;
+
+}
+
 TEST_P(indexingTest,indexPriorityQ)
 {
     string filename=GetParam();
