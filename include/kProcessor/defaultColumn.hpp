@@ -91,7 +91,7 @@ public:
     vector<vector<uint32_t > > colors;
     colorIndex colorInv;
     colorColumn(){
-
+        colors.push_back(vector<uint32_t >());
     }
 
     ~colorColumn(){
@@ -111,5 +111,33 @@ public:
 
 
 };
+
+class StringColorColumn: public Column{
+public:
+    vector<vector<uint32_t > > colors;
+    flat_hash_map<uint32_t,string> namesMap;
+
+    StringColorColumn(){
+        colors.push_back(vector<uint32_t > ());
+    }
+
+    ~StringColorColumn(){
+
+    }
+
+    vector<string > getWithIndex(uint32_t index);
+    //uint32_t  insertAndGetIndex(vector<uint32_t > item);
+//    void insert(vector<uint32_t > item,uint32_t index);
+//    vector<uint32_t > get(uint32_t index);
+
+    void serialize(string filename);
+    void deserialize(string filename);
+
+    void populateColors();
+
+
+
+};
+
 
 #endif

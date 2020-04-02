@@ -198,6 +198,8 @@ void kDataFrame::setKmerColumnValue(string columnName,string kmer,T value)
 template double kDataFrame::getKmerDefaultColumnValue<double, vectorColumn<double>  >(string kmer);
 template void kDataFrame::setKmerDefaultColumnValue<double, vectorColumn<double>>(string kmer, double value);
 
+
+
 template vector<uint32_t > kDataFrame::getKmerDefaultColumnValue<vector<uint32_t >, colorColumn>(string kmer);
 template void kDataFrame::setKmerDefaultColumnValue<vector<uint32_t >, colorColumn>(string kmer, vector<uint32_t > value);
 
@@ -207,6 +209,9 @@ template void kDataFrame::setKmerDefaultColumnValue<double, vectorColumn<double>
 template vector<uint32_t > kDataFrame::getKmerDefaultColumnValue<vector<uint32_t >, colorColumn>(uint64_t kmer);
 template void kDataFrame::setKmerDefaultColumnValue<vector<uint32_t >, colorColumn>(uint64_t kmer, vector<uint32_t > value);
 
+
+template vector<string> kDataFrame::getKmerDefaultColumnValue<vector<string>, StringColorColumn>(string kmer);
+template vector<string> kDataFrame::getKmerDefaultColumnValue<vector<string>, StringColorColumn>(uint64_t kmer);
 
 
 void kDataFrame::changeDefaultColumnType(Column* ptr)

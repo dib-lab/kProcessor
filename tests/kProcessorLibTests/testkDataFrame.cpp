@@ -944,30 +944,44 @@ TEST_P(indexingTest,index)
 
   kDataFrame *KF = new kDataFrameMQF(25, 25, 1);
   kmerDecoder *KMERS = kProcessor::initialize_kmerDecoder(filename, chunkSize, "kmers", {{"k_size", 25}});
-  colored_kDataFrame* res= kProcessor::index(KMERS, filename+".names", KF);
+  kProcessor::index(KMERS, filename+".names", KF);
 
-    uint64_t kSize=res->getkSize();
-    vector<uint32_t> colors;
-    delete KMERS;
+  uint64_t kSize=KF->getkSize();
+
+  delete KMERS;
+  string names_fileName=filename+".names";
+  ifstream namesFile(names_fileName.c_str());
+  string seqName, groupName,line;
+    flat_hash_map<string, string> namesMap;
+    while (std::getline(namesFile, line)) {
+        std::vector<string> tokens;
+        std::istringstream iss(line);
+        std::string token;
+        while (std::getline(iss, token, '\t'))   // but we can specify a different one
+            tokens.push_back(token);
+        seqName = tokens[0];
+        groupName = tokens[1];
+        namesMap.insert(make_pair(seqName, groupName));
+    }
+    namesFile.close();
+
     KMERS = kProcessor::initialize_kmerDecoder(filename, chunkSize, "kmers", {{"k_size", 25}});
 
     while (!KMERS->end()) {
             KMERS->next_chunk();
             for (const auto &seq : *KMERS->getKmers()) {
                 string readName = seq.first;
-                uint32_t sampleID = res->namesMapInv[readName];
-                ASSERT_NE(sampleID, 0);
+                string groupName=namesMap[readName];
                 for (const auto &kmer : seq.second) {
-                    colors.clear();
-                    res->getKmerSource(kmer.str, colors);
+                    vector<string> colors=KF->getKmerDefaultColumnValue<vector<string> ,StringColorColumn>(kmer.hash);
                     ASSERT_NE(colors.size(),0);
                     auto colorIt=colors.end();
-                    colorIt=find(colors.begin(),colors.end(),sampleID);
+                    colorIt=find(colors.begin(),colors.end(),groupName);
                     ASSERT_NE(colorIt,colors.end());
                 }
             }
     }
-    delete KF,res,KMERS;
+    delete KF,KMERS;
 
 }
 
@@ -1038,6 +1052,8 @@ TEST_P(indexingTest,indexPriorityQ)
     }
 
     kProcessor::indexPriorityQueue(inputFrames, KF);
+    string fileName="tmp.kdataframe."+gen_random(4);
+
 
     for(int i=0;i<inputFrames.size();i++)
     {
@@ -1060,34 +1076,54 @@ TEST_P(indexingTest,indexPriorityQ)
 
 TEST_P(indexingTest,saveAndLoad)
 {
-  string filename=GetParam();
-  int chunkSize = 1000;
-  kDataFrame *KF = new kDataFrameMQF(25, 28, 1);
-  kmerDecoder *KMERS = kProcessor::initialize_kmerDecoder(filename, chunkSize, "kmers", {{"k_size", 25}});
-  colored_kDataFrame* res1= kProcessor::index(KMERS,filename+".names", KF);
-  res1->save("tmp.coloredKdataFrame");
-  colored_kDataFrame* res=colored_kDataFrame::load("tmp.coloredKdataFrame");
+    string filename=GetParam();
+    int chunkSize = 1000;
 
-  uint64_t kSize=res->getkSize();
-  int readCount=0;
-  vector<uint32_t> colors;
+    kDataFrame *KF = new kDataFrameMQF(25, 25, 1);
+    kmerDecoder *KMERS = kProcessor::initialize_kmerDecoder(filename, chunkSize, "kmers", {{"k_size", 25}});
+    kProcessor::index(KMERS, filename+".names", KF);
+    string fileName="tmp.kdataframe."+gen_random(4);
+    KF->save(fileName);
+    delete KF;
+    kDataFrame* kframeLoaded=kDataFrame::load(fileName);
+
+
+    uint64_t kSize=kframeLoaded->getkSize();
+    //vector<uint32_t> colors;
+    delete KMERS;
+    string names_fileName=filename+".names";
+    ifstream namesFile(names_fileName.c_str());
+    string seqName, groupName,line;
+    flat_hash_map<string, string> namesMap;
+    while (std::getline(namesFile, line)) {
+        std::vector<string> tokens;
+        std::istringstream iss(line);
+        std::string token;
+        while (std::getline(iss, token, '\t'))   // but we can specify a different one
+            tokens.push_back(token);
+        seqName = tokens[0];
+        groupName = tokens[1];
+        namesMap.insert(make_pair(seqName, groupName));
+    }
+    namesFile.close();
+
+    KMERS = kProcessor::initialize_kmerDecoder(filename, chunkSize, "kmers", {{"k_size", 25}});
 
     while (!KMERS->end()) {
         KMERS->next_chunk();
         for (const auto &seq : *KMERS->getKmers()) {
             string readName = seq.first;
-            uint32_t sampleID = res->namesMapInv[readName];
-            ASSERT_NE(sampleID, 0);
+            string groupName=namesMap[readName];
             for (const auto &kmer : seq.second) {
-                colors.clear();
-                res->getKmerSource(kmer.str, colors);
+                vector<string> colors=kframeLoaded->getKmerDefaultColumnValue<vector<string> ,StringColorColumn>(kmer.hash);
                 ASSERT_NE(colors.size(),0);
                 auto colorIt=colors.end();
-                colorIt=find(colors.begin(),colors.end(),sampleID);
+                colorIt=find(colors.begin(),colors.end(),groupName);
                 ASSERT_NE(colorIt,colors.end());
             }
         }
     }
+    delete kframeLoaded,KMERS;
 
 }
 

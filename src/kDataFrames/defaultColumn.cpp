@@ -3,6 +3,7 @@
 #include<fstream>
 #include <cereal/types/vector.hpp>
 #include <cereal/types/memory.hpp>
+#include "parallel_hashmap/phmap_dump.h"
 #include <cereal/archives/binary.hpp>
 #include <stack>
 template class vectorColumn<int>;
@@ -27,6 +28,10 @@ Column* Column::getContainerByName(std::size_t hash)
     else if(hash== typeid(colorColumn).hash_code())
     {
         return new colorColumn();
+    }
+    else if(hash== typeid(StringColorColumn).hash_code())
+    {
+        return new StringColorColumn();
     }
     else
     {
@@ -142,6 +147,57 @@ void colorColumn::populateColors(){
 
 
     }
+
+}
+
+
+vector<string > StringColorColumn::getWithIndex(uint32_t index){
+    vector<string > res(colors[index].size());
+    for(int i=0;i<colors[index].size();i++)
+        res[i]=namesMap[colors[index][i]];
+    return res;
+
+}
+
+
+void StringColorColumn::serialize(string filename)
+{
+    std::ofstream os(filename+".colors", std::ios::binary);
+    cereal::BinaryOutputArchive archive(os);
+    archive(colors);
+    os.close();
+
+    ofstream namesMapOut(filename+".namesMap");
+    namesMapOut<<namesMap.size()<<endl;
+    for(auto it:namesMap)
+    {
+        namesMapOut<<it.first<<" "<<it.second<<endl;
+    }
+    namesMapOut.close();
+}
+
+
+
+
+
+void StringColorColumn::deserialize(string filename)
+{
+    std::ifstream os(filename+".colors", std::ios::binary);
+    cereal::BinaryInputArchive iarchive(os);
+    iarchive(colors);
+
+    ifstream namesMapIn(filename+".namesMap");
+    uint64_t size;
+    namesMapIn>>size;
+    for(int i=0;i<size;i++)
+    {
+        uint32_t color;
+        string name;
+        namesMapIn>>color>>name;
+        namesMap[color]=name;
+
+    }
+    namesMapIn.close();
 
 }
 

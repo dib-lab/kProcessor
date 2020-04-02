@@ -98,10 +98,10 @@ kmerDecoder* initialize_kmerDecoder(int kmer_size, int hash_mode = 1);
  void kmerDecoder_setHashing(kDataFrame * KF, int hash_mode, bool canonical = true);
 
 /// Perform indexing to a sequences file with predefined kmers decoding mode, returns a colored kDataframe.
-colored_kDataFrame *index(kmerDecoder *KD, string names_fileName, kDataFrame *frame);
+ void index(kmerDecoder *KD, string names_fileName, kDataFrame *frame);
 
 /// Index function without needing the kmerDecoder
-    colored_kDataFrame *
+    void
     index(kDataFrame *frame, std::map<std::string, int> parse_params, string filename, int chunks, string names_fileName);
 
     void indexPriorityQueue(vector<kDataFrame*> input, kDataFrame *output);
