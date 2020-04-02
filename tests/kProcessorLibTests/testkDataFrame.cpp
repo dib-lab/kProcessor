@@ -942,7 +942,7 @@ TEST_P(indexingTest,index)
   string filename=GetParam();
   int chunkSize = 1000;
 
-  kDataFrame *KF = new kDataFrameMQF(25, 28, 1);
+  kDataFrame *KF = new kDataFrameMQF(25, 25, 1);
   kmerDecoder *KMERS = kProcessor::initialize_kmerDecoder(filename, chunkSize, "kmers", {{"k_size", 25}});
   colored_kDataFrame* res= kProcessor::index(KMERS, filename+".names", KF);
 
@@ -976,7 +976,7 @@ TEST_P(indexingTest,indexPriorityQSaveAndLoad)
     string filename=GetParam();
     int chunkSize = 1000;
 
-    kDataFrame *KF = new kDataFrameMQF(25, 28, 1);
+    kDataFrame *KF = new kDataFrameMQF(25, 25, 1);
     kmerDecoder *KMERS = kProcessor::initialize_kmerDecoder(filename, chunkSize, "kmers", {{"k_size", 25}});
 
 
@@ -1021,7 +1021,7 @@ TEST_P(indexingTest,indexPriorityQ)
     string filename=GetParam();
     int chunkSize = 1000;
 
-    kDataFrame *KF = new kDataFrameMQF(25, 28, 1);
+    kDataFrame *KF = new kDataFrameMQF(25, 25, 1);
     kmerDecoder *KMERS = kProcessor::initialize_kmerDecoder(filename, chunkSize, "kmers", {{"k_size", 25}});
 
 
