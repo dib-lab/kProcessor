@@ -342,6 +342,46 @@ The difference between setCount and insert is that setCount set the count to N n
 
 };
 
+template<typename T,typename Container>
+T kDataFrame::getKmerColumnValue(string columnName,string kmer)
+{
+    uint64_t kmerOrder=getkmerOrder(kmer);
+    return ((Container*)columns[columnName])->get(kmerOrder);
+}
+template<typename T,typename Container>
+void kDataFrame::setKmerColumnValue(string columnName,string kmer,T value)
+{
+    uint64_t kmerOrder=getkmerOrder(kmer);
+    ((Container*)columns[columnName])->insert(value,kmerOrder);
+}
+
+
+template<typename T,typename Container>
+T kDataFrame::getKmerDefaultColumnValue(string kmer)
+{
+    return ((Container*)defaultColumn)->getWithIndex(getCount(kmer));
+}
+
+template<typename T,typename Container>
+void kDataFrame::setKmerDefaultColumnValue(string kmer, T value)
+{
+    uint32_t i=((Container*)defaultColumn)->insertAndGetIndex(value);
+    setCount(kmer,i);
+}
+
+template<typename T,typename Container>
+T kDataFrame::getKmerDefaultColumnValue(uint64_t kmer)
+{
+    return ((Container*)defaultColumn)->getWithIndex(getCount(kmer));
+}
+
+template<typename T,typename Container>
+void kDataFrame::setKmerDefaultColumnValue(uint64_t kmer, T value)
+{
+    uint32_t i=((Container*)defaultColumn)->insertAndGetIndex(value);
+    setCount(kmer,i);
+}
+
 
 
 class kDataFrameMQF: public kDataFrame{
