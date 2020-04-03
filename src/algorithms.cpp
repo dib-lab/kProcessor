@@ -864,64 +864,128 @@ namespace kProcessor {
 
         }
 
-    void indexPriorityQueue(vector<kDataFrame*> input, kDataFrame *output){
-        colorColumn* colors=new colorColumn();
-        output->changeDefaultColumnType(colors);
-        for(int i=0;i<input.size();i++)
-        {
-            vector<uint32_t> tmp={i};
-            colors->insertAndGetIndex(tmp);
-        }
-
-
-        auto compare = [](tuple<uint64_t,uint64_t ,kDataFrameIterator*,kDataFrameIterator*>  lhs, tuple<uint64_t,uint64_t ,kDataFrameIterator*,kDataFrameIterator*>  rhs)
-        {
-            if(get<0>(lhs) == get<0>(rhs))
-                return get<1>(lhs) > get<1>(rhs);
-            return get<0>(lhs) > get<0>(rhs);
-        };
-
-        priority_queue<tuple<uint64_t ,uint64_t,kDataFrameIterator*,kDataFrameIterator*> , vector<tuple<uint64_t,uint64_t ,kDataFrameIterator*,kDataFrameIterator*> >,  decltype(compare)> nextKmer(compare);
-
-        for(int i=0;i<input.size();i++)
-        {
-            kDataFrameIterator* it=new kDataFrameIterator(input[i]->begin());
-            kDataFrameIterator* itend=new kDataFrameIterator(input[i]->end());
-            nextKmer.push(make_tuple(it->getHashedKmer(),i,it,itend));
-        }
-
-        uint64_t processedKmers=0;
-        while(nextKmer.size()>0)
-        {
-            vector<uint32_t> colorVec;
-            colorVec.clear();
-            uint64_t currHash=get<0>(nextKmer.top());
-            processedKmers++;
-            while(nextKmer.size()>0 && get<0>(nextKmer.top())==currHash)
-            {
-                auto colorTuple=nextKmer.top();
-                nextKmer.pop();
-                colorVec.push_back(get<1>(colorTuple));
-                get<2>(colorTuple)->next();
-                if(*get<2>(colorTuple)!=*get<3>(colorTuple)) {
-                    get<0>(colorTuple)=get<2>(colorTuple)->getHashedKmer();
-                    nextKmer.push(colorTuple);
-                }
-                else{
-                    delete get<2>(colorTuple);
-                    delete get<3>(colorTuple);
-                }
-            }
-            output->setKmerDefaultColumnValue<vector<uint32_t >, colorColumn>(currHash,colorVec);
-
-        }
-        colors->populateColors();
-
-
+void indexPriorityQueue(vector<kDataFrame*>& input, kDataFrame *output){
+    colorColumn* colors=new colorColumn(input.size());
+    output->changeDefaultColumnType(colors);
+    for(int i=0;i<input.size();i++)
+    {
+        vector<uint32_t> tmp={i};
+        colors->insertAndGetIndex(tmp);
     }
 
 
-        vector<uint64_t> estimateKmersHistogram(string fileName, int kSize ,int threads)
+    auto compare = [](tuple<uint64_t,uint64_t ,kDataFrameIterator*,kDataFrameIterator*>  lhs, tuple<uint64_t,uint64_t ,kDataFrameIterator*,kDataFrameIterator*>  rhs)
+    {
+        if(get<0>(lhs) == get<0>(rhs))
+            return get<1>(lhs) > get<1>(rhs);
+        return get<0>(lhs) > get<0>(rhs);
+    };
+
+    priority_queue<tuple<uint64_t ,uint64_t,kDataFrameIterator*,kDataFrameIterator*> , vector<tuple<uint64_t,uint64_t ,kDataFrameIterator*,kDataFrameIterator*> >,  decltype(compare)> nextKmer(compare);
+
+    for(int i=0;i<input.size();i++)
+    {
+        kDataFrameIterator* it=new kDataFrameIterator(input[i]->begin());
+        kDataFrameIterator* itend=new kDataFrameIterator(input[i]->end());
+        nextKmer.push(make_tuple(it->getHashedKmer(),i,it,itend));
+    }
+
+    uint64_t processedKmers=0;
+    while(nextKmer.size()>0)
+    {
+        vector<uint32_t> colorVec;
+        colorVec.clear();
+        uint64_t currHash=get<0>(nextKmer.top());
+        processedKmers++;
+        while(nextKmer.size()>0 && get<0>(nextKmer.top())==currHash)
+        {
+            auto colorTuple=nextKmer.top();
+            nextKmer.pop();
+            colorVec.push_back(get<1>(colorTuple));
+            get<2>(colorTuple)->next();
+            if(*get<2>(colorTuple)!=*get<3>(colorTuple)) {
+                get<0>(colorTuple)=get<2>(colorTuple)->getHashedKmer();
+                nextKmer.push(colorTuple);
+            }
+            else{
+                delete get<2>(colorTuple);
+                delete get<3>(colorTuple);
+            }
+        }
+        output->setKmerDefaultColumnValue<vector<uint32_t >, colorColumn>(currHash,colorVec);
+
+    }
+    colors->populateColors();
+
+
+}
+
+void mergeIndexes(vector<kDataFrame*>& input, kDataFrame *output){
+
+    vector<uint32_t> idsOffset(input.size());
+    idsOffset[0]=0;
+    for(int i=1;i<input.size();i++)
+    {
+        idsOffset[i]=idsOffset[i-1];
+        idsOffset[i]+=((colorColumn*)input[i-1]->getDefaultColumn())->noSamples;
+    }
+    colorColumn* colors=new colorColumn();
+    output->changeDefaultColumnType(colors);
+
+
+    auto compare = [](tuple<uint64_t,uint64_t ,kDataFrameIterator*,kDataFrameIterator*>  lhs, tuple<uint64_t,uint64_t ,kDataFrameIterator*,kDataFrameIterator*>  rhs)
+    {
+        if(get<0>(lhs) == get<0>(rhs))
+            return get<1>(lhs) > get<1>(rhs);
+        return get<0>(lhs) > get<0>(rhs);
+    };
+
+    priority_queue<tuple<uint64_t ,uint64_t,kDataFrameIterator*,kDataFrameIterator*> , vector<tuple<uint64_t,uint64_t ,kDataFrameIterator*,kDataFrameIterator*> >,  decltype(compare)> nextKmer(compare);
+
+    for(int i=0;i<input.size();i++)
+    {
+        kDataFrameIterator* it=new kDataFrameIterator(input[i]->begin());
+        kDataFrameIterator* itend=new kDataFrameIterator(input[i]->end());
+        nextKmer.push(make_tuple(it->getHashedKmer(),i,it,itend));
+    }
+
+    uint64_t processedKmers=0;
+    while(nextKmer.size()>0)
+    {
+        vector<uint32_t> colorVec;
+        colorVec.clear();
+        uint64_t currHash=get<0>(nextKmer.top());
+        processedKmers++;
+        while(nextKmer.size()>0 && get<0>(nextKmer.top())==currHash)
+        {
+            auto colorTuple=nextKmer.top();
+            nextKmer.pop();
+
+            uint32_t i=get<1>(colorTuple);
+            vector<uint32_t> tmp=input[i]->getKmerDefaultColumnValue<vector<uint32_t >, colorColumn>(get<0>(colorTuple));
+            for(auto c:tmp)
+                colorVec.push_back(c+idsOffset[i]);
+
+            sort(colorVec.begin(),colorVec.end());
+            get<2>(colorTuple)->next();
+            if(*get<2>(colorTuple)!=*get<3>(colorTuple)) {
+                get<0>(colorTuple)=get<2>(colorTuple)->getHashedKmer();
+                nextKmer.push(colorTuple);
+            }
+            else{
+                delete get<2>(colorTuple);
+                delete get<3>(colorTuple);
+            }
+        }
+        output->setKmerDefaultColumnValue<vector<uint32_t >, colorColumn>(currHash,colorVec);
+
+    }
+    colors->populateColors();
+
+
+}
+
+vector<uint64_t> estimateKmersHistogram(string fileName, int kSize ,int threads)
 {
    std::string tmpFile = "tmp."+to_string(rand()%1000000);
    main_ntCard(fileName,kSize,1000,threads,tmpFile);

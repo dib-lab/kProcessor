@@ -1074,6 +1074,72 @@ TEST_P(indexingTest,indexPriorityQ)
 
 }
 
+TEST_P(indexingTest,mergeIndexes)
+{
+    string filename=GetParam();
+    int chunkSize = 1000;
+
+    kDataFrame *KF = new kDataFrameMQF(25, 25, 1);
+    kmerDecoder *KMERS = kProcessor::initialize_kmerDecoder(filename, chunkSize, "kmers", {{"k_size", 25}});
+
+
+    vector<kDataFrame*> inputFrames;
+    while (!KMERS->end()) {
+        KMERS->next_chunk();
+        for (const auto &seq : *KMERS->getKmers()) {
+            kDataFrame* curr=new kDataFrameMAP(KMERS->get_kSize());
+            for (const auto &kmer : seq.second) {
+                curr->insert(kmer.hash);
+            }
+            inputFrames.push_back(curr);
+        }
+    }
+    int numIndexes=10;
+    int sizeOfIndexes=inputFrames.size()/numIndexes;
+    vector<kDataFrame*> indexes(numIndexes);
+
+    for(int i=0;i<numIndexes;i++)
+    {
+        vector<kDataFrame*> input;
+        input.clear();
+        for(int j=i*sizeOfIndexes; j<(i+1)*sizeOfIndexes;j++) {
+            input.push_back(inputFrames[j]);
+        }
+        if(i==numIndexes-1)
+        {
+            for(int j=(i+1)*sizeOfIndexes; j<inputFrames.size();j++)
+                input.push_back(inputFrames[j]);
+        }
+        kDataFrame *KF2 = new kDataFrameMQF(25,25,2);
+        kProcessor::indexPriorityQueue(input, KF2);
+        indexes[i]=KF2;
+    }
+
+
+    kProcessor::mergeIndexes(indexes, KF);
+
+    for(int i=0;i<numIndexes;i++)
+        delete indexes[i];
+
+    for(int i=0;i<inputFrames.size();i++)
+    {
+        kDataFrameIterator it=inputFrames[i]->begin();
+        while(it!=inputFrames[i]->end())
+        {
+            vector<uint32_t> colors=KF->getKmerDefaultColumnValue<vector<uint32_t >, colorColumn>(it.getHashedKmer());
+            ASSERT_NE(colors.size(),0);
+            auto colorIt=colors.end();
+            colorIt=find(colors.begin(),colors.end(),i);
+            ASSERT_NE(colorIt,colors.end());
+            it.next();
+        }
+    }
+
+    delete KF;
+    delete KMERS;
+
+}
+
 TEST_P(indexingTest,saveAndLoad)
 {
     string filename=GetParam();

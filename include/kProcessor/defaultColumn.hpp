@@ -90,7 +90,12 @@ class colorColumn: public Column{
 public:
     vector<vector<uint32_t > > colors;
     colorIndex colorInv;
+    uint64_t  noSamples;
     colorColumn(){
+        colors.push_back(vector<uint32_t >());
+    }
+    colorColumn(uint64_t noSamples){
+        this->noSamples=noSamples;
         colors.push_back(vector<uint32_t >());
     }
 
