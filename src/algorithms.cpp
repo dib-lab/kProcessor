@@ -378,7 +378,8 @@ namespace kProcessor {
         vector<uint64_t> countHistogram;
 
         // Initialize kmerDecoder
-        
+      //  vector<uint64_t> countHistogram= estimateKmersHistogram(filename, kframe->getkSize() ,1);
+        kframe->reserve(100000);
         std::string mode = "kmers";
         bool check_mode = (parse_params.find("mode") != parse_params.end());
 
@@ -422,6 +423,7 @@ namespace kProcessor {
                 }
             }
         }
+        delete KD;
 
 
     }
@@ -559,8 +561,6 @@ namespace kProcessor {
         res->reserve((uint64_t) ((double) numKmers * 1.2));
         merge(input, res, [](vector<kmerRow> &input) -> kmerRow {
             kmerRow res = input[0];
-            //  cout<<"Start"<<endl;
-            //  cout<<input[0].kmer<<endl;
             for (int i = 1; i < input.size(); i++) {
                 //cout<<input[i].kmer<<endl;
                 res.count = min(res.count, input[i].count);
@@ -589,7 +589,6 @@ namespace kProcessor {
                 return kmerRow();
             return res;
         });
-        //cout<<"Size "<<res->size()<<endl;
         return res;
     }
 
@@ -938,10 +937,10 @@ namespace kProcessor {
 
             uint64_t lastTag = 0;
             readID = 0;
-
+            int __batch_count = 0;
             while (!KD->end()) {
                 KD->next_chunk();
-
+                cout << "Processing Chunk(" << ++__batch_count << "): " << chunk_size*__batch_count << " seqs ..." << endl;
                 flat_hash_map<uint64_t, uint64_t> convertMap;
 
                 for (const auto &seq : *KD->getKmers()) {

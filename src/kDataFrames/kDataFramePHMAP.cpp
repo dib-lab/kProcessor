@@ -1,7 +1,5 @@
 #include "kDataFrame.hpp"
-#include <cereal/types/unordered_map.hpp>
-#include <cereal/types/memory.hpp>
-#include <cereal/archives/binary.hpp>
+#include "parallel_hashmap/phmap_dump.h"
 #include <iostream>
 #include <fstream>
 #include "Utils/kmer.h"
@@ -154,11 +152,19 @@ bool kDataFramePHMAP::setCount(uint64_t kmerS, uint64_t tag) {
 }
 
 uint64_t kDataFramePHMAP::getCount(string kmerS) {
-    return this->MAP[KD->hash_kmer(kmerS)];
+    phmap::flat_hash_map<uint64_t,uint64_t>::const_iterator got = this->MAP.find(KD->hash_kmer(kmerS));
+    if ( got == this->MAP.end() )
+        return 0;
+    else
+        return got->second;
 }
 
 uint64_t kDataFramePHMAP::getCount(uint64_t kmerS) {
-    return this->MAP[kmerS];
+    phmap::flat_hash_map<uint64_t,uint64_t>::const_iterator got = this->MAP.find(kmerS);
+    if ( got == this->MAP.end() )
+        return 0;
+    else
+        return got->second;
 }
 
 uint64_t kDataFramePHMAP::bucket(string kmerS) {
@@ -197,11 +203,13 @@ void kDataFramePHMAP::save(string filePath) {
     // Write the kmerSize
     ofstream file(filePath + ".extra");
     file << kSize << endl;
-
-    std::ofstream os(filePath + ".phmap", std::ios::binary);
-    cereal::BinaryOutputArchive archive(os);
-    archive(this->MAP);
-
+    file << this->KD->hash_mode << endl;
+    filePath += ".phmap";
+    {   
+        phmap::BinaryOutputArchive ar_out(filePath.c_str());
+        this->MAP.dump(ar_out);
+    }
+    
 }
 
 kDataFrame *kDataFramePHMAP::load(string filePath) {
@@ -209,15 +217,17 @@ kDataFrame *kDataFramePHMAP::load(string filePath) {
     // Load kSize
     ifstream file(filePath + ".extra");
     uint64_t kSize;
+    int hashing_mode;
     file >> kSize;
+    file >> hashing_mode;
 
-    // Initialize kDataFramePHMAP
-    kDataFramePHMAP *KMAP = new kDataFramePHMAP(kSize);
-
-    // Load the hashMap into the kDataFramePHMAP
-    std::ifstream os(filePath + ".phmap", std::ios::binary);
-    cereal::BinaryInputArchive iarchive(os);
-    iarchive(KMAP->MAP);
+    filePath += ".phmap";
+    
+    kDataFramePHMAP *KMAP = new kDataFramePHMAP(kSize, hashing_mode);
+    {
+        phmap::BinaryInputArchive ar_in(filePath.c_str());
+        KMAP->MAP.load(ar_in);
+    }
 
     return KMAP;
 }
