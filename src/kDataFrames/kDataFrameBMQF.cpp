@@ -92,8 +92,7 @@ void kDataFrameBMQF::reserve(uint64_t n)
 {
     bufferedMQF* old=bufferedmqf;
     bufferedmqf=new bufferedMQF();
-    uint64_t q=(uint64_t)ceil(log2((double)n*1.4));
-    int randNum=rand();
+    uint64_t q=(uint64_t)ceil(log2((double)n*1.2));
     bufferedMQF_init(bufferedmqf, (1ULL<<(q-2)), (1ULL<<q), hashbits, 0,2, fileName.c_str());
     if(old!=NULL)
     {
