@@ -14,14 +14,20 @@ int main(int argc, char *argv[])
     string outPath=argv[3];
 
     kDataFrameBMQF frame(k,outPath);
+    //kDataFrameMQF frame(k);
     frame.reserve(numSlots);
 
     string kmer;
     uint64_t  count;
+    uint64_t nKmers=0;
     while (cin>>kmer>>count)
     {
         frame.insert(kmer,count);
+	nKmers++;
+	if(nKmers%100000==0)
+	  cout<<nKmers<<endl;
     }
+    cout<<"Finished"<<endl;
     frame.serialize(outPath);
     return 0;
 
