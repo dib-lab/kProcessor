@@ -1,5 +1,11 @@
 file(GLOB SRCS *.cpp)
 
-ADD_EXECUTABLE(kProcessorApp ${SRCS})
+#ADD_EXECUTABLE(kProcessorApp ${SRCS})
+#
+#TARGET_LINK_LIBRARIES(kProcessorApp kProcessor MQF)
 
-TARGET_LINK_LIBRARIES(kProcessorApp kProcessor MQF ${SEQAN_LIBRARIES})
+
+add_executable(loadFromTSV loadFromTSV.cpp)
+
+target_link_libraries (loadFromTSV LINK_PUBLIC kProcessor MQF ${SEQAN_LIBRARIES}  ${ntcardLib})
+
