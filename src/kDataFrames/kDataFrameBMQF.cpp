@@ -97,7 +97,7 @@ void kDataFrameBMQF::reserve(uint64_t n)
     if(old!=NULL)
     {
         // ERROR FLAG: bufferedMQF_copy(bufferedmqf,old)
-        bufferedMQF_copy(bufferedmqf,old);
+        bufferedMQF_migrate(old,bufferedmqf);
         //bufferedMQF_destroy(old);
         delete old;
     }
