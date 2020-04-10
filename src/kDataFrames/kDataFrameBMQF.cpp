@@ -92,7 +92,8 @@ void kDataFrameBMQF::reserve(uint64_t n)
 {
     bufferedMQF* old=bufferedmqf;
     bufferedmqf=new bufferedMQF();
-    uint64_t q=(uint64_t)ceil(log2((double)n*1.2));
+    uint64_t q=(uint64_t)ceil(log2((double)n*1.5));
+    q=max(q,(uint64_t)19);
     bufferedMQF_init(bufferedmqf, (1ULL<<(q-2)), (1ULL<<q), hashbits, 0,2, fileName.c_str());
     if(old!=NULL)
     {
@@ -252,6 +253,10 @@ bool kDataFrameBMQF::setCount(string kmer,uint64_t count){
             return setCount(kmer,count);
         }
     }
+    if(load_factor()>0.85){
+        // ERROR FLAG: reserve(bufferedmqf->memoryBuffer->metadata->nslots)
+        reserve(bufferedmqf->disk->metadata->nslots);
+    }
     return true;
 }
 
@@ -265,10 +270,14 @@ bool kDataFrameBMQF::insert(string kmer,uint64_t count){
         reserve(bufferedmqf->disk->metadata->nslots);
         return insert(kmer,count);
     }
+    if(load_factor()>0.85){
+        // ERROR FLAG: reserve(bufferedmqf->memoryBuffer->metadata->nslots)
+        reserve(bufferedmqf->disk->metadata->nslots);
+    }
     return true;
 }
 bool kDataFrameBMQF::insert(string kmer){
-    if(load_factor()>0.9){
+    if(load_factor()>0.85){
         // ERROR FLAG: reserve(bufferedmqf->memoryBuffer->metadata->nslots)
         reserve(bufferedmqf->disk->metadata->nslots);
     }
@@ -314,6 +323,10 @@ bool kDataFrameBMQF::setCount(uint64_t  hash,uint64_t count){
             return setCount(hash,count);
         }
     }
+    if(load_factor()>0.85){
+        // ERROR FLAG: reserve(bufferedmqf->memoryBuffer->metadata->nslots)
+        reserve(bufferedmqf->disk->metadata->nslots);
+    }
     return true;
 }
 
@@ -325,6 +338,10 @@ bool kDataFrameBMQF::insert(uint64_t hash,uint64_t count){
     {
         reserve(bufferedmqf->disk->metadata->nslots);
         return insert(hash,count);
+    }
+    if(load_factor()>0.85){
+        // ERROR FLAG: reserve(bufferedmqf->memoryBuffer->metadata->nslots)
+        reserve(bufferedmqf->disk->metadata->nslots);
     }
     return true;
 }
@@ -340,6 +357,10 @@ bool kDataFrameBMQF::insert(uint64_t hash){
     {
         reserve(bufferedmqf->disk->metadata->nslots);
         return insert(hash);
+    }
+    if(load_factor()>0.85){
+        // ERROR FLAG: reserve(bufferedmqf->memoryBuffer->metadata->nslots)
+        reserve(bufferedmqf->disk->metadata->nslots);
     }
     return true;
 }
