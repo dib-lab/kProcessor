@@ -24,14 +24,14 @@ int main(int argc, char *argv[])
         filenames.push_back(sample);
     }
 
-    kDataFrame* indexFrame=kDataFrame::load(sample);
+    kDataFrame* indexFrame=kDataFrame::load(framePath);
 
     uint64_t testedKmers=0;
     uint64_t failedKmers=0;
 
     for(int i=0;i<filenames.size();i++)
     {
-        ifstream inp(filenames[i]+".testkmers");
+        ifstream inp(filenames[i]+".bmqf.testkmers");
         string kmer;
         while(inp>>kmer)
         {
@@ -40,7 +40,12 @@ int main(int argc, char *argv[])
             auto colorIt=find(colors.begin(),colors.end(),i);
             if(colorIt==colors.end())
             {
-                cerr<<"Error detected in sample "<<i <<endl;
+	      cerr<<"Error detected in sample #"<<i <<" "<<
+		filenames[i]<<" at kmer "<<kmer<<" Combination got "<<endl;
+								     for(auto c: colors)
+								       cerr<<c <<" ";
+										 cerr<<endl;
+	      
                 failedKmers++;
             }
 
