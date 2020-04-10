@@ -9,3 +9,8 @@ add_executable(loadFromTSV loadFromTSV.cpp)
 
 target_link_libraries (loadFromTSV LINK_PUBLIC kProcessor MQF ${SEQAN_LIBRARIES}  ${ntcardLib})
 
+
+
+add_executable(index index.cpp)
+target_link_libraries (index LINK_PUBLIC kProcessor MQF ${SEQAN_LIBRARIES}  ${ntcardLib})
+
