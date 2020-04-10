@@ -86,30 +86,29 @@ kDataFrame * kDataFrame::load(string filePath) {
     else
         throw std::runtime_error("Could not open kDataFrame file");
 
-    ifstream inp(filePath+".multiColumn");
-    string tmp;
-    string name,path;
-    uint64_t type;
-    inp>>tmp>>res->isStatic;
-    if(res->isStatic)
-    {
-        uint32_t numColumns;
-        inp>>tmp>>numColumns;
-        for(int i=0;i<numColumns;i++)
-        {
-            inp>>name>>type>>path;
-            Column* c=Column::getContainerByName(type);
-            c->deserialize(path);
-            res->columns[name]=c;
+    if (fileExists(filePath +".multiColumn") ){
+        ifstream inp(filePath + ".multiColumn");
+        string tmp;
+        string name, path;
+        uint64_t type;
+        inp >> tmp >> res->isStatic;
+        if (res->isStatic) {
+            uint32_t numColumns;
+            inp >> tmp >> numColumns;
+            for (int i = 0; i < numColumns; i++) {
+                inp >> name >> type >> path;
+                Column *c = Column::getContainerByName(type);
+                c->deserialize(path);
+                res->columns[name] = c;
+            }
+            res->preprocessKmerOrder();
         }
-        res->preprocessKmerOrder();
-    }
-    inp>>name>>type>>path;
-    if(type!=0)
-    {
-        Column* c=Column::getContainerByName(type);
-        c->deserialize(path);
-        res->defaultColumn=c;
+        inp >> name >> type >> path;
+        if (type != 0) {
+            Column *c = Column::getContainerByName(type);
+            c->deserialize(path);
+            res->defaultColumn = c;
+        }
     }
 
     return res;
