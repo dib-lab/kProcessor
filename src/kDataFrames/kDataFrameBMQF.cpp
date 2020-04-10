@@ -11,8 +11,8 @@
 kDataFrameBMQF::kDataFrameBMQF():kDataFrame(){
     bufferedmqf=new bufferedMQF();
     int randNum=rand();
-    string fileName="tmp"+to_string(randNum);
-    bufferedMQF_init(bufferedmqf, (1ULL<<16), (1ULL<<16), 2*kSize, 0,2, fileName.c_str());
+    fileName="tmp"+to_string(randNum);
+    bufferedMQF_init(bufferedmqf, (1ULL<<16), (1ULL<<16), 2*kSize, 0,2, (fileName+".bmqf").c_str());
     KD = (new Kmers(kSize));
     falsePositiveRate=0;
     hashbits=2*kSize;
@@ -29,7 +29,7 @@ kDataFrameBMQF::kDataFrameBMQF(uint64_t ksize,uint8_t q,uint8_t fixedCounterSize
     bufferedmqf=new bufferedMQF();
     int randNum=rand();
     fileName=path;
-    bufferedMQF_init(bufferedmqf, (1ULL<<q-2), (1ULL<<q), 2*kSize, value_bits,fixedCounterSize, fileName.c_str());
+    bufferedMQF_init(bufferedmqf, (1ULL<<q-2), (1ULL<<q), 2*kSize, value_bits,fixedCounterSize, (fileName+".bmqf").c_str());
     this->falsePositiveRate=falsePositiveRate;
     if(falsePositiveRate==0){
         KD = (new Kmers(kSize));
@@ -62,7 +62,7 @@ kDataFrameBMQF::kDataFrameBMQF(uint64_t ksize,string path):
 kDataFrameBMQF::kDataFrameBMQF(bufferedMQF* bufferedmqf,uint64_t ksize,double falsePositiveRate):
         kDataFrame(ksize)
 {
-    fileName=bufferedmqf->filename;
+    fileName=bufferedmqf->filename.substr(0,bufferedmqf->filename.size()-5);
     this->bufferedmqf=bufferedmqf;
     this->falsePositiveRate=falsePositiveRate;
     if(falsePositiveRate==0){
@@ -94,7 +94,7 @@ void kDataFrameBMQF::reserve(uint64_t n)
     bufferedmqf=new bufferedMQF();
     uint64_t q=(uint64_t)ceil(log2((double)n*1.5));
     q=max(q,(uint64_t)19);
-    bufferedMQF_init(bufferedmqf, (1ULL<<(q-2)), (1ULL<<q), hashbits, 0,2, fileName.c_str());
+    bufferedMQF_init(bufferedmqf, (1ULL<<(q-2)), (1ULL<<q), hashbits, 0,2, (fileName+".bmqf").c_str());
     if(old!=NULL)
     {
         // ERROR FLAG: bufferedMQF_copy(bufferedmqf,old)
@@ -121,8 +121,8 @@ void kDataFrameBMQF::reserve(vector<uint64_t> countHistogram) {
                                       &nSlots, &fixedCounterSize, &memory);
 //    std::cerr << "[DEBUG] Q: " << q << std::endl;
     int randNum=rand();
-    string fileName="tmp"+to_string(randNum);
-    bufferedMQF_init(bufferedmqf, nSlots/2, nSlots, hashbits, 0,2, fileName.c_str());
+    fileName="tmp"+to_string(randNum);
+    bufferedMQF_init(bufferedmqf, nSlots/2, nSlots, hashbits, 0,2, (fileName+".bmqf").c_str());
     if (old != NULL) {
         bufferedMQF_migrate(old, bufferedmqf);
        // qf_destroy(old);
@@ -143,8 +143,8 @@ kDataFrameBMQF::kDataFrameBMQF(uint64_t ksize,vector<uint64_t> countHistogram,ui
                                        &nSlots,&fixedCounterSize,&memory);
     // bufferedMQF_init requires different arguments
     int randNum=rand();
-    string fileName="tmp"+to_string(randNum);
-    bufferedMQF_init(bufferedmqf, nSlots, 2*ksize,value_bits,fixedCounterSize, 2,fileName.c_str());
+    fileName="tmp"+to_string(randNum);
+    bufferedMQF_init(bufferedmqf, nSlots, 2*ksize,value_bits,fixedCounterSize, 2,(fileName+".bmqf").c_str());
 }
 
 uint64_t kDataFrameBMQF::estimateMemory(uint64_t nslots,uint64_t slotSize, uint64_t fcounter, uint64_t value_bits)
@@ -393,7 +393,7 @@ float kDataFrameBMQF::max_load_factor(){
 
 
 void kDataFrameBMQF::serialize(string filePath){
-    if(filePath!=bufferedmqf->filename)
+    if(filePath!=this->fileName)
         throw logic_error("kDataframeBMQF has to be saved on the file path that it was created in");
 
     //filePath += ".mqf";
@@ -416,7 +416,7 @@ kDataFrame* kDataFrameBMQF::load(string filePath){
     flasePositiveRate = (hashing_mode == 1) ? 0 : 0.5;
 
     bufferedMQF* bufferedmqf=new bufferedMQF();
-    bufferedMQF_deserialize(bufferedmqf,filePath.c_str());
+    bufferedMQF_deserialize(bufferedmqf,(filePath+".bmqf").c_str());
     return new kDataFrameBMQF(bufferedmqf,filekSize, flasePositiveRate);
 }
 

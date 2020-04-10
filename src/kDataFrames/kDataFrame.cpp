@@ -81,7 +81,7 @@ kDataFrame * kDataFrame::load(string filePath) {
         res=kDataFrameMAP::load(filePath);
     else if (fileExists(filePath + ".phmap"))
         res=kDataFramePHMAP::load(filePath);
-    else if (fileExists(filePath))
+    else if (fileExists(filePath+ ".bmqf"))
         res=kDataFrameBMQF::load(filePath);
     else
         throw std::runtime_error("Could not open kDataFrame file");
