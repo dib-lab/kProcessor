@@ -6,6 +6,8 @@
 #include "parallel_hashmap/phmap_dump.h"
 #include <cereal/archives/binary.hpp>
 #include <stack>
+#include <iterator>
+#include <regex>
 template class vectorColumn<int>;
 template class vectorColumn<bool>;
 template class vectorColumn<double>;
@@ -117,37 +119,7 @@ void colorColumn::deserialize(string filename)
 }
 
 void colorColumn::populateColors(){
-    colors=vector<vector<uint32_t > >(colorInv.lastColor+1);
-    vector<uint32_t> color;
-    stack<tuple<colorNode*,uint32_t ,bool> > S;
-    for(auto it:colorInv.root->edges)
-    {
-        S.push(make_tuple(it.second,it.first,false));
-    }
-    while(S.size()>0)
-    {
-        if(!std::get<2>(S.top()))
-        {
-            std::get<2>(S.top())=true;
-            color.push_back(std::get<1>(S.top()));
-            if(std::get<0>(S.top())->currColor!=0)
-            {
-
-                colors[std::get<0>(S.top())->currColor]=color;
-            }
-
-            for(auto it:std::get<0>(S.top())->edges)
-            {
-                S.push(make_tuple(it.second,it.first,false));
-            }
-        } else{
-            color.pop_back();
-            S.pop();
-        }
-
-
-    }
-
+    colorInv.populateColors(colors);
 }
 
 
@@ -227,7 +199,7 @@ colorIndex::~colorIndex()
 bool colorIndex::hasColorID(vector<uint32_t>& v)
 {
     colorNode* currNode=root;
-    int i=0;
+    unsigned  int i=0;
     while(i<v.size())
     {
         auto it=currNode->edges.find(v[i]);
@@ -330,5 +302,106 @@ void colorIndex::deserialize(string fileName){
         }
 
 
+    }
+}
+
+void colorIndex::populateColors(vector<vector<uint32_t> > &colors) {
+    colors=vector<vector<uint32_t > >(lastColor+1);
+    vector<uint32_t> color;
+    stack<tuple<colorNode*,uint32_t ,bool> > S;
+    for(auto it:root->edges)
+    {
+        S.push(make_tuple(it.second,it.first,false));
+    }
+    while(S.size()>0)
+    {
+        if(!std::get<2>(S.top()))
+        {
+            std::get<2>(S.top())=true;
+            color.push_back(std::get<1>(S.top()));
+            if(std::get<0>(S.top())->currColor!=0)
+            {
+
+                colors[std::get<0>(S.top())->currColor]=color;
+            }
+
+            for(auto it:std::get<0>(S.top())->edges)
+            {
+                S.push(make_tuple(it.second,it.first,false));
+            }
+        } else{
+            color.pop_back();
+            S.pop();
+        }
+
+
+    }
+}
+
+bool stringColorIndex::hasColorID(vector<uint32_t>& v){
+    auto it=colors.find(toString(v));
+    return it!=colors.end();
+}
+uint32_t stringColorIndex::getColorID(vector<uint32_t>& v)
+{
+    string col=toString(v);
+    auto it=colors.find(col);
+    if(it==colors.end()){
+        colors[col]=++lastColor;
+        it=colors.find(col);
+    }
+    return it->second;
+}
+void stringColorIndex::serialize(string fileName){
+    vector<vector<uint32_t > > outColors(colors.size()+1);
+    for(auto c:colors)
+    {
+        vector<uint32_t > tmp;
+        tmp.clear();
+        regex r(";");
+        sregex_token_iterator it(c.first.begin(), c.first.end(),r, -1);
+
+        sregex_token_iterator reg_end;
+        for (; it != reg_end; ++it) {
+            if(it->str()!="")
+                tmp.push_back(atoi(it->str().c_str()));
+        }
+        outColors[c.second]=tmp;
+    }
+    std::ofstream os(fileName+".colors", std::ios::binary);
+    cereal::BinaryOutputArchive archive(os);
+    archive(outColors);
+    os.close();
+
+}
+void stringColorIndex::deserialize(string filename)
+{
+    std::ifstream os(filename+".colors", std::ios::binary);
+    cereal::BinaryInputArchive iarchive(os);
+    vector<vector<uint32_t > > inColors;
+    iarchive(inColors);
+
+    for(unsigned int i=0;i<inColors.size();i++)
+    {
+        colors[toString(inColors[i])]=i;
+    }
+}
+
+void stringColorIndex::populateColors(vector<vector<uint32_t > >& outColors)
+{
+    outColors=vector<vector<uint32_t > >(colors.size()+1);
+    for(auto c:colors)
+    {
+        vector<uint32_t > tmp;
+        tmp.clear();
+        regex r(";");
+        sregex_token_iterator it(c.first.begin(), c.first.end(),r, -1);
+        sregex_token_iterator reg_end;
+        for (; it != reg_end; ++it) {
+            if(it->str()!="") {
+                tmp.push_back(atoi(it->str().c_str()));
+            }
+        }
+        outColors[c.second]=tmp;
     }
 }

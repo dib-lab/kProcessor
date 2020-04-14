@@ -82,6 +82,40 @@ public:
     void serialize(string fileName);
     void deserialize(string filename);
 
+    void populateColors(vector<vector<uint32_t > >& colors);
+
+};
+
+class stringColorIndex{
+public:
+    flat_hash_map<string,uint32_t> colors;
+    uint32_t lastColor;
+    stringColorIndex()
+    {
+
+        lastColor=0;
+    }
+    ~stringColorIndex(){
+
+    }
+    inline string toString(vector<uint32_t>& v)
+    {
+        string res="";
+        for(auto c:v)
+        {
+            res+=to_string(c);
+            res+=";";
+        }
+        return res;
+
+    }
+    bool hasColorID(vector<uint32_t>& v);
+    uint32_t getColorID(vector<uint32_t>& v);
+    void serialize(string fileName);
+    void deserialize(string filename);
+
+    void populateColors(vector<vector<uint32_t > >& colors);
+
 };
 
 
@@ -89,7 +123,7 @@ public:
 class colorColumn: public Column{
 public:
     vector<vector<uint32_t > > colors;
-    colorIndex colorInv;
+    stringColorIndex colorInv;
     uint64_t  noSamples;
     colorColumn(){
         colors.push_back(vector<uint32_t >());
