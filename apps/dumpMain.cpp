@@ -14,6 +14,10 @@ using namespace std;
 
 
 int main(int argc, char *argv[]){
+  if(argc!=2){
+    cout<<"Help: ./dumpMain <kdataframe prefix>"<<endl;
+    return 0;
+    }
   string input=argv[1];
   kDataFrame* KF=kDataFrame::load(input);
   auto it=KF->begin();
