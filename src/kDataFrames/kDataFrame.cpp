@@ -65,12 +65,14 @@ void kDataFrame::save(string filePath)
         size_t columnType=typeid(*(defaultColumn)).hash_code();
         out<<"default\t"<<columnType<<"\t"<<filename<<endl;
         defaultColumn->serialize(filename);
+        cout<<"saving default finsihed"<<endl;
     }
     else{
         out<<"default\t"<<0<<"\tNULL"<<endl;
     }
     out.close();
     this->serialize(filePath);
+    cout<<"serializing finished"<<endl;
 }
 
 kDataFrame * kDataFrame::load(string filePath) {
