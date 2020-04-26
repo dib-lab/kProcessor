@@ -41,7 +41,7 @@ int main(int argc, char *argv[])
     cout<<"Indexing Finished"<<endl;
 
     output->save(outPath);
-
+    cout<<"Saving Finished"<<endl;
     delete output;
     for(auto f:frames)
         delete f;

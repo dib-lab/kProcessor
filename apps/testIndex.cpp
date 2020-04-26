@@ -28,6 +28,7 @@ int main(int argc, char *argv[])
 
     uint64_t testedKmers=0;
     uint64_t failedKmers=0;
+    uint64_t notFoundKmers =0;
 
     for(int i=0;i<filenames.size();i++)
     {
@@ -37,6 +38,11 @@ int main(int argc, char *argv[])
         {
             testedKmers++;
             vector<uint32_t> colors=indexFrame->getKmerDefaultColumnValue<vector<uint32_t >, colorColumn>(kmer);
+	    if(colors.size()==0)
+	      {
+		notFoundKmers++;
+		continue;
+	      }
             auto colorIt=find(colors.begin(),colors.end(),i);
             if(colorIt==colors.end())
             {
@@ -53,7 +59,8 @@ int main(int argc, char *argv[])
         inp.close();
     }
     cout<<"Numbers of tested Kmers = "<<testedKmers<<endl;
-    cout<<"Numbers of failed kmers = "<<failedKmers<<endl;
+    cout<<"Numbers of non found kmers = "<<notFoundKmers<<endl;
+    cout<<"Numbers of wrong combination = "<<failedKmers<<endl;
 
     return 0;
 }

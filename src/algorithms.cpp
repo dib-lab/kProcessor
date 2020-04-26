@@ -912,10 +912,34 @@ void indexPriorityQueue(vector<kDataFrame*>& input, kDataFrame *output){
                 delete get<3>(colorTuple);
             }
         }
-        output->setKmerDefaultColumnValue<vector<uint32_t >, colorColumn>(currHash,colorVec);
+
+	uint64_t prevColor=output->getCount(currHash);
+	if(prevColor!=0)
+	  {
+	    auto res=output->getKmerDefaultColumnValue<vector<uint32_t >, colorColumn>(currHash);
+	        cout<<"Error in Indexing detected at kmer "<<currHash<<endl;
+	    cout<<"should be empty vector and found  ";
+	    for(auto a:res)
+	     cout<<a<<" ";
+	     cout<<endl<<endl;
+	  }
+	output->setKmerDefaultColumnValue<vector<uint32_t >, colorColumn>(currHash,colorVec);
+	auto res=output->getKmerDefaultColumnValue<vector<uint32_t >, colorColumn>(currHash);
+	//	cout<<res.size()<<endl;
+	if(!equal(res.begin(),res.end(),colorVec.begin()))
+	  {
+	    cout<<"Error in Indexing detected at kmer "<<currHash<<endl;
+	    cout<<"expected ";
+	    for(auto a:colorVec)
+	      cout<<a<<" ";
+	    cout<<endl<<"Found ";
+	    for(auto a:res)
+	      cout<<a<<" ";
+	    cout<<endl;
+	  }
 
     }
-    colors->populateColors();
+    //  colors->populateColors();
 
 
 }
