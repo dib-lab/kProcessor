@@ -52,18 +52,20 @@ void kDataFrame::save(string filePath)
         out<<"numColumns=\t"<<columns.size()<<endl;
         for(auto c:columns)
         {
-            string filename=filePath+".multiColumn."+c.first;
+	    string suffix=".multiColumn."+c.first;
+            string filename=filePath+ suffix;
             size_t columnType=typeid(*(c.second)).hash_code();
-            out<<c.first<<"\t"<<columnType<<"\t"<<filename<<endl;
+            out<<c.first<<"\t"<<columnType<<"\t"<<suffix<<endl;
             c.second->serialize(filename);
         }
 
     }
     if(defaultColumn!=NULL)
     {
-        string filename=filePath+".defaultColumn";
+        string suffix=".defaultColumn";
+        string filename=filePath+suffix;
         size_t columnType=typeid(*(defaultColumn)).hash_code();
-        out<<"default\t"<<columnType<<"\t"<<filename<<endl;
+        out<<"default\t"<<columnType<<"\t"<<suffix<<endl;
         defaultColumn->serialize(filename);
         cout<<"saving default finsihed"<<endl;
     }
@@ -72,7 +74,6 @@ void kDataFrame::save(string filePath)
     }
     out.close();
     this->serialize(filePath);
-    cout<<"serializing finished"<<endl;
 }
 
 kDataFrame * kDataFrame::load(string filePath) {
@@ -97,10 +98,10 @@ kDataFrame * kDataFrame::load(string filePath) {
         if (res->isStatic) {
             uint32_t numColumns;
             inp >> tmp >> numColumns;
-            for (int i = 0; i < numColumns; i++) {
+            for (uint32_t i = 0; i < numColumns; i++) {
                 inp >> name >> type >> path;
                 Column *c = Column::getContainerByName(type);
-                c->deserialize(path);
+                c->deserialize(filePath+path);
                 res->columns[name] = c;
             }
             res->preprocessKmerOrder();
@@ -108,7 +109,7 @@ kDataFrame * kDataFrame::load(string filePath) {
         inp >> name >> type >> path;
         if (type != 0) {
             Column *c = Column::getContainerByName(type);
-            c->deserialize(path);
+            c->deserialize(filePath+path);
             res->defaultColumn = c;
         }
     }

@@ -100,14 +100,16 @@ T vectorColumn<T>::get(uint32_t index){
 
 
 uint32_t  colorColumn::insertAndGetIndex(vector<uint32_t > item){
-    if(colorInv.hasColorID(item))
-      return colorInv.getColorID(item);
+  return colorInv.getColorID(item);
+    // if(colorInv.hasColorID(item))
+    //   return colorInv.getColorID(item);
 
-    uint32_t i= colorInv.getColorID(item);
-    colors.push_back(item);
-    if(i!=colors.size()-1)
-      cout<<"error in insert and get index "<<i<<" "<<colors.size()<<endl;
-    return i;
+    // uint32_t i= colorInv.getColorID(item);
+    // colors.push_back(item);
+    // if(i!=colors.size()-1)
+    //   cout<<"error in insert and get index "<<i<<" "<<colors.size()<<endl;
+    // return i;
+  
 }
 vector<uint32_t > colorColumn::getWithIndex(uint32_t index){
     return colors[index];
