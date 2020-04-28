@@ -23,3 +23,6 @@ target_link_libraries (testIndex LINK_PUBLIC kProcessor MQF ${SEQAN_LIBRARIES}  
 add_executable(dumpMain dumpMain.cpp)
 target_link_libraries (dumpMain LINK_PUBLIC kProcessor MQF ${SEQAN_LIBRARIES}  ${ntcardLib})
 
+add_executable(optimizeIndex optimizeIndex.cpp)
+target_link_libraries (optimizeIndex LINK_PUBLIC kProcessor MQF ${SEQAN_LIBRARIES}  ${ntcardLib})
+

@@ -347,6 +347,39 @@ void colorIndex::populateColors(vector<vector<uint32_t> > &colors) {
     }
 }
 
+void colorIndex::optimize() {
+    flat_hash_map<uint32_t ,uint32_t > freqs;
+    stack<tuple<colorNode*,uint32_t ,bool> > S;
+    for(auto it:root->edges)
+    {
+        S.push(make_tuple(it.second,it.first,false));
+    }
+    while(S.size()>0)
+    {
+        if(!std::get<2>(S.top()))
+        {
+            std::get<2>(S.top())=true;
+            uint32_t  currSample=std::get<1>(S.top());
+            if(freqs.find(currSample)==freqs.end())
+                freqs[currSample]++;
+
+            for(auto it:std::get<0>(S.top())->edges)
+            {
+                S.push(make_tuple(it.second,it.first,false));
+            }
+        } else{
+
+            S.pop();
+        }
+
+
+    }
+    for(auto it:freqs)
+    {
+        cout<<it.first<<" : "<<it.second<<"\n";
+    }
+}
+
 bool stringColorIndex::hasColorID(vector<uint32_t>& v){
     auto it=colors.find(toString(v));
     return it!=colors.end();
