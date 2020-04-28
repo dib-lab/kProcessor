@@ -361,7 +361,8 @@ void colorIndex::optimize() {
             std::get<2>(S.top())=true;
             uint32_t  currSample=std::get<1>(S.top());
             if(freqs.find(currSample)==freqs.end())
-                freqs[currSample]++;
+                freqs[currSample]=0;
+            freqs[currSample]++;
 
             for(auto it:std::get<0>(S.top())->edges)
             {
