@@ -347,9 +347,72 @@ void colorIndex::populateColors(vector<vector<uint32_t> > &colors) {
     }
 }
 
+
+
 void colorIndex::optimize() {
+    stats();
+    vector<vector<uint32_t > > colors=vector<vector<uint32_t > >(lastColor+1);
+    vector<uint32_t> color;
+    stack<tuple<colorNode*,uint32_t ,bool> > S;
+    flat_hash_map<uint32_t ,uint32_t > freqs;
+    for(auto it:root->edges)
+    {
+        S.push(make_tuple(it.second,it.first,false));
+    }
+    while(S.size()>0)
+    {
+        if(!std::get<2>(S.top()))
+        {
+            uint32_t currSample=std::get<1>(S.top());
+            std::get<2>(S.top())=true;
+            color.push_back(currSample);
+            if(freqs.find(currSample)==freqs.end())
+                freqs[currSample]=0;
+            freqs[currSample]++;
+            if(std::get<0>(S.top())->currColor!=0)
+            {
+
+                colors[std::get<0>(S.top())->currColor]=color;
+            }
+
+            for(auto it:std::get<0>(S.top())->edges)
+            {
+                S.push(make_tuple(it.second,it.first,false));
+            }
+        } else{
+            color.pop_back();
+            S.pop();
+        }
+
+
+    }
+    vector<uint32_t > newColor(freqs.size());
+    for(unsigned int i=0;i<freqs.size();i++)
+        newColor[i]=i;
+    sort(newColor.begin(), newColor.end(),
+         [&](uint32_t & a,uint32_t & b) -> bool
+         {
+             uint32_t aa=a;
+             uint32_t bb=b;
+             return freqs[aa] > freqs[bb];
+         });
+
+    colorIndex newColorIndex;
+    for(auto c:colors)
+    {
+        vector<uint32_t> newc(c.size());
+        for(auto cc:c)
+            newc[cc]=newColor[cc];
+        newColorIndex.hasColorID(newc);
+    }
+    cout<<"Optimization Done"<<endl;
+    newColorIndex.stats();
+}
+
+void colorIndex::stats() {
     flat_hash_map<uint32_t ,uint32_t > freqs;
     stack<tuple<colorNode*,uint32_t ,bool> > S;
+    uint32_t  nNodes=0;
     for(auto it:root->edges)
     {
         S.push(make_tuple(it.second,it.first,false));
@@ -363,7 +426,7 @@ void colorIndex::optimize() {
             if(freqs.find(currSample)==freqs.end())
                 freqs[currSample]=0;
             freqs[currSample]++;
-
+            nNodes++;
             for(auto it:std::get<0>(S.top())->edges)
             {
                 S.push(make_tuple(it.second,it.first,false));
@@ -375,11 +438,13 @@ void colorIndex::optimize() {
 
 
     }
+    cout<<"Total Number of Nodes = "<<nNodes<<endl;
     for(auto it:freqs)
     {
         cout<<it.first<<" : "<<it.second<<"\n";
     }
 }
+
 
 bool stringColorIndex::hasColorID(vector<uint32_t>& v){
     auto it=colors.find(toString(v));

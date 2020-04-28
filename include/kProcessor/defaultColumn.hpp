@@ -85,6 +85,7 @@ public:
     void populateColors(vector<vector<uint32_t > >& colors);
 
     void optimize();
+    void stats();
 
 };
 
