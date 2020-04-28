@@ -16,6 +16,6 @@ int main(int argc, char *argv[])
 
     kDataFrame* indexFrame=kDataFrame::load(framePath);
     colorColumn* colors=(colorColumn*)indexFrame->getDefaultColumn();
-    colors->optimize();
+    colors->colorInv.optimize();
     return 0;
 }
