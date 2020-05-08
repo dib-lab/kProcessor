@@ -264,7 +264,8 @@ public:
 
 class fixedSizeVector: public vectorBase{
 public:
-    sdsl::int_vector<> vec;
+    typedef  sdsl::int_vector<> vectype;
+    vectype vec;
     uint32_t colorsize;
     fixedSizeVector()
     {
