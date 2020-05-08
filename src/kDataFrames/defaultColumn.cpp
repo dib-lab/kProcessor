@@ -6,8 +6,10 @@
 #include "parallel_hashmap/phmap_dump.h"
 #include <cereal/archives/binary.hpp>
 #include <stack>
+#include <queue>
 #include <iterator>
 #include <regex>
+#include <sdsl/util.hpp>
 template class vectorColumn<int>;
 template class vectorColumn<bool>;
 template class vectorColumn<double>;
@@ -125,6 +127,7 @@ void colorColumn::deserialize(string filename)
 {
     colorInv.deserialize(filename);
     populateColors();
+    noSamples=colorInv.noSamples;
 }
 
 void colorColumn::populateColors(){
@@ -134,7 +137,7 @@ void colorColumn::populateColors(){
 
 vector<string > StringColorColumn::getWithIndex(uint32_t index){
     vector<string > res(colors[index].size());
-    for(int i=0;i<colors[index].size();i++)
+    for(unsigned  int i=0;i<colors[index].size();i++)
         res[i]=namesMap[colors[index][i]];
     return res;
 
@@ -170,7 +173,7 @@ void StringColorColumn::deserialize(string filename)
     ifstream namesMapIn(filename+".namesMap");
     uint64_t size;
     namesMapIn>>size;
-    for(int i=0;i<size;i++)
+    for(unsigned  int i=0;i<size;i++)
     {
         uint32_t color;
         string name;
@@ -224,7 +227,7 @@ bool colorIndex::hasColorID(vector<uint32_t>& v)
 uint32_t colorIndex::getColorID(vector<uint32_t>& v)
 {
     colorNode* currNode=root;
-    int i=0;
+    unsigned int i=0;
     while(i<v.size())
     {
         auto it=currNode->edges.find(v[i]);
@@ -328,6 +331,7 @@ void colorIndex::populateColors(vector<vector<uint32_t> > &colors) {
         {
             std::get<2>(S.top())=true;
             color.push_back(std::get<1>(S.top()));
+            noSamples=max(noSamples,std::get<1>(S.top()));
             if(std::get<0>(S.top())->currColor!=0)
             {
 
@@ -345,6 +349,7 @@ void colorIndex::populateColors(vector<vector<uint32_t> > &colors) {
 
 
     }
+    noSamples++;
 }
 
 
@@ -386,8 +391,8 @@ void colorIndex::optimize() {
 
 
     }
-    vector<uint32_t > newColor(freqs.size());
-    for(unsigned int i=0;i<freqs.size();i++)
+    vector<uint32_t > newColor(lastColor);
+    for(unsigned int i=0;i<lastColor;i++)
         newColor[i]=i;
     sort(newColor.begin(), newColor.end(),
          [&](uint32_t & a,uint32_t & b) -> bool
@@ -400,13 +405,18 @@ void colorIndex::optimize() {
     colorIndex newColorIndex;
     for(auto c:colors)
     {
+        if(c.size()==0)
+            continue;
         vector<uint32_t> newc(c.size());
-        for(auto cc:c)
-            newc[cc]=newColor[cc];
-        newColorIndex.hasColorID(newc);
+        for(unsigned int i=0;i<c.size();i++) {
+            newc[i] = newColor[c[i]];
+        }
+        sort(newc.begin(),newc.end());
+        newColorIndex.getColorID(newc);
     }
     cout<<"Optimization Done"<<endl;
     newColorIndex.stats();
+   // newColorIndex.optimize();
 }
 
 void colorIndex::stats() {
@@ -513,3 +523,294 @@ void stringColorIndex::populateColors(vector<vector<uint32_t > >& outColors)
         outColors[c.second]=tmp;
     }
 }
+
+
+compressedColorColumn::compressedColorColumn(colorColumn* col){
+    noSamples=col->noSamples;
+    colors.push_back(new constantVector(noSamples));
+    colors.push_back(new vectorOfVectors(noSamples+1,col->getNumColors()-noSamples+1));
+    optimize(col);
+    optimize2();
+}
+
+void compressedColorColumn::optimize(colorColumn* col)
+{
+    numColors=col->getNumColors();
+    vector<pair<uint32_t,uint32_t > > sizeAndIndex(numColors);
+    uint64_t  oldColorsSum=0,newColorsSum=0;
+    idsMap.resize(numColors+1);
+   // vector<sdsl::bit_vector> colorsBitvectors(colors.size());
+    for(uint32_t i=0;i<numColors;i++)
+    {
+        vector<uint32_t> tmp=col->getWithIndex(i);
+        sizeAndIndex[i]=make_pair((uint32_t)col->colors[i].size(),i);
+        oldColorsSum+=col->colors[i].size();
+//        colorsBitvectors[i]=sdsl::bit_vector(noSamples);
+//        for(auto s:tmp) {
+//            colorsBitvectors[i][s] = 1;
+//        }
+    }
+    cout<<"Old Colors sum "<<oldColorsSum<<endl;
+    sort(sizeAndIndex.begin(),sizeAndIndex.end());
+
+    for(unsigned int ii=1; ii<numColors; ii++)
+    {
+        unsigned int i=sizeAndIndex[ii].second;
+        idsMap[sizeAndIndex[ii].second]=ii;
+        vector<uint32_t > newCombination;
+        newCombination.clear();
+        //vector<uint32_t > tmp= col->getWithIndex(i);
+        deque<uint32_t > currV;
+        copy(col->colors[i].begin(),col->colors[i].end(),back_inserter(currV));
+      //  sdsl::bit_vector curr(colorsBitvectors[i]);
+      //  uint32_t currOneBits = sdsl::util::cnt_one_bits( curr );
+        for(unsigned  int jj=ii-1; jj>0 ; jj--)
+        {
+            if(currV.size()<sizeAndIndex[jj].first){
+                auto it=lower_bound(sizeAndIndex.begin(),sizeAndIndex.begin()+jj,make_pair((uint32_t)currV.size(),(uint32_t)colors.size()));
+                jj=it-sizeAndIndex.begin();
+            }
+//            if(currOneBits<sizeAndIndex[jj].first){
+//                auto it=lower_bound(sizeAndIndex.begin(),sizeAndIndex.begin()+jj,make_pair(currOneBits,(uint32_t)colors.size()));
+//                jj=it-sizeAndIndex.begin();
+//            }
+
+            unsigned j=sizeAndIndex[jj].second;
+            if(j<noSamples)
+                continue;
+
+         //   vector<uint32_t > currJ=col->colors[j];
+            bool isContain=true;
+            auto it=currV.begin();
+            for(auto c : col->colors[j])
+            {
+                it=lower_bound(it,currV.end(),c);
+                if(it==currV.end()||*it!=c)
+                {
+                    isContain=false;
+                    break;
+                }
+            }
+            if(isContain)
+            {
+                newCombination.push_back(idsMap[j]);
+                it=currV.begin();
+                for(auto c : col->colors[j])
+                {
+                    it=lower_bound(it,currV.end(),c);
+                    currV.erase(it);
+                }
+                if(currV.size()==0)
+                {
+                    break;
+                }
+            }
+
+//            sdsl::bit_vector tmp(curr);
+//            tmp|=colorsBitvectors[j];
+//            if(tmp == curr)
+//            {
+//                newCombination.push_back(j);
+//                sdsl::bit_vector mask(colorsBitvectors[j]);
+//                mask.flip();
+//                curr&=mask;
+//                currOneBits = sdsl::util::cnt_one_bits( curr );
+//                if(currOneBits==0)
+//                    break;
+//            }
+
+        }
+        for(auto c:currV)
+            newCombination.push_back(c);
+
+//        if(currOneBits!=0) {
+//            for (uint32_t k = 0; k < noSamples; k++) {
+//                if (curr[k])
+//                    newCombination.push_back(k);
+//            }
+//        }
+        newColorsSum+=newCombination.size();
+        sort(newCombination.begin(),newCombination.end());
+        insert(newCombination,ii);
+
+    }
+    sdsl::util::bit_compress(idsMap);
+    cout<<"New Colors sum "<<newColorsSum<<endl;
+}
+
+void compressedColorColumn::optimize2()
+{
+    vector<pair<pair<uint32_t,uint32_t> ,uint32_t > > sizeAndMaxAndIndex(numColors);
+
+    for(uint32_t i=1;i<=colors[0]->size();i++)
+    {
+        sizeAndMaxAndIndex[i]=make_pair(make_pair((uint32_t)1,i-1),i);
+
+    }
+    for(uint32_t i=0;i<colors[1]->size();i++) {
+        vector<uint32_t> v=colors[1]->get(i);
+        uint32_t maxColor=0;
+        for(auto c:v)
+            maxColor=max(maxColor,c);
+        uint32_t index=i+colors[1]->beginID;
+        sizeAndMaxAndIndex[index]=make_pair(make_pair((uint32_t)v.size(),maxColor),index);
+    }
+
+    sort(sizeAndMaxAndIndex.begin(),sizeAndMaxAndIndex.end());
+    vector<uint32_t> newMap(numColors+1);
+    for(unsigned int i=0;i<numColors;i++)
+    {
+        newMap[sizeAndMaxAndIndex[i].second]=i;
+    }
+    for(unsigned int i=0;i<numColors;i++)
+    {
+        idsMap[i]=newMap[idsMap[i]];
+    }
+    uint32_t i=noSamples+1;//skip the first trivial colors
+    vectorBase* vec=colors[1];
+    colors.erase(colors.begin()+1);
+    uint32_t start=i,end=i;
+    for(uint32_t currentSize=2;currentSize<10;currentSize++)
+    {
+
+        while(end<numColors && sizeAndMaxAndIndex[end].first.first==currentSize && sizeAndMaxAndIndex[end].first.second<65536)
+        {
+            end++;
+        }
+       // cout<<start<<" "<<end<<endl;
+        if(start!=end) {
+            fixedSizeVector *curr = new fixedSizeVector(end - start, currentSize);
+            curr->beginID = start;
+            colors.push_back(curr);
+            for (; i < end; i++) {
+
+                auto tmp = vec->get(sizeAndMaxAndIndex[i].second - vec->beginID);
+
+                for(unsigned int j=0;j<tmp.size();j++)
+                    tmp[j]=newMap[tmp[j]];
+
+                insert(tmp, i);
+            }
+            sdsl::util::bit_compress(curr->vec);
+        }
+        start=i;
+        while(end<numColors && sizeAndMaxAndIndex[end].first.first==currentSize)
+        {
+            end++;
+        }
+     //   cout<<start<<" "<<end<<endl;
+        if(start!=end) {
+            fixedSizeVector *curr = new fixedSizeVector(end - start, currentSize);
+            curr->beginID = start;
+            colors.push_back(curr);
+            for (; i < end; i++) {
+                auto tmp = vec->get(sizeAndMaxAndIndex[i].second - vec->beginID);
+                for(unsigned int j=0;j<tmp.size();j++)
+                    tmp[j]=newMap[tmp[j]];
+                insert(tmp, i);
+            }
+            sdsl::util::bit_compress(curr->vec);
+        }
+    }
+    start=end;
+    end=numColors;
+    if(start!=end) {
+        vectorOfVectors *curr = new vectorOfVectors(start, end - start);
+        colors.push_back(curr);
+        for (; i < end; i++) {
+            auto tmp = vec->get(sizeAndMaxAndIndex[i].second - vec->beginID);
+            for (unsigned int j = 0; j < tmp.size(); j++)
+                tmp[j] = newMap[tmp[j]];
+            insert(tmp, i);
+        }
+    }
+
+
+
+
+}
+
+void  compressedColorColumn::insert(vector<uint32_t >& item,uint32_t index){
+    auto it=lower_bound(colors.begin(),colors.end(),index+1,
+            [](vectorBase* lhs, uint32_t rhs) -> bool { return lhs->beginID < rhs; });
+   // if(it==colors.end())
+        it--;
+    (*it)->set(index-(*it)->beginID,item);
+
+
+}
+uint32_t  compressedColorColumn::insertAndGetIndex(vector<uint32_t > item){
+    throw std::logic_error("insertAndGetIndex is not supported in compressedColorColumn");
+    return 0;
+
+}
+vector<uint32_t > compressedColorColumn::getWithIndex(uint32_t index){
+    index=idsMap[index];
+    vector<uint32_t > res;
+    stack<uint32_t> q;
+    auto it=lower_bound(colors.begin(),colors.end(),index+1,
+                        [](vectorBase* lhs, uint32_t rhs) -> bool { return lhs->beginID < rhs; });
+  //  if(it==colors.end())
+        it--;
+    vector<uint32_t > compressedColor=(*it)->get(index-(*it)->beginID);
+    for(unsigned int i=0;i<compressedColor.size();i++) {
+        if(compressedColor[i]>=noSamples)
+        {
+            q.push(compressedColor[i]);
+        }
+        else{
+            res.push_back(compressedColor[i]);
+        }
+    }
+    while(q.size()>0){
+        index=q.top();
+       // cout<<index<<endl;
+        it=lower_bound(colors.begin(),colors.end(),index+1,
+                       [](vectorBase* lhs, uint32_t rhs) -> bool { return lhs->beginID < rhs; });
+  //      if(it==colors.end())
+            it--;
+        vector<uint32_t > compressedColor=(*it)->get(index-(*it)->beginID);
+        q.pop();
+        for(unsigned int i=0;i<compressedColor.size();i++) {
+            if(compressedColor[i]>=noSamples)
+            {
+                q.push(compressedColor[i]);
+            }
+            else{
+                res.push_back(compressedColor[i]);
+            }
+        }
+
+    }
+    return res;
+}
+
+
+
+void compressedColorColumn::serialize(string filename)
+{
+    ofstream out(filename.c_str());
+
+//    for(unsigned int i=0;i<colors.size();i++)
+//        colors[i].serialize(out);
+//    out.close();
+//    colorInv.serialize(filename);
+}
+void compressedColorColumn::deserialize(string filename)
+{
+  //  colorInv.deserialize(filename);
+   // populateColors();
+}
+
+uint64_t compressedColorColumn::sizeInBytes()
+{
+    uint64_t res=0;
+    for(auto vec:colors)
+    {
+        res+=vec->sizeInBytes();
+    }
+    res+=sdsl::size_in_bytes(idsMap);
+    return res;
+}
+
+

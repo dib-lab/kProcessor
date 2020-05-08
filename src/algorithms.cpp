@@ -81,7 +81,7 @@ namespace kProcessor {
     }
 
 
-    void loadIntoMQF(string sequenceFilename, int ksize, int noThreads, Hasher *hasher, QF *memoryMQF, QF *diskMQF) {
+    void loadIntoMQF(string sequenceFilename, unsigned int ksize, int noThreads, Hasher *hasher, QF *memoryMQF, QF *diskMQF) {
         FastqReaderSqueker reader(sequenceFilename);
         omp_set_num_threads(noThreads);
         QF *localMQF;
@@ -105,7 +105,7 @@ namespace kProcessor {
                     moreWork = tmp;
                 }
 
-                for (int j = 0; j < reads.size(); j++) {
+                for (unsigned int j = 0; j < reads.size(); j++) {
                     read = reads[j].first;
                     start_read:
                     if (read.size() < ksize) {
@@ -116,7 +116,7 @@ namespace kProcessor {
                     uint64_t first_rev = 0;
                     uint64_t item = 0;
 
-                    for (int i = 0; i < ksize; i++) {
+                    for (unsigned int i=0; i < ksize; i++) {
                         //First kmer
                         uint8_t curr = kmer::map_base(read[i]);
                         if (curr > DNA_MAP::G) {
@@ -237,7 +237,7 @@ namespace kProcessor {
     void estimateMemRequirement(std::string ntcardFilename,
                                 uint64_t numHashBits, uint64_t tagSize,
                                 uint64_t *res_noSlots, uint64_t *res_fixedSizeCounter, uint64_t *res_memory) {
-        uint64_t noDistinctKmers = 0, totalNumKmers = 0;
+        uint64_t noDistinctKmers = 0,totalNumKmers=0;
         vector<uint64_t> histogram(1000, 0);
         ifstream ntcardFile(ntcardFilename);
         string f;
@@ -349,7 +349,7 @@ namespace kProcessor {
             reader.readNSeq(&reads, 5000);
             for (auto seqPair:reads) {
                 string seq = seqPair.first;
-                for (int i = 0; i < seq.size() - k + 1; i++) {
+                for (unsigned int i=0; i < seq.size() - k + 1; i++) {
                     string kmer = seq.substr(i, k);
                     output->insert(kmer);
                 }
@@ -466,7 +466,7 @@ namespace kProcessor {
         terminate_if_kDataFrameMAP(input);
         priority_queue<pair<kmerRow, int>, vector<pair<kmerRow, int> >, CustomKmerRow> Q;
         vector<kDataFrameIterator> iterators(input.size());
-        for (int i = 0; i < input.size(); i++) {
+        for (unsigned int i=0; i < input.size(); i++) {
             iterators[i] = input[i]->begin();
             if (iterators[i] != input[i]->end()) {
                 //  cout<<i<<" "<<(*iterators[i]).hashedKmer<<endl;
@@ -475,7 +475,7 @@ namespace kProcessor {
         }
         vector<kmerRow> current(input.size());
         while (Q.size() > 0) {
-            for (int i = 0; i < current.size(); i++)
+            for (unsigned int i=0; i < current.size(); i++)
                 current[i] = kmerRow();
             pair<kmerRow, int> top = Q.top();
             Q.pop();
@@ -508,7 +508,7 @@ namespace kProcessor {
         res->reserve((uint64_t) ((double) numKmers * 0.75));
         merge(input, res, [](vector<kmerRow> &input) -> kmerRow {
             kmerRow res;
-            for (int i = 0; i < input.size(); i++) {
+            for (unsigned int i = 0; i < input.size(); i++) {
                 if (input[i].count != 0) {
                     res.kmer = input[i].kmer;
                     res.hashedKmer = input[i].hashedKmer;
@@ -529,7 +529,7 @@ namespace kProcessor {
         res->reserve((uint64_t) ((double) numKmers * 1.2));
         merge(input, res, [](vector<kmerRow> &input) -> kmerRow {
             kmerRow res = input[0];
-            for (int i = 1; i < input.size(); i++) {
+            for (unsigned int i = 1; i < input.size(); i++) {
                 //cout<<input[i].kmer<<endl;
                 res.count = min(res.count, input[i].count);
             }
@@ -547,7 +547,7 @@ namespace kProcessor {
         merge(input, res, [](vector<kmerRow> &input) -> kmerRow {
             kmerRow res = input[0];
             bool found = false;
-            for (int i = 1; i < input.size(); i++) {
+            for (unsigned int i = 1; i < input.size(); i++) {
                 if (input[i].count > 0) {
                     found = true;
                     break;
@@ -710,15 +710,15 @@ namespace kProcessor {
 
 
         vector<kDataFrameMQF *> frames;
-        int currIndex = 0;
+//        int currIndex = 0;
         string kmer;
-        uint64_t tagBits = 0;
-        uint64_t maxTagValue = (1ULL << tagBits) - 1;
+//        uint64_t tagBits = 0;
+//        uint64_t maxTagValue = (1ULL << tagBits) - 1;
        //  kDataFrame *frame;
-        int kSize = KD->get_kSize();
+//        int kSize = KD->get_kSize();
 
 
-        uint64_t lastTag = 0;
+//        uint64_t lastTag = 0;
         readID = 0;
 
         while (!KD->end()) {
@@ -755,7 +755,7 @@ namespace kProcessor {
                         }
 
                         string colorsString = to_string(colors[0]);
-                        for (int k = 1; k < colors.size(); k++) {
+                        for (unsigned int k = 1; k < colors.size(); k++) {
                             colorsString += ";" + to_string(colors[k]);
                         }
 
@@ -867,7 +867,7 @@ namespace kProcessor {
 void indexPriorityQueue(vector<kDataFrame*>& input, kDataFrame *output){
     colorColumn* colors=new colorColumn(input.size());
     output->changeDefaultColumnType(colors);
-    for(int i=0;i<input.size();i++)
+    for(unsigned int i=0;i<input.size();i++)
     {
         vector<uint32_t> tmp={i};
         colors->insertAndGetIndex(tmp);
@@ -883,7 +883,7 @@ void indexPriorityQueue(vector<kDataFrame*>& input, kDataFrame *output){
 
     priority_queue<tuple<uint64_t ,uint64_t,kDataFrameIterator*,kDataFrameIterator*> , vector<tuple<uint64_t,uint64_t ,kDataFrameIterator*,kDataFrameIterator*> >,  decltype(compare)> nextKmer(compare);
 
-    for(int i=0;i<input.size();i++)
+    for(unsigned int i=0;i<input.size();i++)
     {
         kDataFrameIterator* it=new kDataFrameIterator(input[i]->begin());
         kDataFrameIterator* itend=new kDataFrameIterator(input[i]->end());
@@ -920,7 +920,7 @@ void indexPriorityQueue(vector<kDataFrame*>& input, kDataFrame *output){
 	        cout<<"Error in Indexing detected at kmer "<<currHash<<endl;
 	    cout<<"should be empty vector and found  ";
 	    for(auto a:res)
-	     cout<<a<<" ";
+	        cout<<a<<" ";
 	     cout<<endl<<endl;
 	  }
 	output->setKmerDefaultColumnValue<vector<uint32_t >, colorColumn>(currHash,colorVec);
@@ -948,7 +948,7 @@ void mergeIndexes(vector<kDataFrame*>& input, kDataFrame *output){
 
     vector<uint32_t> idsOffset(input.size());
     idsOffset[0]=0;
-    for(int i=1;i<input.size();i++)
+    for(unsigned int i=1;i<input.size();i++)
     {
         idsOffset[i]=idsOffset[i-1];
         idsOffset[i]+=((colorColumn*)input[i-1]->getDefaultColumn())->noSamples;
@@ -966,7 +966,7 @@ void mergeIndexes(vector<kDataFrame*>& input, kDataFrame *output){
 
     priority_queue<tuple<uint64_t ,uint64_t,kDataFrameIterator*,kDataFrameIterator*> , vector<tuple<uint64_t,uint64_t ,kDataFrameIterator*,kDataFrameIterator*> >,  decltype(compare)> nextKmer(compare);
 
-    for(int i=0;i<input.size();i++)
+    for(unsigned int i=0;i<input.size();i++)
     {
         kDataFrameIterator* it=new kDataFrameIterator(input[i]->begin());
         kDataFrameIterator* itend=new kDataFrameIterator(input[i]->end());
