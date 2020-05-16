@@ -798,6 +798,8 @@ uint32_t getLongestSubsetColor(colorColumn* col,deque<uint32_t> & color,uint32_t
                //     cout<<"Pushing c:"<<it->second->currColor<<" withe edge "<<it->first<<endl;
 
                     S.push(make_tuple(it->second, it->first, false));
+//                    if(it->second->currColor!=0)
+//                        break;
                 }
             }
         } else{
@@ -851,7 +853,7 @@ void compressedColorColumn::optimize3(colorColumn* col)
     numColors=col->getNumColors();
     uint64_t  oldColorsSum=0,newColorsSum=0;
     idsMap.resize(numColors+1);
-
+#pragma omp parallel for
     for(unsigned int i=1; i<numColors+1; i++)
     {
         idsMap[i]=i;
@@ -891,8 +893,8 @@ void compressedColorColumn::optimize3(colorColumn* col)
             currV=tmp;
         }
 
-        if(i%1000==0)
-            cout<<i<<endl;
+//        if(i%1000000==0)
+//            cout<<i<<endl;
 
 //        cout<<"result  ";
 //        for(auto c :newColor)

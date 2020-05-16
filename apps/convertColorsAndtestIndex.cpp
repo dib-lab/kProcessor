@@ -7,13 +7,18 @@
 #include "kDataFrame.hpp"
 #include <vector>
 #include "algorithms.hpp"
+# include <omp.h>
+#include <stdlib.h>
+
 using namespace std;
 
 int main(int argc, char *argv[])
 {
     string inputList=argv[1];
     string framePath=argv[2];
-    string targetColor=argv[3];
+    int numThreads=atoi(argv[3]);
+
+    omp_set_num_threads(numThreads);
 
     vector<string> filenames;
     vector<kDataFrame*> frames;
