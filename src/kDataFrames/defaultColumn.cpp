@@ -779,14 +779,20 @@ uint32_t getLongestSubsetColor(colorColumn* col,deque<uint32_t> & color,uint32_t
                     nodeColors[sample]=currNode->currColor;
                 else
                     nodeColors[sample]=sample;
+
+                uint32_t samplesLeft=color.end()-find(color.begin(),color.end(),sample);
+
+                if(samplesLeft+col->colors[nodeColors[sample]].size() <= resultsize)
+                    continue;
             }
 
 //            for(auto it:std::get<0>(S.top())->edges)
 //            {
 //                if(find(color.begin(),color.end(),it.first)!=color.end())
 
-            for(auto c:color)
+            for(int i=color.size()-1; i>=0;i--)
             {
+                auto c=color[i];
                 auto it=currNode->edges.find(c);
                 if(it!=currNode->edges.end()) {
                //     cout<<"Pushing c:"<<it->second->currColor<<" withe edge "<<it->first<<endl;
@@ -823,6 +829,10 @@ uint32_t getLongestSubsetColor(colorColumn* col,deque<uint32_t> & color,uint32_t
                 else if (currColorLength == resultsize && currColor<result)
                 {
                     result=currColor;
+                }
+                if(resultsize==color.size()-1)
+                {
+                    return result;
                 }
 
             }
