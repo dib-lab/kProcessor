@@ -332,6 +332,7 @@ public:
     void deserialize(string filename);
     void optimize(colorColumn* col);
     void optimize2();
+    void optimize3(colorColumn* col);
 
     uint32_t getNumColors(){
         return colors.size();

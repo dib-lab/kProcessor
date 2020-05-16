@@ -325,21 +325,39 @@ void colorIndex::populateColors(vector<vector<uint32_t> > &colors) {
     {
         S.push(make_tuple(it.second,it.first,false));
     }
+    S.push(make_tuple(root->edges[27],27,false));
+    bool debug=false;
     while(S.size()>0)
     {
         if(!std::get<2>(S.top()))
         {
             std::get<2>(S.top())=true;
+            if(debug)
+            cout<<"Visiting c"<<std::get<0>(S.top())->currColor<< " With edge "<<std::get<1>(S.top())<<endl;
             color.push_back(std::get<1>(S.top()));
             noSamples=max(noSamples,std::get<1>(S.top()));
             if(std::get<0>(S.top())->currColor!=0)
             {
-
                 colors[std::get<0>(S.top())->currColor]=color;
+                if(debug) {
+                    cout << std::get<0>(S.top())->currColor << " : ";
+                    for (auto c :colors[std::get<0>(S.top())->currColor])
+                        cout << c << " ";
+                    cout << endl;
+                }
+//
+//                if(std::get<0>(S.top())->currColor) {
+//                    cout << std::get<0>(S.top())->currColor << " : ";
+//                    for (auto c :colors[std::get<0>(S.top())->currColor])
+//                        cout << c << " ";
+//                    cout << endl;
+//                }
             }
 
             for(auto it:std::get<0>(S.top())->edges)
             {
+                if(debug)
+                    cout<<"Pushing c:"<<it.second->currColor<<" withe edge "<<it.first<<endl;
                 S.push(make_tuple(it.second,it.first,false));
             }
         } else{
@@ -529,7 +547,7 @@ compressedColorColumn::compressedColorColumn(colorColumn* col){
     noSamples=col->noSamples;
     colors.push_back(new constantVector(noSamples));
     colors.push_back(new vectorOfVectors(noSamples+1,col->getNumColors()-noSamples+1));
-    optimize(col);
+    optimize3(col);
     optimize2();
 }
 
@@ -728,6 +746,154 @@ void compressedColorColumn::optimize2()
 
 
 
+}
+///todo return the longest seq in node colors
+uint32_t getLongestSubsetColor(colorColumn* col,deque<uint32_t> & color,uint32_t colorId){
+    unordered_map<uint32_t ,uint32_t > nodeColors(color.size());
+    stack<tuple<colorNode*,uint32_t ,bool> > S;
+    S.push(make_tuple(col->colorInv.root,0,false));
+
+    uint32_t result;
+    uint32_t resultsize=0;
+    while(S.size()>0)
+    {
+        colorNode* currNode=std::get<0>(S.top());
+        uint32_t sample=std::get<1>(S.top());
+        uint32_t currColor=currNode->currColor;
+
+        bool visited=std::get<2>(S.top());
+    //    cout<<sample<<"-"<<visited<<endl;
+        if(!visited)
+        {
+
+            std::get<2>(S.top())=true;
+          //  cout<<"Visiting "<<std::get<1>(S.top())<<endl;
+            if(currColor!=0)
+            {
+//                cout<<currNode->currColor<<" : ";
+//                for(auto c :col->colors[currNode->currColor])
+//                    cout<<c<<" ";
+//                cout<<endl;
+ //               nodeColors[std::get<1>(S.top())]=std::get<0>(S.top())->currColor;
+                if(currColor > col->noSamples && currColor!=colorId)
+                    nodeColors[sample]=currNode->currColor;
+                else
+                    nodeColors[sample]=sample;
+            }
+
+//            for(auto it:std::get<0>(S.top())->edges)
+//            {
+//                if(find(color.begin(),color.end(),it.first)!=color.end())
+
+            for(auto c:color)
+            {
+                auto it=currNode->edges.find(c);
+                if(it!=currNode->edges.end()) {
+               //     cout<<"Pushing c:"<<it->second->currColor<<" withe edge "<<it->first<<endl;
+
+                    S.push(make_tuple(it->second, it->first, false));
+                }
+            }
+        } else{
+            if(currColor!=0) {
+                uint32_t currColor = nodeColors[sample];
+                uint32_t currColorLength = col->colors[currColor].size();
+
+//            for(auto it:std::get<0>(S.top())->edges)
+//            {
+//                if(find(color.begin(),color.end(),it.first)!=color.end())
+//                {
+                for (auto c:color) {
+                    auto it = currNode->edges.find(c);
+                    if (it != currNode->edges.end()) {
+                        uint32_t tmpColorLength = col->colors[nodeColors[it->first]].size();
+                        if (tmpColorLength > currColorLength) {
+                            currColorLength = tmpColorLength;
+                            currColor = nodeColors[it->first];
+                            nodeColors[sample] = currColor;
+                        }
+                    }
+
+                }
+                if(currColorLength > resultsize)
+                {
+                    resultsize=currColorLength;
+                    result=currColor;
+                }
+                else if (currColorLength == resultsize && currColor<result)
+                {
+                    result=currColor;
+                }
+
+            }
+
+            S.pop();
+        }
+
+
+    }
+
+    return result;
+
+}
+void compressedColorColumn::optimize3(colorColumn* col)
+{
+    numColors=col->getNumColors();
+    uint64_t  oldColorsSum=0,newColorsSum=0;
+    idsMap.resize(numColors+1);
+
+    for(unsigned int i=1; i<numColors+1; i++)
+    {
+        idsMap[i]=i;
+        deque<uint32_t > currV;
+        copy(col->colors[i].begin(),col->colors[i].end(),back_inserter(currV));
+
+        oldColorsSum+=currV.size();
+        vector<uint32_t> newColor;
+        while(currV.size()>0) {
+//            cout<<"input color "<<i<<":";
+//            for(auto c :currV)
+//                cout<<c<<" ";
+//            cout<<endl;
+            uint32_t subsetColor = getLongestSubsetColor(col, currV,i);
+            newColor.push_back(subsetColor);
+            unordered_set<uint32_t> removeList;
+            if(subsetColor < col->noSamples)
+                subsetColor++;
+
+//            cout<<"subset  ";
+//            for(auto c :col->colors[subsetColor])
+//                cout<<c<<" ";
+//            cout<<endl;
+
+            for(auto c: col->colors[subsetColor])
+                removeList.insert(c);
+            deque<uint32_t > tmp;
+            auto it=currV.begin();
+            while(it!=currV.end())
+            {
+                if(removeList.find(*it)==removeList.end())
+                {
+                    tmp.push_back(*it);
+                }
+                it++;
+            }
+            currV=tmp;
+        }
+
+        if(i%1000==0)
+            cout<<i<<endl;
+
+//        cout<<"result  ";
+//        for(auto c :newColor)
+//            cout<<c<<" ";
+//        cout<<endl;
+        insert(newColor,i);
+        newColorsSum+=newColor.size();
+    }
+    sdsl::util::bit_compress(idsMap);
+    cout<<"old Colors sum "<<oldColorsSum<<endl;
+    cout<<"New Colors sum "<<newColorsSum<<endl;
 }
 
 void  compressedColorColumn::insert(vector<uint32_t >& item,uint32_t index){
