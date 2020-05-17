@@ -32,7 +32,8 @@ int main(int argc, char *argv[])
 
     kDataFrame* indexFrame=kDataFrame::load(framePath);
     compressedColorColumn* col=new compressedColorColumn((colorColumn*)indexFrame->getDefaultColumn());
-    cout<<"Size = "<<(double)col->sizeInBytes()/(1024.0*1024.0)<<"MB"<<endl;
+    double s=(double)col->sizeInBytes();
+    cout<<"Size = "<<s/(1024.0*1024.0)<<"MB"<<endl;
     indexFrame->changeDefaultColumnType(col);
 
     uint64_t testedKmers=0;

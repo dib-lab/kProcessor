@@ -988,6 +988,7 @@ uint64_t compressedColorColumn::sizeInBytes()
         res+=vec->sizeInBytes();
     }
     res+=sdsl::size_in_bytes(idsMap);
+    cout<<"Ids Size = "<<sdsl::size_in_bytes(idsMap)/(1024.0*1024.0)<<"MB"<<endl;
     return res;
 }
 
