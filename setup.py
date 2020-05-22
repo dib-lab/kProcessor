@@ -13,6 +13,7 @@ from distutils.command.build import build
 from distutils.spawn import find_executable
 import sys
 import os
+import subprocess
 
 if sys.version_info[:2] < (3, 5) or sys.version_info[:2] > (3, 7):
     raise RuntimeError("Python version == (3.6 | 3.7) required.")
@@ -112,8 +113,10 @@ classifiers = [
     "Programming Language :: Python :: 3.7",
 ]
 
+commit_hash_short_name = subprocess.getoutput("git rev-parse --short HEAD").split()[0]
+
 setup(name='kProcessor',
-      version='0.3',
+      version=f"{commit_hash_short_name}_listDecoder",
       author="Tamer Mansour, Mostafa Shokrof, Mohamed Abuelanin",
       author_email='drtamermansour@gmail.com, mostafa.shokrof@gmail.com, mabuelanin@gmail.com',
       description="""kProcessor Python interface""",
