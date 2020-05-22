@@ -925,6 +925,10 @@ namespace kProcessor {
                 }
             }
 
+            flat_hash_map<uint64_t, string> inv_groupNameMap;
+            for (auto &_ : groupNameMap)
+                inv_groupNameMap[_.second] = _.first;
+
 
             vector<kDataFrameMQF *> frames;
             int currIndex = 0;
@@ -1028,10 +1032,14 @@ namespace kProcessor {
 
                             colorsCount[currentTag]--;
                             if (colorsCount[currentTag] == 0 && currentTag != 0) {
-                                freeColors.push(currentTag);
-                                legend->erase(currentTag);
-                                if (convertMap.find(currentTag) != convertMap.end())
-                                    convertMap.erase(currentTag);
+                                auto _invGroupNameIT = inv_groupNameMap.find(currentTag);
+
+                                if (_invGroupNameIT == inv_groupNameMap.end() || groupCounter[_invGroupNameIT->second] == 0){
+                                    freeColors.push(currentTag);
+                                    legend->erase(currentTag);
+                                    if (convertMap.find(currentTag) != convertMap.end())
+                                        convertMap.erase(currentTag);
+                                }
                             }
                             colorsCount[itc->second]++;
                         }
