@@ -396,7 +396,7 @@ namespace kProcessor {
         kmerDecoder * KD;
 
         if(mode == "items"){
-            KD = new Items(filename);
+            KD = new Items(filename, chunk_size);
             kframe->KD = KD;
         }
         else{
@@ -882,7 +882,7 @@ namespace kProcessor {
         kmerDecoder * KD;
 
         if(mode == "items")
-            KD = new Items(filename);
+            KD = new Items(filename, chunk_size);
         else{
             KD = initialize_kmerDecoder(filename, chunk_size, mode, parse_params);
             // Clone the hashing
@@ -938,6 +938,8 @@ namespace kProcessor {
             uint64_t lastTag = 0;
             readID = 0;
             int __batch_count = 0;
+            int total_received_seqs = 0;
+
             while (!KD->end()) {
                 KD->next_chunk();
                 cout << "Processing Chunk(" << ++__batch_count << "): " << chunk_size*__batch_count << " seqs ..." << endl;
@@ -945,6 +947,7 @@ namespace kProcessor {
 
                 for (const auto &seq : *KD->getKmers()) {
                     string readName = seq.first;
+                    total_received_seqs++;
 
                     auto it = namesMap.find(readName);
                     if (it == namesMap.end()) {
@@ -961,11 +964,31 @@ namespace kProcessor {
                     convertMap.insert(make_pair(readTag, readTag));
                     //    cout<<readName<<"   "<<seq.size()<<endl;
                     for (const auto &kmer : seq.second) {
+                        // get the color of the current kmer
                         uint64_t currentTag = frame->getCount(kmer.hash);
+
+                        // cout << readName << '\t' << kmer.str << '\t' << kmer.hash << " | current_color(" << currentTag << ")" <<  endl;
+                        
                         auto itc = convertMap.find(currentTag);
+                        
                         if (itc == convertMap.end()) {
-                            vector<uint32_t> colors = legend->find(currentTag)->second;
+                            // cout << "[DEBUG]  itc == convertMap.end()" << endl;
+
+                            auto _colors_it = legend->find(currentTag);
+
+                            if (_colors_it == legend->end()){
+
+                                // DBUGGING
+                                cerr << "[ERROR] Read: " << readName <<  " with currentTag/color(" << currentTag <<") WAS NOT FOUND in the colors map(legends) | ";
+                                cerr << " & GrpID(" << readTag <<") ," << "GrpName("<< groupName <<")" << endl;
+                                continue;
+                            }
+
+                            auto colors = _colors_it->second;
+
+
                             auto tmpiT = find(colors.begin(), colors.end(), readTag);
+
                             if (tmpiT == colors.end()) {
                                 colors.push_back(readTag);
                                 sort(colors.begin(), colors.end());
@@ -1031,6 +1054,7 @@ namespace kProcessor {
                     }
                 }
             }
+            cerr << "total indexed sequences: " << total_received_seqs << endl;;
             colorTable *colors = new intVectorsTable();
             for (auto it : *legend) {
                 colors->setColor(it.first, it.second);
