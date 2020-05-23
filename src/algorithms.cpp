@@ -396,7 +396,7 @@ namespace kProcessor {
         kmerDecoder * KD;
 
         if(mode == "items"){
-            KD = new Items(filename, chunk_size);
+            KD = new Items(filename);
             kframe->KD = KD;
         }
         else{
@@ -882,7 +882,7 @@ namespace kProcessor {
         kmerDecoder * KD;
 
         if(mode == "items")
-            KD = new Items(filename, chunk_size);
+            KD = new Items(filename);
         else{
             KD = initialize_kmerDecoder(filename, chunk_size, mode, parse_params);
             // Clone the hashing
