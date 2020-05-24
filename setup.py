@@ -114,9 +114,10 @@ classifiers = [
 ]
 
 commit_hash_short_name = subprocess.getoutput("git rev-parse --short HEAD").split()[0]
+branch_name = subprocess.getoutput("git rev-parse --abbrev-ref HEAD").split()[0]
 
 setup(name='kProcessor',
-      version=f"{commit_hash_short_name}_listDecoder",
+      version=f"{branch_name}_{commit_hash_short_name}",
       author="Tamer Mansour, Mostafa Shokrof, Mohamed Abuelanin",
       author_email='drtamermansour@gmail.com, mostafa.shokrof@gmail.com, mabuelanin@gmail.com',
       description="""kProcessor Python interface""",
