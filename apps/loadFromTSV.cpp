@@ -5,6 +5,7 @@
 #include <iostream>
 #include <string>
 #include "kDataFrame.hpp"
+#include <math.h>
 using namespace std;
 
 int main(int argc, char *argv[])
@@ -12,10 +13,12 @@ int main(int argc, char *argv[])
     int k=atoi(argv[1]);
     uint64_t  numSlots=atoi(argv[2]);
     string outPath=argv[3];
-    cout<<"Expected number of kmers "<<numSlots<<endl;
-    kDataFrameBMQF frame(k,outPath);
+    //    numSlots=(double)numSlots*1.4;
+    cout<<"Expected number of slots "<<numSlots<<endl;
+    uint64_t s=log2(numSlots);
+    cout<<"S = "<<s<<endl;
+    kDataFrameBMQF frame(k,s,2,0,0,outPath);
     //kDataFrameMQF frame(k);
-    frame.reserve(numSlots);
     cout<<"reserve completed"<<endl;
     string kmer;
     uint64_t  count;

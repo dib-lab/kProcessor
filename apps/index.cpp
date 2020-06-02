@@ -36,7 +36,7 @@ int main(int argc, char *argv[])
         }
     }
 
-    kDataFrame* output= new kDataFrameMQF(kSize,q,1);
+    kDataFrame* output= new kDataFrameMQF(kSize,q,2);
     kProcessor::indexPriorityQueue(frames,output);
     cout<<"Indexing Finished"<<endl;
 
