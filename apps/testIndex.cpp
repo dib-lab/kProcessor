@@ -32,7 +32,7 @@ int main(int argc, char *argv[])
 
     for(int i=0;i<filenames.size();i++)
     {
-        ifstream inp(filenames[i]+".bmqf.testkmers");
+        ifstream inp(filenames[i]+".testkmers");
         string kmer;
         while(inp>>kmer)
         {

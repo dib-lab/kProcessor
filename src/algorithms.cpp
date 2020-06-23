@@ -897,7 +897,7 @@ void indexPriorityQueue(vector<kDataFrame*>& input, kDataFrame *output){
         colorVec.clear();
         uint64_t currHash=get<0>(nextKmer.top());
         processedKmers++;
-	if(processedKmers%10000==0)
+	if(processedKmers%1000000==0)
 	  cout<<processedKmers<<" Kmers Processed"<<endl;
         while(nextKmer.size()>0 && get<0>(nextKmer.top())==currHash)
         {

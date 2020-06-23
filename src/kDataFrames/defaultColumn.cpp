@@ -325,7 +325,7 @@ void colorIndex::populateColors(vector<vector<uint32_t> > &colors) {
     {
         S.push(make_tuple(it.second,it.first,false));
     }
-    S.push(make_tuple(root->edges[27],27,false));
+    //S.push(make_tuple(root->edges[27],27,false));
     bool debug=false;
     while(S.size()>0)
     {
