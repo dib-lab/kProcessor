@@ -121,22 +121,20 @@ kDataFrame * kDataFrame::load(string filePath) {
 
 void kDataFrame::preprocessKmerOrder()
 {
-  int prevOrder=0;
   int checkpointsDistance=64;
   int index=0;
   kDataFrameIterator it=this->begin();
   while(it!=this->end())
   {
-    string kmer=it.getKmer();
     if(index%checkpointsDistance==0)
     {
-      orderCheckpoints[kmer]=prevOrder;
-      prevOrder=index;
+      string kmer=it.getKmer();
+      orderCheckpoints[kmer]=index;
     }
     index++;
     it++;
   }
-  orderCheckpoints["THEEND"]=prevOrder;
+  orderCheckpoints["THEEND"]=index;
   isKmersOrderComputed=true;
 }
 uint64_t kDataFrame::getkmerOrder(string kmer)
@@ -154,8 +152,10 @@ uint64_t kDataFrame::getkmerOrder(string kmer)
   if(it==this->end())
   {
     kmer="THEEND";
+   // return size()-offset;
+  //  return orderCheckpoints[kmer]+(size()%64-offset);
   }
-  return orderCheckpoints[kmer]+offset;
+  return orderCheckpoints[kmer]-offset;
 }
 
 
