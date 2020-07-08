@@ -79,6 +79,9 @@ kDataFrameMAP::kDataFrameMAP(uint64_t ksize) {
 //    hasher = new wrapperHasher<std::map<uint64_t, uint64_t>::hasher>(MAP.hash_function(), ksize);
 //    this->MAP = std::map<uint64_t, uint64_t>(1000);
     // this->hasher = (new IntegerHasher(ksize));
+    endIterator=new kDataFrameIterator(
+            (_kDataFrameIterator *) new kDataFrameMAPIterator(MAP.end(), this, kSize),
+            (kDataFrame *) this);
 }
 kDataFrameMAP::kDataFrameMAP(uint64_t ksize,vector<uint64_t> kmersHistogram) {
     this->class_name = "MAP"; // Temporary until resolving #17
@@ -88,6 +91,9 @@ kDataFrameMAP::kDataFrameMAP(uint64_t ksize,vector<uint64_t> kmersHistogram) {
     for(auto h:kmersHistogram)
       countSum+=h;
     reserve(countSum);
+    endIterator=new kDataFrameIterator(
+            (_kDataFrameIterator *) new kDataFrameMAPIterator(MAP.end(), this, kSize),
+            (kDataFrame *) this);
 //    hasher = new wrapperHasher<std::map<uint64_t, uint64_t>::hasher>(MAP.hash_function(), ksize);
 //    this->MAP = std::map<uint64_t, uint64_t>(1000);
     // this->hasher = (new IntegerHasher(ksize));
@@ -96,6 +102,9 @@ kDataFrameMAP::kDataFrameMAP() {
     this->class_name = "MAP"; // Temporary until resolving #17
     this->kSize = 23;
     KD = new Kmers(this->kSize, 2);
+    endIterator=new kDataFrameIterator(
+            (_kDataFrameIterator *) new kDataFrameMAPIterator(MAP.end(), this, kSize),
+            (kDataFrame *) this);
 //    this->MAP = std::map<uint64_t, uint64_t>(1000);
     // hasher=new wrapperHasher<std::map<uint64_t,uint64_t>::hasher >(MAP.hash_function(),kSize);
     // this->hasher = (new IntegerHasher(23));
@@ -168,13 +177,13 @@ uint64_t kDataFrameMAP::max_size() {
 }
 
 float kDataFrameMAP::load_factor() {
-    return 1;
-//    return this->MAP.load_factor();
+    return 0.5;
+ //   return (float)this->MAP.size()/(float)this->MAP.capacity();
 }
 
 float kDataFrameMAP::max_load_factor() {
     return 1;
-    //    return this->MAP.max_load_factor();
+  //  return this->MAP.max_load_factor();
 }
 
 
@@ -228,16 +237,16 @@ void kDataFrameMAP::reserve(vector<uint64_t> countHistogram) {
 }
 
 kDataFrameIterator kDataFrameMAP::begin() {
-    return *(new kDataFrameIterator(
+    return (kDataFrameIterator(
             (_kDataFrameIterator *) new kDataFrameMAPIterator(MAP.begin(), this, kSize),
             (kDataFrame *) this));
 }
 
-kDataFrameIterator kDataFrameMAP::end() {
-    return *(new kDataFrameIterator(
-            (_kDataFrameIterator *) new kDataFrameMAPIterator(MAP.end(), this, kSize),
-            (kDataFrame *) this));
-}
+//kDataFrameIterator kDataFrameMAP::end() {
+//    return *(new kDataFrameIterator(
+//            (_kDataFrameIterator *) new kDataFrameMAPIterator(MAP.end(), this, kSize),
+//            (kDataFrame *) this));
+//}
 kDataFrameIterator kDataFrameMAP::find(string kmer) {
   return *(new kDataFrameIterator(
           (_kDataFrameIterator *) new kDataFrameMAPIterator(MAP.find(kmer::str_to_canonical_int(kmer)), this, kSize),

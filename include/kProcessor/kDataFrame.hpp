@@ -233,6 +233,7 @@ protected:
   Column* defaultColumn;
   virtual void preprocessKmerOrder();
   virtual uint64_t getkmerOrder(string kmer);
+  kDataFrameIterator* endIterator;
 public:
     kmerDecoder * KD;
   virtual string get_class_name(){ return class_name;}  // Temporary until resolving #17
@@ -291,7 +292,7 @@ The difference between setCount and insert is that setCount set the count to N n
 ///Returns an iterator at the beginning of the kDataFrame.
   virtual kDataFrameIterator begin()=0;
 ///Returns an iterator at the end of the kDataFrame.
-  virtual kDataFrameIterator end()=0;
+  virtual kDataFrameIterator end();
 ///Returns an iterator at the specific kmer.
   virtual kDataFrameIterator find(string kmer)=0;
 
@@ -460,7 +461,7 @@ public:
   static kDataFrame* load(string filePath);
 
   kDataFrameIterator begin();
-  kDataFrameIterator end();
+ // kDataFrameIterator end();
   kDataFrameIterator find(string kmer);
 };
 
@@ -498,7 +499,6 @@ private:
   __uint128_t range;
   static bool isEnough(vector<uint64_t> histogram,uint64_t noSlots,uint64_t fixedSizeCounter,uint64_t slotSize);
   friend class kDataframeBMQF;
-  kDataFrameIterator* endIterator;
   string fileName;
 public:
   kDataFrameBMQF();
@@ -561,7 +561,7 @@ public:
   static kDataFrame* load(string filePath);
 
   kDataFrameIterator begin();
-  kDataFrameIterator end();
+ // kDataFrameIterator end();
   kDataFrameIterator find(string kmer);
 
   string getFilename();
@@ -599,7 +599,7 @@ public:
   float load_factor();
   float max_load_factor();
   kDataFrameIterator begin();
-  kDataFrameIterator end();
+ // kDataFrameIterator end();
   kDataFrameIterator find(string kmer);
 
   uint64_t bucket(string kmer);
@@ -692,7 +692,7 @@ public:
 
     kDataFrameIterator begin();
 
-    kDataFrameIterator end();
+   // kDataFrameIterator end();
     kDataFrameIterator find(string kmer);
 
     uint64_t bucket(string kmer);

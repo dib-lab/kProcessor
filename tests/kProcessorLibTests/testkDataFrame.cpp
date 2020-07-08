@@ -134,6 +134,10 @@ kDataFrame* getFrame(tuple<string,int> input)
     {
         return new kDataFrameMAP(kSize);
     }
+    else if(type=="PHMAP")
+    {
+        return new kDataFramePHMAP(kSize);
+    }
     else if(type=="BMQF")
     {
         int randNum=rand();
@@ -162,7 +166,7 @@ vector<kDataFrameBMQF*> BuildTestBufferedFrames()
 INSTANTIATE_TEST_SUITE_P(testFrames,
                         kDataFrameTest,
                          ::testing::Combine(
-                                 ::testing::Values("MQF","MAP"),
+                                 ::testing::Values("MQF","MAP","PHMAP"),
                                  ::testing::Values(21,31))
 );
 
@@ -175,7 +179,7 @@ vector<string> fastqFiles={"test.noN.fastq"};
 INSTANTIATE_TEST_SUITE_P(testcounting,
                          algorithmsTest,
                         ::testing::Combine(
-                                ::testing::Values("MQF","MAP"),
+                                ::testing::Values("MQF","MAP","PHMAP"),
                                 ::testing::Values(21,31),
                              ::testing::ValuesIn(fastqFiles)
                       ));
@@ -376,7 +380,7 @@ TEST_P(kDataFrameTest,iterateOverAllKmers)
         numInsertedKmers++;
       kframe->insert(k.first,k.second);
 
-      if(kframe->load_factor()>=kframe->max_load_factor()*0.8){
+      if(kframe->load_factor()>=kframe->max_load_factor()){
         break;
       }
     }

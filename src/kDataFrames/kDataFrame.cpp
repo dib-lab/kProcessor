@@ -33,6 +33,7 @@ kDataFrame::~kDataFrame(){
         delete defaultColumn;
     for(auto c:columns)
         delete c.second;
+    delete endIterator;
 }
 
 bool kDataFrame::empty() {
@@ -235,3 +236,10 @@ void kDataFrame::changeDefaultColumnType(Column* ptr)
 //    setCount(kmer,i);
 //}
 //
+
+kDataFrameIterator kDataFrame::end(){
+//    kDataFrameBMQFIterator* it=new kDataFrameBMQFIterator(bufferedmqf,kSize,KD);
+//    it->endIterator();
+//    return (kDataFrameIterator(it,(kDataFrame*)this));
+    return *endIterator;
+}

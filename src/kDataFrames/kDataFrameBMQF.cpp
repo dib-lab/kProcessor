@@ -427,12 +427,7 @@ kDataFrameIterator kDataFrameBMQF::begin(){
             (kDataFrame*)this));
 }
 
-kDataFrameIterator kDataFrameBMQF::end(){
-//    kDataFrameBMQFIterator* it=new kDataFrameBMQFIterator(bufferedmqf,kSize,KD);
-//    it->endIterator();
-//    return (kDataFrameIterator(it,(kDataFrame*)this));
-    return *endIterator;
-}
+
 
 kDataFrameIterator kDataFrameBMQF::find(string kmer) {
     bufferedMQFIterator* mqfIt = new bufferedMQFIterator();

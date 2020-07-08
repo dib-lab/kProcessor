@@ -114,11 +114,11 @@ kDataFrameIterator kDataFrameMQF::begin() {
             (kDataFrame *) this));
 }
 
-kDataFrameIterator kDataFrameMQF::end() {
-    kDataFrameMQFIterator *it = new kDataFrameMQFIterator(mqf, kSize, KD);
-    it->endIterator();
-    return (kDataFrameIterator(it, (kDataFrame *) this));
-}
+//kDataFrameIterator kDataFrameMQF::end() {
+//    kDataFrameMQFIterator *it = new kDataFrameMQFIterator(mqf, kSize, KD);
+//    it->endIterator();
+//    return (kDataFrameIterator(it, (kDataFrame *) this));
+//}
 kDataFrameIterator kDataFrameMQF::find(string kmer) {
     QFi* mqfIt = new QFi();
     uint64_t hash = KD->hash_kmer(kmer) % mqf->metadata->range;
@@ -142,6 +142,10 @@ kDataFrameMQF::kDataFrameMQF() : kDataFrame() {
     falsePositiveRate = 0;
     hashbits = 2 * kSize;
     range = (1ULL << hashbits);
+
+    kDataFrameMQFIterator *it = new kDataFrameMQFIterator(mqf, kSize, KD);
+    it->endIterator();
+    endIterator=new  kDataFrameIterator(it,(kDataFrame*)this);
 }
 
 kDataFrameMQF::kDataFrameMQF(uint64_t ksize, uint8_t q, int mode) : kDataFrame(ksize) {
@@ -179,6 +183,10 @@ kDataFrameMQF::kDataFrameMQF(uint64_t ksize, uint8_t q, int mode) : kDataFrame(k
     hashbits = 2 * kSize;
     range = (1ULL << hashbits);
 
+    kDataFrameMQFIterator *it = new kDataFrameMQFIterator(mqf, kSize, KD);
+    it->endIterator();
+    endIterator=new  kDataFrameIterator(it,(kDataFrame*)this);
+
 }
 
 kDataFrameMQF::kDataFrameMQF(uint64_t ksize, uint8_t q, uint8_t fixedCounterSize, uint8_t tagSize,
@@ -196,6 +204,9 @@ kDataFrameMQF::kDataFrameMQF(uint64_t ksize, uint8_t q, uint8_t fixedCounterSize
     hashbits = 2 * kSize;
     range = (1ULL << hashbits);
 
+    kDataFrameMQFIterator *it = new kDataFrameMQFIterator(mqf, kSize, KD);
+    it->endIterator();
+    endIterator=new  kDataFrameIterator(it,(kDataFrame*)this);
 }
 
 kDataFrameMQF::kDataFrameMQF(uint64_t ksize, int mode) :
@@ -206,7 +217,9 @@ kDataFrameMQF::kDataFrameMQF(uint64_t ksize, int mode) :
     hashbits = 2 * kSize;
     range = (1ULL << hashbits);
     mqf = NULL;
+    endIterator=NULL;
     reserve(1000000);
+
 }
 
 kDataFrameMQF::kDataFrameMQF(uint64_t ksize) :
@@ -217,6 +230,7 @@ kDataFrameMQF::kDataFrameMQF(uint64_t ksize) :
     hashbits = 2 * kSize;
     range = (1ULL << hashbits);
     mqf = NULL;
+    endIterator=NULL;
     reserve(1000000);
 }
 
@@ -233,6 +247,9 @@ kDataFrameMQF::kDataFrameMQF(QF *mqf, uint64_t ksize, double falsePositiveRate) 
     hashbits = this->mqf->metadata->key_bits;
     hashbits = 2 * kSize;
     range = (1ULL << hashbits);
+    kDataFrameMQFIterator *it = new kDataFrameMQFIterator(mqf, kSize, KD);
+    it->endIterator();
+    endIterator=new  kDataFrameIterator(it,(kDataFrame*)this);
 }
 
 kDataFrame *kDataFrameMQF::getTwin() {
@@ -252,6 +269,11 @@ void kDataFrameMQF::reserve(uint64_t n) {
         qf_destroy(old);
         delete old;
     }
+    if(endIterator!=NULL)
+        delete endIterator;
+    kDataFrameMQFIterator *it = new kDataFrameMQFIterator(mqf, kSize, KD);
+    it->endIterator();
+    endIterator=new  kDataFrameIterator(it,(kDataFrame*)this);
 }
 void kDataFrameMQF::reserve(vector<uint64_t> countHistogram) {
     QF *old = mqf;
@@ -492,7 +514,7 @@ float kDataFrameMQF::load_factor() {
 }
 
 float kDataFrameMQF::max_load_factor() {
-    return 0.9;
+    return 0.8;
 }
 
 
