@@ -510,7 +510,6 @@ public:
     ,double falsePositiveRate);
   ~kDataFrameBMQF(){
     delete bufferedmqf;
-    delete endIterator;
   }
   void reserve (uint64_t n);
   void reserve (vector<uint64_t> countHistogram);
