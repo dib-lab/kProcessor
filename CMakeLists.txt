@@ -37,7 +37,7 @@ if (OPENMP_FOUND)
 endif()
 
 add_subdirectory(ThirdParty/MQF/)
-add_subdirectory(ThirdParty/sdsl-lite/)
+add_subdirectory(ThirdParty/sdsl-lite/lib/)
 add_subdirectory(ThirdParty/kmerDecoder)
 
 include(ExternalProject)
