@@ -941,9 +941,7 @@ void indexPriorityQueue(vector<kDataFrame*>& input, kDataFrame *output){
 	//   }
 
     }
-    cout<<"Finished Indexing!"<<endl;
     colors->populateColors();
-    cout<<"Populating Colors!"<<endl;
 
 }
 

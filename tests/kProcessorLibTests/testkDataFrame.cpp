@@ -1306,7 +1306,7 @@ TEST_P(kDataFrameBufferedTest,saveAndIterateOverAllKmers)
 //TEST_P(kDataFrameBufferedTest,transformPlus10)
 //{
 //
-//    kDataFrame* kframe=GetParam()->getTwin();
+//    kDataFrame* kframe=(kDataFrameBMQF*)getFrame(make_tuple("BMQF",GetParam()));
 //    EXPECT_EQ(kframe->empty(), true);
 //    unordered_map<string,int>* kmers=kmersGen.getKmers((int)kframe->getkSize());
 //    unordered_map<string,int> insertedKmers;
@@ -1337,65 +1337,65 @@ TEST_P(kDataFrameBufferedTest,saveAndIterateOverAllKmers)
 //
 //}
 
-TEST_P(kDataFrameBufferedTest,parsingTest)
-{
-    kDataFrameBMQF* kframe=(kDataFrameBMQF*)getFrame(make_tuple("BMQF",GetParam()));
-    string fileName="test2.noN.fastq";
-//kDataFrame* kframe=get<0>(GetParam())->getTwin();
-//string fileName=get<1>(GetParam());
-    int kSize=kframe->getkSize();
-    kProcessor::countKmersFromFile(kframe, {{"mode", 1}}, fileName, 1000); // Mode 1 : kmers, KmerSize will be cloned from the kFrame
-
-    ifstream kmerCountGoldFile("test.noN.dsk.txt");
-    string kmer;
-    uint64_t  count;
-    while(kmerCountGoldFile>>kmer>>count)
-    {
-        uint64_t kDatframe_count=kframe->getCount(kmer);
-        ASSERT_EQ(count,kDatframe_count);
-    }
-    kmerCountGoldFile.close();
-
-    seqan::SeqFileIn seqIn(fileName.c_str());
-    seqan::StringSet<seqan::CharString> ids;
-    seqan::StringSet<seqan::CharString> reads;
-    int chunkSize=1000;
-    unordered_map<string,uint64_t > insertedKmers;
-    while(!atEnd(seqIn)){
-        clear(reads);
-        clear(ids);
-
-        seqan::readRecords(ids, reads, seqIn,chunkSize);
-        for(int j=0;j<length(reads);j++)
-        {
-            string seq=string((char*)seqan::toCString(reads[j]));
-            for(int i=0;i<seq.size()-kSize+1;i++)
-            {
-                string kmer=seq.substr(i,kSize);
-                kmer=kmer::canonicalKmer(kmer);
-                insertedKmers[kmer]++;
-            }
-        }
-
-    }
-    seqan::close(seqIn);
-    kDataFrameIterator it=kframe->begin();
-    while(it!=kframe->end())
-    {
-        string kmer=it.getKmer();
-        uint64_t count=it.getCount();
-        if(count != insertedKmers[kmer])
-        {
-            cout<<kmer<<endl;
-
-        }
-        EXPECT_EQ(count,insertedKmers[kmer]);
-        insertedKmers.erase(kmer);
-        it++;
-    }
-    EXPECT_EQ(insertedKmers.size(),0);
- //   delete kframe;
-}
+//TEST_P(kDataFrameBufferedTest,parsingTest)
+//{
+//    kDataFrameBMQF* kframe=(kDataFrameBMQF*)getFrame(make_tuple("BMQF",GetParam()));
+//    string fileName="test2.noN.fastq";
+////kDataFrame* kframe=get<0>(GetParam())->getTwin();
+////string fileName=get<1>(GetParam());
+//    int kSize=kframe->getkSize();
+//    kProcessor::countKmersFromFile(kframe, {{"mode", 1}}, fileName, 1000); // Mode 1 : kmers, KmerSize will be cloned from the kFrame
+//
+//    ifstream kmerCountGoldFile("test.noN.dsk.txt");
+//    string kmer;
+//    uint64_t  count;
+//    while(kmerCountGoldFile>>kmer>>count)
+//    {
+//        uint64_t kDatframe_count=kframe->getCount(kmer);
+//        ASSERT_EQ(count,kDatframe_count);
+//    }
+//    kmerCountGoldFile.close();
+//
+//    seqan::SeqFileIn seqIn(fileName.c_str());
+//    seqan::StringSet<seqan::CharString> ids;
+//    seqan::StringSet<seqan::CharString> reads;
+//    int chunkSize=1000;
+//    unordered_map<string,uint64_t > insertedKmers;
+//    while(!atEnd(seqIn)){
+//        clear(reads);
+//        clear(ids);
+//
+//        seqan::readRecords(ids, reads, seqIn,chunkSize);
+//        for(int j=0;j<length(reads);j++)
+//        {
+//            string seq=string((char*)seqan::toCString(reads[j]));
+//            for(int i=0;i<seq.size()-kSize+1;i++)
+//            {
+//                string kmer=seq.substr(i,kSize);
+//                kmer=kmer::canonicalKmer(kmer);
+//                insertedKmers[kmer]++;
+//            }
+//        }
+//
+//    }
+//    seqan::close(seqIn);
+//    kDataFrameIterator it=kframe->begin();
+//    while(it!=kframe->end())
+//    {
+//        string kmer=it.getKmer();
+//        uint64_t count=it.getCount();
+//        if(count != insertedKmers[kmer])
+//        {
+//            cout<<kmer<<endl;
+//
+//        }
+//        EXPECT_EQ(count,insertedKmers[kmer]);
+//        insertedKmers.erase(kmer);
+//        it++;
+//    }
+//    EXPECT_EQ(insertedKmers.size(),0);
+// //   delete kframe;
+//}
 
 TEST_P(algorithmsTest,parsingTest2)
 {
