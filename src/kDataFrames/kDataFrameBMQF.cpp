@@ -46,6 +46,10 @@ kDataFrameBMQF::kDataFrameBMQF(uint64_t ksize,uint8_t q,uint8_t fixedCounterSize
 
 }
 
+void kDataFrameBMQF::deleteMemoryBuffer()
+{
+    bufferedMQF_deleteMemoryBuffer(bufferedmqf);
+}
 
 kDataFrameBMQF::kDataFrameBMQF(uint64_t ksize,string path):
         kDataFrame(ksize){

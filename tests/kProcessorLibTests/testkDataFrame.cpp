@@ -1303,6 +1303,43 @@ TEST_P(kDataFrameBufferedTest,saveAndIterateOverAllKmers)
 
 }
 
+TEST_P(kDataFrameBufferedTest,saveAndIterateOverAllKmersNoMemory)
+{
+
+    kDataFrameBMQF* kframe=(kDataFrameBMQF*)getFrame(make_tuple("BMQF",GetParam()));
+    string filename=kframe->getFilename();
+    EXPECT_EQ(kframe->empty(), true);
+    unordered_map<string,int>* kmers=kmersGen.getKmers((int)kframe->getkSize());
+    int numInsertedKmers=0;
+    //  unordered_map<string,int> insertedKmers;
+    for(auto k:*kmers)
+    {
+        numInsertedKmers++;
+        kframe->insert(k.first,k.second);
+        if(kframe->load_factor()>=kframe->max_load_factor()*0.8){
+            break;
+        }
+    }
+
+    kframe->save(filename);
+    delete kframe;
+    kDataFrameBMQF* kframeLoaded=(kDataFrameBMQF*)kDataFrame::load(filename);
+    kframeLoaded->deleteMemoryBuffer();
+    int checkedKmers=0;
+    kDataFrameIterator it=kframeLoaded->begin();
+    while(it!=kframeLoaded->end())
+    {
+        string kmer=it.getKmer();
+        uint64_t count=it.getCount();
+        ASSERT_EQ(count,(*kmers)[kmer]);
+        checkedKmers++;
+        it++;
+    }
+    EXPECT_EQ(checkedKmers,numInsertedKmers);
+    delete kframe;
+
+}
+
 //TEST_P(kDataFrameBufferedTest,transformPlus10)
 //{
 //

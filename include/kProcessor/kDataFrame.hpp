@@ -564,6 +564,8 @@ public:
   kDataFrameIterator find(string kmer);
 
   string getFilename();
+
+  void deleteMemoryBuffer();
 };
 
 // kDataFrameMAP _____________________________

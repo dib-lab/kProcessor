@@ -7,6 +7,7 @@
 #include "kDataFrame.hpp"
 #include <vector>
 #include "algorithms.hpp"
+#include <typeinfo>
 using namespace std;
 
 int main(int argc, char *argv[])
@@ -17,13 +18,18 @@ int main(int argc, char *argv[])
 
     vector<string> filenames;
     vector<kDataFrame*> frames;
-
     string sample;
     ifstream input(inputPath);
+
+
     while(input>>sample)
     {
         filenames.push_back(sample);
         frames.push_back(kDataFrame::load(sample));
+        if(dynamic_cast<kDataFrameBMQF*>(frames.back()))
+        {
+            ((kDataFrameBMQF*)frames.back())->deleteMemoryBuffer();
+        }
 	cerr<<"sample "<<sample<<" loaded"<<endl; 
     }
     uint64_t  kSize=frames[0]->getkSize();
