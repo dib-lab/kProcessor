@@ -56,7 +56,7 @@ public:
 
 class colorNode{
 public:
-    flat_hash_map<uint32_t, colorNode*> edges;
+    map<uint32_t, colorNode*> edges;
     uint32_t currColor;
     colorNode() {
         currColor = 0;
