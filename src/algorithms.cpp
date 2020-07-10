@@ -925,7 +925,7 @@ void indexPriorityQueue(vector<kDataFrame*>& input, kDataFrame *output){
 	        cout<<a<<" ";
 	     cout<<endl<<endl;
 	  }
-	output->setKmerDefaultColumnValue<vector<uint32_t >, colorColumn>(currHash,colorVec);
+	output->setKmerDefaultColumnValue<vector<uint32_t >&, colorColumn>(currHash,colorVec);
 	 // auto res=output->getKmerDefaultColumnValue<vector<uint32_t >, colorColumn>(currHash);
 	// //	cout<<res.size()<<endl;
 	// if(!equal(res.begin(),res.end(),colorVec.begin()))
