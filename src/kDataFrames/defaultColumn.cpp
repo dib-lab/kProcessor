@@ -748,10 +748,12 @@ void compressedColorColumn::optimize2()
 
 }
 ///todo return the longest seq in node colors
+/// commented a lign to try string inverted index
+
 uint32_t getLongestSubsetColor(colorColumn* col,deque<uint32_t> & color,uint32_t colorId){
     unordered_map<uint32_t ,uint32_t > nodeColors(color.size());
     stack<tuple<colorNode*,uint32_t ,bool> > S;
-    S.push(make_tuple(col->colorInv.root,0,false));
+//    S.push(make_tuple(col->colorInv.root,0,false));
 
     uint32_t result;
     uint32_t resultsize=0;

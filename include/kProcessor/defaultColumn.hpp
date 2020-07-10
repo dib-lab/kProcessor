@@ -96,10 +96,12 @@ class stringColorIndex{
 public:
     flat_hash_map<string,uint32_t> colors;
     uint32_t lastColor;
+    uint32_t noSamples;
     stringColorIndex()
     {
 
         lastColor=0;
+        noSamples=0;
     }
     ~stringColorIndex(){
 
@@ -129,7 +131,7 @@ public:
 class colorColumn: public Column{
 public:
     vector<vector<uint32_t > > colors;
-    colorIndex colorInv;
+    stringColorIndex colorInv;
     uint64_t  noSamples;
     colorColumn(){
         colors.push_back(vector<uint32_t >());
