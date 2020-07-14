@@ -123,6 +123,7 @@ public:
     void deserialize(string filename);
 
     void populateColors(vector<vector<uint32_t > >& colors);
+  void optimize(){}
 
 };
 
