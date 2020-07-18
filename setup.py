@@ -111,13 +111,14 @@ classifiers = [
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.6",
     "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
 ]
 
 commit_hash_short_name = subprocess.getoutput("git rev-parse --short HEAD").split()[0]
 branch_name = subprocess.getoutput("git rev-parse --abbrev-ref HEAD").split()[0]
 
 setup(name='kProcessor',
-      version=f"{branch_name}_{commit_hash_short_name}",
+      version="1.0.0",
       author="Tamer Mansour, Mostafa Shokrof, Mohamed Abuelanin",
       author_email='drtamermansour@gmail.com, mostafa.shokrof@gmail.com, mabuelanin@gmail.com',
       description="""kProcessor Python interface""",
