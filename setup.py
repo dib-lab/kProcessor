@@ -15,8 +15,8 @@ import sys
 import os
 import subprocess
 
-if sys.version_info[:2] < (3, 5) or sys.version_info[:2] > (3, 7):
-    raise RuntimeError("Python version == (3.6 | 3.7) required.")
+if sys.version_info[:2] < (3, 5) or sys.version_info[:2] > (3, 8):
+    raise RuntimeError("Python version == (3.6 | 3.7 | 3.8) required.")
 
 if os.path.exists('MANIFEST'):
     os.remove('MANIFEST')
