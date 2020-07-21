@@ -104,7 +104,7 @@ kmerDecoder* initialize_kmerDecoder(int kmer_size, int hash_mode = 1);
     void
     index(kDataFrame *frame, std::map<std::string, int> parse_params, string filename, int chunks, string names_fileName);
 
-    void indexPriorityQueue(vector<kDataFrame*>& input, kDataFrame *output);
+    void indexPriorityQueue(vector<kDataFrame*>& input, string tmpFolder, kDataFrame *output);
 
     void mergeIndexes(vector<kDataFrame*>& input, kDataFrame *output);
     //colored_kDataFrame * indexPriorityQueue(kmerDecoder *KD, string names_fileName, kDataFrame *frame);

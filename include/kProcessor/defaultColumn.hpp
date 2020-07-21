@@ -129,20 +129,69 @@ public:
 
 
 
-class colorColumn: public Column{
+class inExactColorIndex{
 public:
-    vector<vector<uint32_t > > colors;
-    stringColorIndex colorInv;
-    uint64_t  noSamples;
-    colorColumn(){
-        colors.push_back(vector<uint32_t >());
+    flat_hash_map<uint64_t,uint32_t> colors;
+    uint32_t lastColor;
+    uint32_t noSamples;
+    inExactColorIndex()
+    {
+
+        lastColor=0;
+        noSamples=0;
     }
-    colorColumn(uint64_t noSamples){
+    ~inExactColorIndex(){
+
+    }
+    bool hasColorID(vector<uint32_t>& v);
+    uint32_t getColorID(vector<uint32_t>& v);
+    void serialize(string fileName){}
+    void deserialize(string filename){}
+
+    void populateColors(vector<vector<uint32_t > >& colors){}
+    void optimize(){}
+
+};
+
+#define NUM_VECTORS 9
+#define VECTOR_SIZE 10000000
+
+class insertColorColumn: public Column{
+public:
+
+    vector<sdsl::int_vector<> > colors;
+    vector<uint32_t> colorsTop;
+    vector<uint32_t> vecCount;
+    inExactColorIndex colorInv;
+    uint64_t  noSamples;
+    uint64_t noColors;
+    string tmpFolder;
+    insertColorColumn(){
+        colorsTop=vector<uint32_t>(NUM_VECTORS);
+        vecCount=vector<uint32_t>(NUM_VECTORS);
+        for(int i=0;i<NUM_VECTORS;i++) {
+            colors.push_back(sdsl::int_vector<>(VECTOR_SIZE));
+            colorsTop[i]=0;
+            vecCount[i]=0;
+        }
+        tmpFolder="";
+        noColors=0;
+    }
+    insertColorColumn(uint64_t noSamples,string tmp){
+        colorsTop=vector<uint32_t>(NUM_VECTORS);
+        vecCount=vector<uint32_t>(NUM_VECTORS);
         this->noSamples=noSamples;
-        colors.push_back(vector<uint32_t >());
+        for(int i=0;i<NUM_VECTORS;i++) {
+            colors.push_back(sdsl::int_vector<>(VECTOR_SIZE));
+            colorsTop[i]=0;
+            vecCount[i]=0;
+        }
+        tmpFolder=tmp;
+        noColors=0;
+
     }
 
-    ~colorColumn(){
+    ~insertColorColumn(){
 
     }
     uint32_t  insertAndGetIndex(vector<uint32_t > item);
@@ -176,8 +225,8 @@ public:
     void save(string filename);
     void load(string filename);
 
-    virtual void serialize()=0;
-    virtual void deseriazlize()=0;
+    virtual void serialize(ofstream& of)=0;
+    virtual void deserialize(ifstream& f)=0;
 
     virtual uint64_t sizeInBytes()=0;
 
@@ -220,8 +269,8 @@ public:
     uint32_t size()override {
         return vecs.size();
     }
-    void serialize(){}
-    void deseriazlize(){}
+    void serialize(ofstream& of);
+    void deserialize(ifstream& iif);
     uint64_t sizeInBytes(){
         uint64_t res=0;
         for(auto vec:vecs)
@@ -257,8 +306,8 @@ public:
     uint32_t size()override {
         return noColors;
     }
-    void serialize(){}
-    void deseriazlize(){}
+    void serialize(ofstream& of){}
+    void deserialize(ifstream& iif){}
     uint64_t sizeInBytes(){
 
         return 4;
@@ -301,28 +350,29 @@ public:
     uint32_t size()override {
         return vec.size()/colorsize;
     }
-    void serialize(){}
-    void deseriazlize(){}
+    void serialize(ofstream& of);
+    void deserialize(ifstream& iif);
     uint64_t sizeInBytes(){
 
         return sdsl::size_in_bytes(vec)+4;
     }
 };
-class compressedColorColumn: public Column{
+class queryColorColumn: public Column{
 public:
     deque<vectorBase*> colors;
     uint64_t  noSamples;
     sdsl::int_vector<> idsMap;
     uint64_t numColors;
-    compressedColorColumn(){
+    queryColorColumn(){
         colors.push_back(new vectorOfVectors());
     }
-    compressedColorColumn(uint64_t noSamples){
+    queryColorColumn(uint64_t noSamples){
         this->noSamples=noSamples;
         colors.push_back(new vectorOfVectors());
     }
-    compressedColorColumn(colorColumn* col);
-    ~compressedColorColumn(){
+    queryColorColumn(uint64_t noSamples,uint64_t noColors,string tmpFolder);
+    queryColorColumn(insertColorColumn* col);
+    ~queryColorColumn(){
 
     }
     uint32_t  insertAndGetIndex(vector<uint32_t > item);
@@ -333,9 +383,9 @@ public:
 
     void serialize(string filename);
     void deserialize(string filename);
-    void optimize(colorColumn* col);
+    void optimize(insertColorColumn* col);
     void optimize2();
-    void optimize3(colorColumn* col);
+    void optimize3(insertColorColumn* col);
 
     uint32_t getNumColors(){
         return colors.size();

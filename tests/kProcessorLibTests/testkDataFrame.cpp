@@ -1010,7 +1010,7 @@ TEST_P(indexingTest,indexPriorityQSaveAndLoad)
         }
     }
 
-    kProcessor::indexPriorityQueue(inputFrames, KF);
+    kProcessor::indexPriorityQueue(inputFrames,"", KF);
     string fileName="tmp.kdataframe."+gen_random(4);
     KF->save(fileName);
     delete KF;
@@ -1020,7 +1020,7 @@ TEST_P(indexingTest,indexPriorityQSaveAndLoad)
         kDataFrameIterator it=inputFrames[i]->begin();
         while(it!=inputFrames[i]->end())
         {
-            vector<uint32_t> colors=kframeLoaded->getKmerDefaultColumnValue<vector<uint32_t >, colorColumn>(it.getHashedKmer());
+            vector<uint32_t> colors=kframeLoaded->getKmerDefaultColumnValue<vector<uint32_t >, insertColorColumn>(it.getHashedKmer());
             ASSERT_NE(colors.size(),0);
             auto colorIt=colors.end();
             colorIt=find(colors.begin(),colors.end(),i);
@@ -1055,7 +1055,7 @@ TEST_P(indexingTest,indexPriorityQ)
         }
     }
 
-    kProcessor::indexPriorityQueue(inputFrames, KF);
+    kProcessor::indexPriorityQueue(inputFrames,"", KF);
     string fileName="tmp.kdataframe."+gen_random(4);
 
 
@@ -1064,7 +1064,7 @@ TEST_P(indexingTest,indexPriorityQ)
         kDataFrameIterator it=inputFrames[i]->begin();
         while(it!=inputFrames[i]->end())
         {
-            vector<uint32_t> colors=KF->getKmerDefaultColumnValue<vector<uint32_t >, colorColumn>(it.getHashedKmer());
+            vector<uint32_t> colors=KF->getKmerDefaultColumnValue<vector<uint32_t >, insertColorColumn>(it.getHashedKmer());
             ASSERT_NE(colors.size(),0);
             auto colorIt=colors.end();
             colorIt=find(colors.begin(),colors.end(),i);
@@ -1115,7 +1115,7 @@ TEST_P(indexingTest,mergeIndexes)
                 input.push_back(inputFrames[j]);
         }
         kDataFrame *KF2 = new kDataFrameMQF(25,25,2);
-        kProcessor::indexPriorityQueue(input, KF2);
+        kProcessor::indexPriorityQueue(input,"", KF2);
         indexes[i]=KF2;
     }
 
@@ -1130,7 +1130,7 @@ TEST_P(indexingTest,mergeIndexes)
         kDataFrameIterator it=inputFrames[i]->begin();
         while(it!=inputFrames[i]->end())
         {
-            vector<uint32_t> colors=KF->getKmerDefaultColumnValue<vector<uint32_t >, colorColumn>(it.getHashedKmer());
+            vector<uint32_t> colors=KF->getKmerDefaultColumnValue<vector<uint32_t >, insertColorColumn>(it.getHashedKmer());
             ASSERT_NE(colors.size(),0);
             auto colorIt=colors.end();
             colorIt=find(colors.begin(),colors.end(),i);

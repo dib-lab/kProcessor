@@ -10,10 +10,17 @@
 #include <iterator>
 #include <regex>
 #include <sdsl/util.hpp>
+#include "mum.h"
+
 template class vectorColumn<int>;
 template class vectorColumn<bool>;
 template class vectorColumn<double>;
 
+bool is_file_exist(const char *fileName)
+{
+    std::ifstream infile(fileName);
+    return infile.good();
+}
 
 Column* Column::getContainerByName(std::size_t hash)
 {
@@ -29,13 +36,17 @@ Column* Column::getContainerByName(std::size_t hash)
     {
         return new vectorColumn<bool>();
     }
-    else if(hash== typeid(colorColumn).hash_code())
+    else if(hash== typeid(insertColorColumn).hash_code())
     {
-        return new colorColumn();
+        return new insertColorColumn();
     }
     else if(hash== typeid(StringColorColumn).hash_code())
     {
         return new StringColorColumn();
+    }
+    else if(hash== typeid(queryColorColumn).hash_code())
+    {
+        return new queryColorColumn();
     }
     else
     {
@@ -101,37 +112,83 @@ T vectorColumn<T>::get(uint32_t index){
 }
 
 
-uint32_t  colorColumn::insertAndGetIndex(vector<uint32_t > item){
-  return colorInv.getColorID(item);
-    // if(colorInv.hasColorID(item))
-    //   return colorInv.getColorID(item);
+uint32_t  insertColorColumn::insertAndGetIndex(vector<uint32_t > item){
+  //return colorInv.getColorID(item);
+     if(colorInv.hasColorID(item))
+       return colorInv.getColorID(item);
 
-    // uint32_t i= colorInv.getColorID(item);
-    // colors.push_back(item);
-    // if(i!=colors.size()-1)
-    //   cout<<"error in insert and get index "<<i<<" "<<colors.size()<<endl;
-    // return i;
-  
+     noColors++;
+     uint32_t c= colorInv.getColorID(item);
+     uint32_t colorSize=item.size();
+     uint32_t maxSizeForNextColor;
+     if(colorSize<NUM_VECTORS-1)
+     {
+         // array of arrays fixed size
+         colors[colorSize][colorsTop[colorSize]++]=c;
+         for(auto s:item)
+             colors[colorSize][colorsTop[colorSize]++]=s;
+
+         maxSizeForNextColor=colorsTop[colorSize]+1+colorSize;
+
+     }
+     else{
+         // array of arrays mixed sizes
+         colorSize=NUM_VECTORS-1;
+         colors[colorSize][colorsTop[colorSize]++]=c;
+         colors[colorSize][colorsTop[colorSize]++]=item.size();
+         for(auto s:item)
+             colors[colorSize][colorsTop[colorSize]++]=s;
+
+         maxSizeForNextColor=colorsTop[colorSize]+2+noSamples;
+     }
+     if(maxSizeForNextColor > VECTOR_SIZE)
+     {
+         if(colorsTop[colorSize] != VECTOR_SIZE)
+             colors[colorSize].resize(colorsTop[colorSize]);
+
+         string colorsFileName = tmpFolder + "insertOnlyColumn." + to_string(colorSize)+
+                                 "." + to_string(vecCount[colorSize]++);
+         sdsl::store_to_file(colors[colorSize],colorsFileName.c_str());
+         if(colors[colorSize].size()!=VECTOR_SIZE)
+             colors[colorSize].resize(VECTOR_SIZE);
+         colorsTop[colorSize]=0;
+
+     }
+     return c;
 }
-vector<uint32_t > colorColumn::getWithIndex(uint32_t index){
-    return colors[index];
+/*
+ * * */
+vector<uint32_t > insertColorColumn::getWithIndex(uint32_t index){
+    throw logic_error("it is insert only coplor column");
+//    return colors[index];
 }
 
 
 
-void colorColumn::serialize(string filename)
+void insertColorColumn::serialize(string filename)
 {
     colorInv.serialize(filename);
 }
-void colorColumn::deserialize(string filename)
+void insertColorColumn::deserialize(string filename)
 {
     colorInv.deserialize(filename);
     populateColors();
     noSamples=colorInv.noSamples;
 }
 
-void colorColumn::populateColors(){
-    colorInv.populateColors(colors);
+void insertColorColumn::populateColors(){
+    for(uint32_t colorSize=1;colorSize<NUM_VECTORS;colorSize++)
+    {
+        if(colorsTop[colorSize] != VECTOR_SIZE)
+            colors[colorSize].resize(colorsTop[colorSize]);
+
+        string colorsFileName = tmpFolder + "insertOnlyColumn." + to_string(colorSize)+ "." +
+                                to_string(vecCount[colorSize]);
+
+        sdsl::store_to_file(colors[colorSize],colorsFileName.c_str());
+
+    }
+//    colorInv.populateColors(colors);
 }
 
 
@@ -542,8 +599,30 @@ void stringColorIndex::populateColors(vector<vector<uint32_t > >& outColors)
     }
 }
 
+bool inExactColorIndex::hasColorID(vector<uint32_t>& v)
+{
+   uint64_t hash=mum_hash(v.data(),v.size()*4,4495203915657755407);
+   if(colors.find(hash)==colors.end()){
+       return false;
+   }
+   return true;
+}
+uint32_t inExactColorIndex::getColorID(vector<uint32_t>& v)
+{
+    uint64_t hash=mum_hash(v.data(),v.size()*4,4495203915657755407);
+    auto it=colors.find(hash);
+    if(it!=colors.end()){
+        return it->second;
+    }
+    colors[hash]=++lastColor;
+    return colors[hash];
 
-compressedColorColumn::compressedColorColumn(colorColumn* col){
+
+}
+
+
+
+queryColorColumn::queryColorColumn(insertColorColumn* col){
     noSamples=col->noSamples;
     colors.push_back(new constantVector(noSamples));
     colors.push_back(new vectorOfVectors(noSamples+1,col->getNumColors()-noSamples+1));
@@ -551,7 +630,7 @@ compressedColorColumn::compressedColorColumn(colorColumn* col){
     optimize2();
 }
 
-void compressedColorColumn::optimize(colorColumn* col)
+void queryColorColumn::optimize(insertColorColumn* col)
 {
     numColors=col->getNumColors();
     vector<pair<uint32_t,uint32_t > > sizeAndIndex(numColors);
@@ -656,7 +735,7 @@ void compressedColorColumn::optimize(colorColumn* col)
     cout<<"New Colors sum "<<newColorsSum<<endl;
 }
 
-void compressedColorColumn::optimize2()
+void queryColorColumn::optimize2()
 {
     vector<pair<pair<uint32_t,uint32_t> ,uint32_t > > sizeAndMaxAndIndex(numColors);
 
@@ -750,7 +829,7 @@ void compressedColorColumn::optimize2()
 ///todo return the longest seq in node colors
 /// commented a lign to try string inverted index
 
-uint32_t getLongestSubsetColor(colorColumn* col,deque<uint32_t> & color,uint32_t colorId){
+uint32_t getLongestSubsetColor(insertColorColumn* col,deque<uint32_t> & color,uint32_t colorId){
     unordered_map<uint32_t ,uint32_t > nodeColors(color.size());
     stack<tuple<colorNode*,uint32_t ,bool> > S;
 //    S.push(make_tuple(col->colorInv.root,0,false));
@@ -850,7 +929,7 @@ uint32_t getLongestSubsetColor(colorColumn* col,deque<uint32_t> & color,uint32_t
     return result;
 
 }
-void compressedColorColumn::optimize3(colorColumn* col)
+void queryColorColumn::optimize3(insertColorColumn* col)
 {
     numColors=col->getNumColors();
     uint64_t  oldColorsSum=0,newColorsSum=0;
@@ -910,7 +989,7 @@ void compressedColorColumn::optimize3(colorColumn* col)
     cout<<"New Colors sum "<<newColorsSum<<endl;
 }
 
-void  compressedColorColumn::insert(vector<uint32_t >& item,uint32_t index){
+void  queryColorColumn::insert(vector<uint32_t >& item,uint32_t index){
     auto it=lower_bound(colors.begin(),colors.end(),index+1,
             [](vectorBase* lhs, uint32_t rhs) -> bool { return lhs->beginID < rhs; });
    // if(it==colors.end())
@@ -919,12 +998,14 @@ void  compressedColorColumn::insert(vector<uint32_t >& item,uint32_t index){
 
 
 }
-uint32_t  compressedColorColumn::insertAndGetIndex(vector<uint32_t > item){
-    throw std::logic_error("insertAndGetIndex is not supported in compressedColorColumn");
+uint32_t  queryColorColumn::insertAndGetIndex(vector<uint32_t > item){
+    throw std::logic_error("insertAndGetIndex is not supported in queryColorColumn");
     return 0;
 
 }
-vector<uint32_t > compressedColorColumn::getWithIndex(uint32_t index){
+vector<uint32_t > queryColorColumn::getWithIndex(uint32_t index){
+    if(index==0)
+        return vector<uint32_t>();
     index=idsMap[index];
     vector<uint32_t > res;
     stack<uint32_t> q;
@@ -965,24 +1046,125 @@ vector<uint32_t > compressedColorColumn::getWithIndex(uint32_t index){
     return res;
 }
 
+queryColorColumn::queryColorColumn(uint64_t noSamples,uint64_t noColors,string tmpFolder){
+    colors.push_back(new vectorOfVectors());
+    this->noSamples=noSamples;
+    uint32_t colorId = 1;
+    numColors=noColors;
+    idsMap=sdsl::int_vector<>(numColors+1);
+    for(int colorSize=1 ; colorSize < NUM_VECTORS-1 ;colorSize++) {
+        int chunkNum = 0;
+        string colorsFileName = tmpFolder + "insertOnlyColumn." + to_string(colorSize)+ "." +
+                                to_string(chunkNum++);
+        while(is_file_exist(colorsFileName.c_str())) {
+            sdsl::int_vector<> curr;
+            sdsl::load_from_file(curr,colorsFileName);
+            uint32_t noColors= curr.size()/(colorSize+1);
+            fixedSizeVector *f = new fixedSizeVector(noColors, colorSize);
+            f->beginID=colorId;
+            vector<uint32_t> tmp(colorSize);
+            for(int i=0;i<curr.size();i+=colorSize+1)
+            {
+                idsMap[curr[i]]=colorId++;
+                for(int j=0; j<colorSize ;j++)
+                    tmp[j] = curr[i+1+j];
+                f->set(i/(colorSize+1) , tmp);
+
+            }
+            colors.push_back(f);
+
+            colorsFileName = tmpFolder + "insertOnlyColumn." + to_string(colorSize)+ "." +
+                             to_string(chunkNum++);
+        }
+    }
+
+    int chunkNum = 0;
+    string colorsFileName = tmpFolder + "insertOnlyColumn." + to_string(NUM_VECTORS-1)+ "." +
+                            to_string(chunkNum++);
+    while(is_file_exist(colorsFileName.c_str())) {
+        sdsl::int_vector<> curr;
+        sdsl::load_from_file(curr,colorsFileName);
+        vector<vector<uint32_t> > bigColors;
+        vector<uint32_t > bigColorsIds;
+        uint32_t i=0;
+        while(i<curr.size())
+        {
+            bigColorsIds.push_back(curr[i++]);
+            bigColors.push_back(vector<uint32_t>(curr[i++]));
+            for(int j=0;  j< bigColors.back().size() ;j++)
+            {
+                bigColors.back()[j]=curr[i++];
+            }
+        }
+        vectorOfVectors *f = new vectorOfVectors(colorId, bigColors.size());
+        f->beginID=colorId;
+        for(uint32_t j =0; j<bigColors.size() ; j++)
+        {
+            idsMap[bigColorsIds[j]]=colorId++;
+            f->set(j , bigColors[j]);
 
 
-void compressedColorColumn::serialize(string filename)
+        }
+        colors.push_back(f);
+        colorsFileName = tmpFolder + "insertOnlyColumn." + to_string(NUM_VECTORS-1)+ "." +
+                         to_string(chunkNum++);
+    }
+
+
+}
+
+void queryColorColumn::serialize(string filename)
 {
     ofstream out(filename.c_str());
+    out.write(  (char*)( &(noSamples) ), sizeof( uint32_t ) );
+    idsMap.serialize(out);
 
-//    for(unsigned int i=0;i<colors.size();i++)
-//        colors[i].serialize(out);
-//    out.close();
-//    colorInv.serialize(filename);
+    uint32_t tmp=colors.size();
+    out.write(  (char*)( &(tmp) ), sizeof( uint32_t ) );
+    for(auto v:colors) {
+        if(dynamic_cast<fixedSizeVector*>(v))
+            tmp=0;
+        else if(dynamic_cast<vectorOfVectors*>(v))
+            tmp=1;
+        else
+            throw logic_error("Not supported vector");
+
+        out.write(  (char*)( &(tmp) ), sizeof( uint32_t ) );
+        v->serialize(out);
+    }
+    out.close();
+
 }
-void compressedColorColumn::deserialize(string filename)
+void queryColorColumn::deserialize(string filename)
 {
-  //  colorInv.deserialize(filename);
-   // populateColors();
+    ifstream input(filename.c_str());
+    input.read(  (char*)( &(noSamples) ), sizeof( uint32_t ) );
+    idsMap.load(input);
+
+    uint32_t colorsSize;
+    input.read(  (char*)( &(colorsSize) ), sizeof( uint32_t ) );
+    uint32_t currColor=1;
+    for(uint32_t i=0 ; i<colorsSize ; i++)
+    {
+        uint32_t vecType;
+        input.read(  (char*)( &(vecType) ), sizeof( uint32_t ) );
+        vectorBase* vec;
+        if(vecType==0)
+            vec=new fixedSizeVector();
+        else if (vecType==1)
+            vec= new vectorOfVectors();
+        else
+            throw logic_error("Not supported vector");
+        vec->deserialize(input);
+        vec->beginID=currColor;;
+        currColor+=vec->size();
+        colors.push_back(vec);
+    }
+    input.close();
+
 }
 
-uint64_t compressedColorColumn::sizeInBytes()
+uint64_t queryColorColumn::sizeInBytes()
 {
     uint64_t res=0;
     for(auto vec:colors)
@@ -995,3 +1177,27 @@ uint64_t compressedColorColumn::sizeInBytes()
 }
 
 
+
+void fixedSizeVector::serialize(ofstream& f) {
+    f.write(  (char*)( &(colorsize) ), sizeof( uint32_t ) );
+    vec.serialize(f);
+}
+void fixedSizeVector::deserialize(ifstream& f) {
+    f.read( (char*) ( &(colorsize) ), sizeof( uint32_t ) );
+    vec.load(f);
+}
+
+void vectorOfVectors::serialize(ofstream& f) {
+    uint32_t tmp=vecs.size();
+    f.write(  (char*)( &(tmp) ), sizeof( uint32_t ) );
+    for(auto v : vecs)
+        v.serialize(f);
+}
+void vectorOfVectors::deserialize(ifstream& f) {
+    uint32_t len;
+    f.read( (char*) ( &(len) ), sizeof( uint32_t ) );
+    for(unsigned int i=0; i < len;i++){
+        vecs.push_back(sdsl::int_vector<>());
+        vecs.back().load(f);
+    }
+}

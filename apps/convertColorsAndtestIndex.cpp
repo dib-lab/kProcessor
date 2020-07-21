@@ -31,7 +31,7 @@ int main(int argc, char *argv[])
     }
 
     kDataFrame* indexFrame=kDataFrame::load(framePath);
-    compressedColorColumn* col=new compressedColorColumn((colorColumn*)indexFrame->getDefaultColumn());
+    queryColorColumn* col=new queryColorColumn((insertColorColumn*)indexFrame->getDefaultColumn());
     double s=(double)col->sizeInBytes();
     cout<<"Size = "<<s/(1024.0*1024.0)<<"MB"<<endl;
     indexFrame->changeDefaultColumnType(col);
@@ -47,7 +47,7 @@ int main(int argc, char *argv[])
         while(inp>>kmer)
         {
             testedKmers++;
-            vector<uint32_t> colors=indexFrame->getKmerDefaultColumnValue<vector<uint32_t >, compressedColorColumn>(kmer);
+            vector<uint32_t> colors=indexFrame->getKmerDefaultColumnValue<vector<uint32_t >, queryColorColumn>(kmer);
 
 	    if(colors.size()==0)
 	      {

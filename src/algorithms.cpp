@@ -864,8 +864,8 @@ namespace kProcessor {
 
         }
 
-void indexPriorityQueue(vector<kDataFrame*>& input, kDataFrame *output){
-    colorColumn* colors=new colorColumn(input.size());
+void indexPriorityQueue(vector<kDataFrame*>& input, string tmpFolder,kDataFrame *output){
+    insertColorColumn* colors=new insertColorColumn(input.size(),tmpFolder);
     output->changeDefaultColumnType(colors);
     for(unsigned int i=0;i<input.size();i++)
     {
@@ -918,15 +918,17 @@ void indexPriorityQueue(vector<kDataFrame*>& input, kDataFrame *output){
 	uint64_t prevColor=output->getCount(currHash);
 	if(prevColor!=0)
 	  {
-	    auto res=output->getKmerDefaultColumnValue<vector<uint32_t >, colorColumn>(currHash);
+	    auto res=output->getKmerDefaultColumnValue<vector<uint32_t >, insertColorColumn>(currHash);
 	        cout<<"Error in Indexing detected at kmer "<<currHash<<endl;
 	    cout<<"should be empty vector and found  ";
 	    for(auto a:res)
 	        cout<<a<<" ";
 	     cout<<endl<<endl;
 	  }
-	output->setKmerDefaultColumnValue<vector<uint32_t >&, colorColumn>(currHash,colorVec);
-	 // auto res=output->getKmerDefaultColumnValue<vector<uint32_t >, colorColumn>(currHash);
+
+	output->setKmerDefaultColumnValue<vector<uint32_t >&, insertColorColumn>(currHash,colorVec);
+
+	 // auto res=output->getKmerDefaultColumnValue<vector<uint32_t >, insertColorColumn>(currHash);
 	// //	cout<<res.size()<<endl;
 	// if(!equal(res.begin(),res.end(),colorVec.begin()))
 	//   {
@@ -942,7 +944,12 @@ void indexPriorityQueue(vector<kDataFrame*>& input, kDataFrame *output){
 
     }
     colors->populateColors();
+    uint64_t noColors=colors->noColors;
+    cout<<noColors<<" colors created"<<endl;
+    delete colors;
 
+    queryColorColumn* qcolors=new queryColorColumn(input.size(), noColors ,tmpFolder);
+    output->changeDefaultColumnType(qcolors);
 }
 
 void mergeIndexes(vector<kDataFrame*>& input, kDataFrame *output){
@@ -952,9 +959,9 @@ void mergeIndexes(vector<kDataFrame*>& input, kDataFrame *output){
     for(unsigned int i=1;i<input.size();i++)
     {
         idsOffset[i]=idsOffset[i-1];
-        idsOffset[i]+=((colorColumn*)input[i-1]->getDefaultColumn())->noSamples;
+        idsOffset[i]+=((insertColorColumn*)input[i-1]->getDefaultColumn())->noSamples;
     }
-    colorColumn* colors=new colorColumn();
+    insertColorColumn* colors=new insertColorColumn();
     output->changeDefaultColumnType(colors);
 
 
@@ -987,7 +994,7 @@ void mergeIndexes(vector<kDataFrame*>& input, kDataFrame *output){
             nextKmer.pop();
 
             uint32_t i=get<1>(colorTuple);
-            vector<uint32_t> tmp=input[i]->getKmerDefaultColumnValue<vector<uint32_t >, colorColumn>(get<0>(colorTuple));
+            vector<uint32_t> tmp=input[i]->getKmerDefaultColumnValue<vector<uint32_t >, insertColorColumn>(get<0>(colorTuple));
             for(auto c:tmp)
                 colorVec.push_back(c+idsOffset[i]);
 
@@ -1002,7 +1009,7 @@ void mergeIndexes(vector<kDataFrame*>& input, kDataFrame *output){
                 delete get<3>(colorTuple);
             }
         }
-        output->setKmerDefaultColumnValue<vector<uint32_t >, colorColumn>(currHash,colorVec);
+        output->setKmerDefaultColumnValue<vector<uint32_t >, insertColorColumn>(currHash,colorVec);
 
     }
     colors->populateColors();

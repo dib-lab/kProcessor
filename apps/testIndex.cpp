@@ -37,20 +37,20 @@ int main(int argc, char *argv[])
         while(inp>>kmer)
         {
             testedKmers++;
-            vector<uint32_t> colors=indexFrame->getKmerDefaultColumnValue<vector<uint32_t >, colorColumn>(kmer);
-	    if(colors.size()==0)
-	      {
-		notFoundKmers++;
-		continue;
-	      }
+            vector<uint32_t> colors=indexFrame->getKmerDefaultColumnValue<vector<uint32_t >, queryColorColumn >(kmer);
+	        if(colors.size()==0)
+	        {
+		        notFoundKmers++;
+		        continue;
+	        }
             auto colorIt=find(colors.begin(),colors.end(),i);
             if(colorIt==colors.end())
             {
-	      cerr<<"Error detected in sample #"<<i <<" "<<
-		filenames[i]<<" at kmer "<<kmer<<" Combination got "<<endl;
-								     for(auto c: colors)
-								       cerr<<c <<" ";
-										 cerr<<endl;
+	            cerr<<"Error detected in sample #"<<i <<" "<<
+		            filenames[i]<<" at kmer "<<kmer<<" Combination got "<<endl;
+                for(auto c: colors)
+                    cerr<<c <<" ";
+                cerr<<endl;
 	      
                 failedKmers++;
             }
@@ -61,6 +61,5 @@ int main(int argc, char *argv[])
     cout<<"Numbers of tested Kmers = "<<testedKmers<<endl;
     cout<<"Numbers of non found kmers = "<<notFoundKmers<<endl;
     cout<<"Numbers of wrong combination = "<<failedKmers<<endl;
-
     return 0;
 }

@@ -10,3 +10,6 @@
 [submodule "ThirdParty/MQF"]
 	path = ThirdParty/MQF
 	url = https://github.com/dib-lab/MQF.git
+[submodule "ThirdParty/mum-hash"]
+	path = ThirdParty/mum-hash
+	url = git@github.com:vnmakarov/mum-hash.git

@@ -26,8 +26,12 @@ include_directories("ThirdParty/kmerDecoder/include")
 include_directories("ThirdParty/kmerDecoder/lib/parallel_hashmap")
 include_directories("ThirdParty/cereal/include")
 include_directories("ThirdParty/ntCard/include")
+include_directories("ThirdParty/mum-hash")
 
-set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -std=c++17 -fPIC  -W -Wall -pedantic -O3 -Ofast")
+set (CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS} -Wall -Wextra -std=c++17 -fPIC  -W -Wall -pedantic -O0 -g")
+
+set (CMAKE_CXX_FLAGS_RELEASE  "${CMAKE_CXX_FLAGS} -Wall -Wextra -std=c++17 -fPIC  -W -Wall -pedantic -O3 -Ofast")
+
 
 find_package(OpenMP)
 if (OPENMP_FOUND)
