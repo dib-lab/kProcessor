@@ -375,7 +375,8 @@ public:
     queryColorColumn(uint64_t noSamples,uint64_t noColors,string tmpFolder);
     queryColorColumn(insertColorColumn* col);
     ~queryColorColumn(){
-
+        for(auto v:colors)
+            delete v;
     }
     uint32_t  insertAndGetIndex(vector<uint32_t > item);
     vector<uint32_t > getWithIndex(uint32_t index);
