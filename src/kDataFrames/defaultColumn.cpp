@@ -1190,8 +1190,9 @@ void fixedSizeVector::deserialize(ifstream& f) {
 void vectorOfVectors::serialize(ofstream& f) {
     uint32_t tmp=vecs.size();
     f.write(  (char*)( &(tmp) ), sizeof( uint32_t ) );
-    for(auto v : vecs)
-        v.serialize(f);
+    for(int i=0;i<vecs.size();i++)
+        vecs[i].serialize(f);
+
 }
 void vectorOfVectors::deserialize(ifstream& f) {
     uint32_t len;

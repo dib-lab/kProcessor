@@ -252,7 +252,9 @@ public:
     {
         vecs.resize(noColors+1);
     }
-
+    ~vectorOfVectors(){
+        vecs.clear();
+    }
     vector<uint32_t> get(uint32_t index){
         vector<uint32_t> res;
         copy(vecs[index].begin(), vecs[index].end(), back_inserter(res));
