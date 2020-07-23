@@ -112,7 +112,7 @@ T vectorColumn<T>::get(uint32_t index){
 }
 
 
-uint32_t  insertColorColumn::insertAndGetIndex(vector<uint32_t > item){
+uint32_t  insertColorColumn::insertAndGetIndex(vector<uint32_t >& item){
   //return colorInv.getColorID(item);
      if(colorInv.hasColorID(item))
        return colorInv.getColorID(item);
@@ -998,7 +998,7 @@ void  queryColorColumn::insert(vector<uint32_t >& item,uint32_t index){
 
 
 }
-uint32_t  queryColorColumn::insertAndGetIndex(vector<uint32_t > item){
+uint32_t  queryColorColumn::insertAndGetIndex(vector<uint32_t >& item){
     throw std::logic_error("insertAndGetIndex is not supported in queryColorColumn");
     return 0;
 

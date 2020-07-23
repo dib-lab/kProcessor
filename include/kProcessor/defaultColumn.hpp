@@ -194,11 +194,11 @@ public:
     ~insertColorColumn(){
 
     }
-    uint32_t  insertAndGetIndex(vector<uint32_t > item);
+    uint32_t  insertAndGetIndex(vector<uint32_t >& item);
     vector<uint32_t > getWithIndex(uint32_t index);
 
     void insert(vector<uint32_t >& item,uint32_t index);
-    vector<uint32_t > get(uint32_t index);
+    vector<uint32_t >& get(uint32_t index);
 
     void serialize(string filename);
     void deserialize(string filename);
@@ -379,7 +379,7 @@ public:
         for(auto v:colors)
             delete v;
     }
-    uint32_t  insertAndGetIndex(vector<uint32_t > item);
+    uint32_t  insertAndGetIndex(vector<uint32_t >& item);
     vector<uint32_t > getWithIndex(uint32_t index);
 
     void insert(vector<uint32_t >& item,uint32_t index);
