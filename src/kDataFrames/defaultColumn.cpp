@@ -626,8 +626,8 @@ queryColorColumn::queryColorColumn(insertColorColumn* col){
     noSamples=col->noSamples;
     colors.push_back(new constantVector(noSamples));
     colors.push_back(new vectorOfVectors(noSamples+1,col->getNumColors()-noSamples+1));
-    optimize3(col);
-    optimize2();
+   // optimize3(col);
+    //optimize2();
 }
 
 void queryColorColumn::optimize(insertColorColumn* col)

@@ -221,6 +221,7 @@ public:
     vectorBase(uint32_t b){
         beginID=b;
     }
+    virtual ~vectorBase(){}
     virtual uint32_t size()=0;
     void save(string filename);
     void load(string filename);
@@ -265,7 +266,7 @@ public:
         vecs[index]=sdsl::int_vector<>(v.size());
         for(unsigned int i=0;i<v.size();i++)
             vecs[index][i]=v[i];
-        sdsl::util::bit_compress(vecs[index]);
+       // sdsl::util::bit_compress(vecs[index]);
     };
 
     uint32_t size()override {
