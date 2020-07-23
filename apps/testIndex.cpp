@@ -34,7 +34,8 @@ int main(int argc, char *argv[])
     {
         ifstream inp(filenames[i]+".testkmers");
         string kmer;
-        while(inp>>kmer)
+	uint64_t count;
+        while(inp>>kmer>>count)
         {
             testedKmers++;
             vector<uint32_t> colors=indexFrame->getKmerDefaultColumnValue<vector<uint32_t >, queryColorColumn >(kmer);
