@@ -45,6 +45,11 @@ int main(int argc, char *argv[])
     kDataFrame* output= new kDataFrameMQF(kSize,q,1);
     kProcessor::indexPriorityQueue(frames,"",output);
     cout<<"Indexing Finished"<<endl;
+
+    output->save(outPath);
+    cout<<"Saving Finished"<<endl;
+    delete output;
+    output=kDataFrame::load(outPath);
     uint64_t testedKmers=0;
     uint64_t failedKmers=0;
     uint64_t notFoundKmers =0;
@@ -85,9 +90,9 @@ int main(int argc, char *argv[])
 
 
 
-    output->save(outPath);
-    cout<<"Saving Finished"<<endl;
-    delete output;
+//    output->save(outPath);
+//    cout<<"Saving Finished"<<endl;
+//    delete output;
     for(auto f:frames)
         delete f;
 
