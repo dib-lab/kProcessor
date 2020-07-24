@@ -1047,7 +1047,7 @@ vector<uint32_t > queryColorColumn::getWithIndex(uint32_t index){
 }
 
 queryColorColumn::queryColorColumn(uint64_t noSamples,uint64_t noColors,string tmpFolder){
-    colors.push_back(new vectorOfVectors());
+    colors.push_back(new vectorOfVectors(0,0));
     this->noSamples=noSamples;
     uint32_t colorId = 1;
     numColors=noColors;
@@ -1131,6 +1131,7 @@ void queryColorColumn::serialize(string filename)
 
         out.write(  (char*)( &(tmp) ), sizeof( uint32_t ) );
         v->serialize(out);
+        cout<<v->beginID<<endl;
     }
     out.close();
 
@@ -1143,7 +1144,7 @@ void queryColorColumn::deserialize(string filename)
 
     uint32_t colorsSize;
     input.read(  (char*)( &(colorsSize) ), sizeof( uint32_t ) );
-    uint32_t currColor=1;
+    uint32_t currColor=0;
     for(uint32_t i=0 ; i<colorsSize ; i++)
     {
         uint32_t vecType;
@@ -1157,6 +1158,7 @@ void queryColorColumn::deserialize(string filename)
             throw logic_error("Not supported vector");
         vec->deserialize(input);
         vec->beginID=currColor;;
+        cout<<vec->beginID<<endl;
         currColor+=vec->size();
         colors.push_back(vec);
     }
