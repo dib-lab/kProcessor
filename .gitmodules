@@ -7,3 +7,6 @@
 [submodule "ThirdParty/cereal"]
 	path = ThirdParty/cereal
 	url = https://github.com/USCiLab/cereal.git
+[submodule "ThirdParty/MQF"]
+	path = ThirdParty/MQF
+	url = https://github.com/dib-lab/MQF
