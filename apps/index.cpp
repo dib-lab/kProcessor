@@ -46,53 +46,55 @@ int main(int argc, char *argv[])
     kProcessor::indexPriorityQueue(frames,"",output);
     cout<<"Indexing Finished"<<endl;
 
-    output->save(outPath);
-    cout<<"Saving Finished"<<endl;
-    delete output;
-    output=kDataFrame::load(outPath);
+    // output->save(outPath);
+    //    cout<<"Saving Finished"<<endl;
+    // delete output;
+    // output=kDataFrame::load(outPath);
     uint64_t testedKmers=0;
     uint64_t failedKmers=0;
     uint64_t notFoundKmers =0;
 
-    for(int i=0;i<filenames.size();i++)
-    {
-        ifstream inp(filenames[i]+".testkmers");
-        string kmer;
-        uint64_t count;
-        while(inp>>kmer>>count)
-        {
-            testedKmers++;
-            vector<uint32_t> colors=output->getKmerDefaultColumnValue<vector<uint32_t >, queryColorColumn >(kmer);
-            if(colors.size()==0)
-            {
-                cout<<filenames[i]<<" KMER "<<kmer<<endl;
-                notFoundKmers++;
-                continue;
-            }
-            auto colorIt=find(colors.begin(),colors.end(),i);
-            if(colorIt==colors.end())
-            {
-                cerr<<"Error detected in sample #"<<i <<" "<<
-                    filenames[i]<<" at kmer "<<kmer<<" Combination got "<<endl;
-                for(auto c: colors)
-                    cerr<<c <<" ";
-                cerr<<endl;
+    // for(int i=0;i<filenames.size();i++)
+    // {
+    //     ifstream inp(filenames[i]+".testkmers");
+    //     string kmer;
+    //     uint64_t count;
+    //     while(inp>>kmer>>count)
+    //     {
+    // 	  if(notFoundKmers+failedKmers==1000)
+    // 	    break;
+    //         testedKmers++;
+    //         vector<uint32_t> colors=output->getKmerDefaultColumnValue<vector<uint32_t >, queryColorColumn >(kmer);
+    //         if(colors.size()==0)
+    //         {
+    //             cout<<filenames[i]<<" KMER "<<kmer<<endl;
+    //             notFoundKmers++;
+    //             continue;
+    //         }
+    //         auto colorIt=find(colors.begin(),colors.end(),i);
+    //         if(colorIt==colors.end())
+    //         {
+    //             cerr<<"Error detected in sample #"<<i <<" "<<
+    //                 filenames[i]<<" at kmer "<<kmer<<" Combination got "<<endl;
+    //             for(auto c: colors)
+    //                 cerr<<c <<" ";
+    //             cerr<<endl;
 
-                failedKmers++;
-            }
+    //             failedKmers++;
+    //         }
 
-        }
-        inp.close();
-    }
-    cout<<"Numbers of tested Kmers = "<<testedKmers<<endl;
-    cout<<"Numbers of non found kmers = "<<notFoundKmers<<endl;
-    cout<<"Numbers of wrong combination = "<<failedKmers<<endl;
+    //     }
+    //     inp.close();
+    // }
+    // cout<<"Numbers of tested Kmers = "<<testedKmers<<endl;
+    // cout<<"Numbers of non found kmers = "<<notFoundKmers<<endl;
+    // cout<<"Numbers of wrong combination = "<<failedKmers<<endl;
 
 
 
-//    output->save(outPath);
-//    cout<<"Saving Finished"<<endl;
-//    delete output;
+    output->save(outPath);
+    cout<<"Saving Finished"<<endl;
+    delete output;
     for(auto f:frames)
         delete f;
 

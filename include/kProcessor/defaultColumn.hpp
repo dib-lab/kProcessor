@@ -154,7 +154,7 @@ public:
 };
 
 #define NUM_VECTORS 9
-#define VECTOR_SIZE 10000000
+#define VECTOR_SIZE 100000000
 
 class insertColorColumn: public Column{
 public:
@@ -251,7 +251,7 @@ public:
     vectorOfVectors(uint32_t beginId,uint32_t noColors)
             :vectorBase(beginId)
     {
-        vecs.resize(noColors+1);
+        vecs.resize(noColors);
     }
     ~vectorOfVectors(){
         vecs.clear();
