@@ -1,0 +1,25 @@
+# Include the README
+include *.md
+
+# Include the license file
+include LICENSE
+
+# Include the headers files
+recursive-include include *
+recursive-include ThirdParty/MQF/include *
+recursive-include ThirdParty/MQF/include *
+recursive-include ThirdParty/json *
+recursive-include ThirdParty/sdsl-lite/include *
+recursive-include ThirdParty/kmerDecoder/include *
+recursive-include ThirdParty/kmerDecoder/lib/seqan/include *
+recursive-include ThirdParty/kmerDecoder/lib/parallel-hashmap *
+
+# Include static libs
+include build/libkProcessor.a
+include build/ThirdParty/kmerDecoder/libkmerDecoder.a
+include build/ThirdParty/MQF/liblMQF.a
+include build/ThirdParty/sdsl-lite/lib/libsdsl.a
+
+
+# Include SWIG interfaces
+recursive-include swig_interfaces *

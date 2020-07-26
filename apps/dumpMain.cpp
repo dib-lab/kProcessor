@@ -3,9 +3,9 @@
 #include "CLI11.hpp"
 #include <vector>
 #include <stdint.h>
-#include <gqf.hpp>
-#include "KmerCounter/KmerCounter.hpp"
-#include "KmerCounter/kmer.h"
+#include <gqf.h>
+#include "algorithms.hpp"
+#include "Utils/kmer.h"
 #include "Utils/utils.hpp"
 #include <cmath>
 
@@ -29,6 +29,6 @@ int dump_main(int argc, char *argv[]){
   QF qf;
   qf_read(&qf,input_file.c_str());
 
-  dumpMQF(&qf,k,outputKmers);
+  kProcessor::dumpMQF(&qf,k,outputKmers);
   return 0;
 }

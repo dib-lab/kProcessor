@@ -3,9 +3,9 @@
 #include "CLI11.hpp"
 #include <vector>
 #include <stdint.h>
-#include <gqf.hpp>
-#include "KmerCounter/KmerCounter.hpp"
-#include "KmerCounter/kmer.h"
+#include <gqf.h>
+#include "algorithms.hpp"
+#include "Utils/kmer.h"
 #include "Utils/utils.hpp"
 #include <cmath>
 
@@ -39,7 +39,7 @@ int estimateMemory_main(int argc, char *argv[]){
     slotSize=-(uint64_t)(log2(fpr))+1;
   }
 
-  estimateMemRequirement(input_files[0],
+  kProcessor::estimateMemRequirement(input_files[0],
       slotSize, tagSize,
      &res_noSlots, &res_fixedSizeCounter, &res_memory);
 

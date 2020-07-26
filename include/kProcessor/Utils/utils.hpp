@@ -2,39 +2,17 @@
 #define UTILS_HPP
 #include <stdint.h>
 #include <string>
-#include <gqf.hpp>
-#include <seqan/seq_io.h>
-
-using namespace seqan;
-// void removeReadsWithN(std::string inputFilename,std::string outputFilename)
-// {
-//   SeqFileIn seqFileIn(inputFilename.c_str());
-//   SeqFileOut seqFileOut(outputFilename.c_str());
-//   CharString id;
-//   CharString quals;
-//   std::string readT;
-//
-//   while(!atEnd(seqFileIn))
-//   {
-//     bool hasN=false;
-//     readRecord(id, readT,quals, seqFileIn);
-//     for(uint64_t i=0;i<readT.size();i++)
-//     {
-//       if(readT[i]=='N')
-//       {
-//         hasN=true;
-//         break;
-//       }
-//     }
-//     if(!hasN)
-//     {
-//       writeRecord(seqFileOut,id,readT,quals);
-//     }
-//   }
-//
-//
-// }
+#include <vector>
 
 
+namespace kProcessor::utils{
+bool has_suffix(const std::string& s, const std::string& suffix);
+// Taken from
+// https://stackoverflow.com/questions/19189014/how-do-i-find-files-with-a-specific-extension-in-a-directory-that-is-provided-by
+std::vector<std::string> GetFilesExt(const char *dir, const char *ext);
+std::string last_part(std::string str, char c);
+std::string first_part(std::string str, char c);
+bool FileExists(std::string);
+}
 
 #endif

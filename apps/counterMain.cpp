@@ -3,9 +3,9 @@
 #include "CLI11.hpp"
 #include <vector>
 #include <stdint.h>
-#include <gqf.hpp>
-#include "KmerCounter/KmerCounter.hpp"
-#include "KmerCounter/kmer.h"
+#include <gqf.h>
+#include "algorithms.hpp"
+#include "Utils/kmer.h"
 #include "Utils/utils.hpp"
 #include <cmath>
 
@@ -72,7 +72,7 @@ int KmerCounter_main(int argc, char *argv[]){
   uint64_t requiredMem=0,tagSize=0;
   if(ntcardFile != "")
   {
-    estimateMemRequirement(ntcardFile,
+    kProcessor::estimateMemRequirement(ntcardFile,
         num_hashbits, tagSize,
        &nslots, &fixed_size_counter, &requiredMem);
   // cout<<"Number Slots = "<<nslots<<endl
@@ -84,7 +84,7 @@ int KmerCounter_main(int argc, char *argv[]){
   if(fpr>0)
     num_hashbits+=qbits;
 
-  requiredMem=estimateMemory(nslots,num_hashbits,fixed_size_counter,0);
+  requiredMem=kProcessor::estimateMemory(nslots,num_hashbits,fixed_size_counter,0);
   QF memqf,*diskqf=NULL,*mainqf=&memqf;
   if(maxMemory!=0){
     if(requiredMem>maxMemory){
@@ -93,7 +93,7 @@ int KmerCounter_main(int argc, char *argv[]){
       while(requiredMem>maxMemory)
       {
         nslots/=2;
-        requiredMem=estimateMemory(nslots,num_hashbits,fixed_size_counter,0);
+        requiredMem=kProcessor::estimateMemory(nslots,num_hashbits,fixed_size_counter,0);
       }
       mainqf=diskqf;
     }
@@ -104,12 +104,12 @@ int KmerCounter_main(int argc, char *argv[]){
   qf_init(&memqf, nslots, num_hashbits, 0,fixed_size_counter, 0,true, "", 2038074761);
 
   for(auto file: input_files)
-    loadIntoMQF(file,k,noThreads,hasher,&memqf,diskqf);
+    kProcessor::loadIntoMQF(file,k,noThreads,hasher,&memqf,diskqf);
 
 
   if(outputKmers!=""){
     if(fpr==0){
-    dumpMQF(mainqf,k,outputKmers);
+    kProcessor::dumpMQF(mainqf,k,outputKmers);
     }
     else{
       cerr<<"dump mqf in text format is not supported for inexact counting"<<endl;
