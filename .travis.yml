@@ -67,8 +67,8 @@ script:
   - echo "******** Running Python Interface Test Cases ********"
   - echo "Python version $(which python)"
   - cd ${BACK}
-  - cd ./tests/python/
-  - pytest
+  # - cd ./tests/python/
+  # - pytest
 
 branches:
   only:
