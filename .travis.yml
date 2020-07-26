@@ -54,7 +54,7 @@ install:
   - cd ${BACK}
   - echo "******** Running kProcessor CPP Test Cases ********"
   - cd ./build/tests/kProcessorLibTests
-  - ./testKprocessorLib
+  # - ./testKprocessorLib
 
 
 script:
