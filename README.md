@@ -16,13 +16,13 @@
 
 ## ➤ Table of Contents
 
-* [➤ Introduction](#introduction)
-* [➤ Quick Installation (pip)](#quick_installation)
-* [➤ Build from source](#build_source)
-* [➤ Manually build the Python bindings](#manual_build_python)
-* [➤ Build from source](#build_source)
-* [➤ Contributors](#contributors)
-* [➤ License](#license)
+* [➤ Introduction](#-introduction)
+* [➤ Quick Installation (pip)](#-quick-installation-pip)
+* [➤ Build from source](#-build-from-source)
+* [➤ Manually build the Python bindings](#-manually-build-the-python-bindings)
+* [➤ Contributors](#-contributors)
+* [➤ License](#-license)
+
 </details>
 
 
