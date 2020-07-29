@@ -625,7 +625,7 @@ uint32_t inExactColorIndex::getColorID(vector<uint32_t>& v)
 queryColorColumn::queryColorColumn(insertColorColumn* col){
     noSamples=col->noSamples;
     colors.push_back(new constantVector(noSamples));
-    colors.push_back(new vectorOfVectors(noSamples+1,col->getNumColors()-noSamples+1));
+//    colors.push_back(new vectorOfVectors(noSamples+1,col->getNumColors()-noSamples+1));
    // optimize3(col);
     //optimize2();
 }
@@ -788,7 +788,7 @@ void queryColorColumn::optimize2()
 
                 insert(tmp, i);
             }
-            sdsl::util::bit_compress(curr->vec);
+//            sdsl::util::bit_compress(curr->vec);
         }
         start=i;
         while(end<numColors && sizeAndMaxAndIndex[end].first.first==currentSize)
@@ -806,14 +806,14 @@ void queryColorColumn::optimize2()
                     tmp[j]=newMap[tmp[j]];
                 insert(tmp, i);
             }
-            sdsl::util::bit_compress(curr->vec);
+//            sdsl::util::bit_compress(curr->vec);
         }
     }
     start=end;
     end=numColors;
     if(start!=end) {
-        vectorOfVectors *curr = new vectorOfVectors(start, end - start);
-        colors.push_back(curr);
+//        vectorOfVectors *curr = new vectorOfVectors(start, end - start);
+//        colors.push_back(curr);
         for (; i < end; i++) {
             auto tmp = vec->get(sizeAndMaxAndIndex[i].second - vec->beginID);
             for (unsigned int j = 0; j < tmp.size(); j++)
@@ -1057,22 +1057,10 @@ queryColorColumn::queryColorColumn(uint64_t noSamples,uint64_t noColors,string t
         string colorsFileName = tmpFolder + "insertOnlyColumn." + to_string(colorSize)+ "." +
                                 to_string(chunkNum++);
         while(is_file_exist(colorsFileName.c_str())) {
-            sdsl::int_vector<> curr;
-            sdsl::load_from_file(curr,colorsFileName);
-            uint32_t noColors= curr.size()/(colorSize+1);
-            fixedSizeVector *f = new fixedSizeVector(noColors, colorSize);
-            f->beginID=colorId;
-            vector<uint32_t> tmp(colorSize);
-            for(int i=0;i<curr.size();i+=colorSize+1)
-            {
-                idsMap[curr[i]]=colorId++;
-                for(int j=0; j<colorSize ;j++)
-                    tmp[j] = curr[i+1+j];
-                f->set(i/(colorSize+1) , tmp);
-
-            }
+            fixedSizeVector *f = new fixedSizeVector(colorId, colorSize);
+            f->loadFromInsertOnly(colorsFileName,idsMap);
             colors.push_back(f);
-
+            colorId+=f->size();
             colorsFileName = tmpFolder + "insertOnlyColumn." + to_string(colorSize)+ "." +
                              to_string(chunkNum++);
         }
@@ -1082,35 +1070,68 @@ queryColorColumn::queryColorColumn(uint64_t noSamples,uint64_t noColors,string t
     string colorsFileName = tmpFolder + "insertOnlyColumn." + to_string(NUM_VECTORS-1)+ "." +
                             to_string(chunkNum++);
     while(is_file_exist(colorsFileName.c_str())) {
-        sdsl::int_vector<> curr;
-        sdsl::load_from_file(curr,colorsFileName);
-        vector<vector<uint32_t> > bigColors;
-        vector<uint32_t > bigColorsIds;
-        uint32_t i=0;
-        while(i<curr.size())
-        {
-            bigColorsIds.push_back(curr[i++]);
-            bigColors.push_back(vector<uint32_t>(curr[i++]));
-            for(int j=0;  j< bigColors.back().size() ;j++)
-            {
-                bigColors.back()[j]=curr[i++];
-            }
-        }
-        vectorOfVectors *f = new vectorOfVectors(colorId, bigColors.size());
-        f->beginID=colorId;
-        for(uint32_t j =0; j<bigColors.size() ; j++)
-        {
-            idsMap[bigColorsIds[j]]=colorId++;
-            f->set(j , bigColors[j]);
-
-
-        }
+        vectorOfVectors *f = new vectorOfVectors(colorId);
+        f->loadFromInsertOnly(colorsFileName,idsMap);
+        colorId+=f->size();
         colors.push_back(f);
         colorsFileName = tmpFolder + "insertOnlyColumn." + to_string(NUM_VECTORS-1)+ "." +
                          to_string(chunkNum++);
     }
 
 
+}
+void fixedSizeVector::loadFromInsertOnly(string path,sdsl::int_vector<>& idsMap)
+{
+    sdsl::int_vector<> curr;
+    sdsl::load_from_file(curr,path);
+    uint32_t noColors= curr.size()/(colorsize+1);
+    sdsl::int_vector<> tmpVec(noColors*colorsize);
+    uint32_t top=0;
+    uint32_t colorId=beginID;
+    for(int i=0;i<curr.size();i+=colorsize+1)
+    {
+        idsMap[curr[i]]=colorId++;
+        for(int j=0; j<colorsize ;j++)
+            tmpVec[top++] = curr[i+1+j];
+    }
+    vec=sdsl::enc_vector<>(tmpVec);
+}
+
+void vectorOfVectors::loadFromInsertOnly(string path,sdsl::int_vector<>& idsMap)
+{
+    sdsl::int_vector<> curr;
+    sdsl::load_from_file(curr,path);
+    vector<vector<uint32_t> > bigColors;
+    vector<uint32_t > bigColorsIds;
+    uint32_t i=0;
+    uint32_t colorId=beginID;
+    uint32_t  total=0;
+    while(i<curr.size())
+    {
+        bigColorsIds.push_back(curr[i++]);
+        bigColors.push_back(vector<uint32_t>(curr[i++]));
+        total += bigColors.back().size();
+        for(int j=0;  j< bigColors.back().size() ;j++)
+        {
+            bigColors.back()[j]=curr[i++];
+        }
+    }
+
+
+
+    sdsl::int_vector<> tmpStarts(bigColors.size());
+    sdsl::int_vector<> tmpvecs(total);
+    uint32_t  curri=0;
+    for(unsigned int i=0; i < bigColors.size();i++){
+        tmpStarts[i]=curri;
+        idsMap[bigColorsIds[i]]=colorId++;
+        for(int j=0;j<bigColors[i].size();j++)
+        {
+            tmpvecs[curri++]=bigColors[i][j];
+        }
+    }
+    vecs=sdsl::enc_vector(tmpvecs);
+    starts=sdsl::enc_vector(tmpStarts);
 }
 
 void queryColorColumn::serialize(string filename)
@@ -1187,20 +1208,37 @@ void fixedSizeVector::serialize(ofstream& f) {
 void fixedSizeVector::deserialize(ifstream& f) {
     f.read( (char*) ( &(colorsize) ), sizeof( uint32_t ) );
     vec.load(f);
+
+//    sdsl::int_vector<> tmp;
+//    tmp.load(f);
+//    vec=sdsl::enc_vector<>(tmp);
 }
 
 void vectorOfVectors::serialize(ofstream& f) {
-    uint32_t tmp=vecs.size();
-    f.write(  (char*)( &(tmp) ), sizeof( uint32_t ) );
-    for(int i=0;i<vecs.size();i++)
-        vecs[i].serialize(f);
-
+    vecs.serialize(f);
+    starts.serialize(f);
 }
 void vectorOfVectors::deserialize(ifstream& f) {
-    uint32_t len;
-    f.read( (char*) ( &(len) ), sizeof( uint32_t ) );
-    for(unsigned int i=0; i < len;i++){
-        vecs.push_back(sdsl::int_vector<>());
-        vecs.back().load(f);
-    }
+    vecs.load(f);
+    starts.load(f);
+//    uint32_t len;
+//    f.read( (char*) ( &(len) ), sizeof( uint32_t ) );
+//    vector<sdsl::int_vector<> > vs(len);
+//    uint32_t  total=0;
+//    for(unsigned int i=0; i < len;i++){
+//        vs[i].load(f);
+//        total += vs[i].size();
+//    }
+//    sdsl::int_vector<> tmpStarts(len);
+//    sdsl::int_vector<> tmpvecs(total);
+//    uint32_t  curr=0;
+//    for(unsigned int i=0; i < len;i++){
+//        tmpStarts[i]=curr;
+//        for(int j=0;j<vs[i].size();j++)
+//        {
+//            tmpvecs[curr++]=vs[i][j];
+//        }
+//    }
+//    vecs=sdsl::enc_vector(tmpvecs);
+//    starts=sdsl::enc_vector(tmpStarts);
 }

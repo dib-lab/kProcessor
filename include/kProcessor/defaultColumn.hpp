@@ -154,7 +154,7 @@ public:
 };
 
 #define NUM_VECTORS 9
-#define VECTOR_SIZE 100000000
+#define VECTOR_SIZE 10000000
 
 class insertColorColumn: public Column{
 public:
@@ -242,44 +242,61 @@ public:
 
 class vectorOfVectors: public vectorBase{
 public:
-    vector<sdsl::int_vector<> > vecs;
+    sdsl::enc_vector<>  vecs;
+    sdsl::enc_vector<> starts;
 
     vectorOfVectors()
     {
 
     }
+    vectorOfVectors(uint32_t beginId)
+            :vectorBase(beginId)
+    {
+      //  starts.resize(noColors);
+    //    vecs.resize(noColors);
+    }
     vectorOfVectors(uint32_t beginId,uint32_t noColors)
             :vectorBase(beginId)
     {
-        vecs.resize(noColors);
+        starts=sdsl::enc_vector(sdsl::int_vector(noColors));
+        //  starts.resize(noColors);
+        //    vecs.resize(noColors);
     }
     ~vectorOfVectors(){
-        vecs.clear();
+
     }
     vector<uint32_t> get(uint32_t index){
-        vector<uint32_t> res;
-        copy(vecs[index].begin(), vecs[index].end(), back_inserter(res));
+        uint32_t start=starts[index];
+        uint32_t end=vecs.size();
+        if(index< starts.size()-1)
+        {
+            index=starts[index+1];
+        }
+        vector<uint32_t> res(end-start);
+        for(int i=start;i<end;i++)
+            res[i-start]=vecs[i];
         return res;
     };
     void set(uint32_t index,vector<uint32_t>& v)
     {
-        vecs[index]=sdsl::int_vector<>(v.size());
-        for(unsigned int i=0;i<v.size();i++)
-            vecs[index][i]=v[i];
+        throw logic_error("set is not supported");
+//        vecs[index]=sdsl::int_vector<>(v.size());
+//        for(unsigned int i=0;i<v.size();i++)
+//            vecs[index][i]=v[i];
        // sdsl::util::bit_compress(vecs[index]);
     };
 
     uint32_t size()override {
-        return vecs.size();
+        return starts.size();
     }
+    void loadFromInsertOnly(string path,sdsl::int_vector<>& idsMap);
     void serialize(ofstream& of);
     void deserialize(ifstream& iif);
     uint64_t sizeInBytes(){
         uint64_t res=0;
-        for(auto vec:vecs)
-        {
-            res+=sdsl::size_in_bytes(vec);
-        }
+        res+=sdsl::size_in_bytes(vecs);
+        res+=sdsl::size_in_bytes(starts);
+
         return res;
     }
 };
@@ -319,19 +336,20 @@ public:
 
 class fixedSizeVector: public vectorBase{
 public:
-    typedef  sdsl::int_vector<> vectype;
+    typedef  sdsl::enc_vector<> vectype;
     vectype vec;
     uint32_t colorsize;
     fixedSizeVector()
     {
 
     }
-    fixedSizeVector(uint32_t noColors,uint32_t size)
+    fixedSizeVector(uint32_t beginId,uint32_t colorsize)
+            :vectorBase(beginId)
     {
-        this->colorsize=size;
-        vec.resize(noColors*size);
+        this->colorsize=colorsize;
+        // vec.resize(noColors*size);
     }
-
+    void loadFromInsertOnly(string path,sdsl::int_vector<>& idsMap);
     vector<uint32_t> get(uint32_t index){
         vector<uint32_t> res(colorsize);
         for(unsigned int i=0;i<colorsize;i++)
@@ -342,12 +360,13 @@ public:
     }
     void set(uint32_t index,vector<uint32_t>& v)
     {
-        if(v.size()!=colorsize)
-            cout<<"error "<<index<<" "<<colorsize<<" "<<v.size()<<endl;
-        for(unsigned int i=0;i<colorsize;i++)
-        {
-            vec[(index*colorsize)+i]=v[i];
-        }
+        throw logic_error("set is not supported");
+//        if(v.size()!=colorsize)
+//            cout<<"error "<<index<<" "<<colorsize<<" "<<v.size()<<endl;
+//        for(unsigned int i=0;i<colorsize;i++)
+//        {
+//            vec[(index*colorsize)+i]=v[i];
+//        }
     }
 
     uint32_t size()override {
@@ -392,7 +411,10 @@ public:
     void optimize3(insertColorColumn* col);
 
     uint32_t getNumColors(){
-        return colors.size();
+        uint32_t res=0;
+        for(int i=1;i<colors.size();i++)
+            res+=colors[i]->size();
+        return res;
     }
     uint64_t sizeInBytes();
 

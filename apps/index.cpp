@@ -14,7 +14,8 @@ int main(int argc, char *argv[])
 {
     string inputPath=argv[1];
     uint64_t  q=atoi(argv[2]);
-    string outPath=argv[3];
+    string tmpFolder=argv[3];
+    string outPath=argv[4];
 
     vector<string> filenames;
     vector<kDataFrame*> frames;
@@ -43,7 +44,7 @@ int main(int argc, char *argv[])
     }
 
     kDataFrame* output= new kDataFrameMQF(kSize,q,1);
-    kProcessor::indexPriorityQueue(frames,"",output);
+    kProcessor::indexPriorityQueue(frames,tmpFolder,output);
     cout<<"Indexing Finished"<<endl;
 
     // output->save(outPath);
