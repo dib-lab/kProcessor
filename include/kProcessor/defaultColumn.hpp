@@ -242,8 +242,8 @@ public:
 
 class vectorOfVectors: public vectorBase{
 public:
-    sdsl::enc_vector<>  vecs;
-    sdsl::enc_vector<> starts;
+    sdsl::vlc_vector<>  vecs;
+    sdsl::vlc_vector<> starts;
 
     vectorOfVectors()
     {
@@ -336,7 +336,7 @@ public:
 
 class fixedSizeVector: public vectorBase{
 public:
-    typedef  sdsl::enc_vector<> vectype;
+    typedef  sdsl::vlc_vector<> vectype;
     vectype vec;
     uint32_t colorsize;
     fixedSizeVector()

@@ -32,12 +32,15 @@ int main(int argc, char *argv[])
 
     for(int i=0;i<filenames.size();i++)
     {
+      cerr<<"Testing "<<filenames[i]+".testkmers"<<endl;
         ifstream inp(filenames[i]+".testkmers");
         string kmer;
 	uint64_t count;
         while(inp>>kmer>>count)
         {
             testedKmers++;
+	    if(testedKmers>5000)
+	      break;
             vector<uint32_t> colors=indexFrame->getKmerDefaultColumnValue<vector<uint32_t >, queryColorColumn >(kmer);
 	        if(colors.size()==0)
 	        {
