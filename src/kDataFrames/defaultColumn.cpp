@@ -1094,7 +1094,8 @@ void fixedSizeVector::loadFromInsertOnly(string path,sdsl::int_vector<>& idsMap)
         for(int j=0; j<colorsize ;j++)
             tmpVec[top++] = curr[i+1+j];
     }
-    vec=sdsl::enc_vector<>(tmpVec);
+    //    vec=sdsl::enc_vector<>(tmpVec);
+    vec=sdsl::int_vector<>(tmpVec);
 }
 
 void vectorOfVectors::loadFromInsertOnly(string path,sdsl::int_vector<>& idsMap)
@@ -1130,8 +1131,10 @@ void vectorOfVectors::loadFromInsertOnly(string path,sdsl::int_vector<>& idsMap)
             tmpvecs[curri++]=bigColors[i][j];
         }
     }
-    vecs=sdsl::enc_vector(tmpvecs);
-    starts=sdsl::enc_vector(tmpStarts);
+    //vecs=sdsl::enc_vector(tmpvecs);
+    //starts=sdsl::enc_vector(tmpStarts);
+    vecs=sdsl::int_vector(tmpvecs);
+    starts=sdsl::int_vector(tmpStarts);
 }
 
 void queryColorColumn::serialize(string filename)

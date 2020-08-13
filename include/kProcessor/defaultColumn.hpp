@@ -242,8 +242,8 @@ public:
 
 class vectorOfVectors: public vectorBase{
 public:
-    sdsl::vlc_vector<>  vecs;
-    sdsl::vlc_vector<> starts;
+    sdsl::int_vector<>  vecs;
+    sdsl::int_vector<> starts;
 
     vectorOfVectors()
     {
@@ -258,7 +258,8 @@ public:
     vectorOfVectors(uint32_t beginId,uint32_t noColors)
             :vectorBase(beginId)
     {
-        starts=sdsl::enc_vector(sdsl::int_vector(noColors));
+      starts=sdsl::int_vector(noColors);
+      //        starts=sdsl::enc_vector(sdsl::int_vector(noColors));
         //  starts.resize(noColors);
         //    vecs.resize(noColors);
     }
