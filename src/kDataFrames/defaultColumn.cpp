@@ -1133,8 +1133,8 @@ void vectorOfVectors::loadFromInsertOnly(string path,sdsl::int_vector<>& idsMap)
     }
     //vecs=sdsl::enc_vector(tmpvecs);
     //starts=sdsl::enc_vector(tmpStarts);
-    vecs=sdsl::int_vector(tmpvecs);
-    starts=sdsl::int_vector(tmpStarts);
+    vecs=vectype(tmpvecs);
+    starts=vectype(tmpStarts);
 }
 
 void queryColorColumn::serialize(string filename)

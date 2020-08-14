@@ -242,8 +242,9 @@ public:
 
 class vectorOfVectors: public vectorBase{
 public:
-    sdsl::int_vector<>  vecs;
-    sdsl::int_vector<> starts;
+    typedef  sdsl::int_vector<> vectype;
+    vectype  vecs;
+    vectype starts;
 
     vectorOfVectors()
     {
