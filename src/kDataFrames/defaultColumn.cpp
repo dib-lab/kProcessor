@@ -1059,6 +1059,7 @@ queryColorColumn::queryColorColumn(uint64_t noSamples,uint64_t noColors,string t
         string colorsFileName = tmpFolder + "insertOnlyColumn." + to_string(colorSize)+ "." +
                                 to_string(chunkNum++);
         while(is_file_exist(colorsFileName.c_str())) {
+	  cout<<colorsFileName<<" fixed"<<endl;
             fixedSizeVector *f = new fixedSizeVector(colorId, colorSize);
             f->loadFromInsertOnly(colorsFileName,idsMap);
             colors.push_back(f);
@@ -1072,6 +1073,7 @@ queryColorColumn::queryColorColumn(uint64_t noSamples,uint64_t noColors,string t
     string colorsFileName = tmpFolder + "insertOnlyColumn." + to_string(NUM_VECTORS-1)+ "." +
                             to_string(chunkNum++);
     while(is_file_exist(colorsFileName.c_str())) {
+	  cout<<colorsFileName<<" vv"<<endl;      
         vectorOfVectors *f = new vectorOfVectors(colorId);
         f->loadFromInsertOnly(colorsFileName,idsMap);
         colorId+=f->size();
@@ -1102,23 +1104,28 @@ void fixedSizeVector::loadFromInsertOnly(string path,sdsl::int_vector<>& idsMap)
 
 void vectorOfVectors::loadFromInsertOnly(string path,sdsl::int_vector<>& idsMap)
 {
-    vectype curr;
+  sdsl::int_vector<> curr;
     sdsl::load_from_file(curr,path);
     vector<vector<uint32_t> > bigColors;
     vector<uint32_t > bigColorsIds;
     uint32_t i=0;
     uint32_t colorId=beginID;
     uint32_t  total=0;
+    unordered_map<uint32_t ,uint32_t > sizeHist;
     while(i<curr.size())
     {
         bigColorsIds.push_back(curr[i++]);
         bigColors.push_back(vector<uint32_t>(curr[i++]));
         total += bigColors.back().size();
+	sizeHist[bigColors.size()]++;
         for(int j=0;  j< bigColors.back().size() ;j++)
         {
             bigColors.back()[j]=curr[i++];
         }
     }
+    cout<<"sizeHist"<<endl;
+    for(auto s:sizeHist)
+        cout<<s.first<<" : " <<s.second<<endl;
 
 
 

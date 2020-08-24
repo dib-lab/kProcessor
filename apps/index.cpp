@@ -92,9 +92,9 @@ int main(int argc, char *argv[])
      cout<<"Numbers of non found kmers = "<<notFoundKmers<<endl;
      cout<<"Numbers of wrong combination = "<<failedKmers<<endl;
 
-    cout<<"sizeHist"<<endl;
-    for(auto s:sizeHist)
-        cout<<s.first<<" : " <<s.second<<endl;
+     //    cout<<"sizeHist"<<endl;
+     //    for(auto s:sizeHist)
+     //        cout<<s.first<<" : " <<s.second<<endl;
 
     output->save(outPath);
     cout<<"Saving Finished"<<endl;
