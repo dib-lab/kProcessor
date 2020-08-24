@@ -1114,16 +1114,20 @@ void vectorOfVectors::loadFromInsertOnly(string path,sdsl::int_vector<>& idsMap)
     unordered_map<uint32_t ,uint32_t > sizeHist;
     while(i<curr.size())
     {
+        cout<<curr[i]<<"( ";
         bigColorsIds.push_back(curr[i++]);
+        cout<<curr[i]<<" ):";
         bigColors.push_back(vector<uint32_t>(curr[i++]));
         total += bigColors.back().size();
-	sizeHist[bigColors.size()]++;
+	    sizeHist[bigColors.back().size()]++;
         for(int j=0;  j< bigColors.back().size() ;j++)
         {
+            cout<<curr[i]<<" " ;
             bigColors.back()[j]=curr[i++];
         }
+        cout<<endl;
     }
-    cout<<"sizeHist"<<endl;
+    cout<<" sizeHist"<<endl;
     for(auto s:sizeHist)
         cout<<s.first<<" : " <<s.second<<endl;
 
