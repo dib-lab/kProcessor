@@ -39,11 +39,7 @@ int main(int argc, char *argv[])
         while(inp>>kmer>>count)
         {
             testedKmers++;
-	    if(testedKmers>50000)
-	      break;
             vector<uint32_t> colors=indexFrame->getKmerDefaultColumnValue<vector<uint32_t >, queryColorColumn >(kmer);
-	    if(colors.size()<10)
-	      cout<<colors.size()<<"\n";
 	        if(colors.size()==0)
 	        {
 		        notFoundKmers++;

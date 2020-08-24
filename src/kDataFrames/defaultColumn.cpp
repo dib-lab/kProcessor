@@ -1013,7 +1013,9 @@ vector<uint32_t > queryColorColumn::getWithIndex(uint32_t index){
                         [](vectorBase* lhs, uint32_t rhs) -> bool { return lhs->beginID < rhs; });
   //  if(it==colors.end())
         it--;
+    return (*it)->get(index-(*it)->beginID);
     vector<uint32_t > compressedColor=(*it)->get(index-(*it)->beginID);
+    return compressedColor;
     for(unsigned int i=0;i<compressedColor.size();i++) {
         if(compressedColor[i]>=noSamples)
         {
