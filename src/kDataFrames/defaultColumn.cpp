@@ -1102,7 +1102,7 @@ void fixedSizeVector::loadFromInsertOnly(string path,sdsl::int_vector<>& idsMap)
 
 void vectorOfVectors::loadFromInsertOnly(string path,sdsl::int_vector<>& idsMap)
 {
-    sdsl::int_vector<> curr;
+    vectype curr;
     sdsl::load_from_file(curr,path);
     vector<vector<uint32_t> > bigColors;
     vector<uint32_t > bigColorsIds;
@@ -1122,8 +1122,8 @@ void vectorOfVectors::loadFromInsertOnly(string path,sdsl::int_vector<>& idsMap)
 
 
 
-    sdsl::int_vector<> tmpStarts(bigColors.size());
-    sdsl::int_vector<> tmpvecs(total);
+    vectype tmpStarts(bigColors.size());
+    vectype tmpvecs(total);
     uint32_t  curri=0;
     for(unsigned int i=0; i < bigColors.size();i++){
         tmpStarts[i]=curri;
@@ -1220,12 +1220,12 @@ void fixedSizeVector::deserialize(ifstream& f) {
 }
 
 void vectorOfVectors::serialize(ofstream& f) {
-    vecs.serialize(f);
-    starts.serialize(f);
+//    vecs.serialize(f);
+//    starts.serialize(f);
 }
 void vectorOfVectors::deserialize(ifstream& f) {
-    vecs.load(f);
-    starts.load(f);
+  //  vecs.load(f);
+  //  starts.load(f);
 //    uint32_t len;
 //    f.read( (char*) ( &(len) ), sizeof( uint32_t ) );
 //    vector<sdsl::int_vector<> > vs(len);
