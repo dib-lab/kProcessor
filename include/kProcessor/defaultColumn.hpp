@@ -242,7 +242,7 @@ public:
 
 class vectorOfVectors: public vectorBase{
 public:
-  typedef  vector<uint32_t> vectype;
+  typedef  sdsl::enc_vector<> vectype;
     vectype  vecs;
     vectype starts;
 
@@ -259,7 +259,7 @@ public:
     vectorOfVectors(uint32_t beginId,uint32_t noColors)
             :vectorBase(beginId)
     {
-      starts=vectype(noColors);
+      //      starts=vectype(noColors);
       //        starts=sdsl::enc_vector(sdsl::int_vector(noColors));
         //  starts.resize(noColors);
         //    vecs.resize(noColors);
@@ -272,7 +272,7 @@ public:
         uint32_t end=vecs.size();
         if(index< starts.size()-1)
         {
-            index=starts[index+1];
+            end=starts[index+1];
         }
         vector<uint32_t> res(end-start);
         for(int i=start;i<end;i++)
