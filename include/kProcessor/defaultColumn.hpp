@@ -154,7 +154,7 @@ public:
 };
 
 #define NUM_VECTORS 20
-#define VECTOR_SIZE 10000000
+#define VECTOR_SIZE 100000000
 
 class insertColorColumn: public Column{
 public:
