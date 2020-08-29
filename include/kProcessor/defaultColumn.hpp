@@ -230,6 +230,7 @@ public:
     virtual void deserialize(ifstream& f)=0;
 
     virtual uint64_t sizeInBytes()=0;
+    virtual void explainSize()=0;
 
     virtual vector<uint32_t> get(uint32_t index)=0;
     virtual void set(uint32_t index,vector<uint32_t>& v)=0;
@@ -291,6 +292,9 @@ public:
     uint32_t size()override {
         return starts.size();
     }
+    void explainSize(){
+        cout<<"Vector of Vectors "<<size()<<" colors in"<< sizeInBytes()/(1024.0*1024.0)<<"MB"<<endl;
+    }
     void loadFromInsertOnly(string path,sdsl::int_vector<>& idsMap);
     void serialize(ofstream& of);
     void deserialize(ifstream& iif);
@@ -324,7 +328,9 @@ public:
     void set(uint32_t index,vector<uint32_t>& v)
     {
     }
-
+    void explainSize(){
+        cout<<"constant "<<size()<<" colors in"<< sizeInBytes()/(1024.0*1024.0)<<"MB"<<endl;
+    }
     uint32_t size()override {
         return noColors;
     }
@@ -376,6 +382,9 @@ public:
     }
     void serialize(ofstream& of);
     void deserialize(ifstream& iif);
+    void explainSize(){
+        cout<<"fixed size("<<colorsize<<") of "<<size()<<" colors in "<< sizeInBytes()/(1024.0*1024.0)<<"MB"<<endl;
+    }
     uint64_t sizeInBytes(){
 
         return sdsl::size_in_bytes(vec)+4;
@@ -408,6 +417,9 @@ public:
     uint64_t sizeInBytes(){
 
         return sdsl::size_in_bytes(vec)+sdsl::size_in_bytes(starts)+8;
+    }
+    void explainSize(){
+        cout<<"RLE fixed size("<<colorsize<<") of "<<size()<<" colors in "<< sizeInBytes()/(1024.0*1024.0)<<"MB"<<endl;
     }
 };
 class queryColorColumn: public Column{
@@ -449,6 +461,7 @@ public:
         return res;
     }
     uint64_t sizeInBytes();
+    void explainSize();
 
 
 

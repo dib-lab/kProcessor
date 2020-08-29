@@ -1199,10 +1199,22 @@ uint64_t queryColorColumn::sizeInBytes()
    // cout<<"Ids Size = "<<sdsl::size_in_bytes(idsMap)/(1024.0*1024.0)<<"MB"<<endl;
     return res;
 }
+void queryColorColumn::explainSize()
+{
+    uint64_t res=0;
+    cout<<"Ids Size = "<<sdsl::size_in_bytes(idsMap)/(1024.0*1024.0)<<"MB"<<endl;
+    for(auto vec:colors)
+    {
+        vec->explainSize();
+    }
+    cout<<"Total = "<<sizeInBytes()/(1024.0*1024.0)<<"MB"<<endl;
+    // cout<<"Ids Size = "<<sdsl::size_in_bytes(idsMap)/(1024.0*1024.0)<<"MB"<<endl;
+}
+
 
 void queryColorColumn::optimizeRLE()
 {
-    cout<<"Size Before "<<(double)sizeInBytes()/(1024.0*1024.0)<<endl;
+    explainSize();
     for(unsigned int i=0;i<colors.size();i++) {
         if(dynamic_cast<fixedSizeVector*>(colors[i]))
         {
@@ -1218,7 +1230,7 @@ void queryColorColumn::optimizeRLE()
 //            }
         }
     }
-    cout<<"Size after "<<(double)sizeInBytes()/(1024.0*1024.0)<<endl;
+    explainSize();
 
 }
 
