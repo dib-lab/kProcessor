@@ -381,6 +381,35 @@ public:
         return sdsl::size_in_bytes(vec)+4;
     }
 };
+class RLEfixedSizeVector: public vectorBase{
+public:
+    typedef  sdsl::enc_vector<> vectype;
+    vectype vec;
+    vectype starts;
+    uint32_t colorsize;
+    uint32_t numColors;
+    RLEfixedSizeVector()
+    {
+
+    }
+    RLEfixedSizeVector(fixedSizeVector* fv,sdsl::int_vector<>& idsMap);
+    void loadFromInsertOnly(string path,sdsl::int_vector<>& idsMap);
+    vector<uint32_t> get(uint32_t index);
+    void set(uint32_t index,vector<uint32_t>& v)
+    {
+        throw logic_error("set is not supported");
+    }
+
+    uint32_t size()override {
+        return numColors;
+    }
+    void serialize(ofstream& of);
+    void deserialize(ifstream& iif);
+    uint64_t sizeInBytes(){
+
+        return sdsl::size_in_bytes(vec)+sdsl::size_in_bytes(starts)+8;
+    }
+};
 class queryColorColumn: public Column{
 public:
     deque<vectorBase*> colors;
@@ -408,6 +437,7 @@ public:
 
     void serialize(string filename);
     void deserialize(string filename);
+    void optimizeRLE();
     void optimize(insertColorColumn* col);
     void optimize2();
     void optimize3(insertColorColumn* col);

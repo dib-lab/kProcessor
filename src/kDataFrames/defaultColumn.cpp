@@ -1196,10 +1196,31 @@ uint64_t queryColorColumn::sizeInBytes()
         res+=vec->sizeInBytes();
     }
     res+=sdsl::size_in_bytes(idsMap);
-    cout<<"Ids Size = "<<sdsl::size_in_bytes(idsMap)/(1024.0*1024.0)<<"MB"<<endl;
+   // cout<<"Ids Size = "<<sdsl::size_in_bytes(idsMap)/(1024.0*1024.0)<<"MB"<<endl;
     return res;
 }
 
+void queryColorColumn::optimizeRLE()
+{
+    cout<<"Size Before "<<(double)sizeInBytes()/(1024.0*1024.0)<<endl;
+    for(unsigned int i=0;i<colors.size();i++) {
+        if(dynamic_cast<fixedSizeVector*>(colors[i]))
+        {
+            fixedSizeVector* tmp=(fixedSizeVector*)colors[i];
+            RLEfixedSizeVector* tmp2=new RLEfixedSizeVector(tmp,idsMap);
+            colors[i]=tmp2;
+//            if(tmp2->sizeInBytes() < tmp->sizeInBytes()) {
+//                colors[i]=tmp2;
+//                delete tmp;
+//            }
+//            else{
+//                delete tmp2;
+//            }
+        }
+    }
+    cout<<"Size after "<<(double)sizeInBytes()/(1024.0*1024.0)<<endl;
+
+}
 
 
 void fixedSizeVector::serialize(ofstream& f) {
@@ -1243,3 +1264,76 @@ void vectorOfVectors::deserialize(ifstream& f) {
 //    vecs=sdsl::enc_vector(tmpvecs);
 //    starts=sdsl::enc_vector(tmpStarts);
 }
+
+RLEfixedSizeVector::RLEfixedSizeVector(fixedSizeVector* fv,sdsl::int_vector<>& idsMap)
+:vectorBase(fv->beginID)
+{
+    colorsize=fv->colorsize;
+    numColors=fv->size();
+    unordered_map<uint32_t ,uint32_t > idsINV;
+    for(unsigned int i=0;i<idsMap.size();i++)
+    {
+        if(idsMap[i]>= beginID && idsMap[i]< beginID + numColors)
+        {
+            idsINV[idsMap[i]]=i;
+        }
+    }
+    vector<pair<vector<uint32_t>, uint32_t> > aux(numColors);
+    auto it=fv->vec.begin();
+    for(unsigned int i=0 ; i<numColors ;i++)
+    {
+        aux[i]=make_pair(vector<uint32_t>(colorsize),idsINV[beginID+i]);
+        for(unsigned int j=0 ; j<colorsize; j++)
+        {
+            aux[i].first[j]=*it;
+            it++;
+        }
+    }
+    sort(aux.begin(),aux.end(),[]
+            (const pair<vector<uint32_t>, uint32_t>& lhs, pair<vector<uint32_t>, uint32_t> &rhs) -> bool
+    {
+        for(unsigned int i=0;i<lhs.first.size();i++)
+            if(lhs.first[i]<rhs.first[i])
+                return true;
+            else if(lhs.first[i]>rhs.first[i])
+                return false;
+        return false;
+    });
+    for(unsigned int i=0 ; i<numColors ;i++)
+    {
+        idsMap[aux[i].second]=beginID+i;
+    }
+
+    deque<uint32_t> tmpVec;
+    deque<uint32_t> tmpStart;
+    uint32_t last=-1;
+    for(unsigned int j=0;j<colorsize;j++)
+    {
+        for(unsigned int i=0;i<numColors;i++)
+            if(aux[i].first[j]!=last)
+            {
+                last=aux[i].first[j];
+                tmpVec.push_back(last);
+                tmpStart.push_back(i+j*numColors);
+            }
+    }
+    vec=vectype(tmpVec);
+    starts=vectype(tmpStart);
+}
+
+vector<uint32_t> RLEfixedSizeVector::get(uint32_t index)
+{
+    vector<uint32_t> result(colorsize);
+    for(unsigned  int i=0;i<colorsize;i++)
+    {
+        uint32_t  tindex= i*numColors+index;
+        auto it=lower_bound(starts.begin(),starts.end(),tindex+1);
+        it--;
+        result[i]=vec[it-starts.begin()];
+    }
+    return result;
+}
+
+
+void RLEfixedSizeVector::serialize(ofstream& of){}
+void RLEfixedSizeVector::deserialize(ifstream& iif){}
