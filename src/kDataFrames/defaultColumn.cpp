@@ -1360,7 +1360,7 @@ void vectorOfVectors::sort(sdsl::int_vector<>& idsMap)
             end=*(itStart+1);
         }
         aux[i]=make_pair(vector<uint32_t>(end-start),idsINV[beginID+i]);
-        for(unsigned int j=start ; j<end; j++)
+        for(unsigned int j=0 ; j<end-start; j++)
         {
             aux[i].first[j]=*it;
             it++;
