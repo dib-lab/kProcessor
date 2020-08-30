@@ -226,6 +226,8 @@ public:
     void save(string filename);
     void load(string filename);
 
+    virtual void sort(sdsl::int_vector<>& idsMap)=0;
+
     virtual void serialize(ofstream& of)=0;
     virtual void deserialize(ifstream& f)=0;
 
@@ -309,6 +311,7 @@ public:
 
         return res;
     }
+    void sort(sdsl::int_vector<>& idsMap);
 };
 
 
@@ -328,6 +331,10 @@ public:
         //there is no color id =0 but there is a sample equal zero
         vector<uint32_t> res={index-1};
         return res;
+    }
+    void sort(sdsl::int_vector<>& idsMap)
+    {
+
     }
     void set(uint32_t index,vector<uint32_t>& v)
     {
@@ -389,6 +396,7 @@ public:
     }
     void serialize(ofstream& of);
     void deserialize(ifstream& iif);
+    void sort(sdsl::int_vector<>& idsMap);
     void explainSize(){
         cout<<"fixed size("<<colorsize<<") of "<<size()<<" colors in "<< sizeInBytes()/(1024.0*1024.0)<<"MB"<<endl;
     }
@@ -428,6 +436,10 @@ public:
 
         return sdsl::size_in_bytes(vec)+sdsl::size_in_bytes(starts)+8;
     }
+    void sort(sdsl::int_vector<>& idsMap)
+    {
+
+    }
     void explainSize(){
         cout<<"RLE fixed size("<<colorsize<<") of "<<size()<<" colors in "<< sizeInBytes()/(1024.0*1024.0)<<"MB"<<endl;
     }
@@ -462,6 +474,7 @@ public:
 
     void serialize(string filename);
     void deserialize(string filename);
+    void sortColors();
     void optimizeRLE();
     void optimize(insertColorColumn* col);
     void optimize2();

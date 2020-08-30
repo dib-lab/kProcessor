@@ -929,6 +929,7 @@ uint32_t getLongestSubsetColor(insertColorColumn* col,deque<uint32_t> & color,ui
     return result;
 
 }
+
 void queryColorColumn::optimize3(insertColorColumn* col)
 {
     numColors=col->getNumColors();
@@ -1082,6 +1083,12 @@ queryColorColumn::queryColorColumn(uint64_t noSamples,uint64_t noColors,string t
 
 
 }
+
+void queryColorColumn::sortColors()
+{
+    for(auto c :colors)
+        c->sort(idsMap);
+}
 void fixedSizeVector::loadFromInsertOnly(string path,sdsl::int_vector<>& idsMap)
 {
     sdsl::int_vector<> curr;
@@ -1222,6 +1229,7 @@ void queryColorColumn::optimizeRLE()
         if(dynamic_cast<fixedSizeVector*>(colors[i]))
         {
             fixedSizeVector* tmp=(fixedSizeVector*)colors[i];
+
             RLEfixedSizeVector* tmp2=new RLEfixedSizeVector(tmp,idsMap);
             colors[i]=tmp2;
 //            if(tmp2->sizeInBytes() < tmp->sizeInBytes()) {
@@ -1249,6 +1257,53 @@ void fixedSizeVector::deserialize(ifstream& f) {
 //    sdsl::int_vector<> tmp;
 //    tmp.load(f);
 //    vec=sdsl::enc_vector<>(tmp);
+}
+
+void fixedSizeVector::sort(sdsl::int_vector<>& idsMap)
+{
+    uint32_t numColors=size();
+    unordered_map<uint32_t ,uint32_t > idsINV;
+    for(unsigned int i=0;i<idsMap.size();i++)
+    {
+        if(idsMap[i]>= beginID && idsMap[i]< beginID + numColors)
+        {
+            idsINV[idsMap[i]]=i;
+        }
+    }
+    vector<pair<vector<uint32_t>, uint32_t> > aux(numColors);
+    auto it=vec.begin();
+    for(unsigned int i=0 ; i<numColors ;i++)
+    {
+        aux[i]=make_pair(vector<uint32_t>(colorsize),idsINV[beginID+i]);
+        for(unsigned int j=0 ; j<colorsize; j++)
+        {
+            aux[i].first[j]=*it;
+            it++;
+        }
+    }
+    std::sort(aux.begin(),aux.end(),[]
+            (const pair<vector<uint32_t>, uint32_t>& lhs, pair<vector<uint32_t>, uint32_t> &rhs) -> bool
+    {
+        for(unsigned int i=0;i<lhs.first.size();i++)
+            if(lhs.first[i]<rhs.first[i])
+                return true;
+            else if(lhs.first[i]>rhs.first[i])
+                return false;
+        return false;
+    });
+    for(unsigned int i=0 ; i<numColors ;i++)
+    {
+        idsMap[aux[i].second]=beginID+i;
+    }
+
+    vector<uint32_t> tmpVec(numColors*colorsize);
+    for(unsigned int i=0;i<numColors;i++)
+    {
+        for(unsigned int j=0;j<colorsize;j++)
+            tmpVec[i*colorsize + j]=aux[i].first[j];
+
+    }
+    vec=vectype(tmpVec);
 }
 
 void vectorOfVectors::serialize(ofstream& f) {
@@ -1280,6 +1335,68 @@ void vectorOfVectors::deserialize(ifstream& f) {
 //    starts=sdsl::enc_vector(tmpStarts);
 }
 
+
+void vectorOfVectors::sort(sdsl::int_vector<>& idsMap)
+{
+    uint32_t numColors=size();
+    unordered_map<uint32_t ,uint32_t > idsINV;
+    for(unsigned int i=0;i<idsMap.size();i++)
+    {
+        if(idsMap[i]>= beginID && idsMap[i]< beginID + numColors)
+        {
+            idsINV[idsMap[i]]=i;
+        }
+    }
+    vector<pair<vector<uint32_t>, uint32_t> > aux(numColors);
+    auto it=vecs.begin();
+    auto itStart=starts.begin();
+    unsigned  int i=0;
+    while(itStart!=starts.end())
+    {
+        uint32_t start=*itStart;
+        uint32_t end=vecs.size();
+        if((itStart+1)!= starts.end())
+        {
+            end=*(itStart+1);
+        }
+        aux[i]=make_pair(vector<uint32_t>(end-start),idsINV[beginID+i]);
+        for(unsigned int j=start ; j<end; j++)
+        {
+            aux[i].first[j]=*it;
+            it++;
+        }
+        i++;
+        itStart++;
+    }
+    std::sort(aux.begin(),aux.end(),[]
+            (const pair<vector<uint32_t>, uint32_t>& lhs, pair<vector<uint32_t>, uint32_t> &rhs) -> bool
+    {
+        for(unsigned int i=0;i<lhs.first.size();i++)
+            if(lhs.first[i]<rhs.first[i])
+                return true;
+            else if(lhs.first[i]>rhs.first[i])
+                return false;
+        return false;
+    });
+    for(unsigned int i=0 ; i<numColors ;i++)
+    {
+        idsMap[aux[i].second]=beginID+i;
+    }
+
+    vector<uint32_t> tmpVec(vecs.size());
+    vector<uint32_t> tmpStarts(starts.size());
+    uint32_t curr=0;
+    for(unsigned int i=0;i<numColors;i++)
+    {
+        tmpStarts[i]=curr;
+        for(unsigned int j=0;j<aux[i].first.size();j++)
+            tmpVec[curr++]=aux[i].first[j];
+
+    }
+    vecs=vectype(tmpVec);
+    starts=vectype(tmpStarts);
+}
+
 RLEfixedSizeVector::RLEfixedSizeVector(fixedSizeVector* fv,sdsl::int_vector<>& idsMap)
 :vectorBase(fv->beginID)
 {
@@ -1304,7 +1421,7 @@ RLEfixedSizeVector::RLEfixedSizeVector(fixedSizeVector* fv,sdsl::int_vector<>& i
             it++;
         }
     }
-    sort(aux.begin(),aux.end(),[]
+    std::sort(aux.begin(),aux.end(),[]
             (const pair<vector<uint32_t>, uint32_t>& lhs, pair<vector<uint32_t>, uint32_t> &rhs) -> bool
     {
         for(unsigned int i=0;i<lhs.first.size();i++)

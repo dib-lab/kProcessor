@@ -25,7 +25,8 @@ int main(int argc, char *argv[])
     }
 
     kDataFrame* indexFrame=kDataFrame::load(framePath);
-    ((queryColorColumn*)indexFrame->getDefaultColumn())->optimizeRLE();
+   // ((queryColorColumn*)indexFrame->getDefaultColumn())->optimizeRLE();
+    ((queryColorColumn*)indexFrame->getDefaultColumn())->sortColors();
 
     uint64_t testedKmers=0;
     uint64_t failedKmers=0;
