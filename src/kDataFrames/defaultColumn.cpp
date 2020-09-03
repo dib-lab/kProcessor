@@ -1105,6 +1105,8 @@ void fixedSizeVector::loadFromInsertOnly(string path,sdsl::int_vector<>& idsMap)
     }
     //    vec=sdsl::enc_vector<>(tmpVec);
     vec=sdsl::int_vector<>(tmpVec);
+    ((fixedSizeVectorIterator*)(endIterator->iterator))->it=vec.end();
+
 }
 
 void vectorOfVectors::loadFromInsertOnly(string path,sdsl::int_vector<>& idsMap)
@@ -1245,6 +1247,28 @@ void queryColorColumn::optimizeRLE()
 
 }
 
+fixedSizeVector::fixedSizeVector()
+{
+    auto it=new fixedSizeVectorIterator(this);
+    it->it=vec.end();
+    endIterator=new vectorBaseIterator(it);
+}
+fixedSizeVector::fixedSizeVector(uint32_t beginId,uint32_t colorsize)
+:vectorBase(beginId)
+        {
+                auto it=new fixedSizeVectorIterator(this);
+        it->it=vec.end();
+        endIterator=new vectorBaseIterator(it);
+        this->colorsize=colorsize;
+                // vec.resize(noColors*size);
+        }
+vectorBaseIterator fixedSizeVector::begin(){
+    return vectorBaseIterator(new fixedSizeVectorIterator(this));
+}
+vectorBaseIterator fixedSizeVector::end(){
+    ((fixedSizeVectorIterator*)endIterator->iterator)->it=vec.end();
+    return *endIterator;
+}
 
 void fixedSizeVector::serialize(ofstream& f) {
     f.write(  (char*)( &(colorsize) ), sizeof( uint32_t ) );
@@ -1306,6 +1330,31 @@ void fixedSizeVector::sort(sdsl::int_vector<>& idsMap)
     vec=vectype(tmpVec);
 }
 
+
+vectorOfVectors::vectorOfVectors()
+{
+    endIterator=new vectorBaseIterator(new vectorOfVectorsIterator(this));
+}
+vectorOfVectors::vectorOfVectors(uint32_t beginId)
+:vectorBase(beginId)
+{
+    endIterator=new vectorBaseIterator(new vectorOfVectorsIterator(this));
+}
+vectorOfVectors::vectorOfVectors(uint32_t beginId,uint32_t noColors)
+:vectorBase(beginId)
+{
+    endIterator=new vectorBaseIterator(new vectorOfVectorsIterator(this));
+    starts=vectype(sdsl::int_vector<>(noColors));
+}
+vectorBaseIterator vectorOfVectors::begin(){
+    return vectorBaseIterator(new vectorOfVectorsIterator(this));
+}
+
+vectorBaseIterator vectorOfVectors::end(){
+    ((vectorOfVectorsIterator*)endIterator->iterator)->vecsIt=vecs.end();
+    ((vectorOfVectorsIterator*)endIterator->iterator)->startsIt=starts.end();
+    return *endIterator;
+}
 void vectorOfVectors::serialize(ofstream& f) {
     vecs.serialize(f);
     starts.serialize(f);
@@ -1313,26 +1362,6 @@ void vectorOfVectors::serialize(ofstream& f) {
 void vectorOfVectors::deserialize(ifstream& f) {
     vecs.load(f);
     starts.load(f);
-//    uint32_t len;
-//    f.read( (char*) ( &(len) ), sizeof( uint32_t ) );
-//    vector<sdsl::int_vector<> > vs(len);
-//    uint32_t  total=0;
-//    for(unsigned int i=0; i < len;i++){
-//        vs[i].load(f);
-//        total += vs[i].size();
-//    }
-//    sdsl::int_vector<> tmpStarts(len);
-//    sdsl::int_vector<> tmpvecs(total);
-//    uint32_t  curr=0;
-//    for(unsigned int i=0; i < len;i++){
-//        tmpStarts[i]=curr;
-//        for(int j=0;j<vs[i].size();j++)
-//        {
-//            tmpvecs[curr++]=vs[i][j];
-//        }
-//    }
-//    vecs=sdsl::enc_vector(tmpvecs);
-//    starts=sdsl::enc_vector(tmpStarts);
 }
 
 

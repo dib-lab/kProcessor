@@ -29,6 +29,7 @@ public:
 
 
 
+
 template<typename  T>
 class vectorColumn: public Column{
 public:
@@ -153,8 +154,8 @@ public:
 
 };
 
-#define NUM_VECTORS 20
-#define VECTOR_SIZE 100000000
+#define NUM_VECTORS 5
+#define VECTOR_SIZE 10000000
 
 class insertColorColumn: public Column{
 public:
@@ -212,8 +213,85 @@ public:
 
 
 };
-class vectorBase{
+
+
+class _vectorBaseIterator{
+    public:
+    _vectorBaseIterator(){}
+
+    virtual _vectorBaseIterator& operator ++ (int)=0;
+    virtual _vectorBaseIterator* clone()=0;
+    virtual bool operator ==(const _vectorBaseIterator& other)=0;
+    virtual bool operator !=(const _vectorBaseIterator& other)=0;
+    virtual vector<uint32_t> operator*()=0;
+    virtual ~_vectorBaseIterator(){};
+
+};
+
+class vectorBaseIterator{
 public:
+    _vectorBaseIterator* iterator;
+    vectorBaseIterator(){
+        iterator=NULL;
+    }
+
+    vectorBaseIterator(const vectorBaseIterator& other){
+        if(other.iterator!=NULL){
+            iterator=other.iterator->clone();
+        }
+        else{
+            iterator=NULL;
+        }
+    }
+    vectorBaseIterator& operator= (const vectorBaseIterator& other){
+        if(other.iterator!=NULL){
+            iterator=other.iterator->clone();
+        }
+        else{
+            iterator=NULL;
+        }
+        return *this;
+    }
+    vectorBaseIterator(_vectorBaseIterator* it){
+        iterator=it;
+    }
+/// Increment the iterator to the next kmer
+    vectorBaseIterator& operator ++ (int){
+        (*iterator)++;
+        return *this;
+    }
+
+    /// Increment the iterator to the next kmer (Implemented mainly for python interface)
+    vectorBaseIterator& next(){
+        (*iterator)++;
+        return *this;
+    }
+    /// Compare the position of each iterator in the underlying datastructure.
+    /*! returns True when current and other points to the same kmer */
+    bool operator ==(const vectorBaseIterator& other)
+    {
+        return *iterator == *other.iterator;
+    }
+    /// Compare the position of each iterator in the underlying datastructure.
+    /*! returns True when current and other points to different kmers */
+    bool operator !=(const vectorBaseIterator& other)
+    {
+        return *iterator != *other.iterator;
+    }
+    vector<uint32_t> operator*(){
+        return *(*iterator);
+    }
+    ~vectorBaseIterator(){
+        delete iterator;
+    }
+};
+
+
+
+class vectorBase{
+    protected:
+        vectorBaseIterator* endIterator;
+    public:
     uint32_t beginID;
     vectorBase(){
         beginID=0;
@@ -221,7 +299,7 @@ public:
     vectorBase(uint32_t b){
         beginID=b;
     }
-    virtual ~vectorBase(){}
+    virtual ~vectorBase(){delete endIterator;}
     virtual uint32_t size()=0;
     void save(string filename);
     void load(string filename);
@@ -242,6 +320,13 @@ public:
         return lhs.beginID < rhs.beginID ;
     }
 
+    ///Returns an iterator at the beginning of the vectorBaseIterator.
+    virtual vectorBaseIterator begin()=0;
+    ///Returns an iterator at the end of the vectorBaseIterator.
+    virtual vectorBaseIterator end(){
+        return *endIterator;
+    }
+
 };
 
 class vectorOfVectors: public vectorBase{
@@ -250,24 +335,9 @@ public:
     vectype  vecs;
     vectype starts;
 
-    vectorOfVectors()
-    {
-
-    }
-    vectorOfVectors(uint32_t beginId)
-            :vectorBase(beginId)
-    {
-      //  starts.resize(noColors);
-    //    vecs.resize(noColors);
-    }
-    vectorOfVectors(uint32_t beginId,uint32_t noColors)
-            :vectorBase(beginId)
-    {
-            starts=vectype(sdsl::int_vector<>(noColors));
-      //        starts=sdsl::enc_vector(sdsl::int_vector(noColors));
-        //  starts.resize(noColors);
-        //    vecs.resize(noColors);
-    }
+    vectorOfVectors();
+    vectorOfVectors(uint32_t beginId);
+    vectorOfVectors(uint32_t beginId,uint32_t noColors);
     ~vectorOfVectors(){
 
     }
@@ -295,10 +365,10 @@ public:
     uint32_t size()override {
         return starts.size();
     }
-    void explainSize(){
+    void explainSize() override {
         cout<<"Vector of Vectors "<<size()<<" colors in"<< sizeInBytes()/(1024.0*1024.0)<<"MB"<<endl;
     }
-    uint64_t numIntegers(){
+    uint64_t numIntegers()override {
         return vecs.size();
     }
     void loadFromInsertOnly(string path,sdsl::int_vector<>& idsMap);
@@ -312,6 +382,60 @@ public:
         return res;
     }
     void sort(sdsl::int_vector<>& idsMap);
+    vectorBaseIterator begin() override ;
+    vectorBaseIterator end();
+
+
+
+};
+
+class vectorOfVectorsIterator: public _vectorBaseIterator{
+public:
+    vectorOfVectors::vectype::iterator vecsIt;
+    vectorOfVectors::vectype::iterator startsIt;
+    vectorOfVectors* origin;
+    vectorOfVectorsIterator(vectorOfVectors* o){
+        origin=o;
+        vecsIt=o->vecs.begin();
+        startsIt=o->starts.begin();
+    }
+
+    _vectorBaseIterator& operator ++ (int){
+        uint32_t end=origin->vecs.size();
+        if((startsIt+1)!=origin->starts.end())
+            end=*(startsIt+1);
+        int diff=end-*startsIt;
+        startsIt++;
+        vecsIt+=diff;
+        return *this;
+    }
+    _vectorBaseIterator* clone(){
+        vectorOfVectorsIterator* newIt=new vectorOfVectorsIterator(origin);
+        newIt->vecsIt=vecsIt;
+        newIt->startsIt=startsIt;
+        return newIt;
+    }
+    bool operator ==(const _vectorBaseIterator& other){
+        return startsIt == ((vectorOfVectorsIterator*)&other)->startsIt;
+    };
+    bool operator !=(const _vectorBaseIterator& other){
+        return startsIt != ((vectorOfVectorsIterator*)&other)->startsIt;
+    };
+    vector<uint32_t> operator*(){
+        auto tmpIt=vecsIt;
+        uint32_t end=origin->vecs.size();
+        if((startsIt+1)!=origin->starts.end())
+            end=*(startsIt+1);
+        int diff=end-*startsIt;
+        vector<uint32_t> res(diff);
+        for(int i=0;i<diff;i++) {
+            res[i] = *tmpIt;
+            tmpIt++;
+        }
+        return res;
+    };
+    ~vectorOfVectorsIterator(){};
+
 };
 
 
@@ -326,6 +450,7 @@ public:
     {
         this->noColors=noColors;
     }
+    ~constantVector(){}
 
     vector<uint32_t> get(uint32_t index){
         //there is no color id =0 but there is a sample equal zero
@@ -354,23 +479,27 @@ public:
 
         return 4;
     }
+    vectorBaseIterator begin(){
+        return vectorBaseIterator();
+    }
+
+
 };
+
+
+
+class fixedSizeVectorIterator;
+
 
 class fixedSizeVector: public vectorBase{
 public:
     typedef  sdsl::vlc_vector<> vectype;
     vectype vec;
     uint32_t colorsize;
-    fixedSizeVector()
-    {
+    fixedSizeVector();
+    ~fixedSizeVector(){}
 
-    }
-    fixedSizeVector(uint32_t beginId,uint32_t colorsize)
-            :vectorBase(beginId)
-    {
-        this->colorsize=colorsize;
-        // vec.resize(noColors*size);
-    }
+    fixedSizeVector(uint32_t beginId,uint32_t colorsize);
     void loadFromInsertOnly(string path,sdsl::int_vector<>& idsMap);
     vector<uint32_t> get(uint32_t index){
         vector<uint32_t> res(colorsize);
@@ -407,7 +536,49 @@ public:
 
         return sdsl::size_in_bytes(vec)+4;
     }
+    vectorBaseIterator begin();
+    vectorBaseIterator end();
+
 };
+
+class fixedSizeVectorIterator: public _vectorBaseIterator{
+public:
+    fixedSizeVector::vectype::iterator it;
+    fixedSizeVector* origin;
+    fixedSizeVectorIterator(fixedSizeVector* o){
+        origin=o;
+        it=o->vec.begin();
+    }
+
+    _vectorBaseIterator& operator ++ (int){
+        it+=origin->colorsize;
+        return *this;
+    }
+    _vectorBaseIterator* clone(){
+        fixedSizeVectorIterator* newIt=new fixedSizeVectorIterator(origin);
+        newIt->it=it;
+        return newIt;
+    }
+    bool operator ==(const _vectorBaseIterator& other){
+        return it == ((fixedSizeVectorIterator*)&other)->it;
+    };
+    bool operator !=(const _vectorBaseIterator& other){
+        return it != ((fixedSizeVectorIterator*)&other)->it;
+    };
+    vector<uint32_t> operator*(){
+        vector<uint32_t> res(origin->colorsize);
+        auto tmpIt=it;
+        for(unsigned int i=0;i<origin->colorsize;i++) {
+            res[i] = *tmpIt;
+            tmpIt++;
+        }
+        return res;
+    };
+    ~fixedSizeVectorIterator(){};
+
+};
+
+
 class RLEfixedSizeVector: public vectorBase{
 public:
     typedef  sdsl::enc_vector<> vectype;
@@ -446,6 +617,13 @@ public:
     uint64_t numIntegers(){
         return numColors*colorsize;
     }
+    vectorBaseIterator begin(){
+        return vectorBaseIterator();
+    }
+    vectorBaseIterator end(){
+        return vectorBaseIterator();
+    }
+
 };
 class queryColorColumn: public Column{
 public:
@@ -489,6 +667,8 @@ public:
     uint64_t sizeInBytes();
     void explainSize();
 
+    vectorBaseIterator begin();
+    vectorBaseIterator end();
 
 
 };
