@@ -1597,7 +1597,7 @@ prefixTrieQueryColorColumn::prefixTrieQueryColorColumn(queryColorColumn* col)
             {
                 cout<<"Tmp edges of size ("<<sdsl::size_in_mega_bytes(tmp_edges)<<"MB) is full a new one will be created"<<endl;
                 tmpEdgesTop=0;
-                edges.push_back(sdsl::enc_vector<>(tmp_edges));
+                edges.push_back(sdsl::vlc_vector<>(tmp_edges));
                 cout<<"The new compressed vector size is "<<sdsl::size_in_mega_bytes(edges.back())<<"MB"<<endl;
             }
         }
@@ -1623,7 +1623,7 @@ prefixTrieQueryColorColumn::prefixTrieQueryColorColumn(queryColorColumn* col)
         }
     }
     tmp_edges.resize(tmpEdgesTop);
-    edges.push_back(sdsl::enc_vector<>(tmp_edges));
+    edges.push_back(sdsl::vlc_vector<>(tmp_edges));
     tmpTreeChunks.back().resize(tmpTreeTop);
 
     uint32_t edgeSizes=0;
