@@ -1535,7 +1535,7 @@ prefixTrieQueryColorColumn::prefixTrieQueryColorColumn(queryColorColumn* col)
         }
     }
 
-    uint32_t  tmpSize= col->numIntegers();
+    uint32_t  tmpSize= col->numIntegers()/2;
     cout<<"Total Num of Integers "<<tmpSize<<endl;
     deque<sdsl::bit_vector> tmpTreeChunks;
 
