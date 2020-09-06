@@ -375,7 +375,7 @@ public:
         cout<<"Vector of Vectors "<<size()<<" colors in"<< sizeInBytes()/(1024.0*1024.0)<<"MB"<<endl;
     }
     uint64_t numIntegers()override {
-        return vecs.size();
+        return vecs.size()+starts.size();
     }
     void loadFromInsertOnly(string path,sdsl::int_vector<>& idsMap);
     void serialize(ofstream& of);
