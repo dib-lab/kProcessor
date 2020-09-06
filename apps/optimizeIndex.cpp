@@ -25,7 +25,7 @@ int main(int argc, char *argv[])
     }
 
     kDataFrame* indexFrame=kDataFrame::load(framePath);
-   // ((queryColorColumn*)indexFrame->getDefaultColumn())->optimizeRLE();
+    ((queryColorColumn*)indexFrame->getDefaultColumn())->explainSize();
     //((queryColorColumn*)indexFrame->getDefaultColumn())->sortColors();
 
     uint64_t testedKmers=0;
@@ -33,37 +33,19 @@ int main(int argc, char *argv[])
     uint64_t notFoundKmers =0;
 
     queryColorColumn* qColumn=((queryColorColumn*)indexFrame->getDefaultColumn());
-    for(auto c: qColumn->colors)
-    {
-
-        auto it=c->begin();
-        unsigned  int i=0;
-        while(it != c->end())
-        {
-            vector<uint32_t> correct=c->get(i);
-            vector<uint32_t> test=*it;
-            if(!equal(correct.begin(),correct.end(),test.begin()))
-            {
-                cout<<"Failed"<<endl;
-            }
-            it++;
-            i++;
-        }
-        if(i!=c->size())
-            cout<<"Not reached the end "<<i<<" size= "<<c->size() <<endl;
-    }
-
-
+    prefixTrieQueryColorColumn* pColumn=new prefixTrieQueryColorColumn(qColumn);
+    pColumn->explainSize();
+    indexFrame->changeDefaultColumnType(pColumn);
     for(int i=0;i<filenames.size();i++)
     {
-        cerr<<"Testing "<<filenames[i]+".testkmers"<<endl;
+      //  cerr<<"Testing "<<filenames[i]+".testkmers"<<endl;
         ifstream inp(filenames[i]+".testkmers");
         string kmer;
         uint64_t count;
         while(inp>>kmer>>count)
         {
             testedKmers++;
-            vector<uint32_t> colors=indexFrame->getKmerDefaultColumnValue<vector<uint32_t >, queryColorColumn >(kmer);
+            vector<uint32_t> colors=indexFrame->getKmerDefaultColumnValue<vector<uint32_t >, prefixTrieQueryColorColumn >(kmer);
             if(colors.size()==0)
             {
                 notFoundKmers++;

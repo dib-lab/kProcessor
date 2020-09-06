@@ -6,6 +6,7 @@
 #include <iostream>
 #include <parallel_hashmap/phmap.h>
 #include "sdsl/vectors.hpp"
+#include "sdsl/bp_support.hpp"
 #include <stack>
 
 using phmap::flat_hash_map;
@@ -224,6 +225,7 @@ class _vectorBaseIterator{
     virtual bool operator ==(const _vectorBaseIterator& other)=0;
     virtual bool operator !=(const _vectorBaseIterator& other)=0;
     virtual vector<uint32_t> operator*()=0;
+    virtual uint32_t getID()=0;
     virtual ~_vectorBaseIterator(){};
 
 };
@@ -280,6 +282,10 @@ public:
     }
     vector<uint32_t> operator*(){
         return *(*iterator);
+    }
+
+    uint32_t getID(){
+        return iterator->getID();
     }
     ~vectorBaseIterator(){
         delete iterator;
@@ -434,6 +440,10 @@ public:
         }
         return res;
     };
+    uint32_t getID()
+    {
+        return (startsIt-origin->starts.begin())+origin->beginID;
+    }
     ~vectorOfVectorsIterator(){};
 
 };
@@ -573,7 +583,11 @@ public:
             tmpIt++;
         }
         return res;
-    };
+    }
+    uint32_t getID()
+    {
+        return (it-origin->vec.begin())/origin->colorsize+origin->beginID;
+    }
     ~fixedSizeVectorIterator(){};
 
 };
@@ -658,17 +672,53 @@ public:
     void optimize2();
     void optimize3(insertColorColumn* col);
 
-    uint32_t getNumColors(){
+    uint32_t size(){
         uint32_t res=0;
         for(int i=1;i<colors.size();i++)
             res+=colors[i]->size();
         return res;
     }
+    uint32_t numIntegers(){
+        uint32_t res=0;
+        for(int i=1;i<colors.size();i++)
+            res+=colors[i]->numIntegers();
+        return res;
+    }
     uint64_t sizeInBytes();
     void explainSize();
 
-    vectorBaseIterator begin();
-    vectorBaseIterator end();
+
+};
+
+
+class prefixTrieQueryColorColumn: public Column{
+public:
+    deque<sdsl::enc_vector<> > edges;
+    sdsl::bit_vector tree;
+    sdsl::bp_support_sada<> bp_tree;
+    uint64_t  noSamples;
+    sdsl::int_vector<> idsMap;
+    uint64_t numColors;
+    prefixTrieQueryColorColumn(){
+
+    }
+    prefixTrieQueryColorColumn(queryColorColumn* col);
+    ~prefixTrieQueryColorColumn(){
+
+    }
+    uint32_t  insertAndGetIndex(vector<uint32_t >& item);
+    vector<uint32_t > getWithIndex(uint32_t index);
+
+    void insert(vector<uint32_t >& item,uint32_t index);
+    //vector<uint32_t > get(uint32_t index);
+
+    void serialize(string filename);
+    void deserialize(string filename);
+
+
+    uint32_t getNumColors();
+    uint64_t sizeInBytes();
+    void explainSize();
 
 
 };
