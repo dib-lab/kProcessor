@@ -1705,10 +1705,13 @@ void prefixTrieQueryColorColumn::explainSize(){
     cout<< "BpSupport = " << sdsl::size_in_mega_bytes(bp_tree)<<"MB\n";
     cout<< "Ids Map = " << sdsl::size_in_mega_bytes(idsMap)<<"MB\n";
     double res=0;
-    for(auto e:edges)
-        res+=sdsl::size_in_mega_bytes(e);
+    uint64_t edgesInts=0;
+    for(auto e:edges) {
+        res += sdsl::size_in_mega_bytes(e);
+        edgesInts += e.size();
+    }
     cout<< "edges = " << res<<"MB\n";
-
+    cout<< "edges Integets= " << edgesInts<<"\n";
     double total=res+sdsl::size_in_mega_bytes(idsMap)
                  +sdsl::size_in_mega_bytes(bp_tree)+
                  sdsl::size_in_mega_bytes(tree);
