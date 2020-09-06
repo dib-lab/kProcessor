@@ -423,6 +423,7 @@ public:
         vectorOfVectorsIterator* newIt=new vectorOfVectorsIterator(origin);
         newIt->vecsIt=vecsIt;
         newIt->startsIt=startsIt;
+        newIt->origin=origin;
         return newIt;
     }
     bool operator ==(const _vectorBaseIterator& other){
@@ -577,6 +578,7 @@ public:
     _vectorBaseIterator* clone(){
         fixedSizeVectorIterator* newIt=new fixedSizeVectorIterator(origin);
         newIt->it=it;
+        newIt->origin=origin;
         return newIt;
     }
     bool operator ==(const _vectorBaseIterator& other){

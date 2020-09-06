@@ -1518,7 +1518,7 @@ prefixTrieQueryColorColumn::prefixTrieQueryColorColumn(queryColorColumn* col)
     }
     cout<<"Inverted Ids is calculated"<<endl;
 
-    auto compare = [](tuple<vector<uint32_t >,uint32_t,vectorBaseIterator,vectorBaseIterator>  lhs, tuple<vector<uint32_t >,uint32_t ,vectorBaseIterator,vectorBaseIterator>  rhs)
+    auto compare = [](tuple<vector<uint32_t >,uint32_t,vectorBaseIterator*,vectorBaseIterator*>  lhs, tuple<vector<uint32_t >,uint32_t ,vectorBaseIterator*,vectorBaseIterator*>  rhs)
     {
         for(unsigned int i=0;i<std::get<0>(lhs).size() && i<std::get<0>(rhs).size();i++)
             if(std::get<0>(lhs)[i]>std::get<0>(rhs)[i])
@@ -1527,14 +1527,14 @@ prefixTrieQueryColorColumn::prefixTrieQueryColorColumn(queryColorColumn* col)
                 return false;
         return std::get<0>(lhs).size() > std::get<0>(rhs).size();
     };
-    priority_queue<tuple<vector<uint32_t >,uint32_t,vectorBaseIterator,vectorBaseIterator> , vector<tuple<vector<uint32_t >,uint32_t ,vectorBaseIterator,vectorBaseIterator> >,  decltype(compare)> nextColor(compare);
+    priority_queue<tuple<vector<uint32_t >,uint32_t,vectorBaseIterator*,vectorBaseIterator*> , vector<tuple<vector<uint32_t >,uint32_t ,vectorBaseIterator*,vectorBaseIterator*> >,  decltype(compare)> nextColor(compare);
     for(auto c:col->colors)
     {
-        vectorBaseIterator it=c->begin();
-        vectorBaseIterator itEnd=c->end();
-        if(it!=itEnd) {
-            vector<uint32_t> arr = *it;
-            nextColor.push(make_tuple(arr,it.getID(), it, itEnd));
+        vectorBaseIterator* it=new vectorBaseIterator(c->begin());
+        vectorBaseIterator* itEnd=new vectorBaseIterator(c->end());
+        if(*it!=*itEnd) {
+            vector<uint32_t> arr = **it;
+            nextColor.push(make_tuple(arr,it->getID(), it, itEnd));
         }
     }
 
@@ -1558,10 +1558,6 @@ prefixTrieQueryColorColumn::prefixTrieQueryColorColumn(queryColorColumn* col)
         auto colorTuple=nextColor.top();
         nextColor.pop();
         processedColors++;
-
-
-
-
         uint32_t i=0;
         for(;i<std::get<0>(colorTuple).size() && i< currPrefix.size();i++)
         {
@@ -1607,11 +1603,15 @@ prefixTrieQueryColorColumn::prefixTrieQueryColorColumn(queryColorColumn* col)
 
         idsMap[invIdsMap[std::get<1>(colorTuple)]]=rank-1;
 
-        std::get<2>(colorTuple).next();
-        if(std::get<2>(colorTuple)!=std::get<3>(colorTuple)) {
-            std::get<0>(colorTuple)=*(std::get<2>(colorTuple));
-            std::get<1>(colorTuple)=std::get<2>(colorTuple).getID();
+        std::get<2>(colorTuple)->next();
+        if(*std::get<2>(colorTuple)!=*std::get<3>(colorTuple)) {
+            std::get<0>(colorTuple)=*(*(std::get<2>(colorTuple)));
+            std::get<1>(colorTuple)=std::get<2>(colorTuple)->getID();
             nextColor.push(colorTuple);
+        }
+        else{
+            delete std::get<2>(colorTuple);
+            delete std::get<3>(colorTuple);
         }
 
     }
