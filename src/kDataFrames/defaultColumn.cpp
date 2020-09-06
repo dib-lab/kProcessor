@@ -1215,11 +1215,14 @@ void queryColorColumn::explainSize()
     uint64_t res=0;
     uint64_t numIntegers=0;
     cout<<"Ids Size = "<<sdsl::size_in_bytes(idsMap)/(1024.0*1024.0)<<"MB"<<endl;
+    double vMBBytes;
     for(auto vec:colors)
     {
+        vMBBytes+=vec->sizeInMB();
         vec->explainSize();
         numIntegers+=vec->numIntegers();
     }
+    cout<<"Arrays sizes = "<<vMBBytes<<"MB"<<endl;
     cout<<"Total = "<<sizeInBytes()/(1024.0*1024.0)<<"MB"<<endl;
     cout<<"Num Integers = "<<numIntegers<<endl;
     // cout<<"Ids Size = "<<sdsl::size_in_bytes(idsMap)/(1024.0*1024.0)<<"MB"<<endl;

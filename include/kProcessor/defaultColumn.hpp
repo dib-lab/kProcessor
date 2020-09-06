@@ -316,6 +316,7 @@ class vectorBase{
     virtual void deserialize(ifstream& f)=0;
 
     virtual uint64_t sizeInBytes()=0;
+    virtual double sizeInMB()=0;
     virtual void explainSize()=0;
     virtual uint64_t numIntegers()=0;
 
@@ -386,6 +387,9 @@ public:
         res+=sdsl::size_in_bytes(starts);
 
         return res;
+    }
+    double sizeInMB(){
+        return sdsl::size_in_mega_bytes(vecs)+sdsl::size_in_mega_bytes(starts);
     }
     void sort(sdsl::int_vector<>& idsMap);
     vectorBaseIterator begin() override ;
@@ -492,6 +496,9 @@ public:
     vectorBaseIterator begin(){
         return vectorBaseIterator();
     }
+    double sizeInMB(){
+        return 0.0;
+    }
 
 
 };
@@ -545,6 +552,9 @@ public:
     uint64_t sizeInBytes(){
 
         return sdsl::size_in_bytes(vec)+4;
+    }
+    double sizeInMB(){
+        return sdsl::size_in_mega_bytes(vec);
     }
     vectorBaseIterator begin();
     vectorBaseIterator end();
@@ -636,6 +646,9 @@ public:
     }
     vectorBaseIterator end(){
         return vectorBaseIterator();
+    }
+    double sizeInMB(){
+        return sdsl::size_in_mega_bytes(vec)+sdsl::size_in_mega_bytes(starts);
     }
 
 };
