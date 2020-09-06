@@ -1622,8 +1622,10 @@ prefixTrieQueryColorColumn::prefixTrieQueryColorColumn(queryColorColumn* col)
             tmpTreeChunks.push_back(sdsl::bit_vector(tmpSize));
         }
     }
-    tmp_edges.resize(tmpEdgesTop);
-    edges.push_back(sdsl::vlc_vector<>(tmp_edges));
+    //tmp_edges.resize(tmpEdgesTop);
+    vector<uint32_t> tmp_edges2(tmpEdgesTop);
+    std::copy(tmp_edges.begin(),tmp_edges.begin()+tmpEdgesTop,tmp_edges2.begin());
+    edges.push_back(sdsl::vlc_vector<>(tmp_edges2));
     tmpTreeChunks.back().resize(tmpTreeTop);
 
     uint32_t edgeSizes=0;
