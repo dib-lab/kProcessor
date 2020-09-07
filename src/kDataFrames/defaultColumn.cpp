@@ -1509,14 +1509,14 @@ prefixTrieQueryColorColumn::prefixTrieQueryColorColumn(queryColorColumn* col)
     noSamples=col->noSamples;
     numColors=col->size();
     col->sortColors();
-    cout<<"Colors Sorted"<<endl;
+    cerr<<"Colors Sorted"<<endl;
     idsMap=sdsl::int_vector<>(col->idsMap.size());
     sdsl::int_vector<> invIdsMap(col->idsMap.size());
     for(unsigned int i=0;i< col->idsMap.size();i++)
     {
         invIdsMap[col->idsMap[i]]=i;
     }
-    cout<<"Inverted Ids is calculated"<<endl;
+    cerr<<"Inverted Ids is calculated"<<endl;
 
     auto compare = [](tuple<vector<uint32_t >,uint32_t,vectorBaseIterator*,vectorBaseIterator*>  lhs, tuple<vector<uint32_t >,uint32_t ,vectorBaseIterator*,vectorBaseIterator*>  rhs)
     {
@@ -1539,7 +1539,7 @@ prefixTrieQueryColorColumn::prefixTrieQueryColorColumn(queryColorColumn* col)
     }
 
     uint32_t  tmpSize= col->numIntegers()/2;
-    cout<<"Total Num of Integers "<<tmpSize<<endl;
+    cerr<<"Total Num of Integers "<<tmpSize<<endl;
     deque<sdsl::bit_vector> tmpTreeChunks;
 
     uint32_t  tmpEdgesTop=0;
@@ -1571,7 +1571,7 @@ prefixTrieQueryColorColumn::prefixTrieQueryColorColumn(queryColorColumn* col)
             tmpTreeChunks.back()[tmpTreeTop++]=0;
             if(tmpTreeTop==tmpTreeChunks.back().size())
             {
-                cout<<"Tmp bp_tree of size ("<<sdsl::size_in_mega_bytes(tmpTreeChunks.back())<<"MB) is full a new one will be created"<<endl;
+                cerr<<"Tmp bp_tree of size ("<<sdsl::size_in_mega_bytes(tmpTreeChunks.back())<<"MB) is full a new one will be created"<<endl;
                 tmpTreeTop=0;
                 tmpTreeChunks.push_back(sdsl::bit_vector(tmpSize));
             }
@@ -1586,7 +1586,7 @@ prefixTrieQueryColorColumn::prefixTrieQueryColorColumn(queryColorColumn* col)
             tmpTreeChunks.back()[tmpTreeTop++]=1;
             if(tmpTreeTop==tmpTreeChunks.back().size())
             {
-                cout<<"Tmp bp_tree of size ("<<sdsl::size_in_mega_bytes(tmpTreeChunks.back())<<"MB) is full a new one will be created"<<endl;
+                cerr<<"Tmp bp_tree of size ("<<sdsl::size_in_mega_bytes(tmpTreeChunks.back())<<"MB) is full a new one will be created"<<endl;
                 tmpTreeTop=0;
                 tmpTreeChunks.push_back(sdsl::bit_vector(tmpSize));
             }
@@ -1594,10 +1594,10 @@ prefixTrieQueryColorColumn::prefixTrieQueryColorColumn(queryColorColumn* col)
             tmp_edges[tmpEdgesTop++]=sample;
             if(tmpEdgesTop==tmp_edges.size())
             {
-                cout<<"Tmp edges of size ("<<sdsl::size_in_mega_bytes(tmp_edges)<<"MB) is full a new one will be created"<<endl;
+                cerr<<"Tmp edges of size ("<<sdsl::size_in_mega_bytes(tmp_edges)<<"MB) is full a new one will be created"<<endl;
                 tmpEdgesTop=0;
                 edges.push_back(sdsl::vlc_vector<>(tmp_edges));
-                cout<<"The new compressed vector size is "<<sdsl::size_in_mega_bytes(edges.back())<<"MB"<<endl;
+                cerr<<"The new compressed vector size is "<<sdsl::size_in_mega_bytes(edges.back())<<"MB"<<endl;
             }
         }
 
@@ -1620,7 +1620,7 @@ prefixTrieQueryColorColumn::prefixTrieQueryColorColumn(queryColorColumn* col)
         tmpTreeChunks.back()[tmpTreeTop++]=0;
         if(tmpTreeTop==tmpTreeChunks.back().size())
         {
-            cout<<"Tmp bp_tree of size ("<<sdsl::size_in_mega_bytes(tmpTreeChunks.back())<<"MB) is full a new one will be created"<<endl;
+            cerr<<"Tmp bp_tree of size ("<<sdsl::size_in_mega_bytes(tmpTreeChunks.back())<<"MB) is full a new one will be created"<<endl;
             tmpTreeTop=0;
             tmpTreeChunks.push_back(sdsl::bit_vector(tmpSize));
         }
@@ -1634,19 +1634,19 @@ prefixTrieQueryColorColumn::prefixTrieQueryColorColumn(queryColorColumn* col)
     uint32_t edgeSizes=0;
     for(auto t:edges)
         edgeSizes+=t.size();
-    cout<<"Edges size = "<<edgeSizes<<endl;
+    cerr<<"Edges size = "<<edgeSizes<<endl;
 
     uint32_t  treeTotalSize=0;
     for(auto t:tmpTreeChunks)
         treeTotalSize+=t.size();
-    cout<<"Tree total size = "<<treeTotalSize<<endl;
+    cerr<<"Tree total size = "<<treeTotalSize<<endl;
     tree=sdsl::bit_vector(treeTotalSize);
     auto it=tree.begin();
     for(auto t:tmpTreeChunks)
         it=copy(t.begin(),t.end(),it);
     bp_tree=sdsl::bp_support_sada<>(&tree);
     //cout<<bp_tree.select(0)<<endl;
-    cout<<"Tree structure size = "<<sdsl::size_in_mega_bytes(bp_tree)<<endl;
+    cerr<<"Tree structure size = "<<sdsl::size_in_mega_bytes(bp_tree)<<endl;
 }
 
 
