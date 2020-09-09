@@ -13,7 +13,7 @@ int main(int argc, char *argv[])
 {
     string inputList=argv[1];
     string framePath=argv[2];
-
+    string outputColumn=argv[3];
     vector<string> filenames;
     vector<kDataFrame*> frames;
 
@@ -34,8 +34,15 @@ int main(int argc, char *argv[])
 
     queryColorColumn* qColumn=((queryColorColumn*)indexFrame->getDefaultColumn());
     prefixTrieQueryColorColumn* pColumn=new prefixTrieQueryColorColumn(qColumn);
+    pColumn->serialize(outputColumn);
+
+
     pColumn->explainSize();
     indexFrame->changeDefaultColumnType(pColumn);
+    indexFrame->save(framePath+".prefixTrie");
+    delete indexFrame;
+    indexFrame=kDataFrame::load(framePath+".prefixTrie");
+
     for(int i=0;i<filenames.size();i++)
     {
       //  cerr<<"Testing "<<filenames[i]+".testkmers"<<endl;

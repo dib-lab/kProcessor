@@ -48,6 +48,10 @@ Column* Column::getContainerByName(std::size_t hash)
     {
         return new queryColorColumn();
     }
+    else if(hash== typeid(prefixTrieQueryColorColumn).hash_code())
+    {
+        return new prefixTrieQueryColorColumn();
+    }
     else
     {
         throw logic_error("Failed to load Unknown Column "+hash);
@@ -1195,6 +1199,7 @@ void queryColorColumn::deserialize(string filename)
         colors.push_back(vec);
     }
     input.close();
+    numColors=size();
 
 }
 
@@ -1680,9 +1685,34 @@ void prefixTrieQueryColorColumn::insert(vector<uint32_t >& item,uint32_t index){
 //}
 
 void prefixTrieQueryColorColumn::serialize(string filename){
-
+    ofstream out(filename.c_str());
+    out.write(  (char*)( &(noSamples) ), sizeof( uint32_t ) );
+    out.write(  (char*)( &(numColors) ), sizeof( uint32_t ) );
+    idsMap.serialize(out);
+    tree.serialize(out);
+    bp_tree.serialize(out);
+    uint32_t tmp=edges.size();
+    out.write(  (char*)( &(tmp) ), sizeof( uint32_t ) );
+    for(auto v:edges) {
+        v.serialize(out);
+    }
+    out.close();
 }
 void prefixTrieQueryColorColumn::deserialize(string filename){
+    ifstream input(filename.c_str());
+    input.read(  (char*)( &(noSamples) ), sizeof( uint32_t ) );
+    input.read(  (char*)( &(numColors) ), sizeof( uint32_t ) );
+    idsMap.load(input);
+    tree.load(input);
+    bp_tree.load(input,&tree);
+    uint32_t numEdges;
+    input.read(  (char*)( &(numEdges) ), sizeof( uint32_t ) );
+    edges=deque<sdsl::vlc_vector<> >(numEdges);
+    for(uint32_t i=0 ; i<numEdges ; i++)
+    {
+        edges[i].load(input);
+    }
+    input.close();
 
 }
 
