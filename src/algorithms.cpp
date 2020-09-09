@@ -949,6 +949,7 @@ void indexPriorityQueue(vector<kDataFrame*>& input, string tmpFolder,kDataFrame 
     delete colors;
 
     queryColorColumn* qcolors=new queryColorColumn(input.size(), noColors ,tmpFolder);
+    qcolors->explainSize();
     output->changeDefaultColumnType(qcolors);
 }
 
