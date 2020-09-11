@@ -708,7 +708,7 @@ public:
 
 class prefixTrieQueryColorColumn: public Column{
 public:
-    deque<sdsl::vlc_vector<> > edges;
+    sdsl::enc_vector<>  edges;
     sdsl::bit_vector tree;
     sdsl::bp_support_sada<> bp_tree;
     uint64_t  noSamples;
