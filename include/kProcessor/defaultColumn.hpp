@@ -712,7 +712,7 @@ public:
     sdsl::bit_vector tree;
     sdsl::bp_support_sada<> bp_tree;
     uint64_t  noSamples;
-    sdsl::int_vector<> idsMap;
+    sdsl::int_vector<64> idsMap;
     uint64_t numColors;
     prefixTrieQueryColorColumn(){
 

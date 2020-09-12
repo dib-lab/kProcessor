@@ -1515,7 +1515,7 @@ prefixTrieQueryColorColumn::prefixTrieQueryColorColumn(queryColorColumn* col)
     numColors=col->size();
     col->sortColors();
     cerr<<"Colors Sorted"<<endl;
-    idsMap=sdsl::int_vector<>(col->idsMap.size());
+    idsMap=sdsl::int_vector<64>(col->idsMap.size());
     sdsl::int_vector<> invIdsMap(col->idsMap.size());
     for(unsigned int i=0;i< col->idsMap.size();i++)
     {
@@ -1543,12 +1543,12 @@ prefixTrieQueryColorColumn::prefixTrieQueryColorColumn(queryColorColumn* col)
         }
     }
 
-    uint32_t  tmpSize= col->numIntegers()/2;
+    uint64_t  tmpSize= col->numIntegers()/2;
 
 
 
-    uint32_t  tmpEdgesTop=0;
-    uint32_t  tmpTreeTop=0;
+    uint64_t  tmpEdgesTop=0;
+    uint64_t  tmpTreeTop=0;
     sdsl::int_vector<> tmp_edges(tmpSize);
     tree=sdsl::bit_vector(tmpSize);
 
@@ -1557,7 +1557,7 @@ prefixTrieQueryColorColumn::prefixTrieQueryColorColumn(queryColorColumn* col)
 
     uint64_t processedColors=0;
     deque<uint32_t> currPrefix;
-    uint32_t rank=0;
+    uint64_t rank=0;
     while(nextColor.size()>0)
     {
         auto colorTuple=nextColor.top();
@@ -1576,7 +1576,7 @@ prefixTrieQueryColorColumn::prefixTrieQueryColorColumn(queryColorColumn* col)
             tree[tmpTreeTop++]=0;
             if(tmpTreeTop==tree.size())
             {
-                cerr<<"Tmp bp_tree of size ("<<sdsl::size_in_mega_bytes(tree)<<"MB) is full! size will doubled"<<endl;
+                cerr<<"Tmp bp_tree of size "<< tree.size()<<"("<<sdsl::size_in_mega_bytes(tree)<<"MB) is full! size will doubled"<<endl;
                 tree.resize(tree.size()*2);
             }
         }
@@ -1590,7 +1590,7 @@ prefixTrieQueryColorColumn::prefixTrieQueryColorColumn(queryColorColumn* col)
             tree[tmpTreeTop++]=1;
             if(tmpTreeTop==tree.size())
             {
-                cerr<<"Tmp bp_tree of size ("<<sdsl::size_in_mega_bytes(tree)<<"MB) is full! size will doubled"<<endl;
+                cerr<<"Tmp bp_tree of size "<< tree.size()<<"("<<sdsl::size_in_mega_bytes(tree)<<"MB) is full! size will doubled"<<endl;
                 tree.resize(tree.size()*2);
             }
 
@@ -1621,7 +1621,7 @@ prefixTrieQueryColorColumn::prefixTrieQueryColorColumn(queryColorColumn* col)
         tree[tmpTreeTop++]=0;
         if(tmpTreeTop==tree.size())
         {
-            cerr<<"Tmp bp_tree of size ("<<sdsl::size_in_mega_bytes(tree)<<"MB) is full! size will doubled"<<endl;
+            cerr<<"Tmp bp_tree of size "<< tree.size()<<"("<<sdsl::size_in_mega_bytes(tree)<<"MB) is full! size will doubled"<<endl;
             tree.resize(tree.size()*2);
         }
     }
