@@ -1644,12 +1644,12 @@ uint32_t  prefixTrieQueryColorColumn::insertAndGetIndex(vector<uint32_t >& item)
 }
 vector<uint32_t > prefixTrieQueryColorColumn::getWithIndex(uint32_t index){
     deque<uint32_t> tmp;
-    index=idsMap[index];
-    while(index!=bp_tree.size())
+    uint64_t bigIndex=idsMap[index];
+    while(bigIndex!=bp_tree.size())
     {
-        uint32_t edgeIndex=bp_tree.rank(index)-1;
+        uint64_t edgeIndex=bp_tree.rank(bigIndex)-1;
         tmp.push_back(edges[edgeIndex]);
-        index=bp_tree.enclose(index);
+        bigIndex=bp_tree.enclose(bigIndex);
     }
     vector<uint32_t> res(tmp.size());
     for(unsigned int i=0;i<res.size();i++)
