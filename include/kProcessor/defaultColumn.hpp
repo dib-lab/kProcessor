@@ -708,9 +708,10 @@ public:
 
 class prefixTrieQueryColorColumn: public Column{
 public:
-    sdsl::enc_vector<>  edges;
-    sdsl::bit_vector tree;
-    sdsl::bp_support_sada<> bp_tree;
+    deque<sdsl::enc_vector<>*>  edges;
+    deque<sdsl::bit_vector*> tree;
+    deque<sdsl::bp_support_sada<>*> bp_tree;
+    sdsl::int_vector<> starts;
     uint64_t  noSamples;
     sdsl::int_vector<64> idsMap;
     uint64_t numColors;
@@ -719,6 +720,12 @@ public:
     }
     prefixTrieQueryColorColumn(queryColorColumn* col);
     ~prefixTrieQueryColorColumn(){
+        for(auto t:tree)
+            delete t;
+        for(auto b:bp_tree)
+            delete b;
+        for(auto e:edges)
+            delete e;
 
     }
     uint32_t  insertAndGetIndex(vector<uint32_t >& item);

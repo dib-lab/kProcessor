@@ -1543,14 +1543,17 @@ prefixTrieQueryColorColumn::prefixTrieQueryColorColumn(queryColorColumn* col)
         }
     }
 
-    uint64_t  tmpSize= col->numIntegers()/2;
+    uint64_t  tmpSize= col->numIntegers()/10;
 
 
 
     uint64_t  tmpEdgesTop=0;
     uint64_t  tmpTreeTop=0;
     sdsl::int_vector<> tmp_edges(tmpSize);
-    tree=sdsl::bit_vector(tmpSize);
+    vector<uint64_t > tmpStarts;
+    tmpStarts.push_back(0);
+    tree.push_back(new sdsl::bit_vector(tmpSize*2));
+
 
 
 
@@ -1562,7 +1565,6 @@ prefixTrieQueryColorColumn::prefixTrieQueryColorColumn(queryColorColumn* col)
     {
         auto colorTuple=nextColor.top();
         nextColor.pop();
-        processedColors++;
         uint32_t i=0;
         for(;i<std::get<0>(colorTuple).size() && i< currPrefix.size();i++)
         {
@@ -1573,25 +1575,38 @@ prefixTrieQueryColorColumn::prefixTrieQueryColorColumn(queryColorColumn* col)
         for(unsigned int j=i;j<currPrefix.size();j++)
         {
             rank++;
-            tree[tmpTreeTop++]=0;
-            if(tmpTreeTop==tree.size())
+            (*tree.back())[tmpTreeTop++]=0;
+            if(tmpTreeTop==tree.back()->size())
             {
-                cerr<<"Tmp bp_tree of size "<< tree.size()<<"("<<sdsl::size_in_mega_bytes(tree)<<"MB) is full! size will doubled"<<endl;
-                tree.resize(tree.size()*2);
+                cerr<<"Tmp bp_tree of size "<< tree.size()<<"("<<sdsl::size_in_mega_bytes(*tree.back())<<"MB) is full! size will doubled"<<endl;
+                tree.back()->resize(tree.back()->size()*2);
+                tmpSize*=2;
             }
         }
         currPrefix.erase(currPrefix.begin()+i,currPrefix.end());
+        if(currPrefix.size()==0 &&rank >0)
+        {
+            tmp_edges.resize(tmpEdgesTop);
+            edges.push_back(new sdsl::enc_vector<>(tmp_edges));
+            tree.back()->resize(tmpTreeTop);
+            bp_tree.push_back(new sdsl::bp_support_sada<>(tree.back()));
+            tmpStarts.push_back(rank);
+            tmpEdgesTop=0;
+            tmpTreeTop=0;
+            tmpSize=tmp_edges.size();
+            tree.push_back(new sdsl::bit_vector(tmpSize*2));
+        }
         for(unsigned int j=i;j<std::get<0>(colorTuple).size();j++)
         {
             rank++;
             uint32_t sample=std::get<0>(colorTuple)[j];
             currPrefix.push_back(sample);
 
-            tree[tmpTreeTop++]=1;
-            if(tmpTreeTop==tree.size())
+            (*tree.back())[tmpTreeTop++]=1;
+            if(tmpTreeTop==tree.back()->size())
             {
-                cerr<<"Tmp bp_tree of size "<< tree.size()<<"("<<sdsl::size_in_mega_bytes(tree)<<"MB) is full! size will doubled"<<endl;
-                tree.resize(tree.size()*2);
+                cerr<<"Tmp bp_tree of size "<< tree.back()->size()<<"("<<sdsl::size_in_mega_bytes(*tree.back())<<"MB) is full! size will doubled"<<endl;
+                tree.back()->resize(tree.back()->size()*2);
             }
 
             tmp_edges[tmpEdgesTop++]=sample;
@@ -1603,7 +1618,7 @@ prefixTrieQueryColorColumn::prefixTrieQueryColorColumn(queryColorColumn* col)
         }
 
         idsMap[invIdsMap[std::get<1>(colorTuple)]]=rank-1;
-
+        processedColors++;
         std::get<2>(colorTuple)->next();
         if(*std::get<2>(colorTuple)!=*std::get<3>(colorTuple)) {
             std::get<0>(colorTuple)=*(*(std::get<2>(colorTuple)));
@@ -1618,23 +1633,21 @@ prefixTrieQueryColorColumn::prefixTrieQueryColorColumn(queryColorColumn* col)
     }
     for(unsigned int j=0;j<currPrefix.size();j++)
     {
-        tree[tmpTreeTop++]=0;
-        if(tmpTreeTop==tree.size())
+        (*tree.back())[tmpTreeTop++]=0;
+        if(tmpTreeTop==tree.back()->size())
         {
-            cerr<<"Tmp bp_tree of size "<< tree.size()<<"("<<sdsl::size_in_mega_bytes(tree)<<"MB) is full! size will doubled"<<endl;
-            tree.resize(tree.size()*2);
+            cerr<<"Tmp bp_tree of size "<< tree.back()->size()<<"("<<sdsl::size_in_mega_bytes(*tree.back())<<"MB) is full! size will doubled"<<endl;
+            tree.back()->resize(tree.back()->size()*2);
         }
     }
+    //tmpStarts.push_back(rank);
     tmp_edges.resize(tmpEdgesTop);
-    cerr<<"Edges size = "<<tmp_edges.size()<<endl;
-    edges=sdsl::enc_vector<>(tmp_edges);
-    cerr<<"Compressed Edges size = "<<sdsl::size_in_mega_bytes(edges)<<"MB"<<endl;
+    edges.push_back(new sdsl::enc_vector<>(tmp_edges));
+    tree.back()->resize(tmpTreeTop);
+    bp_tree.push_back(new sdsl::bp_support_sada<>(tree.back()));
+    starts=sdsl::int_vector<>(tmpStarts.size());
+    std::copy(tmpStarts.begin(),tmpStarts.end(),starts.begin());
 
-    tree.resize(tmpTreeTop);
-    cerr<<"Tree total size = "<<tree.size()<<endl;
-    bp_tree=sdsl::bp_support_sada<>(&tree);
-    //cout<<bp_tree.select(0)<<endl;
-    cerr<<"Tree structure size = "<<sdsl::size_in_mega_bytes(bp_tree)<<"MB"<<endl;
 }
 
 
@@ -1645,11 +1658,15 @@ uint32_t  prefixTrieQueryColorColumn::insertAndGetIndex(vector<uint32_t >& item)
 vector<uint32_t > prefixTrieQueryColorColumn::getWithIndex(uint32_t index){
     deque<uint32_t> tmp;
     uint64_t bigIndex=idsMap[index];
-    while(bigIndex!=bp_tree.size())
+    auto it=lower_bound(starts.begin(),starts.end(),bigIndex+1);
+    it--;
+    uint32_t tIndex=it- starts.begin();
+    bigIndex-=*it;
+    while(bigIndex!=bp_tree[tIndex]->size())
     {
-        uint64_t edgeIndex=bp_tree.rank(bigIndex)-1;
-        tmp.push_back(edges[edgeIndex]);
-        bigIndex=bp_tree.enclose(bigIndex);
+        uint64_t edgeIndex=bp_tree[tIndex]->rank(bigIndex)-1;
+        tmp.push_back((*edges[tIndex])[edgeIndex]);
+        bigIndex=bp_tree[tIndex]->enclose(bigIndex);
     }
     vector<uint32_t> res(tmp.size());
     for(unsigned int i=0;i<res.size();i++)
@@ -1670,9 +1687,14 @@ void prefixTrieQueryColorColumn::serialize(string filename){
     out.write(  (char*)( &(noSamples) ), sizeof( uint32_t ) );
     out.write(  (char*)( &(numColors) ), sizeof( uint32_t ) );
     idsMap.serialize(out);
-    tree.serialize(out);
-    bp_tree.serialize(out);
-    edges.serialize(out);
+    starts.serialize(out);
+    for(uint32_t i=0;i<tree.size();i++)
+    {
+        tree[i]->serialize(out);
+        bp_tree[i]->serialize(out);
+        edges[i]->serialize(out);
+    }
+
     out.close();
 }
 void prefixTrieQueryColorColumn::deserialize(string filename){
@@ -1680,9 +1702,17 @@ void prefixTrieQueryColorColumn::deserialize(string filename){
     input.read(  (char*)( &(noSamples) ), sizeof( uint32_t ) );
     input.read(  (char*)( &(numColors) ), sizeof( uint32_t ) );
     idsMap.load(input);
-    tree.load(input);
-    bp_tree.load(input,&tree);
-    edges.load(input);
+    starts.load(input);
+    for(uint32_t i=0;i<starts.size();i++)
+    {
+        tree.push_back(new sdsl::bit_vector());
+        tree.back()->load(input);
+        bp_tree.push_back(new sdsl::bp_support_sada<>());
+        bp_tree.back()->load(input,tree.back());
+        edges.push_back(new sdsl::enc_vector<>());
+        edges.back()->load(input);
+    }
+
     input.close();
 
 }
@@ -1693,24 +1723,39 @@ uint32_t prefixTrieQueryColorColumn::getNumColors(){
 }
 uint64_t prefixTrieQueryColorColumn::sizeInBytes(){
     uint64_t res=0;
-    res+=sdsl::size_in_bytes(tree);
-    res+=sdsl::size_in_bytes(bp_tree);
+    for(auto t:tree)
+        res+=sdsl::size_in_bytes(*t);
+    for(auto b:bp_tree)
+        res+=sdsl::size_in_bytes(*b);
     res+=sdsl::size_in_bytes(idsMap);
-    res+=sdsl::size_in_bytes(edges);
-
+    for(auto e:edges)
+        res+=sdsl::size_in_bytes(*e);
     return res;
 }
 void prefixTrieQueryColorColumn::explainSize(){
+    double treeSize=0;
+    double bpSize=0;
+    double eSize=0;
+    uint64_t numE=0;
+    for(auto t:tree)
+        treeSize+=sdsl::size_in_mega_bytes(*t);
+    for(auto b:bp_tree)
+        bpSize+=sdsl::size_in_mega_bytes(*b);
+    for(auto e:edges) {
+        eSize += sdsl::size_in_mega_bytes(*e);
+        numE+=e->size();
+    }
+
     cout<<"Prefix Trie index"<<endl;
-    cout<< "Bit Tree = " << sdsl::size_in_mega_bytes(tree)<<"MB\n";
-    cout<< "BpSupport = " << sdsl::size_in_mega_bytes(bp_tree)<<"MB\n";
+    cout<< "Bit Tree = " << treeSize<<"MB\n";
+    cout<< "BpSupport = " << bpSize<<"MB\n";
     cout<< "Ids Map = " << sdsl::size_in_mega_bytes(idsMap)<<"MB\n";
 
-    cout<< "edges = " << sdsl::size_in_mega_bytes(edges)<<"MB\n";
-    cout<< "edges # Integers= " <<edges.size()<<"\n";
-    double total=sdsl::size_in_mega_bytes(edges)+sdsl::size_in_mega_bytes(idsMap)
-                 +sdsl::size_in_mega_bytes(bp_tree)+
-                 sdsl::size_in_mega_bytes(tree);
+    cout<< "edges = " << eSize<<"MB\n";
+    cout<< "edges # Integers= " <<numE<<"\n";
+    double total=eSize+sdsl::size_in_mega_bytes(idsMap)
+                 +bpSize+
+                 treeSize;
     cout<< "Total = " << total<<"MB"<<endl;
 }
 
