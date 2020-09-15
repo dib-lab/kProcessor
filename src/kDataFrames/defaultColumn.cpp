@@ -1102,7 +1102,7 @@ void fixedSizeVector::loadFromInsertOnly(string path,sdsl::int_vector<>& idsMap)
     sdsl::int_vector<> tmpVec(noColors*colorsize);
     uint32_t top=0;
     uint32_t colorId=beginID;
-    for(int i=0;i<curr.size();i+=colorsize+1)
+    for(unsigned  int i=0;i<curr.size();i+=colorsize+1)
     {
         idsMap[curr[i]]=colorId++;
         for(int j=0; j<colorsize ;j++)
@@ -1128,7 +1128,7 @@ void vectorOfVectors::loadFromInsertOnly(string path,sdsl::int_vector<>& idsMap)
         bigColorsIds.push_back(curr[i++]);
         bigColors.push_back(vector<uint32_t>(curr[i++]));
         total += bigColors.back().size();
-        for(int j=0;  j< bigColors.back().size() ;j++)
+        for(unsigned  int j=0;  j< bigColors.back().size() ;j++)
         {
             bigColors.back()[j]=curr[i++];
         }
@@ -1140,7 +1140,7 @@ void vectorOfVectors::loadFromInsertOnly(string path,sdsl::int_vector<>& idsMap)
     for(unsigned int i=0; i < bigColors.size();i++){
         tmpStarts[i]=curri;
         idsMap[bigColorsIds[i]]=colorId++;
-        for(int j=0;j<bigColors[i].size();j++)
+        for(unsigned int j=0;j<bigColors[i].size();j++)
         {
             tmpvecs[curri++]=bigColors[i][j];
         }
@@ -1217,7 +1217,6 @@ uint64_t queryColorColumn::sizeInBytes()
 void queryColorColumn::explainSize()
 {
     cout<<"Query Column"<<endl;
-    uint64_t res=0;
     uint64_t numIntegers=0;
     cout<<"Ids Size = "<<sdsl::size_in_bytes(idsMap)/(1024.0*1024.0)<<"MB"<<endl;
     double vMBBytes=0.0;
@@ -1574,6 +1573,8 @@ prefixTrieQueryColorColumn::prefixTrieQueryColorColumn(queryColorColumn* col)
 
 
     unordered_map<int,uint64_t > addedEdgesHisto;
+    for(int i=0;i<=noSamples;i++)
+        addedEdgesHisto[i]=0;
 
     uint64_t processedColors=0;
     deque<uint32_t> currPrefix;
@@ -1673,7 +1674,8 @@ prefixTrieQueryColorColumn::prefixTrieQueryColorColumn(queryColorColumn* col)
 
     cout<<"Added Edges Histo "<<endl;
     for(auto a:addedEdgesHisto)
-        cout<<a.first<<" -> "<<a.second<<endl;
+        if(a.second>0)
+            cout<<a.first<<" -> "<<a.second<<endl;
     cout<<endl;
 
 }
@@ -1768,7 +1770,7 @@ void prefixTrieQueryColorColumn::explainSize(){
     uint64_t numE=0;
     for(auto t:tree) {
         treeSize += sdsl::size_in_mega_bytes(*t);
-        sdsl::rrr_vector<63> cvector(*t);
+        sdsl::rrr_vector<> cvector(*t);
         treeCompressedSize += sdsl::size_in_mega_bytes(cvector);
     }
     for(auto b:bp_tree)

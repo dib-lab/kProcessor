@@ -356,7 +356,7 @@ public:
             end=starts[index+1];
         }
         vector<uint32_t> res(end-start);
-        for(int i=start;i<end;i++)
+        for(unsigned int i=start;i<end;i++)
             res[i-start]=vecs[i];
         return res;
     };
@@ -689,13 +689,13 @@ public:
 
     uint32_t size(){
         uint32_t res=0;
-        for(int i=1;i<colors.size();i++)
+        for(unsigned int i=1;i<colors.size();i++)
             res+=colors[i]->size();
         return res;
     }
     uint32_t numIntegers(){
         uint32_t res=0;
-        for(int i=1;i<colors.size();i++)
+        for(unsigned int i=1;i<colors.size();i++)
             res+=colors[i]->numIntegers();
         return res;
     }
