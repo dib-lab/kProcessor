@@ -1673,10 +1673,15 @@ prefixTrieQueryColorColumn::prefixTrieQueryColorColumn(queryColorColumn* col)
     std::copy(tmpStarts.begin(),tmpStarts.end(),starts.begin());
 
     cout<<"Added Edges Histo "<<endl;
-    for(auto a:addedEdgesHisto)
-        if(a.second>0)
-            cout<<a.first<<" -> "<<a.second<<endl;
-    cout<<endl;
+    uint32_t  edgesSum=0;
+    for(auto a:addedEdgesHisto) {
+        edgesSum += (a.first - 1) * (a.second);
+        if (a.second > 0) {
+            cout << a.first << " -> " << a.second << endl;
+
+        }
+    }
+    cout<<"Possible saving "<<edgesSum<<endl;
 
 }
 
