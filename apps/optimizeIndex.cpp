@@ -52,6 +52,8 @@ int main(int argc, char *argv[])
         while(inp>>kmer>>count)
         {
             testedKmers++;
+            if(kmer!="CATCTTCCAGTACAGTGTTG")
+                continue;
             vector<uint32_t> colors=indexFrame->getKmerDefaultColumnValue<vector<uint32_t >, prefixTrieQueryColorColumn >(kmer);
             if(colors.size()==0)
             {
@@ -67,7 +69,14 @@ int main(int argc, char *argv[])
                     cerr<<c <<" ";
                 cerr<<endl;
 
+                indexFrame->changeDefaultColumnType(qColumn);
+                vector<uint32_t> colors=indexFrame->getKmerDefaultColumnValue<vector<uint32_t >, queryColorColumn >(kmer);
+                cerr<<"It should be ";
+                for(auto c: colors)
+                    cerr<<c <<" ";
+                cerr<<endl;
                 failedKmers++;
+                indexFrame->changeDefaultColumnType(pColumn);
             }
 
         }

@@ -8,6 +8,7 @@
 #include "sdsl/vectors.hpp"
 #include "sdsl/bp_support.hpp"
 #include <stack>
+#include <unordered_set>
 
 using phmap::flat_hash_map;
 using namespace std;
@@ -707,6 +708,8 @@ public:
 
 
 class prefixTrieQueryColorColumn: public Column{
+private:
+    unordered_map<uint64_t ,vector<uint32_t > > nodesCache;
 public:
     deque<sdsl::enc_vector<>*>  edges;
     deque<sdsl::bit_vector*> tree;
@@ -736,8 +739,8 @@ public:
 
     void serialize(string filename);
     void deserialize(string filename);
-
-
+    void shorten(vector<uint32_t> & input,vector<uint32_t> & output);
+   // void _shorten(vector<uint32_t> & input,vector<uint32_t> & output, vector<uint32_t> & remaining);
     uint32_t getNumColors();
     uint64_t sizeInBytes();
     void explainSize();

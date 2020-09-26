@@ -1565,9 +1565,11 @@ prefixTrieQueryColorColumn::prefixTrieQueryColorColumn(queryColorColumn* col)
 
     uint64_t  tmpEdgesTop=0;
     uint64_t  tmpTreeTop=0;
+    uint64_t currTree=0;
+    starts=sdsl::int_vector<>(noSamples);
     sdsl::int_vector<> tmp_edges(tmpSize);
-    vector<uint64_t > tmpStarts;
-    tmpStarts.push_back(0);
+    deque<uint32_t> currPrefix;
+    starts[currTree]=0;
     tree.push_back(new sdsl::bit_vector(tmpSize*2));
 
 
@@ -1577,26 +1579,47 @@ prefixTrieQueryColorColumn::prefixTrieQueryColorColumn(queryColorColumn* col)
         addedEdgesHisto[i]=0;
 
     uint64_t processedColors=0;
-    deque<uint32_t> currPrefix;
+    deque<uint64_t> pastNodes;
     uint64_t rank=0;
+
     while(nextColor.size()>0)
     {
         auto colorTuple=nextColor.top();
         nextColor.pop();
-        uint32_t i=0;
 //        for(auto c:std::get<0>(colorTuple))
 //        {
 //            cout<<c<<" ";
 //        }
 //        cout<<endl;
-        for(;i<std::get<0>(colorTuple).size() && i< currPrefix.size();i++)
-        {
-            if(currPrefix[i] != std::get<0>(colorTuple)[i])
-                break;
-        }
+        vector<uint32_t> currColor(std::get<0>(colorTuple).begin(),std::get<0>(colorTuple).end());
 
-        for(unsigned int j=i;j<currPrefix.size();j++)
+        unsigned int i=0;
+        for(;i<currPrefix.size() && i< std::get<0>(colorTuple).size() ; i++ )
         {
+            if(currPrefix[i]!=std::get<0>(colorTuple)[i])
+                break;
+
+        }
+        unordered_set<uint32_t> unneededNodes(currPrefix.begin()+i,currPrefix.end());
+        bool hasUnneeded= false;
+        unsigned  int j=0;
+        for(;j<pastNodes.size();j++)
+        {
+
+            for (auto c:nodesCache[pastNodes[j]])
+                if (unneededNodes.find(c) != unneededNodes.end())
+                {
+                    hasUnneeded = true;
+                    break;
+                }
+
+            if(hasUnneeded)
+                break;
+
+        }
+        for(unsigned  int k=j;k<pastNodes.size();k++)
+        {
+            nodesCache.erase(pastNodes[k]);
             rank++;
             (*tree.back())[tmpTreeTop++]=0;
             if(tmpTreeTop==tree.back()->size())
@@ -1606,26 +1629,51 @@ prefixTrieQueryColorColumn::prefixTrieQueryColorColumn(queryColorColumn* col)
                 tmpSize*=2;
             }
         }
+        pastNodes.erase(pastNodes.begin()+j,pastNodes.end());
         currPrefix.erase(currPrefix.begin()+i,currPrefix.end());
         if(currPrefix.size()==0 &&rank >0)
         {
+            currTree++;
             tmp_edges.resize(tmpEdgesTop);
             edges.push_back(new sdsl::enc_vector<>(tmp_edges));
             tree.back()->resize(tmpTreeTop);
             bp_tree.push_back(new sdsl::bp_support_sada<>(tree.back()));
-            tmpStarts.push_back(rank);
+            starts[currTree]=rank;
             tmpEdgesTop=0;
             tmpTreeTop=0;
-            tmpSize=tmp_edges.size();
+            tmpSize=tmp_edges.size()*2;
+            tmp_edges.resize(tmpSize);
             tree.push_back(new sdsl::bit_vector(tmpSize*2));
         }
-        addedEdgesHisto[std::get<0>(colorTuple).size()-i]+=1;
-        for(unsigned int j=i;j<std::get<0>(colorTuple).size();j++)
+
+       // vector<uint32_t> tobeAdded(std::get<0>(colorTuple).size()-i);
+     //   std::copy(std::get<0>(colorTuple).begin(),std::get<0>(colorTuple).end(),tobeAdded.begin());
+        vector<uint32_t> toBAdded(currColor.begin()+i,currColor.end());
+        for(auto a:toBAdded)
+            currPrefix.push_back(a);
+        addedEdgesHisto[toBAdded.size()]+=1;
+        vector<uint32_t> shortened;
+        shortened.clear();
+        shorten(toBAdded, shortened);
+
+//        if(toBAdded.size()>1) {
+//            cout << "Prefix ";
+//            for (auto c:toBAdded) {
+//                cout << c << " ";
+//            }
+//            cout << endl;
+//            cout << "Shortened ";
+//            for (auto c:shortened) {
+//                cout << c << " ";
+//            }
+//            cout << endl;
+//        }
+        for(unsigned int j=0;j<shortened.size();j++)
         {
             rank++;
-            uint32_t sample=std::get<0>(colorTuple)[j];
-            currPrefix.push_back(sample);
-
+            uint32_t sample=shortened[j];
+            //currPrefix.push_back(sample);
+            pastNodes.push_back(sample);
             (*tree.back())[tmpTreeTop++]=1;
             if(tmpTreeTop==tree.back()->size())
             {
@@ -1655,7 +1703,7 @@ prefixTrieQueryColorColumn::prefixTrieQueryColorColumn(queryColorColumn* col)
         }
 
     }
-    for(unsigned int j=0;j<currPrefix.size();j++)
+    for(unsigned int j=0;j<pastNodes.size();j++)
     {
         (*tree.back())[tmpTreeTop++]=0;
         if(tmpTreeTop==tree.back()->size())
@@ -1669,11 +1717,11 @@ prefixTrieQueryColorColumn::prefixTrieQueryColorColumn(queryColorColumn* col)
     edges.push_back(new sdsl::enc_vector<>(tmp_edges));
     tree.back()->resize(tmpTreeTop);
     bp_tree.push_back(new sdsl::bp_support_sada<>(tree.back()));
-    starts=sdsl::int_vector<>(tmpStarts.size());
-    std::copy(tmpStarts.begin(),tmpStarts.end(),starts.begin());
+//    starts=sdsl::int_vector<>(tmpStarts.size());
+//    std::copy(tmpStarts.begin(),tmpStarts.end(),starts.begin());
 
     cout<<"Added Edges Histo "<<endl;
-    uint32_t  edgesSum=0;
+    uint64_t  edgesSum=0;
     for(auto a:addedEdgesHisto) {
         edgesSum += (a.first - 1) * (a.second);
         if (a.second > 0) {
@@ -1692,17 +1740,28 @@ uint32_t  prefixTrieQueryColorColumn::insertAndGetIndex(vector<uint32_t >& item)
 }
 vector<uint32_t > prefixTrieQueryColorColumn::getWithIndex(uint32_t index){
     deque<uint32_t> tmp;
-    uint64_t bigIndex=idsMap[index];
-    auto it=lower_bound(starts.begin(),starts.end(),bigIndex+1);
-    it--;
-    uint32_t tIndex=it- starts.begin();
-    bigIndex-=*it;
-    while(bigIndex!=bp_tree[tIndex]->size())
+    queue<uint64_t > Q;
+    Q.push(idsMap[index]);
+    while(Q.size()>0)
     {
-        uint64_t edgeIndex=bp_tree[tIndex]->rank(bigIndex)-1;
-        tmp.push_back((*edges[tIndex])[edgeIndex]);
-        bigIndex=bp_tree[tIndex]->enclose(bigIndex);
+        uint64_t bigIndex=Q.front();
+        Q.pop();
+        auto it=lower_bound(starts.begin(),starts.end(),bigIndex+1);
+        it--;
+        uint32_t tIndex=it- starts.begin();
+        bigIndex-=*it;
+        while(bigIndex!=bp_tree[tIndex]->size())
+        {
+            uint64_t edgeIndex=bp_tree[tIndex]->rank(bigIndex)-1;
+            uint64_t node=(*edges[tIndex])[edgeIndex];
+            if(node<noSamples)
+                tmp.push_back(node);
+            else
+                Q.push(node-noSamples);
+            bigIndex=bp_tree[tIndex]->enclose(bigIndex);
+        }
     }
+
     vector<uint32_t> res(tmp.size());
     for(unsigned int i=0;i<res.size();i++)
         res[i]=tmp[tmp.size()-i-1];
@@ -1801,3 +1860,68 @@ void prefixTrieQueryColorColumn::explainSize(){
 }
 
 
+void prefixTrieQueryColorColumn::shorten(vector<uint32_t> & input,vector<uint32_t> & output)
+{
+    if(input.size()==1) {
+        output = input;
+        return;
+    }
+    uint32_t treeIndex=noSamples-input[0]-1;
+    if(treeIndex>=edges.size())
+    {
+        output.push_back(input[0]);
+        nodesCache[input[0]]={input[0]};
+        input.erase(input.begin());
+        if(input.size()>0)
+            shorten(input,output);
+        return;
+    }
+    vector<uint32_t>  remaining;
+    vector<uint32_t>  chosen;
+    if((*edges[treeIndex])[0]!=input[0]){
+        cerr<<"Wrong tree "<<(*edges[treeIndex])[0]<<endl;
+        return;
+    }
+    auto i=input.begin();
+    uint64_t treePos=0;
+    uint32_t result=tree.size();
+    while(i !=input.end() && treePos< tree[treeIndex]->size() && (*tree[treeIndex])[treePos]==1)
+    {
+        uint32_t currNode=(*edges[treeIndex])[treePos];
+        auto it=find(i,input.end(),currNode);
+        for(;i<it;i++)
+        {
+            remaining.push_back(*i);
+        }
+        if(i!=input.end())
+        {
+            chosen.push_back(currNode);
+            result=treePos;
+            treePos++;
+            i++;
+        }
+        else{
+            treePos=bp_tree[treeIndex]->find_close(treePos)+1;
+        }
+
+    }
+    if(result==0) {
+        output.push_back(input[0]);
+        nodesCache[input[0]]={input[0]};
+    }
+    else {
+        uint64_t ptr=result + starts[treePos] + noSamples;
+        output.push_back(ptr);
+        nodesCache[ptr]=chosen;
+    }
+
+    for(;i<input.end();i++)
+    {
+        remaining.push_back(*i);
+    }
+    if(remaining.size()!=0)
+    {
+        shorten(remaining,output);
+    }
+
+}
