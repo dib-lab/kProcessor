@@ -744,6 +744,7 @@ public:
     uint32_t getNumColors();
     uint64_t sizeInBytes();
     void explainSize();
+    void exportTree(string prefix,int tree);
 
 
 };

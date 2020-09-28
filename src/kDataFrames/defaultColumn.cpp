@@ -1644,6 +1644,7 @@ prefixTrieQueryColorColumn::prefixTrieQueryColorColumn(queryColorColumn* col)
             tmpSize=tmp_edges.size()*2;
             tmp_edges.resize(tmpSize);
             tree.push_back(new sdsl::bit_vector(tmpSize*2));
+//            exportTree("tree.",edges.size()-1);
         }
 
        // vector<uint32_t> tobeAdded(std::get<0>(colorTuple).size()-i);
@@ -1719,7 +1720,7 @@ prefixTrieQueryColorColumn::prefixTrieQueryColorColumn(queryColorColumn* col)
     bp_tree.push_back(new sdsl::bp_support_sada<>(tree.back()));
 //    starts=sdsl::int_vector<>(tmpStarts.size());
 //    std::copy(tmpStarts.begin(),tmpStarts.end(),starts.begin());
-
+ //   exportTree("tree.",edges.size()-1);
     cout<<"Added Edges Histo "<<endl;
     uint64_t  edgesSum=0;
     for(auto a:addedEdgesHisto) {
@@ -1864,6 +1865,7 @@ void prefixTrieQueryColorColumn::shorten(vector<uint32_t> & input,vector<uint32_
 {
     if(input.size()==1) {
         output = input;
+        nodesCache[input[0]]={input[0]};
         return;
     }
     uint32_t treeIndex=noSamples-input[0]-1;
@@ -1910,7 +1912,7 @@ void prefixTrieQueryColorColumn::shorten(vector<uint32_t> & input,vector<uint32_
         nodesCache[input[0]]={input[0]};
     }
     else {
-        uint64_t ptr=result + starts[treePos] + noSamples;
+        uint64_t ptr=result + starts[treeIndex] + noSamples;
         output.push_back(ptr);
         nodesCache[ptr]=chosen;
     }
@@ -1923,5 +1925,65 @@ void prefixTrieQueryColorColumn::shorten(vector<uint32_t> & input,vector<uint32_
     {
         shorten(remaining,output);
     }
+
+}
+
+void prefixTrieQueryColorColumn::exportTree(string prefix,int treeIndex){
+    string outFilename=prefix+to_string(treeIndex);
+    ofstream out(outFilename.c_str());
+    int tabs=0;
+    out<<"graph \"\""<<endl;
+    tabs++;
+    for(int i=0;i<tabs;i++)
+        out<<"\t";
+    out<<"{"<<endl;
+    tabs++;
+    for(int i=0;i<tabs;i++)
+        out<<"\t";
+    string bp="";
+    for(uint32_t i=0; i < tree[treeIndex]->size() ; i++)
+    {
+        if((*tree[treeIndex])[i]==0)
+            bp+=')';
+        else
+            bp+='(';
+    }
+    out<<"label =\""<<bp<<"\""<<endl;
+    //out<<"label =\"Tree "<<treeIndex<<"\""<<endl;
+    uint32_t pos=0;
+    stack<uint32_t > parents;
+    parents.push(0);
+    for(int i=0;i<tabs;i++)
+        out<<"\t";
+    out<<"n"<<pos<<" ;"<<endl;
+    for(int i=0;i<tabs;i++)
+        out<<"\t";
+    out<<"n"<<pos<<" [label=\""<<(*edges[treeIndex])[pos]<<"\"] ;"<<endl;
+    pos++;
+    while(pos<tree[treeIndex]->size())
+    {
+        for(int i=0;i<tabs;i++)
+            out<<"\t";
+        out<<"n"<<parents.top()<<" -- n"<<pos<<" ;"<<endl;
+        for(int i=0;i<tabs;i++)
+            out<<"\t";
+        uint64_t edgeIndex=bp_tree[treeIndex]->rank(pos)-1;
+        out<<"n"<<pos<<" [label=\""<<(*edges[treeIndex])[edgeIndex]<<"\"] ;"<<endl;
+        parents.push(pos);
+        pos++;
+        while(pos<tree[treeIndex]->size() && (*tree[treeIndex])[pos]==0)
+        {
+            pos++;
+            parents.pop();
+        }
+
+
+
+    }
+    tabs--;
+    for(int i=0;i<tabs;i++)
+        out<<"\t";
+    out<<"}"<<endl;
+
 
 }
