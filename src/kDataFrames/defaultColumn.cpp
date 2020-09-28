@@ -1635,7 +1635,7 @@ prefixTrieQueryColorColumn::prefixTrieQueryColorColumn(queryColorColumn* col)
         {
             currTree++;
             tmp_edges.resize(tmpEdgesTop);
-            edges.push_back(new sdsl::enc_vector<>(tmp_edges));
+            edges.push_back(new vectype(tmp_edges));
             tree.back()->resize(tmpTreeTop);
             bp_tree.push_back(new sdsl::bp_support_sada<>(tree.back()));
             starts[currTree]=rank;
@@ -1715,7 +1715,7 @@ prefixTrieQueryColorColumn::prefixTrieQueryColorColumn(queryColorColumn* col)
     }
     //tmpStarts.push_back(rank);
     tmp_edges.resize(tmpEdgesTop);
-    edges.push_back(new sdsl::enc_vector<>(tmp_edges));
+    edges.push_back(new vectype(tmp_edges));
     tree.back()->resize(tmpTreeTop);
     bp_tree.push_back(new sdsl::bp_support_sada<>(tree.back()));
 //    starts=sdsl::int_vector<>(tmpStarts.size());
@@ -1725,10 +1725,10 @@ prefixTrieQueryColorColumn::prefixTrieQueryColorColumn(queryColorColumn* col)
     uint64_t  edgesSum=0;
     for(auto a:addedEdgesHisto) {
         edgesSum += (a.first - 1) * (a.second);
-        if (a.second > 0) {
-            cout << a.first << " -> " << a.second << endl;
-
-        }
+//        if (a.second > 0) {
+//            cout << a.first << " -> " << a.second << endl;
+//
+//        }
     }
     cout<<"Possible saving "<<edgesSum<<endl;
 
@@ -1804,7 +1804,7 @@ void prefixTrieQueryColorColumn::deserialize(string filename){
         tree.back()->load(input);
         bp_tree.push_back(new sdsl::bp_support_sada<>());
         bp_tree.back()->load(input,tree.back());
-        edges.push_back(new sdsl::enc_vector<>());
+        edges.push_back(new vectype());
         edges.back()->load(input);
     }
 
