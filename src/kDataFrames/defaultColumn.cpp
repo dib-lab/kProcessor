@@ -1858,6 +1858,36 @@ void prefixTrieQueryColorColumn::explainSize(){
                  +bpSize+
                  treeSize;
     cout<< "Total = " << total<<"MB"<<endl;
+
+    double encMega=0;
+    double vlcMega=0;
+    const uint32_t tmpSize=100000000;
+
+
+    for(auto v:edges)
+    {
+        uint32_t index=0;
+        sdsl::int_vector<> tmp(tmpSize);
+        while(index<v->size()) {
+            auto b = v->begin()+index;
+            auto e = b + tmpSize;
+            if(index+tmpSize>=v->size()) {
+                e = v->end();
+                tmp.resize(e-b);
+            }
+            std::copy(b, e, tmp.begin());
+            sdsl::enc_vector<> enc(tmp);
+            encMega += sdsl::size_in_mega_bytes(enc);
+
+            sdsl::vlc_vector<> vlc(tmp);
+            vlcMega += sdsl::size_in_mega_bytes(vlc);
+            index+=tmpSize;
+        }
+    }
+    cout<<"Enc Splitted size = "<<encMega<<"MB"<<endl;
+    cout<<"VLC Splitted size = "<<vlcMega<<"MB"<<endl;
+
+
 }
 
 
