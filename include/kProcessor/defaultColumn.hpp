@@ -715,7 +715,7 @@ public:
     deque<vectype*>  edges;
     deque<sdsl::bit_vector*> tree;
     deque<sdsl::bp_support_sada<>*> bp_tree;
-    sdsl::int_vector<> starts;
+    sdsl::int_vector<64> starts;
     uint64_t  noSamples;
     sdsl::int_vector<64> idsMap;
     uint64_t numColors;

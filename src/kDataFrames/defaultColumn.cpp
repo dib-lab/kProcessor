@@ -1566,7 +1566,7 @@ prefixTrieQueryColorColumn::prefixTrieQueryColorColumn(queryColorColumn* col)
     uint64_t  tmpEdgesTop=0;
     uint64_t  tmpTreeTop=0;
     uint64_t currTree=0;
-    starts=sdsl::int_vector<>(noSamples);
+    starts=sdsl::int_vector<64>(noSamples);
     sdsl::int_vector<> tmp_edges(tmpSize);
     deque<uint32_t> currPrefix;
     starts[currTree]=0;
