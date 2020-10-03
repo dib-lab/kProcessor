@@ -39,6 +39,7 @@ before_install:
   - conda update --yes conda
 
 install:
+  - git submodule update --init  --recursive 
   - export PATH=/home/travis/miniconda3/bin:$PATH
   - conda create --yes -n env_kprocessor python=$MB_PYTHON_VERSION
   - source activate env_kprocessor
