@@ -28,8 +28,16 @@ include_directories("ThirdParty/cereal/include")
 include_directories("ThirdParty/ntCard/include")
 include_directories("ThirdParty/mum-hash")
 
+
+add_subdirectory(ThirdParty/MQF/)
+add_subdirectory(ThirdParty/sdsl-lite/)
+add_subdirectory(ThirdParty/kmerDecoder)
+
+
+
 #set (CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS} -Wall -Wextra -std=c++17 -fPIC  -W -Wall -pedantic -O0 -g -lprofiler")
 
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -std=c++17 -fPIC  -W -Wall -pedantic  -O3 -Ofast")
 set (CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS} -Wall -Wextra -std=c++17 -fPIC  -W -Wall -pedantic -O0 -g ")
 
 set (CMAKE_CXX_FLAGS_RELEASE  "${CMAKE_CXX_FLAGS} -Wall -Wextra -std=c++17 -fPIC  -W -Wall -pedantic -O3 -Ofast")
@@ -44,9 +52,6 @@ if (OPENMP_FOUND)
     set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
 endif()
 
-add_subdirectory(ThirdParty/MQF/)
-add_subdirectory(ThirdParty/sdsl-lite/lib/)
-add_subdirectory(ThirdParty/kmerDecoder)
 
 include(ExternalProject)
 ExternalProject_Add(
