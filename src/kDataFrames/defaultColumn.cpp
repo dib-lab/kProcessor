@@ -1565,6 +1565,18 @@ prefixTrieQueryColorColumn::prefixTrieQueryColorColumn(queryColorColumn *col) {
             tree.back()->resize(tree.back()->size() * 2);
         }
     }
+    for (unsigned int k = 0; k < pastNodes.size(); k++) {
+        nodesCache.erase(pastNodes[k]);
+        rank++;
+        (*tree.back())[tmpTreeTop++] = 0;
+        if (tmpTreeTop == tree.back()->size()) {
+            cerr << "Tmp bp_tree of size " << tree.back()->size() << "(" << sdsl::size_in_mega_bytes(*tree.back())
+                 << "MB) is full! size will doubled" << endl;
+            tree.back()->resize(tree.back()->size() * 2);
+            tmpSize *= 2;
+        }
+    }
+
     //tmpStarts.push_back(rank);
     tmp_edges.resize(tmpEdgesTop);
     edges.push_back(new vectype(tmp_edges));
@@ -1573,7 +1585,18 @@ prefixTrieQueryColorColumn::prefixTrieQueryColorColumn(queryColorColumn *col) {
 //    starts=sdsl::int_vector<>(tmpStarts.size());
 //    std::copy(tmpStarts.begin(),tmpStarts.end(),starts.begin());
     //   exportTree("tree.",edges.size()-1);
-    cout << "Added Edges Histo " << endl;
+    cout<<"Node Cache size = "<<nodesCache.size()<<endl;
+    for(auto c: nodesCache) {
+        cout << c.first << " -> ";
+        for(auto t:c.second)
+            cout<<t<<" ";
+        cout<<endl;
+    }
+
+
+
+
+
     uint64_t edgesSum = 0;
     for (auto a:addedEdgesHisto) {
         edgesSum += (a.first - 1) * (a.second);

@@ -47,10 +47,8 @@ int main(int argc, char *argv[]) {
         ifstream inp(filenames[i] + ".testkmers");
         string kmer;
         uint64_t count;
-        while (inp >> kmer >> count) {
+        while (inp >> kmer >> count && failedKmers<1000) {
             testedKmers++;
-//            if(kmer!="CATCTTCCAGTACAGTGTTG")
-//                continue;
             vector<uint32_t> colors = indexFrame->getKmerDefaultColumnValue<vector<uint32_t>, prefixTrieQueryColorColumn>(
                     kmer);
 
