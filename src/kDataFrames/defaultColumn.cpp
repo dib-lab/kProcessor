@@ -1749,18 +1749,18 @@ void prefixTrieQueryColorColumn::shorten(vector<uint32_t> &input, vector<uint32_
     while (i != input.end() && treePos < tree[treeIndex]->size() && (*tree[treeIndex])[treePos] == 1) {
         uint32_t currNode = (*edges[treeIndex])[treePos];
         auto it = find(i, input.end(), currNode);
-        for (; i < it; i++) {
-            remaining.push_back(*i);
-        }
-        if (i != input.end()) {
+        if(it == input.end())
+        {
+            treePos = bp_tree[treeIndex]->find_close(treePos) + 1;
+        } else{
+            for (; i < it; i++) {
+                remaining.push_back(*i);
+            }
             chosen.push_back(currNode);
             result = treePos;
             treePos++;
             i++;
-        } else {
-            treePos = bp_tree[treeIndex]->find_close(treePos) + 1;
         }
-
     }
     if (result == 0) {
         output.push_back(input[0]);
