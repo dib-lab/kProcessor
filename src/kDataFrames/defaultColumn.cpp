@@ -1449,7 +1449,7 @@ prefixTrieQueryColorColumn::prefixTrieQueryColorColumn(queryColorColumn *col) {
     uint64_t processedColors = 0;
     deque<uint64_t> pastNodes;
     uint64_t rank = 0;
-
+    ofstream debugOut("debug");
     while (!nextColor.empty()) {
         auto colorTuple = nextColor.top();
         nextColor.pop();
@@ -1482,6 +1482,10 @@ prefixTrieQueryColorColumn::prefixTrieQueryColorColumn(queryColorColumn *col) {
 
         }
         for (unsigned int k = j; k < pastNodes.size(); k++) {
+            for(auto t:nodesCache[pastNodes[k]])
+                debugOut<<t<<" ";
+            debugOut<<" -> "<<pastNodes[k]<<"\n";
+
             nodesCache.erase(pastNodes[k]);
             rank++;
             (*tree.back())[tmpTreeTop++] = 0;
@@ -1566,6 +1570,10 @@ prefixTrieQueryColorColumn::prefixTrieQueryColorColumn(queryColorColumn *col) {
         }
     }
     for (unsigned int k = 0; k < pastNodes.size(); k++) {
+        for(auto t:nodesCache[pastNodes[k]])
+            debugOut<<t<<" ";
+        debugOut<<" -> "<<pastNodes[k]<<"\n";
+
         nodesCache.erase(pastNodes[k]);
         rank++;
         (*tree.back())[tmpTreeTop++] = 0;
@@ -1619,6 +1627,7 @@ vector<uint32_t> prefixTrieQueryColorColumn::getWithIndex(uint32_t index) {
     deque<uint32_t> tmp;
     queue<uint64_t> Q;
     Q.push(idsMap[index]);
+    cout<<idsMap[index]<<" -> ";
     while (!Q.empty()) {
         uint64_t bigIndex = Q.front();
         Q.pop();
@@ -1629,6 +1638,7 @@ vector<uint32_t> prefixTrieQueryColorColumn::getWithIndex(uint32_t index) {
         while (bigIndex != bp_tree[tIndex]->size()) {
             uint64_t edgeIndex = bp_tree[tIndex]->rank(bigIndex) - 1;
             uint64_t node = (*edges[tIndex])[edgeIndex];
+            cout<<node<<" ";
             if (node < noSamples)
                 tmp.push_back(node);
             else
@@ -1636,6 +1646,7 @@ vector<uint32_t> prefixTrieQueryColorColumn::getWithIndex(uint32_t index) {
             bigIndex = bp_tree[tIndex]->enclose(bigIndex);
         }
     }
+    cout<<endl;
     sort(tmp.begin(),tmp.end());
     vector<uint32_t> res(tmp.size());
     for (unsigned int i = 0; i < res.size(); i++)
