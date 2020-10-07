@@ -1724,7 +1724,7 @@ void prefixTrieQueryColorColumn::explainSize() {
 
 void prefixTrieQueryColorColumn::shorten(vector<uint32_t> &input, vector<uint32_t> &output) {
     if (input.size() == 1) {
-        output = input;
+        output.push_back(input[0]);
         nodesCache[input[0]] = {input[0]};
         return;
     }
