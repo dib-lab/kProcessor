@@ -52,9 +52,10 @@ int main(int argc, char *argv[])
         while(inp>>kmer>>count)
         {
             testedKmers++;
-            if(kmer!="CATCTTCCAGTACAGTGTTG")
-                continue;
+//            if(kmer!="CATCTTCCAGTACAGTGTTG")
+//                continue;
             vector<uint32_t> colors=indexFrame->getKmerDefaultColumnValue<vector<uint32_t >, prefixTrieQueryColorColumn >(kmer);
+
             if(colors.size()==0)
             {
                 notFoundKmers++;
