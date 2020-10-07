@@ -1623,7 +1623,7 @@ vector<uint32_t> prefixTrieQueryColorColumn::getWithIndex(uint32_t index) {
     sort(tmp.begin(),tmp.end());
     vector<uint32_t> res(tmp.size());
     for (unsigned int i = 0; i < res.size(); i++)
-        res[i] = tmp[tmp.size() - i - 1];
+        res[i] = tmp[i];
     return res;
 }
 
