@@ -1487,7 +1487,10 @@ prefixTrieQueryColorColumn::prefixTrieQueryColorColumn(queryColorColumn *col) {
             for(auto t:nodesCache[pastNodes[k]])
                 debugOut<<t<<" ";
             debugOut<<" -> "<<pastNodes[k]<<"\n";
-
+            for(auto t:nodesCache[pastNodes[k]])
+            {
+                currPrefix.erase(std::find(currPrefix.begin(),currPrefix.end(),t));
+            }
             nodesCache.erase(pastNodes[k]);
             rank++;
             (*tree.back())[tmpTreeTop++] = 0;
@@ -1499,7 +1502,7 @@ prefixTrieQueryColorColumn::prefixTrieQueryColorColumn(queryColorColumn *col) {
             }
         }
         pastNodes.erase(pastNodes.begin() + j, pastNodes.end());
-        currPrefix.erase(currPrefix.begin() + i, currPrefix.end());
+     //   currPrefix.erase(currPrefix.begin() + i, currPrefix.end());
         if (currPrefix.empty() && rank > 0) {
             currTree++;
             tmp_edges.resize(tmpEdgesTop);
