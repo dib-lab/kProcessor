@@ -1515,26 +1515,19 @@ prefixTrieQueryColorColumn::prefixTrieQueryColorColumn(queryColorColumn *col) {
         for (auto a:toBAdded)
             currPrefix.push_back(a);
         addedEdgesHisto[toBAdded.size()] += 1;
+        uint32_t inputSize=toBAdded.size();
         vector<uint32_t> shortened;
         shortened.clear();
         shorten(toBAdded, shortened);
-
-//        if(toBAdded.size()>1) {
-//            cout << "Prefix ";
-//            for (auto c:toBAdded) {
-//                cout << c << " ";
-//            }
-//            cout << endl;
-//            cout << "Shortened ";
-//            for (auto c:shortened) {
-//                cout << c << " ";
-//            }
-//            cout << endl;
-//        }
-        for (unsigned int j = 0; j < shortened.size(); j++) {
+        uint32_t outputSize=0;
+        for(auto s:shortened)
+            outputSize+=nodesCache[s].size();
+        if(outputSize!=inputSize)
+        {
+            cerr<<"Build error in rank "<<rank<<endl;
+        }
+        for (auto sample:shortened) {
             rank++;
-            uint32_t sample = shortened[j];
-            //currPrefix.push_back(sample);
             pastNodes.push_back(sample);
             (*tree.back())[tmpTreeTop++] = 1;
             if (tmpTreeTop == tree.back()->size()) {
