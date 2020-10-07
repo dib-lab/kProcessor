@@ -1459,7 +1459,9 @@ prefixTrieQueryColorColumn::prefixTrieQueryColorColumn(queryColorColumn *col) {
 //        }
 //        cout<<endl;
         vector<uint32_t> currColor(std::get<0>(colorTuple).begin(), std::get<0>(colorTuple).end());
-
+        vector<uint32_t> debugVector={0,1,3,4,6,9,59,60,61,62,63,64,68,69,70,71,72,73,74,98,99};
+        if(currColor==debugVector)
+            debugVector.clear();
         unsigned int i = 0;
         for (; i < currPrefix.size() && i < std::get<0>(colorTuple).size(); i++) {
             if (currPrefix[i] != std::get<0>(colorTuple)[i])
