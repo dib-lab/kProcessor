@@ -740,7 +740,7 @@ public:
 
     void serialize(string filename);
     void deserialize(string filename);
-    void shorten(vector<uint32_t> & input,vector<uint32_t> & output);
+    void shorten(deque<uint32_t> & input,deque<uint32_t> & output);
    // void _shorten(vector<uint32_t> & input,vector<uint32_t> & output, vector<uint32_t> & remaining);
     uint32_t getNumColors();
     uint64_t sizeInBytes();

@@ -1469,6 +1469,9 @@ prefixTrieQueryColorColumn::prefixTrieQueryColorColumn(queryColorColumn *col) {
 
         }
         unordered_set<uint32_t> unneededNodes(currPrefix.begin() + i, currPrefix.end());
+        unordered_set<uint32_t> neededNodes(currColor.begin() , currColor.end());
+        deque<uint32_t> toBAdded;
+        toBAdded.clear();
         bool hasUnneeded = false;
         unsigned int j = 0;
         for (; j < pastNodes.size(); j++) {
@@ -1489,7 +1492,9 @@ prefixTrieQueryColorColumn::prefixTrieQueryColorColumn(queryColorColumn *col) {
             debugOut<<" -> "<<pastNodes[k]<<"\n";
             for(auto t:nodesCache[pastNodes[k]])
             {
-                currPrefix.erase(std::find(currPrefix.begin(),currPrefix.end(),t));
+              //  currPrefix.erase(std::find(currPrefix.begin(),currPrefix.end(),t));
+                if(neededNodes.find(t)!=neededNodes.end())
+                    toBAdded.push_back(t);
             }
             nodesCache.erase(pastNodes[k]);
             rank++;
@@ -1502,7 +1507,7 @@ prefixTrieQueryColorColumn::prefixTrieQueryColorColumn(queryColorColumn *col) {
             }
         }
         pastNodes.erase(pastNodes.begin() + j, pastNodes.end());
-     //   currPrefix.erase(currPrefix.begin() + i, currPrefix.end());
+        currPrefix.erase(currPrefix.begin() + i, currPrefix.end());
         if (currPrefix.empty() && rank > 0) {
             currTree++;
             tmp_edges.resize(tmpEdgesTop);
@@ -1520,12 +1525,19 @@ prefixTrieQueryColorColumn::prefixTrieQueryColorColumn(queryColorColumn *col) {
 
         // vector<uint32_t> tobeAdded(std::get<0>(colorTuple).size()-i);
         //   std::copy(std::get<0>(colorTuple).begin(),std::get<0>(colorTuple).end(),tobeAdded.begin());
-        vector<uint32_t> toBAdded(currColor.begin() + i, currColor.end());
-        for (auto a:toBAdded)
-            currPrefix.push_back(a);
+//        for(auto it=currColor.begin() + i;it !=currColor.end();it++)
+//            toBAdded.
+        for (auto it=currColor.begin()+i;it!=currColor.end();it++) {
+            currPrefix.push_back(*it);
+            toBAdded.push_back(*it);
+        }
+        std::sort(toBAdded.begin(), toBAdded.end()); // {1 1 2 3 4 4 5}
+        auto last = std::unique(toBAdded.begin(), toBAdded.end());
+        // v now holds {1 2 3 4 5 x x}, where 'x' is indeterminate
+        toBAdded.erase(last, toBAdded.end());
         addedEdgesHisto[toBAdded.size()] += 1;
-        uint32_t inputSize=toBAdded.size();
-        vector<uint32_t> shortened;
+        uint32_t inputSize = toBAdded.size();
+        deque<uint32_t> shortened;
         shortened.clear();
         shorten(toBAdded, shortened);
         uint32_t outputSize=0;
@@ -1632,7 +1644,7 @@ vector<uint32_t> prefixTrieQueryColorColumn::getWithIndex(uint32_t index) {
     deque<uint32_t> tmp;
     queue<uint64_t> Q;
     Q.push(idsMap[index]);
-    cout<<idsMap[index]<<" -> ";
+   // cout<<idsMap[index]<<" -> ";
     while (!Q.empty()) {
         uint64_t bigIndex = Q.front();
         Q.pop();
@@ -1643,7 +1655,7 @@ vector<uint32_t> prefixTrieQueryColorColumn::getWithIndex(uint32_t index) {
         while (bigIndex != bp_tree[tIndex]->size()) {
             uint64_t edgeIndex = bp_tree[tIndex]->rank(bigIndex) - 1;
             uint64_t node = (*edges[tIndex])[edgeIndex];
-            cout<<node<<" ";
+    //        cout<<node<<" ";
             if (node < noSamples)
                 tmp.push_back(node);
             else
@@ -1651,7 +1663,7 @@ vector<uint32_t> prefixTrieQueryColorColumn::getWithIndex(uint32_t index) {
             bigIndex = bp_tree[tIndex]->enclose(bigIndex);
         }
     }
-    cout<<endl;
+    //cout<<endl;
     sort(tmp.begin(),tmp.end());
     vector<uint32_t> res(tmp.size());
     for (unsigned int i = 0; i < res.size(); i++)
@@ -1754,7 +1766,7 @@ void prefixTrieQueryColorColumn::explainSize() {
 }
 
 
-void prefixTrieQueryColorColumn::shorten(vector<uint32_t> &input, vector<uint32_t> &output) {
+void prefixTrieQueryColorColumn::shorten(deque<uint32_t> &input, deque<uint32_t> &output) {
     if (input.size() == 1) {
         output.push_back(input[0]);
         nodesCache[input[0]] = {input[0]};
@@ -1769,7 +1781,7 @@ void prefixTrieQueryColorColumn::shorten(vector<uint32_t> &input, vector<uint32_
             shorten(input, output);
         return;
     }
-    vector<uint32_t> remaining;
+    deque<uint32_t> remaining;
     vector<uint32_t> chosen;
     if ((*edges[treeIndex])[0] != input[0]) {
         cerr << "Wrong tree " << (*edges[treeIndex])[0] << endl;
