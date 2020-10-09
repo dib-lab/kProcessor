@@ -1402,6 +1402,7 @@ prefixTrieQueryColorColumn::prefixTrieQueryColorColumn(queryColorColumn *col) {
     }
     cerr << "Inverted Ids is calculated" << endl;
 
+
     auto compare = [](tuple<vector<uint32_t>, uint32_t, vectorBaseIterator *, vectorBaseIterator *> lhs,
                       tuple<vector<uint32_t>, uint32_t, vectorBaseIterator *, vectorBaseIterator *> rhs) {
         if (std::get<0>(lhs)[0] < std::get<0>(rhs)[0])
@@ -1504,9 +1505,12 @@ prefixTrieQueryColorColumn::prefixTrieQueryColorColumn(queryColorColumn *col) {
         if (currPrefix.empty() && rank > 0) {
             currTree++;
             //tmp_edges.resize(tmpEdgesTop);
-            vector<uint64_t> tmpVec(tmpEdgesTop);
-            std::copy(tmp_edges.begin(),tmp_edges.begin()+tmpEdgesTop,tmpVec.begin());
-            edges.push_back(new vectype(tmpVec));
+            //vector<uint64_t> tmpVec(tmpEdgesTop);
+            unCompressedEdges.push_back(new sdsl::int_vector<>(tmpEdgesTop));
+            std::copy(tmp_edges.begin(),tmp_edges.begin()+tmpEdgesTop,unCompressedEdges.back()->begin());
+            sdsl::util::bit_compress(*unCompressedEdges.back());
+            //edges.push_back(new vectype(tmpVec));
+
             tree.back()->resize(tmpTreeTop);
             bp_tree.push_back(new sdsl::bp_support_sada<>(tree.back()));
             starts[currTree] = rank;
@@ -1595,8 +1599,24 @@ prefixTrieQueryColorColumn::prefixTrieQueryColorColumn(queryColorColumn *col) {
     }
 
     //tmpStarts.push_back(rank);
-    tmp_edges.resize(tmpEdgesTop);
-    edges.push_back(new vectype(tmp_edges));
+//    tmp_edges.resize(tmpEdgesTop);
+//    edges.push_back(new vectype(tmp_edges));
+
+    unCompressedEdges.push_back(new sdsl::int_vector<>(tmpEdgesTop));
+    std::copy(tmp_edges.begin(),tmp_edges.begin()+tmpEdgesTop,unCompressedEdges.back()->begin());
+    sdsl::util::bit_compress(*unCompressedEdges.back());
+
+
+    double unCompressedSize=0.0;
+    for(auto e:unCompressedEdges)
+    {
+        unCompressedSize+=sdsl::size_in_mega_bytes(*e);
+        edges.push_back(new vectype(*e));
+        delete e;
+    }
+    unCompressedEdges.clear();
+    cout<<"Uncompressed edges size = "<<unCompressedSize<<endl;
+
     tree.back()->resize(tmpTreeTop);
     bp_tree.push_back(new sdsl::bp_support_sada<>(tree.back()));
 
@@ -1760,7 +1780,7 @@ void prefixTrieQueryColorColumn::shorten(deque<uint32_t> &input, deque<uint32_t>
         return;
     }
     uint32_t treeIndex = noSamples - input[0] - 1;
-    if (treeIndex >= edges.size()) {
+    if (treeIndex >= unCompressedEdges.size()) {
         output.push_back(input[0]);
         nodesCache[input[0]] = {input[0]};
         input.erase(input.begin());
@@ -1770,8 +1790,8 @@ void prefixTrieQueryColorColumn::shorten(deque<uint32_t> &input, deque<uint32_t>
     }
     deque<uint32_t> remaining;
     vector<uint32_t> chosen;
-    if ((*edges[treeIndex])[0] != input[0]) {
-        cerr << "Wrong tree " << (*edges[treeIndex])[0] << endl;
+    if ((*unCompressedEdges[treeIndex])[0] != input[0]) {
+        cerr << "Wrong tree " << (*unCompressedEdges[treeIndex])[0] << endl;
         return;
     }
     auto i = input.begin();
@@ -1779,7 +1799,7 @@ void prefixTrieQueryColorColumn::shorten(deque<uint32_t> &input, deque<uint32_t>
     uint64_t result = tree.size();
     while (i != input.end() && treePos < tree[treeIndex]->size() && (*tree[treeIndex])[treePos] == 1) {
         uint64_t edgeIndex = bp_tree[treeIndex]->rank(treePos) - 1;
-        uint32_t currNode = (*edges[treeIndex])[edgeIndex];
+        uint32_t currNode = (*unCompressedEdges[treeIndex])[edgeIndex];
         auto it = find(i, input.end(), currNode);
         if(it == input.end())
         {

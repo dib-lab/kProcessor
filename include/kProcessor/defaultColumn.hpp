@@ -710,6 +710,7 @@ public:
 class prefixTrieQueryColorColumn: public Column{
 private:
     unordered_map<uint64_t ,vector<uint32_t > > nodesCache;
+    deque<sdsl::int_vector<>*>  unCompressedEdges;
 public:
     typedef  sdsl::vlc_vector<> vectype;
     deque<vectype*>  edges;
