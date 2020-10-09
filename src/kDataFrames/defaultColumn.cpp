@@ -1447,6 +1447,7 @@ prefixTrieQueryColorColumn::prefixTrieQueryColorColumn(queryColorColumn *col) {
         addedEdgesHisto[i] = 0;
 
     uint64_t processedColors = 0;
+    uint64_t printChunk=numColors/20;
     deque<uint64_t> pastNodes;
     uint64_t rank = 0;
     while (!nextColor.empty()) {
@@ -1560,6 +1561,8 @@ prefixTrieQueryColorColumn::prefixTrieQueryColorColumn(queryColorColumn *col) {
 
         idsMap[invIdsMap[std::get<1>(colorTuple)]] = rank - 1;
         processedColors++;
+        if(processedColors%printChunk==0)
+            cout<<"Processed "<<processedColors<<" / "<<numColors<<endl;
         std::get<2>(colorTuple)->next();
         if (*std::get<2>(colorTuple) != *std::get<3>(colorTuple)) {
             std::get<0>(colorTuple) = *(*(std::get<2>(colorTuple)));
