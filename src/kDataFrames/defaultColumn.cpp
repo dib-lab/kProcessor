@@ -1449,7 +1449,6 @@ prefixTrieQueryColorColumn::prefixTrieQueryColorColumn(queryColorColumn *col) {
     uint64_t processedColors = 0;
     deque<uint64_t> pastNodes;
     uint64_t rank = 0;
-    ofstream debugOut("debug");
     while (!nextColor.empty()) {
         auto colorTuple = nextColor.top();
         nextColor.pop();
@@ -1459,9 +1458,6 @@ prefixTrieQueryColorColumn::prefixTrieQueryColorColumn(queryColorColumn *col) {
 //        }
 //        cout<<endl;
         vector<uint32_t> currColor(std::get<0>(colorTuple).begin(), std::get<0>(colorTuple).end());
-        vector<uint32_t> debugVector={0,1,3,4,6,9,59,60,61,62,63,64,68,69,70,71,72,73,74,98,99};
-        if(currColor==debugVector)
-            debugVector.clear();
         unsigned int i = 0;
         for (; i < currPrefix.size() && i < std::get<0>(colorTuple).size(); i++) {
             if (currPrefix[i] != std::get<0>(colorTuple)[i])
@@ -1488,11 +1484,7 @@ prefixTrieQueryColorColumn::prefixTrieQueryColorColumn(queryColorColumn *col) {
         }
         for (unsigned int k = j; k < pastNodes.size(); k++) {
             for(auto t:nodesCache[pastNodes[k]])
-                debugOut<<t<<" ";
-            debugOut<<" -> "<<pastNodes[k]<<"\n";
-            for(auto t:nodesCache[pastNodes[k]])
             {
-              //  currPrefix.erase(std::find(currPrefix.begin(),currPrefix.end(),t));
                 if(neededNodes.find(t)!=neededNodes.end())
                     toBAdded.push_back(t);
             }
@@ -1510,15 +1502,17 @@ prefixTrieQueryColorColumn::prefixTrieQueryColorColumn(queryColorColumn *col) {
         currPrefix.erase(currPrefix.begin() + i, currPrefix.end());
         if (currPrefix.empty() && rank > 0) {
             currTree++;
-            tmp_edges.resize(tmpEdgesTop);
-            edges.push_back(new vectype(tmp_edges));
+            //tmp_edges.resize(tmpEdgesTop);
+            vector<uint64_t> tmpVec(tmpEdgesTop);
+            std::copy(tmp_edges.begin(),tmp_edges.begin()+tmpEdgesTop,tmpVec.begin());
+            edges.push_back(new vectype(tmpVec));
             tree.back()->resize(tmpTreeTop);
             bp_tree.push_back(new sdsl::bp_support_sada<>(tree.back()));
             starts[currTree] = rank;
             tmpEdgesTop = 0;
             tmpTreeTop = 0;
             tmpSize = tmp_edges.size() * 2;
-            tmp_edges.resize(tmpSize);
+            //tmp_edges.resize(tmpSize);
             tree.push_back(new sdsl::bit_vector(tmpSize * 2));
 //            exportTree("tree.",edges.size()-1);
         }
@@ -1531,9 +1525,8 @@ prefixTrieQueryColorColumn::prefixTrieQueryColorColumn(queryColorColumn *col) {
             currPrefix.push_back(*it);
             toBAdded.push_back(*it);
         }
-        std::sort(toBAdded.begin(), toBAdded.end()); // {1 1 2 3 4 4 5}
+        std::sort(toBAdded.begin(), toBAdded.end());
         auto last = std::unique(toBAdded.begin(), toBAdded.end());
-        // v now holds {1 2 3 4 5 x x}, where 'x' is indeterminate
         toBAdded.erase(last, toBAdded.end());
         addedEdgesHisto[toBAdded.size()] += 1;
         uint32_t inputSize = toBAdded.size();
@@ -1587,13 +1580,9 @@ prefixTrieQueryColorColumn::prefixTrieQueryColorColumn(queryColorColumn *col) {
         }
     }
     for (unsigned int k = 0; k < pastNodes.size(); k++) {
-        for(auto t:nodesCache[pastNodes[k]])
-            debugOut<<t<<" ";
-        debugOut<<" -> "<<pastNodes[k]<<"\n";
-
         nodesCache.erase(pastNodes[k]);
         rank++;
-        (*tree.back())[tmpTreeTop++] = 0;
+        (*tree.back())[tmpTreeTop++] = false;
         if (tmpTreeTop == tree.back()->size()) {
             cerr << "Tmp bp_tree of size " << tree.back()->size() << "(" << sdsl::size_in_mega_bytes(*tree.back())
                  << "MB) is full! size will doubled" << endl;
@@ -1607,9 +1596,8 @@ prefixTrieQueryColorColumn::prefixTrieQueryColorColumn(queryColorColumn *col) {
     edges.push_back(new vectype(tmp_edges));
     tree.back()->resize(tmpTreeTop);
     bp_tree.push_back(new sdsl::bp_support_sada<>(tree.back()));
-//    starts=sdsl::int_vector<>(tmpStarts.size());
-//    std::copy(tmpStarts.begin(),tmpStarts.end(),starts.begin());
-    //   exportTree("tree.",edges.size()-1);
+
+
     cout<<"Node Cache size = "<<nodesCache.size()<<endl;
     for(auto c: nodesCache) {
         cout << c.first << " -> ";
@@ -1625,10 +1613,6 @@ prefixTrieQueryColorColumn::prefixTrieQueryColorColumn(queryColorColumn *col) {
     uint64_t edgesSum = 0;
     for (auto a:addedEdgesHisto) {
         edgesSum += (a.first - 1) * (a.second);
-//        if (a.second > 0) {
-//            cout << a.first << " -> " << a.second << endl;
-//
-//        }
     }
     cout << "Possible saving " << edgesSum << endl;
 
