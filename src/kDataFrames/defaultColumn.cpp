@@ -1801,7 +1801,7 @@ void prefixTrieQueryColorColumn::shorten(deque<uint32_t> &input, deque<uint32_t>
         uint64_t edgeIndex = bp_tree[treeIndex]->rank(treePos) - 1;
         uint32_t currNode = (*unCompressedEdges[treeIndex])[edgeIndex];
         auto it = lower_bound(i, input.end(), currNode);
-        if(it == input.end())
+        if(it == input.end() || *it!=currNode)
         {
             treePos = bp_tree[treeIndex]->find_close(treePos) + 1;
         } else{
