@@ -41,9 +41,12 @@ bool kDataFrame::empty() {
 }
 
 bool kDataFrame::insert(kmerRow k) {
-    return this->insert(k.kmer, k.count);
+    return this->setCount(k.kmer, k.count);
 }
-
+kDataFrame::iterator kDataFrame::insert(kDataFrame::iterator& it,kmerRow k){
+    insert(k);
+    return begin();
+}
 void kDataFrame::save(string filePath)
 {
     ofstream out(filePath+".multiColumn");

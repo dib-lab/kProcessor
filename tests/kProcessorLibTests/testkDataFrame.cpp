@@ -385,14 +385,13 @@ TEST_P(kDataFrameTest,iterateOverAllKmers)
       }
     }
     int checkedKmers=0;
-    kDataFrameIterator it=kframe->begin();
-    while(it!=kframe->end())
+
+    for(auto it:*kframe)
     {
-      string kmer=it.getKmer();
-      uint64_t count=it.getCount();
+      string kmer=it.kmer;
+      uint64_t count=it.count;
       ASSERT_EQ(count,(*kmers)[kmer]);
       //insertedKmers.erase(kmer);
-      it++;
       checkedKmers++;
     }
     EXPECT_EQ(checkedKmers,numInsertedKmers);
@@ -1218,15 +1217,14 @@ TEST_P(kDataFrameBufferedTest,iterateOverAllKmers)
         }
     }
 
-    kDataFrameIterator it=kframe->begin();
+
     int testKmers=0;
-    while(it!=kframe->end())
+    for(auto it:*kframe)
     {
-        string kmer=it.getKmer();
-        uint64_t count=it.getCount();
+        string kmer=it.kmer;
+        uint64_t count=it.count;
         ASSERT_EQ(count,(*kmers)[kmer]);
         //kmers->erase(kmer);
-        it++;
         testKmers++;
         //if(testKmers%1000==0)
           //  cout<<testKmers<<endl;

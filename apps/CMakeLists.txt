@@ -29,3 +29,6 @@ target_link_libraries (optimizeIndex LINK_PUBLIC kProcessor MQF ${SEQAN_LIBRARIE
 add_executable(convertColorsAndtestIndex convertColorsAndtestIndex.cpp)
 target_link_libraries (convertColorsAndtestIndex LINK_PUBLIC kProcessor MQF ${SEQAN_LIBRARIES}  ${ntcardLib})
 
+
+add_executable(playground playground.cpp)
+target_link_libraries (playground LINK_PUBLIC kProcessor MQF ${SEQAN_LIBRARIES}  ${ntcardLib})

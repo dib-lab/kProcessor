@@ -12,6 +12,8 @@ cmake_minimum_required (VERSION 3.0.0)
 # Name of project and that it is C/C++.
 project (kProcessor C CXX)
 
+
+#set(CMAKE_CXX_COMPILER /usr/bin/g++-10)
 # IMPORTANT == -FPIC #SDSL-LINKING
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 

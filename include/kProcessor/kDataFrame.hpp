@@ -94,6 +94,7 @@ private:
   kDataFrame* origin;
   _kDataFrameIterator* iterator;
 public:
+    using iterator_category = std::forward_iterator_tag;
   kDataFrameIterator(){
     iterator=NULL;
   }
@@ -127,6 +128,10 @@ public:
     (*iterator)++;
     return *this;
   }
+    kDataFrameIterator& operator ++ (){
+        (*iterator)++;
+        return *this;
+    }
 
   /// Increment the iterator to the next kmer (Implemented mainly for python interface)
   kDataFrameIterator& next(){
@@ -235,6 +240,8 @@ protected:
   virtual uint64_t getkmerOrder(string kmer);
   kDataFrameIterator* endIterator;
 public:
+    typedef kDataFrameIterator iterator;
+    typedef kmerRow value_type;
     kmerDecoder * KD;
   virtual string get_class_name(){ return class_name;}  // Temporary until resolving #17
   kDataFrame();
@@ -264,6 +271,7 @@ public:
   /// insert the kmer in the kmer row time in the kDataFrame, or increment the kmer count with the count in the row if it is already exists.
   /*! Returns bool value indicating whether the kmer is inserted or not*/
   bool insert(kmerRow k);
+  kDataFrame::iterator insert(kDataFrame::iterator& it,kmerRow k);
 /// set the kmer's count to N time in the kDataFrame
 /*! Returns bool value indicating whether the kmer is inserted or not.
 The difference between setCount and insert is that setCount set the count to N no matter the previous kmer count was*/
