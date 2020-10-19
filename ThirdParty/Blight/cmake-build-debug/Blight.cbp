@@ -1,0 +1,251 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6"/>
+	<Project>
+		<Option title="Blight"/>
+		<Option makefile_is_custom="1"/>
+		<Option compiler="gcc"/>
+		<Option virtualFolders="CMake Files\;"/>
+		<Build>
+			<Target title="all">
+				<Option working_dir="/home/mostafa/Documents/KmerCounting/kProcessor/ThirdParty/Blight/cmake-build-debug"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="/usr/bin/gmake -j4 -f &quot;/home/mostafa/Documents/KmerCounting/kProcessor/ThirdParty/Blight/cmake-build-debug/Makefile&quot;  VERBOSE=1 all"/>
+					<CompileFile command="/usr/bin/gmake -j4 -f &quot;/home/mostafa/Documents/KmerCounting/kProcessor/ThirdParty/Blight/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/gmake -j4 -f &quot;/home/mostafa/Documents/KmerCounting/kProcessor/ThirdParty/Blight/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/gmake -j4 -f &quot;/home/mostafa/Documents/KmerCounting/kProcessor/ThirdParty/Blight/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="edit_cache">
+				<Option working_dir="/home/mostafa/Documents/KmerCounting/kProcessor/ThirdParty/Blight/cmake-build-debug"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="/usr/bin/gmake -j4 -f &quot;/home/mostafa/Documents/KmerCounting/kProcessor/ThirdParty/Blight/cmake-build-debug/Makefile&quot;  VERBOSE=1 edit_cache"/>
+					<CompileFile command="/usr/bin/gmake -j4 -f &quot;/home/mostafa/Documents/KmerCounting/kProcessor/ThirdParty/Blight/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/gmake -j4 -f &quot;/home/mostafa/Documents/KmerCounting/kProcessor/ThirdParty/Blight/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/gmake -j4 -f &quot;/home/mostafa/Documents/KmerCounting/kProcessor/ThirdParty/Blight/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="rebuild_cache">
+				<Option working_dir="/home/mostafa/Documents/KmerCounting/kProcessor/ThirdParty/Blight/cmake-build-debug"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="/usr/bin/gmake -j4 -f &quot;/home/mostafa/Documents/KmerCounting/kProcessor/ThirdParty/Blight/cmake-build-debug/Makefile&quot;  VERBOSE=1 rebuild_cache"/>
+					<CompileFile command="/usr/bin/gmake -j4 -f &quot;/home/mostafa/Documents/KmerCounting/kProcessor/ThirdParty/Blight/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/gmake -j4 -f &quot;/home/mostafa/Documents/KmerCounting/kProcessor/ThirdParty/Blight/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/gmake -j4 -f &quot;/home/mostafa/Documents/KmerCounting/kProcessor/ThirdParty/Blight/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="Blight">
+				<Option output="/home/mostafa/Documents/KmerCounting/kProcessor/ThirdParty/Blight/cmake-build-debug/Blight" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/home/mostafa/Documents/KmerCounting/kProcessor/ThirdParty/Blight/cmake-build-debug"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add directory="/home/mostafa/Documents/KmerCounting/kProcessor/ThirdParty/Blight/."/>
+					<Add directory="/home/mostafa/Documents/KmerCounting/kProcessor/ThirdParty/Blight/lz4"/>
+					<Add directory="/usr/include/c++/7"/>
+					<Add directory="/usr/include/x86_64-linux-gnu/c++/7"/>
+					<Add directory="/usr/include/c++/7/backward"/>
+					<Add directory="/usr/lib/gcc/x86_64-linux-gnu/7/include"/>
+					<Add directory="/usr/local/include"/>
+					<Add directory="/usr/lib/gcc/x86_64-linux-gnu/7/include-fixed"/>
+					<Add directory="/usr/include/x86_64-linux-gnu"/>
+					<Add directory="/usr/include"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/gmake -j4 -f &quot;/home/mostafa/Documents/KmerCounting/kProcessor/ThirdParty/Blight/cmake-build-debug/Makefile&quot;  VERBOSE=1 Blight"/>
+					<CompileFile command="/usr/bin/gmake -j4 -f &quot;/home/mostafa/Documents/KmerCounting/kProcessor/ThirdParty/Blight/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/gmake -j4 -f &quot;/home/mostafa/Documents/KmerCounting/kProcessor/ThirdParty/Blight/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/gmake -j4 -f &quot;/home/mostafa/Documents/KmerCounting/kProcessor/ThirdParty/Blight/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="Blight/fast">
+				<Option output="/home/mostafa/Documents/KmerCounting/kProcessor/ThirdParty/Blight/cmake-build-debug/Blight" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/home/mostafa/Documents/KmerCounting/kProcessor/ThirdParty/Blight/cmake-build-debug"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add directory="/home/mostafa/Documents/KmerCounting/kProcessor/ThirdParty/Blight/."/>
+					<Add directory="/home/mostafa/Documents/KmerCounting/kProcessor/ThirdParty/Blight/lz4"/>
+					<Add directory="/usr/include/c++/7"/>
+					<Add directory="/usr/include/x86_64-linux-gnu/c++/7"/>
+					<Add directory="/usr/include/c++/7/backward"/>
+					<Add directory="/usr/lib/gcc/x86_64-linux-gnu/7/include"/>
+					<Add directory="/usr/local/include"/>
+					<Add directory="/usr/lib/gcc/x86_64-linux-gnu/7/include-fixed"/>
+					<Add directory="/usr/include/x86_64-linux-gnu"/>
+					<Add directory="/usr/include"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/gmake -j4 -f &quot;/home/mostafa/Documents/KmerCounting/kProcessor/ThirdParty/Blight/cmake-build-debug/Makefile&quot;  VERBOSE=1 Blight/fast"/>
+					<CompileFile command="/usr/bin/gmake -j4 -f &quot;/home/mostafa/Documents/KmerCounting/kProcessor/ThirdParty/Blight/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/gmake -j4 -f &quot;/home/mostafa/Documents/KmerCounting/kProcessor/ThirdParty/Blight/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/gmake -j4 -f &quot;/home/mostafa/Documents/KmerCounting/kProcessor/ThirdParty/Blight/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+		</Build>
+		<Unit filename="/home/mostafa/Documents/KmerCounting/kProcessor/ThirdParty/Blight/Abundance_De_Bruijn_graph_snippet.cpp">
+			<Option target="Blight"/>
+		</Unit>
+		<Unit filename="/home/mostafa/Documents/KmerCounting/kProcessor/ThirdParty/Blight/Colored_De_Bruijn_graph_snippet.cpp">
+			<Option target="Blight"/>
+		</Unit>
+		<Unit filename="/home/mostafa/Documents/KmerCounting/kProcessor/ThirdParty/Blight/MurmurHash3.cpp">
+			<Option target="Blight"/>
+		</Unit>
+		<Unit filename="/home/mostafa/Documents/KmerCounting/kProcessor/ThirdParty/Blight/MurmurHash3.h">
+			<Option target="Blight"/>
+		</Unit>
+		<Unit filename="/home/mostafa/Documents/KmerCounting/kProcessor/ThirdParty/Blight/bbhash.h">
+			<Option target="Blight"/>
+		</Unit>
+		<Unit filename="/home/mostafa/Documents/KmerCounting/kProcessor/ThirdParty/Blight/bench_blight.cpp">
+			<Option target="Blight"/>
+		</Unit>
+		<Unit filename="/home/mostafa/Documents/KmerCounting/kProcessor/ThirdParty/Blight/blight.cpp">
+			<Option target="Blight"/>
+		</Unit>
+		<Unit filename="/home/mostafa/Documents/KmerCounting/kProcessor/ThirdParty/Blight/blight.h">
+			<Option target="Blight"/>
+		</Unit>
+		<Unit filename="/home/mostafa/Documents/KmerCounting/kProcessor/ThirdParty/Blight/bm.h">
+			<Option target="Blight"/>
+		</Unit>
+		<Unit filename="/home/mostafa/Documents/KmerCounting/kProcessor/ThirdParty/Blight/bm64.h">
+			<Option target="Blight"/>
+		</Unit>
+		<Unit filename="/home/mostafa/Documents/KmerCounting/kProcessor/ThirdParty/Blight/bmalgo.h">
+			<Option target="Blight"/>
+		</Unit>
+		<Unit filename="/home/mostafa/Documents/KmerCounting/kProcessor/ThirdParty/Blight/bmalgo_impl.h">
+			<Option target="Blight"/>
+		</Unit>
+		<Unit filename="/home/mostafa/Documents/KmerCounting/kProcessor/ThirdParty/Blight/bmalloc.h">
+			<Option target="Blight"/>
+		</Unit>
+		<Unit filename="/home/mostafa/Documents/KmerCounting/kProcessor/ThirdParty/Blight/bmblocks.h">
+			<Option target="Blight"/>
+		</Unit>
+		<Unit filename="/home/mostafa/Documents/KmerCounting/kProcessor/ThirdParty/Blight/bmbuffer.h">
+			<Option target="Blight"/>
+		</Unit>
+		<Unit filename="/home/mostafa/Documents/KmerCounting/kProcessor/ThirdParty/Blight/bmconst.h">
+			<Option target="Blight"/>
+		</Unit>
+		<Unit filename="/home/mostafa/Documents/KmerCounting/kProcessor/ThirdParty/Blight/bmdef.h">
+			<Option target="Blight"/>
+		</Unit>
+		<Unit filename="/home/mostafa/Documents/KmerCounting/kProcessor/ThirdParty/Blight/bmfunc.h">
+			<Option target="Blight"/>
+		</Unit>
+		<Unit filename="/home/mostafa/Documents/KmerCounting/kProcessor/ThirdParty/Blight/bmfwd.h">
+			<Option target="Blight"/>
+		</Unit>
+		<Unit filename="/home/mostafa/Documents/KmerCounting/kProcessor/ThirdParty/Blight/bmrs.h">
+			<Option target="Blight"/>
+		</Unit>
+		<Unit filename="/home/mostafa/Documents/KmerCounting/kProcessor/ThirdParty/Blight/bmserial.h">
+			<Option target="Blight"/>
+		</Unit>
+		<Unit filename="/home/mostafa/Documents/KmerCounting/kProcessor/ThirdParty/Blight/bmsimd.h">
+			<Option target="Blight"/>
+		</Unit>
+		<Unit filename="/home/mostafa/Documents/KmerCounting/kProcessor/ThirdParty/Blight/bmtrans.h">
+			<Option target="Blight"/>
+		</Unit>
+		<Unit filename="/home/mostafa/Documents/KmerCounting/kProcessor/ThirdParty/Blight/bmundef.h">
+			<Option target="Blight"/>
+		</Unit>
+		<Unit filename="/home/mostafa/Documents/KmerCounting/kProcessor/ThirdParty/Blight/bmutil.h">
+			<Option target="Blight"/>
+		</Unit>
+		<Unit filename="/home/mostafa/Documents/KmerCounting/kProcessor/ThirdParty/Blight/bmxor.h">
+			<Option target="Blight"/>
+		</Unit>
+		<Unit filename="/home/mostafa/Documents/KmerCounting/kProcessor/ThirdParty/Blight/common.h">
+			<Option target="Blight"/>
+		</Unit>
+		<Unit filename="/home/mostafa/Documents/KmerCounting/kProcessor/ThirdParty/Blight/conf.h">
+			<Option target="Blight"/>
+		</Unit>
+		<Unit filename="/home/mostafa/Documents/KmerCounting/kProcessor/ThirdParty/Blight/encoding.h">
+			<Option target="Blight"/>
+		</Unit>
+		<Unit filename="/home/mostafa/Documents/KmerCounting/kProcessor/ThirdParty/Blight/interactive.cpp">
+			<Option target="Blight"/>
+		</Unit>
+		<Unit filename="/home/mostafa/Documents/KmerCounting/kProcessor/ThirdParty/Blight/lz4/lz4.c">
+			<Option target="Blight"/>
+		</Unit>
+		<Unit filename="/home/mostafa/Documents/KmerCounting/kProcessor/ThirdParty/Blight/lz4/lz4.h">
+			<Option target="Blight"/>
+		</Unit>
+		<Unit filename="/home/mostafa/Documents/KmerCounting/kProcessor/ThirdParty/Blight/lz4/lz4_stream.h">
+			<Option target="Blight"/>
+		</Unit>
+		<Unit filename="/home/mostafa/Documents/KmerCounting/kProcessor/ThirdParty/Blight/lz4/lz4frame.c">
+			<Option target="Blight"/>
+		</Unit>
+		<Unit filename="/home/mostafa/Documents/KmerCounting/kProcessor/ThirdParty/Blight/lz4/lz4frame.h">
+			<Option target="Blight"/>
+		</Unit>
+		<Unit filename="/home/mostafa/Documents/KmerCounting/kProcessor/ThirdParty/Blight/lz4/lz4frame_static.h">
+			<Option target="Blight"/>
+		</Unit>
+		<Unit filename="/home/mostafa/Documents/KmerCounting/kProcessor/ThirdParty/Blight/lz4/lz4hc.c">
+			<Option target="Blight"/>
+		</Unit>
+		<Unit filename="/home/mostafa/Documents/KmerCounting/kProcessor/ThirdParty/Blight/lz4/lz4hc.h">
+			<Option target="Blight"/>
+		</Unit>
+		<Unit filename="/home/mostafa/Documents/KmerCounting/kProcessor/ThirdParty/Blight/lz4/xxhash.c">
+			<Option target="Blight"/>
+		</Unit>
+		<Unit filename="/home/mostafa/Documents/KmerCounting/kProcessor/ThirdParty/Blight/lz4/xxhash.h">
+			<Option target="Blight"/>
+		</Unit>
+		<Unit filename="/home/mostafa/Documents/KmerCounting/kProcessor/ThirdParty/Blight/query_index.cpp">
+			<Option target="Blight"/>
+		</Unit>
+		<Unit filename="/home/mostafa/Documents/KmerCounting/kProcessor/ThirdParty/Blight/robin_hood.h">
+			<Option target="Blight"/>
+		</Unit>
+		<Unit filename="/home/mostafa/Documents/KmerCounting/kProcessor/ThirdParty/Blight/snippet.cpp">
+			<Option target="Blight"/>
+		</Unit>
+		<Unit filename="/home/mostafa/Documents/KmerCounting/kProcessor/ThirdParty/Blight/split.cpp">
+			<Option target="Blight"/>
+		</Unit>
+		<Unit filename="/home/mostafa/Documents/KmerCounting/kProcessor/ThirdParty/Blight/strict_fstream.hpp">
+			<Option target="Blight"/>
+		</Unit>
+		<Unit filename="/home/mostafa/Documents/KmerCounting/kProcessor/ThirdParty/Blight/trle.h">
+			<Option target="Blight"/>
+		</Unit>
+		<Unit filename="/home/mostafa/Documents/KmerCounting/kProcessor/ThirdParty/Blight/trle_.h">
+			<Option target="Blight"/>
+		</Unit>
+		<Unit filename="/home/mostafa/Documents/KmerCounting/kProcessor/ThirdParty/Blight/trlec.c">
+			<Option target="Blight"/>
+		</Unit>
+		<Unit filename="/home/mostafa/Documents/KmerCounting/kProcessor/ThirdParty/Blight/trled.c">
+			<Option target="Blight"/>
+		</Unit>
+		<Unit filename="/home/mostafa/Documents/KmerCounting/kProcessor/ThirdParty/Blight/utils.cpp">
+			<Option target="Blight"/>
+		</Unit>
+		<Unit filename="/home/mostafa/Documents/KmerCounting/kProcessor/ThirdParty/Blight/utils.h">
+			<Option target="Blight"/>
+		</Unit>
+		<Unit filename="/home/mostafa/Documents/KmerCounting/kProcessor/ThirdParty/Blight/zstr.hpp">
+			<Option target="Blight"/>
+		</Unit>
+		<Unit filename="/home/mostafa/Documents/KmerCounting/kProcessor/ThirdParty/Blight/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\"/>
+		</Unit>
+	</Project>
+</CodeBlocks_project_file>

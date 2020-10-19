@@ -1,0 +1,61 @@
+cmake_minimum_required(VERSION 3.10)
+project(Blight)
+
+set(CMAKE_CXX_STANDARD 11)
+
+include_directories(.)
+include_directories(lz4)
+
+add_executable(Blight
+        lz4/lz4.c
+        lz4/lz4.h
+        lz4/lz4_stream.h
+        lz4/lz4frame.c
+        lz4/lz4frame.h
+        lz4/lz4frame_static.h
+        lz4/lz4hc.c
+        lz4/lz4hc.h
+        lz4/xxhash.c
+        lz4/xxhash.h
+        Abundance_De_Bruijn_graph_snippet.cpp
+        bbhash.h
+        bench_blight.cpp
+        blight.cpp
+        blight.h
+        bm.h
+        bm64.h
+        bmalgo.h
+        bmalgo_impl.h
+        bmalloc.h
+        bmblocks.h
+        bmbuffer.h
+        bmconst.h
+        bmdef.h
+        bmfunc.h
+        bmfwd.h
+        bmrs.h
+        bmserial.h
+        bmsimd.h
+        bmtrans.h
+        bmundef.h
+        bmutil.h
+        bmxor.h
+        Colored_De_Bruijn_graph_snippet.cpp
+        common.h
+        conf.h
+        encoding.h
+        interactive.cpp
+        MurmurHash3.cpp
+        MurmurHash3.h
+        query_index.cpp
+        robin_hood.h
+        snippet.cpp
+        split.cpp
+        strict_fstream.hpp
+        trle.h
+        trle_.h
+        trlec.c
+        trled.c
+        utils.cpp
+        utils.h
+        zstr.hpp)
