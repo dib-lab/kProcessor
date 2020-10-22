@@ -13,7 +13,7 @@
 
 #include "stdafx.h"
 #include <iostream>
-#include "../kmc_api/kmc_file.h"
+#include "kmc_file.h"
 
 void print_info(void);
 

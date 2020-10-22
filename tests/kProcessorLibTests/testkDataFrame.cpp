@@ -786,6 +786,34 @@ TEST_P(algorithmsTest,parsingTest)
     
 }
 
+TEST_P(algorithmsTest,loadingKMCTest)
+{
+    string kframeType=get<0>(GetParam());
+    int kSize=get<1>(GetParam());
+    kDataFrame* kframe=getFrame(make_tuple(kframeType,kSize));
+    string fileName=get<2>(GetParam());
+    string db=fileName+"."+std::to_string(kSize);
+
+
+    kProcessor::loadFromKMC(kframe,db);
+
+    kmerDecoder *KMERS = kProcessor::initialize_kmerDecoder(fileName, 1000, "kmers", {{"k_size", kSize}});
+
+    while (!KMERS->end()) {
+        KMERS->next_chunk();
+        for (const auto &seq : *KMERS->getKmers()) {
+            for (const auto &kmer : seq.second) {
+                ASSERT_GE(kframe->getCount(kmer.str),1);
+            }
+        }
+    }
+
+    delete kframe;
+
+
+}
+
+
 TEST_P(estimateTest,estimateTestTest)
 {
   string fileName=GetParam();

@@ -37,7 +37,7 @@ uint16_t parseCoverage_log2(const string& str);
 uint16_t parseCoverage_exact(const string& str);
 uint16_t parseCoverage_bool(const string& str);
 string color_coverage2str(const vector<uint16_t>& V);
-vector<string> split(const string& s, char delim);
+vector<string> split_mqf(const string &s, char delim);
 kmer_type hash64shift(kmer_type key);
 bool exists_test(const string& name);
 __m128i mm_bitshift_right(__m128i x, unsigned count);

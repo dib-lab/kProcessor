@@ -443,7 +443,7 @@ void read_vector_bool(vector<bool>& V, zstr::ifstream* out, uint64_t n_bits) {
 
 
 
-vector<string> split(const string& s, char delim) {
+vector<string> split_mqf(const string &s, char delim) {
 	vector<string> res;
 	uint pred(0);
 	for (uint i(0); i < s.size(); ++i) {

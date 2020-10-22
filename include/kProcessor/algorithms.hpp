@@ -48,6 +48,8 @@ void parseSequences(kmerDecoder * KD, kDataFrame* output);
 
 /// Load the kmers in the input file into the output kDataframe. Input File can be of formats: fastq,fasta.
 void countKmersFromFile(kDataFrame * kframe, std::map<std::string, int> parse_params, string filename, int chunk_size = 1000);
+/// Load the kmers from KMC DB.
+void loadFromKMC(kDataFrame * kframe,  std::string KMC_DB_filename);
 
 /// Load the kmers in the input string into the output kDataframe.
 void countKmersFromString(kmerDecoder *KD, string sequence,kDataFrame* output);
