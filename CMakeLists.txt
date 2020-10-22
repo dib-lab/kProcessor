@@ -29,6 +29,8 @@ include_directories("ThirdParty/kmerDecoder/lib/parallel_hashmap")
 include_directories("ThirdParty/cereal/include")
 include_directories("ThirdParty/ntCard/include")
 include_directories("ThirdParty/mum-hash")
+include_directories("ThirdParty/Blight")
+include_directories("ThirdParty/KMC/kmc_api")
 
 
 add_subdirectory(ThirdParty/MQF/)
@@ -66,6 +68,28 @@ ExternalProject_Add(
 set(ntcardLib "${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/ntCard/libntcard.a")
 
 
+ExternalProject_Add(
+        libblight_a
+        SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/Blight
+        CONFIGURE_COMMAND ls
+        BUILD_COMMAND make
+        INSTALL_COMMAND ls
+        BUILD_IN_SOURCE 1
+)
+set(blightLib "${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/Blight/libblight.a")
+
+
+ExternalProject_Add(
+        libKMCAPI_a
+        SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/KMC/kmc_api
+        CONFIGURE_COMMAND ls
+        BUILD_COMMAND make -C ../ kmc_api/kmc_file.o  kmc_api/kmer_api.o  kmc_api/mmer.o && ar -rc libKMCAPI.a  kmc_file.o  kmer_api.o  mmer.o && ranlib libKMCAPI.a
+        INSTALL_COMMAND ls
+        BUILD_IN_SOURCE 1
+)
+
+set(kmcLib "${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/KMC/kmc_api/libKMCAPI.a")
+
 set(LIBRARY_NAME
     kProcessor
 )
@@ -80,6 +104,8 @@ add_library(${LIBRARY_NAME} STATIC
 target_link_libraries(kProcessor MQF)
 target_link_libraries (kProcessor ${SEQAN_LIBRARIES})
 target_link_libraries (kProcessor ${ntcardLib}  -ldl)
+target_link_libraries (kProcessor ${blightLib})
+target_link_libraries (kProcessor ${kmcLib})
 #set_property(TARGET sdsl PROPERTY POSITION_INDEPENDENT_CODE ON)
 target_link_libraries(kProcessor sdsl)
 target_link_libraries(kProcessor kmerDecoder)
