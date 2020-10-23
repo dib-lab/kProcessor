@@ -176,7 +176,7 @@ void kDataFrameBlight::serialize(string filePath) {
     // Write the kmerSize
     ofstream file(filePath + ".extra");
     file << kSize << endl;
-    file << this->KD->hash_mode << endl;
+   // file << this->KD->hash_mode << endl;
     file.close();
     filePath += ".blight.gz";
     {
