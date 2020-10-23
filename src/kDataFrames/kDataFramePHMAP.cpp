@@ -241,6 +241,11 @@ kDataFrame *kDataFramePHMAP::load(string filePath) {
         phmap::BinaryInputArchive ar_in(filePath.c_str());
         KMAP->MAP.load(ar_in);
     }
+    if(endIterator != nullptr)
+        delete endIterator;
+    endIterator= new kDataFrameIterator(
+            (_kDataFrameIterator *) new kDataFramePHMAPIterator(MAP.end(), this, kSize),
+            (kDataFrame *) this);
 
     return KMAP;
 }
@@ -251,12 +256,19 @@ kDataFrame *kDataFramePHMAP::getTwin() {
 
 void kDataFramePHMAP::reserve(uint64_t n) {
     this->MAP.reserve(n);
+    if(endIterator != nullptr)
+        delete endIterator;
+    endIterator= new kDataFrameIterator(
+            (_kDataFrameIterator *) new kDataFramePHMAPIterator(MAP.end(), this, kSize),
+            (kDataFrame *) this);
+
 }
 void kDataFramePHMAP::reserve(vector<uint64_t> countHistogram) {
     uint64_t countSum=0;
     for(auto h:countHistogram)
       countSum+=h;
     reserve(countSum);
+
 
 }
 kDataFrameIterator kDataFramePHMAP::begin() {
