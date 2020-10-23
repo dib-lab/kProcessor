@@ -241,11 +241,11 @@ kDataFrame *kDataFramePHMAP::load(string filePath) {
         phmap::BinaryInputArchive ar_in(filePath.c_str());
         KMAP->MAP.load(ar_in);
     }
-    if(endIterator != nullptr)
-        delete endIterator;
-    endIterator= new kDataFrameIterator(
-            (_kDataFrameIterator *) new kDataFramePHMAPIterator(MAP.end(), this, kSize),
-            (kDataFrame *) this);
+    if(KMAP->endIterator != nullptr)
+        delete KMAP->endIterator;
+    KMAP->endIterator= new kDataFrameIterator(
+            (_kDataFrameIterator *) new kDataFramePHMAPIterator(KMAP->MAP.end(), KMAP, kSize),
+            (kDataFrame *) KMAP);
 
     return KMAP;
 }
