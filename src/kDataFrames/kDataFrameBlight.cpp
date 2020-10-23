@@ -202,6 +202,17 @@ kDataFrame *kDataFrameBlight::load(string filePath) {
         KMAP->blight_index= new kmer_Set_Light(filePath);
 
     }
+    if(KMAP->endIterator != nullptr)
+        delete KMAP->endIterator;
+
+
+
+    kmer_Set_Light_iterator it(KMAP->blight_index);
+    it.kmer_id=it.index_ptr->number_kmer+1;
+
+    KMAP->endIterator= new kDataFrameIterator(
+            (_kDataFrameIterator *) new kDataFrameBlightIterator(it, KMAP, kSize),
+            (kDataFrame *) KMAP);
 
     return KMAP;
 }
