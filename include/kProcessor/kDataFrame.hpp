@@ -229,6 +229,25 @@ public:
    ~kDataFrameMQFIterator();
 };
 
+class dbgIterator{
+public:
+    kDataFrame* frame;
+    string currentKmer;
+    vector<string> nextFwdKmers;
+    vector<string> nextRevKmers;
+
+    dbgIterator();
+    dbgIterator(kDataFrame*,string kmer);
+
+    dbgIterator(const dbgIterator& other);
+    dbgIterator& operator= (const dbgIterator& other);
+
+    void nextFWD(uint32_t index);
+    void nextREV(uint32_t index);
+private:
+    void generateNextKmers();
+
+};
 
 class kDataFrame{
 protected:
@@ -308,6 +327,8 @@ The difference between setCount and insert is that setCount set the count to N n
 ///Returns an iterator at the specific kmer.
   virtual kDataFrameIterator find(string kmer)=0;
 
+
+  dbgIterator getDBGIterator(string kmer);
   virtual void serialize(string filePath)=0;
 /// Returns the kmerDecoder used by kDataframe.
   kmerDecoder* getkmerDecoder(){

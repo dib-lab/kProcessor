@@ -6,6 +6,7 @@
 #include <limits>
 #include <sstream>
 #include "defaultColumn.hpp"
+
 using namespace std;
 
 inline bool fileExists(const std::string &name) {
@@ -246,4 +247,67 @@ kDataFrameIterator kDataFrame::end(){
 //    it->endIterator();
 //    return (kDataFrameIterator(it,(kDataFrame*)this));
     return *endIterator;
+}
+
+
+dbgIterator::dbgIterator(){
+    frame = nullptr;
+}
+dbgIterator::dbgIterator(kDataFrame* f,string kmer){
+    frame=f;
+    currentKmer = kmer;
+    generateNextKmers();
+}
+
+dbgIterator::dbgIterator(const dbgIterator& other){
+    frame=other.frame;
+    currentKmer=other.currentKmer;
+    generateNextKmers();
+}
+dbgIterator& dbgIterator::operator= (const dbgIterator& other){
+    frame=other.frame;
+    currentKmer=other.currentKmer;
+    generateNextKmers();
+    return *this;
+}
+
+
+void dbgIterator::generateNextKmers(){
+    nextFwdKmers.clear();
+    nextRevKmers.clear();
+    char possibleNuc[]= {'A','C','G','T'};
+    string suffix=currentKmer.substr(1,currentKmer.size()-1);
+    for(auto c:possibleNuc)
+    {
+        string candidate=suffix+c;
+        if(frame->getCount(candidate) > 0 )
+            nextFwdKmers.push_back(candidate);
+    }
+    uint32_t k=frame->ksize();
+    uint64_t current=kmer::str_to_int(currentKmer);
+    uint64_t reverse=kmer::reverse_complement(current,k);
+    string reverseKmer=kmer::int_to_str(reverse,k);
+    suffix=reverseKmer.substr(1,reverseKmer.size()-1);
+    for(auto c:possibleNuc)
+    {
+        string candidate=suffix+c;
+        if(frame->getCount(candidate) > 0 )
+            nextRevKmers.push_back(candidate);
+    }
+}
+void dbgIterator::nextFWD(uint32_t index){
+    currentKmer=nextFwdKmers[index];
+    generateNextKmers();
+}
+void dbgIterator::nextREV(uint32_t index){
+    currentKmer=nextRevKmers[index];
+    generateNextKmers();
+}
+
+
+dbgIterator kDataFrame::getDBGIterator(string kmer)
+{
+    if(this->getCount(kmer)==0)
+        throw std::logic_error("Kmer not found in the frame");
+    return dbgIterator(this,kmer);
 }
