@@ -96,7 +96,7 @@ kDataFrameBlight::kDataFrameBlight(uint64_t ksize,string input_fasta_file) {
 }
 
 
-inline bool kDataFrameBlight::kmerExist(string kmerS) {
+bool kDataFrameBlight::kmerExist(string kmerS) {
     return blight_index->get_presence_query(kmerS)[0];
 }
 
@@ -190,15 +190,14 @@ kDataFrame *kDataFrameBlight::load(string filePath) {
     // Load kSize
     ifstream file(filePath + ".extra");
     uint64_t kSize;
-    int hashing_mode;
     file >> kSize;
-    file >> hashing_mode;
     file.close();
     filePath += ".blight.gz";
 
     kDataFrameBlight *KMAP = new kDataFrameBlight();
-    KMAP->kSize=kSize;
+    KMAP->kSize = kSize;
     {
+        cout<<filePath<<endl;
         KMAP->blight_index= new kmer_Set_Light(filePath);
 
     }
@@ -245,10 +244,17 @@ kDataFrameIterator kDataFrameBlight::begin() {
 kDataFrameIterator kDataFrameBlight::find(string kmer) {
     throw logic_error("not implemented yet");
 }
-
+kDataFrameIterator kDataFrameBlight::find(uint64_t kmer) {
+    throw logic_error("not implemented yet");
+}
 
 void kDataFrameBlight::preprocessKmerOrder(){}
 uint64_t kDataFrameBlight::getkmerOrder(string kmer)
 {
-    return blight_index->get_rank_query(kmer)[0];
+    return getCount(kmer);
+}
+
+uint64_t kDataFrameBlight::getkmerOrder(uint64_t kmer)
+{
+    return getCount(kmer);
 }

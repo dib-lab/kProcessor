@@ -127,43 +127,58 @@ kDataFrame * kDataFrame::load(string filePath) {
 void kDataFrame::preprocessKmerOrder()
 {
   int checkpointsDistance=64;
-  int index=0;
+  uint32_t index=0;
   kDataFrameIterator it=this->begin();
   while(it!=this->end())
   {
+
     if(index%checkpointsDistance==0)
     {
-      string kmer=it.getKmer();
+      auto kmer=it.getHashedKmer();
       orderCheckpoints[kmer]=index;
     }
     index++;
     it++;
   }
-  orderCheckpoints["THEEND"]=index;
+  lastCheckpoint=index;
+  //orderCheckpoints["THEEND"]=index;
   isKmersOrderComputed=true;
 }
-uint64_t kDataFrame::getkmerOrder(string kmer)
+uint64_t kDataFrame::getkmerOrder(uint64_t kmer)
 {
   kDataFrameIterator it=this->find(kmer);
-  kmer=it.getKmer();
   uint32_t offset=0;
-  while(it!=this->end()&&
-  orderCheckpoints.find(kmer) == orderCheckpoints.end())
+  while(it!=this->end() &&
+          (orderCheckpoints.find(it.getHashedKmer()) == orderCheckpoints.end()))
   {
     offset++;
     it++;
-    kmer=it.getKmer();
   }
+
   if(it==this->end())
   {
-    kmer="THEEND";
-   // return size()-offset;
-  //  return orderCheckpoints[kmer]+(size()%64-offset);
+    return lastCheckpoint-offset;
   }
-  return orderCheckpoints[kmer]-offset;
+  return orderCheckpoints[it.getHashedKmer()]-offset;
 }
 
+uint64_t kDataFrame::getkmerOrder(string kmer)
+{
+    kDataFrameIterator it=this->find(KD->hash_kmer(kmer));
+    uint32_t offset=0;
+    while(it!=this->end() &&
+          (orderCheckpoints.find(it.getHashedKmer()) == orderCheckpoints.end()))
+    {
+        offset++;
+        it++;
+    }
 
+    if(it==this->end())
+    {
+        return lastCheckpoint-offset;
+    }
+    return orderCheckpoints[it.getHashedKmer()]-offset;
+}
 
 //template int kDataFrame::getKmerColumnValue<int, vectorColumn<int> >(string columnName,string kmer);
 //template double kDataFrame::getKmerColumnValue<double, vectorColumn<double> >(string columnName,string kmer);
@@ -280,7 +295,7 @@ void dbgIterator::generateNextKmers(){
     for(auto c:possibleNuc)
     {
         string candidate=suffix+c;
-        if(frame->getCount(candidate) > 0 )
+        if(frame->kmerExist(candidate)  )
             nextFwdKmers.push_back(candidate);
     }
     uint32_t k=frame->ksize();
@@ -291,7 +306,7 @@ void dbgIterator::generateNextKmers(){
     for(auto c:possibleNuc)
     {
         string candidate=suffix+c;
-        if(frame->getCount(candidate) > 0 )
+        if(frame->kmerExist(candidate) )
             nextRevKmers.push_back(candidate);
     }
 }

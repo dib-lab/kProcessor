@@ -41,7 +41,7 @@ uint64_t kDataFrameMAPIterator::getHashedKmer() {
 }
 
 string kDataFrameMAPIterator::getKmer() {
-    return kmer::int_to_str(iterator->first, this->kSize);
+    return origin->getkmerDecoder()->ihash_kmer(iterator->first);
     // return iterator->first;
 }
 
@@ -110,7 +110,7 @@ kDataFrameMAP::kDataFrameMAP() {
     // this->hasher = (new IntegerHasher(23));
 }
 
-inline bool kDataFrameMAP::kmerExist(string kmerS) {
+bool kDataFrameMAP::kmerExist(string kmerS) {
     return (this->MAP.find(kmer::str_to_canonical_int(kmerS)) == this->MAP.end()) ? 0 : 1;
 }
 
@@ -147,11 +147,19 @@ bool kDataFrameMAP::setCount(uint64_t kmerS, uint64_t tag) {
 }
 
 uint64_t kDataFrameMAP::getCount(string kmerS) {
-    return this->MAP[KD->hash_kmer(kmerS)];
+    auto it= this->MAP.find(KD->hash_kmer(kmerS));
+    if(it==this->MAP.end())
+        return 0;
+
+    return it->second;
 }
 
 uint64_t kDataFrameMAP::getCount(uint64_t kmerS) {
-    return this->MAP[kmerS];
+    auto it= this->MAP.find(kmerS);
+    if(it==this->MAP.end())
+        return 0;
+
+    return it->second;
 }
 
 uint64_t kDataFrameMAP::bucket(string kmerS) {
@@ -222,12 +230,17 @@ kDataFrame *kDataFrameMAP::load(string filePath) {
     cereal::BinaryInputArchive iarchive(os);
     iarchive(KMAP->MAP);
 
+    KMAP->endIterator=new kDataFrameIterator(
+            (_kDataFrameIterator *) new kDataFrameMAPIterator(KMAP->MAP.end(), KMAP, kSize),
+            (kDataFrame *) KMAP);
+
     return KMAP;
 }
 
 kDataFrame *kDataFrameMAP::getTwin() {
     return ((kDataFrame *) new kDataFrameMAP(kSize));
 }
+
 
 void kDataFrameMAP::reserve(uint64_t n) {
 //    this->MAP.reserve(n);
@@ -248,7 +261,13 @@ kDataFrameIterator kDataFrameMAP::begin() {
 //            (kDataFrame *) this));
 //}
 kDataFrameIterator kDataFrameMAP::find(string kmer) {
-  return *(new kDataFrameIterator(
-          (_kDataFrameIterator *) new kDataFrameMAPIterator(MAP.find(kmer::str_to_canonical_int(kmer)), this, kSize),
+  return ( kDataFrameIterator(
+          (_kDataFrameIterator *) new kDataFrameMAPIterator(MAP.find(KD->hash_kmer(kmer)), this, kSize),
           (kDataFrame *) this));
+}
+
+kDataFrameIterator kDataFrameMAP::find(uint64_t kmer) {
+    return ( kDataFrameIterator(
+            (_kDataFrameIterator *) new kDataFrameMAPIterator(MAP.find(kmer), this, kSize),
+            (kDataFrame *) this));
 }

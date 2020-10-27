@@ -126,6 +126,13 @@ kDataFrameIterator kDataFrameMQF::find(string kmer) {
     kDataFrameMQFIterator *it = new kDataFrameMQFIterator(mqfIt, kSize, KD);
     return (kDataFrameIterator(it, (kDataFrame *) this));
 }
+kDataFrameIterator kDataFrameMQF::find(uint64_t kmer) {
+    QFi* mqfIt = new QFi();
+    uint64_t hash = kmer;
+    qfi_find(mqf,mqfIt,hash);
+    kDataFrameMQFIterator *it = new kDataFrameMQFIterator(mqfIt, kSize, KD);
+    return (kDataFrameIterator(it, (kDataFrame *) this));
+}
 
 /*
  *********************
@@ -557,4 +564,8 @@ uint64_t kDataFrameMQF::getkmerOrder(string kmer)
 {
   uint64_t hash = KD->hash_kmer(kmer) % mqf->metadata->range;
   return itemOrder(mqf,hash);
+}
+
+bool kDataFrameMQF::kmerExist(string kmerS) {
+    return getCount(kmerS) > 0 ;
 }
