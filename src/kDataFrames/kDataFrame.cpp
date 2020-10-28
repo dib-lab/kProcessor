@@ -322,7 +322,7 @@ void dbgIterator::nextREV(uint32_t index){
 
 dbgIterator kDataFrame::getDBGIterator(string kmer)
 {
-    if(this->getCount(kmer)==0)
+    if(!this->kmerExist(kmer))
         throw std::logic_error("Kmer not found in the frame");
     return dbgIterator(this,kmer);
 }
