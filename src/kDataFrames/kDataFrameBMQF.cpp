@@ -440,6 +440,14 @@ kDataFrameIterator kDataFrameBMQF::find(string kmer) {
     kDataFrameBMQFIterator* it=new kDataFrameBMQFIterator(bufferedmqf,mqfIt,kSize,KD);
     return (kDataFrameIterator(it, (kDataFrame *) this));
 }
+kDataFrameIterator kDataFrameBMQF::find(uint64_t kmer) {
+    bufferedMQFIterator* mqfIt = new bufferedMQFIterator();
+    uint64_t hash=kmer;
+    bufferedMQF_find(bufferedmqf,mqfIt,hash);
+    kDataFrameBMQFIterator* it=new kDataFrameBMQFIterator(bufferedmqf,mqfIt,kSize,KD);
+    return (kDataFrameIterator(it, (kDataFrame *) this));
+}
+
 
 /*
  *****************************
@@ -553,3 +561,7 @@ kDataFrameBMQFIterator::~kDataFrameBMQFIterator() {
     delete qfi;
 }
 
+
+bool kDataFrameBMQF::kmerExist(string kmerS) {
+    return getCount(kmerS) > 0 ;
+}

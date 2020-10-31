@@ -257,10 +257,12 @@ protected:
   bool isKmersOrderComputed;
   unordered_map<string, Column*> columns;
 
-  unordered_map<string,uint32_t> orderCheckpoints;
+  unordered_map<uint64_t,uint32_t> orderCheckpoints;
+  uint32_t lastCheckpoint;
   Column* defaultColumn;
   virtual void preprocessKmerOrder();
-  virtual std::uint64_t getkmerOrder(string kmer);
+  virtual std::uint64_t getkmerOrder(uint64_t kmer);
+    virtual std::uint64_t getkmerOrder(string kmer);
   kDataFrameIterator* endIterator;
 public:
     typedef kDataFrameIterator iterator;
@@ -326,6 +328,7 @@ The difference between setCount and insert is that setCount set the count to N n
   virtual kDataFrameIterator end();
 ///Returns an iterator at the specific kmer.
   virtual kDataFrameIterator find(string kmer)=0;
+  virtual kDataFrameIterator find(uint64_t kmer)=0;
 
 
   dbgIterator getDBGIterator(string kmer);
@@ -346,7 +349,10 @@ The difference between setCount and insert is that setCount set the count to N n
   // duplicate for easier name in python, getkSize won't be wrapped
   std::uint64_t ksize(){return kSize;}
 
-  void setkSize(std::uint64_t k){kSize=k;}
+  void setkSize(std::uint64_t k){
+
+    kSize=k;
+  }
 
 
   void addColumn(string columnName, Column*);
@@ -358,8 +364,15 @@ The difference between setCount and insert is that setCount set the count to N n
   void setKmerColumnValue(string columnName,string kmer, T value);
 
 
+  template<typename T,typename Container>
+  T getKmerColumnValue(string columnName,uint64_t kmer);
 
-  void changeDefaultColumnType(Column*);
+  template<typename T,typename Container>
+  void setKmerColumnValue(string columnName,uint64_t kmer, T value);
+
+
+
+    void changeDefaultColumnType(Column*);
   Column* getDefaultColumn(){
       return defaultColumn;
   }
@@ -376,6 +389,8 @@ The difference between setCount and insert is that setCount set the count to N n
   template<typename T,typename Container>
   void setKmerDefaultColumnValue(std::uint64_t kmer, T value);
 
+  virtual bool kmerExist(string kmer)=0;
+
 
 };
 
@@ -387,6 +402,20 @@ T kDataFrame::getKmerColumnValue(string columnName,string kmer)
 }
 template<typename T,typename Container>
 void kDataFrame::setKmerColumnValue(string columnName,string kmer,T value)
+{
+    std::uint64_t kmerOrder=getkmerOrder(kmer);
+    ((Container*)columns[columnName])->insert(value,kmerOrder);
+}
+
+
+template<typename T,typename Container>
+T kDataFrame::getKmerColumnValue(string columnName,uint64_t kmer)
+{
+    std::uint64_t kmerOrder=getkmerOrder(kmer);
+    return ((Container*)columns[columnName])->get(kmerOrder);
+}
+template<typename T,typename Container>
+void kDataFrame::setKmerColumnValue(string columnName,uint64_t kmer,T value)
 {
     std::uint64_t kmerOrder=getkmerOrder(kmer);
     ((Container*)columns[columnName])->insert(value,kmerOrder);
@@ -496,6 +525,9 @@ public:
   kDataFrameIterator begin();
  // kDataFrameIterator end();
   kDataFrameIterator find(string kmer);
+    kDataFrameIterator find(uint64_t kmer);
+
+    bool kmerExist(string kmerS);
 };
 
 
@@ -595,10 +627,11 @@ public:
   kDataFrameIterator begin();
  // kDataFrameIterator end();
   kDataFrameIterator find(string kmer);
-
+  kDataFrameIterator find(uint64_t kmer);
   string getFilename();
 
   void deleteMemoryBuffer();
+  bool kmerExist(string kmer);
 };
 
 // kDataFrameMAP _____________________________
@@ -615,7 +648,7 @@ public:
   void reserve (std::uint64_t n);
   void reserve (vector<std::uint64_t> countHistogram);
 
-  inline bool kmerExist(string kmer);
+  bool kmerExist(string kmer);
 
   bool setCount(string kmer, std::uint64_t count);
   bool setCount(std::uint64_t kmer, std::uint64_t count);
@@ -635,7 +668,7 @@ public:
   kDataFrameIterator begin();
  // kDataFrameIterator end();
   kDataFrameIterator find(string kmer);
-
+  kDataFrameIterator find(uint64_t kmer);
   std::uint64_t bucket(string kmer);
   void serialize(string filePath);
   static kDataFrame *load(string filePath);
@@ -697,7 +730,7 @@ public:
     void reserve(std::uint64_t n);
     void reserve (vector<std::uint64_t> countHistogram);
 
-    inline bool kmerExist(string kmer);
+    bool kmerExist(string kmer);
 
     bool setCount(string kmer, std::uint64_t count);
     bool setCount(std::uint64_t kmer, std::uint64_t count);
@@ -728,6 +761,7 @@ public:
 
    // kDataFrameIterator end();
     kDataFrameIterator find(string kmer);
+    kDataFrameIterator find(uint64_t kmer);
 
     std::uint64_t bucket(string kmer);
 
@@ -805,6 +839,7 @@ private:
 protected:
     void preprocessKmerOrder();
     uint64_t getkmerOrder(string kmer);
+    uint64_t getkmerOrder(uint64_t kmer);
 public:
     kDataFrameBlight();
 
@@ -820,7 +855,7 @@ public:
     void reserve(std::uint64_t n);
     void reserve (vector<std::uint64_t> countHistogram);
 
-    inline bool kmerExist(string kmer);
+    bool kmerExist(string kmer);
 
     bool setCount(string kmer, std::uint64_t count);
     bool setCount(std::uint64_t kmer, std::uint64_t count);
@@ -851,6 +886,7 @@ public:
 
     // kDataFrameIterator end();
     kDataFrameIterator find(string kmer);
+    kDataFrameIterator find(uint64_t kmer);
 
 
     void serialize(string filePath);

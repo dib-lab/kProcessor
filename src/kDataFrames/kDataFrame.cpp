@@ -128,37 +128,58 @@ void kDataFrame::preprocessKmerOrder()
 {
   int checkpointsDistance=64;
   uint32_t index=0;
+  kDataFrameIterator it=this->begin();
+  while(it!=this->end())
+  uint32_t index=0;
 
   for(auto kmer:*this)
   {
     if(index%checkpointsDistance==0)
     {
-      orderCheckpoints[kmer.kmer]=index;
+      auto kmer=it.getHashedKmer();
+      orderCheckpoints[kmer]=index;
     }
     index++;
+    it++;
   }
-  orderCheckpoints["THEEND"]=index;
+  lastCheckpoint=index;
+  //orderCheckpoints["THEEND"]=index;
   isKmersOrderComputed=true;
 }
-uint64_t kDataFrame::getkmerOrder(string kmer)
+uint64_t kDataFrame::getkmerOrder(uint64_t kmer)
 {
   kDataFrameIterator it=this->find(kmer);
-  kmer=it.getKmer();
   uint32_t offset=0;
-  while(it!=this->end()&&
-  orderCheckpoints.find(kmer) == orderCheckpoints.end())
+  while(it!=this->end() &&
+          (orderCheckpoints.find(it.getHashedKmer()) == orderCheckpoints.end()))
   {
     offset++;
     it++;
-    kmer=it.getKmer();
   }
+
   if(it==this->end())
   {
-    kmer="THEEND";
-   // return size()-offset;
-  //  return orderCheckpoints[kmer]+(size()%64-offset);
+    return lastCheckpoint-offset;
   }
-  return orderCheckpoints[kmer]-offset;
+  return orderCheckpoints[it.getHashedKmer()]-offset;
+}
+
+uint64_t kDataFrame::getkmerOrder(string kmer)
+{
+    kDataFrameIterator it=this->find(KD->hash_kmer(kmer));
+    uint32_t offset=0;
+    while(it!=this->end() &&
+          (orderCheckpoints.find(it.getHashedKmer()) == orderCheckpoints.end()))
+    {
+        offset++;
+        it++;
+    }
+
+    if(it==this->end())
+    {
+        return lastCheckpoint-offset;
+    }
+    return orderCheckpoints[it.getHashedKmer()]-offset;
 }
 
 
@@ -278,7 +299,7 @@ void dbgIterator::generateNextKmers(){
     for(auto c:possibleNuc)
     {
         string candidate=suffix+c;
-        if(frame->getCount(candidate) > 0 )
+        if(frame->kmerExist(candidate)  )
             nextFwdKmers.push_back(candidate);
     }
     uint32_t k=frame->ksize();
@@ -289,7 +310,7 @@ void dbgIterator::generateNextKmers(){
     for(auto c:possibleNuc)
     {
         string candidate=suffix+c;
-        if(frame->getCount(candidate) > 0 )
+        if(frame->kmerExist(candidate) )
             nextRevKmers.push_back(candidate);
     }
 }
@@ -305,7 +326,7 @@ void dbgIterator::nextREV(uint32_t index){
 
 dbgIterator kDataFrame::getDBGIterator(string kmer)
 {
-    if(this->getCount(kmer)==0)
+    if(!this->kmerExist(kmer))
         throw std::logic_error("Kmer not found in the frame");
     return dbgIterator(this,kmer);
 }
