@@ -222,6 +222,11 @@ kDataFrame *kDataFrameMAP::load(string filePath) {
     cereal::BinaryInputArchive iarchive(os);
     iarchive(KMAP->MAP);
 
+
+    KMAP->endIterator=new kDataFrameIterator(
+            (_kDataFrameIterator *) new kDataFrameMAPIterator(KMAP->MAP.end(), KMAP, kSize),
+            (kDataFrame *) KMAP);
+
     return KMAP;
 }
 

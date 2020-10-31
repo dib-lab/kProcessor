@@ -127,17 +127,15 @@ kDataFrame * kDataFrame::load(string filePath) {
 void kDataFrame::preprocessKmerOrder()
 {
   int checkpointsDistance=64;
-  int index=0;
-  kDataFrameIterator it=this->begin();
-  while(it!=this->end())
+  uint32_t index=0;
+
+  for(auto kmer:*this)
   {
     if(index%checkpointsDistance==0)
     {
-      string kmer=it.getKmer();
-      orderCheckpoints[kmer]=index;
+      orderCheckpoints[kmer.kmer]=index;
     }
     index++;
-    it++;
   }
   orderCheckpoints["THEEND"]=index;
   isKmersOrderComputed=true;

@@ -401,7 +401,7 @@ TEST_P(kDataFrameTest,iterateOverAllKmers)
 
 TEST_P(kDataFrameTest,multiColumns)
 {
-
+    cout<<get<0>(GetParam())<<endl;
     kDataFrame* kframe=getFrame(GetParam());
     EXPECT_EQ(kframe->empty(), true);
     unordered_map<string,int>* kmers=kmersGen.getKmers((int)kframe->getkSize());
