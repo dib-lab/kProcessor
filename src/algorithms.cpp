@@ -22,6 +22,7 @@
 #include <chrono>
 #include "defaultColumn.hpp"
 #include "kmc_file.h"
+
 using namespace std::chrono;
 
 
@@ -1040,7 +1041,7 @@ namespace kProcessor {
         return res;
     }
 
-    void loadFromKMC(kDataFrame * kframe,  std::string KMC_DB_filename){
+    void loadFromKMC(kDataFrame *kframe, std::string KMC_DB_filename) {
         uint32 _kmer_length;
         uint32 _mode;
         uint32 _counter_size;
@@ -1050,22 +1051,21 @@ namespace kProcessor {
         uint64 _max_count;
         uint64 _total_kmers;
         CKMCFile kmer_data_base;
-        if (!kmer_data_base.OpenForListing(KMC_DB_filename))
-        {
+        if (!kmer_data_base.OpenForListing(KMC_DB_filename)) {
             throw std::logic_error("Cant open KMC DB");
             return;
         }
-        kmer_data_base.Info(_kmer_length, _mode, _counter_size, _lut_prefix_length, _signature_len, _min_count, _max_count, _total_kmers);
+        kmer_data_base.Info(_kmer_length, _mode, _counter_size, _lut_prefix_length, _signature_len, _min_count,
+                            _max_count, _total_kmers);
         CKmerAPI kmer_object(_kmer_length);
         uint32 counter;
         std::string str;
 
         kframe->setkSize(_kmer_length);
         kframe->reserve(_total_kmers);
-        while (kmer_data_base.ReadNextKmer(kmer_object, counter))
-        {
+        while (kmer_data_base.ReadNextKmer(kmer_object, counter)) {
             kmer_object.to_string(str);
-            kframe->insert(str,counter);
+            kframe->insert(str, counter);
         }
 
     }
