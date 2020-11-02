@@ -126,6 +126,7 @@ set(LDFLAGS "-lrt -lpthread -lbz2 -lz")
 
 add_subdirectory(tests/)
 add_subdirectory(apps/)
+add_subdirectory(usecases/kDifferentialExpression/)
 
 
 #### Building Documentation with Doxygen
