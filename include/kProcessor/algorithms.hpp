@@ -62,13 +62,13 @@ namespace kProcessor {
     void countKmersFromString(kDataFrame *frame, std::map<std::string, int> parse_params, string sequence);
 
 /// Applies a function on all the kmers in the input kDataframe. The output is another kDataframe with the transformed kmers.
-    kDataFrame *transform(kDataFrame *input, kmerRow (*fn)(kmerRow i));
+    kDataFrame *transform(kDataFrame *input,  function<kmerRow (kmerRow i)>);
 
 /// filter the kmers in the kdataframe. The output is another kDataframe with the filtered kmers.
-    kDataFrame *filter(kDataFrame *input, bool (*fn)(kmerRow i));
+    kDataFrame *filter(kDataFrame *input,  function<bool (kmerRow i)>);
 
 /// aggregate all the kmers in the kdataframe into a single value. The output is one value.
-    any aggregate(kDataFrame *input, any initial, any (*fn)(kmerRow it, any v));
+    any aggregate(kDataFrame *input, any initial,  function<any (kmerRow i, any v)>);
 
 /*! Merge the a list of kDataframes into a one.
  *

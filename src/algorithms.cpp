@@ -291,7 +291,7 @@ namespace kProcessor {
 
     }
 
-    kDataFrame *transform(kDataFrame *input, kmerRow (*fn)(kmerRow it)) {
+    kDataFrame *transform(kDataFrame *input, function<kmerRow (kmerRow i)> fn) {
         kDataFrame *res = input->getTwin();
         kDataFrameIterator it = input->begin();
         while (it != input->end()) {
@@ -313,6 +313,7 @@ namespace kProcessor {
                 res->setKmerColumnValueFromOtherColumn(input,col.first, newColName,kmer.kmer);
             }
         }
+        delete input;
         return res;
 
     }
@@ -363,7 +364,7 @@ namespace kProcessor {
         return res;
     }
 
-    kDataFrame *filter(kDataFrame *input, bool (*fn)(kmerRow it)) {
+    kDataFrame *filter(kDataFrame *input, function<bool (kmerRow i)> fn) {
         kDataFrame *res = input->getTwin();
         kDataFrameIterator it = input->begin();
         while (it != input->end()) {
@@ -385,11 +386,12 @@ namespace kProcessor {
                 res->setKmerColumnValueFromOtherColumn(input,col.first, newColName,kmer.kmer);
             }
         }
+        delete input;
         return res;
 
     }
 
-    any aggregate(kDataFrame *input, any initial, any (*fn)(kmerRow it, any v)) {
+    any aggregate(kDataFrame *input, any initial, function<any (kmerRow i, any v)> fn) {
         kDataFrameIterator it = input->begin();
         while (it != input->end()) {
             initial = fn(*it, initial);
