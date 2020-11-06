@@ -1,12 +1,10 @@
 kProcessor::loadFromKMC(currentFrame,filename);
-
 // calculate the sum of all kmers for normalization
 any totalCountAny=kProcessor::aggregate(currentFrame,(uint64_t)0,  [](kmerRow it, any v) -> any {
     uint32_t count0;
     it.getColumnValue<uint32_t,vectorColumn<uint32_t> >("count",count0);
     return (any)(any_cast<uint64_t>(v) + (uint64_t)count0);
 });
-
 // normalize the counts kmers
 currentFrame= kProcessor::transform(currentFrame,  [=](kmerRow it) -> kmerRow {
     uint32_t count0;
@@ -15,15 +13,15 @@ currentFrame= kProcessor::transform(currentFrame,  [=](kmerRow it) -> kmerRow {
     it.setColumnValue<uint32_t,vectorColumn<uint32_t> >("count",(uint32_t)normalized);
     return it;
 });
+
+
 // index reference
 kProcessor::index(KMERS, genes_file+".names", genesFrame);
 
 
 // join all kdataframes. required Indeices contains the index of the index frame only
-kDataFrame* res= kProcessor::innerJoin(kFrames, requiredIndices);
-
-
 // remove kmers that has zero counts in all samples
+kDataFrame* res= kProcessor::innerJoin(kFrames, requiredIndices);
 res=kProcessor::filter(res,[=](kmerRow r) -> bool {
     for(unsigned i=0; i < allDatasets ;i++ ){
         uint32_t count;
@@ -33,6 +31,7 @@ res=kProcessor::filter(res,[=](kmerRow r) -> bool {
     }
     return false;
 });
+
 
 // calculate fold change
 res->addColumn("foldChange",new vectorColumn<double >(res->size()));
@@ -48,6 +47,7 @@ res= kProcessor::transform(res,  [=](kmerRow it) -> kmerRow {
     it.setColumnValue<double,vectorColumn<double> >("foldChange",foldChange);
     return it;
 });
+
 
 // gather fold changes by genes
 auto foldChangeByGene=new unordered_map<uint32_t ,vector<double> >();
