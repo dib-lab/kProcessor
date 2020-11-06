@@ -19,10 +19,16 @@ public:
     Column(){}
     virtual ~Column(){}
 
+    virtual Column* getTwin()=0;
+    virtual void setSize(uint32_t size)=0;
     static Column* getContainerByName(size_t name);
 
     virtual void serialize(string filename)=0;
     virtual void deserialize(string filename)=0;
+
+    virtual void setValueFromColumn(Column* Container, uint32_t inputOrder,uint32_t outputOrder){
+
+    }
 
 
 };
@@ -53,6 +59,10 @@ public:
 
     void serialize(string filename);
     void deserialize(string filename);
+    Column* getTwin();
+    void setSize(uint32_t size);
+    void setValueFromColumn(Column* Container, uint32_t inputOrder,uint32_t outputOrder);
+
 
 
 };
@@ -211,6 +221,9 @@ public:
     uint32_t getNumColors(){
         return colors.size();
     }
+
+    Column* getTwin();
+    void setSize(uint32_t size);
 
 
 
@@ -703,6 +716,9 @@ public:
     uint64_t sizeInBytes();
     void explainSize();
 
+    Column* getTwin();
+    void setSize(uint32_t size);
+
 
 };
 
@@ -747,6 +763,8 @@ public:
     uint64_t sizeInBytes();
     void explainSize();
     void exportTree(string prefix,int tree);
+    Column* getTwin();
+    void setSize(uint32_t size);
 
 
 };
@@ -767,7 +785,7 @@ public:
     vector<string > getWithIndex(uint32_t index);
     //uint32_t  insertAndGetIndex(vector<uint32_t > item);
 //    void insert(vector<uint32_t > item,uint32_t index);
-//    vector<uint32_t > get(uint32_t index);
+    vector<uint32_t > get(uint32_t index);
 
     void serialize(string filename);
     void deserialize(string filename);
@@ -775,8 +793,40 @@ public:
     void populateColors();
 
 
+    Column* getTwin();
+    void setSize(uint32_t size);
+
 
 };
+
+template<typename  T, typename ColumnType>
+class deduplicatedColumn: public Column{
+public:
+    vector<uint32_t> index;
+    ColumnType* values;
+    deduplicatedColumn(){
+
+    }
+    deduplicatedColumn(uint32_t size){
+        index=vector<uint32_t>(size);
+    }
+    ~deduplicatedColumn(){
+
+    }
+
+
+    T get(uint32_t index);
+
+    void serialize(string filename);
+    void deserialize(string filename);
+    Column* getTwin();
+    void setSize(uint32_t size);
+    void setValueFromColumn(Column* Container, uint32_t inputOrder,uint32_t outputOrder);
+
+
+
+};
+
 
 
 #endif

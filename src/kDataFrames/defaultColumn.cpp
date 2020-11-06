@@ -21,6 +21,13 @@ class vectorColumn<bool>;
 template
 class vectorColumn<double>;
 
+
+template
+class vectorColumn<uint32_t>;
+
+template
+class deduplicatedColumn<vector<uint32_t>,StringColorColumn>;
+
 bool is_file_exist(const char *fileName) {
     std::ifstream infile(fileName);
     return infile.good();
@@ -101,6 +108,24 @@ T vectorColumn<T>::get(uint32_t index) {
     return dataV[index];
 }
 
+template<typename  T>
+Column* vectorColumn<T>::getTwin(){
+    return new vectorColumn<T>();
+}
+
+template<typename  T>
+void vectorColumn<T>::setSize(uint32_t size){
+    dataV=vector<T>(size);
+}
+
+template<typename  T>
+void vectorColumn<T>::setValueFromColumn(Column* Container, uint32_t inputOrder,uint32_t outputOrder)
+{
+    T val=((vectorColumn<T>*)Container)->get(inputOrder);
+    insert(val,outputOrder);
+}
+
+
 
 uint32_t insertColorColumn::insertAndGetIndex(vector<uint32_t> &item) {
     //return colorInv.getColorID(item);
@@ -176,6 +201,13 @@ void insertColorColumn::populateColors() {
 //    colorInv.populateColors(colors);
 }
 
+Column* insertColorColumn::getTwin(){
+    return new insertColorColumn();
+}
+void insertColorColumn::setSize(uint32_t size){
+
+}
+
 
 vector<string> StringColorColumn::getWithIndex(uint32_t index) {
     vector<string> res(colors[index].size());
@@ -184,7 +216,9 @@ vector<string> StringColorColumn::getWithIndex(uint32_t index) {
     return res;
 
 }
-
+vector<uint32_t> StringColorColumn::get(uint32_t index) {
+    return colors[index];
+}
 
 void StringColorColumn::serialize(string filename) {
     std::ofstream os(filename + ".colors", std::ios::binary);
@@ -217,6 +251,13 @@ void StringColorColumn::deserialize(string filename) {
 
     }
     namesMapIn.close();
+
+}
+
+Column* StringColorColumn::getTwin(){
+    new StringColorColumn();
+}
+void StringColorColumn::setSize(uint32_t size){
 
 }
 
@@ -1001,6 +1042,17 @@ void queryColorColumn::sortColors() {
     for (unsigned int i = 0; i < colors.size(); i++)
         colors[i]->sort(idsMap);
 }
+
+
+Column* queryColorColumn::getTwin()
+{
+    return new queryColorColumn();
+}
+void queryColorColumn::setSize(uint32_t size)
+{
+
+}
+
 
 void fixedSizeVector::loadFromInsertOnly(string path, sdsl::int_vector<> &idsMap) {
     sdsl::int_vector<> curr;
@@ -1885,5 +1937,66 @@ void prefixTrieQueryColorColumn::exportTree(string prefix, int treeIndex) {
         out << "\t";
     out << "}" << endl;
 
+
+}
+
+
+Column* prefixTrieQueryColorColumn::getTwin()
+{
+    return new prefixTrieQueryColorColumn();
+}
+void prefixTrieQueryColorColumn::setSize(uint32_t size)
+{
+
+}
+
+
+
+template<typename  T, typename ColumnType>
+void deduplicatedColumn<T,ColumnType>::serialize(string filename) {
+    string indexFilename=filename+".index";
+    string containerFilename=filename+".container";
+    std::ofstream os(indexFilename, std::ios::binary);
+    cereal::BinaryOutputArchive archive(os);
+    archive(index);
+    os.close();
+    values->serialize(containerFilename);
+}
+
+
+template<typename  T, typename ColumnType>
+void deduplicatedColumn<T,ColumnType>::deserialize(string filename) {
+    string indexFilename= filename + ".index";
+    string containerFilename= filename + ".container";
+    std::ifstream os(indexFilename, std::ios::binary);
+    cereal::BinaryInputArchive iarchive(os);
+    iarchive(index);
+    os.close();
+    values=new ColumnType();
+    values->deserialize(containerFilename);
+}
+
+
+template<typename  T, typename ColumnType>
+T deduplicatedColumn<T,ColumnType>::get(uint32_t order) {
+    return values->get(index[order]);
+}
+
+template<typename  T, typename ColumnType>
+Column* deduplicatedColumn<T,ColumnType>::getTwin(){
+    return new deduplicatedColumn<T,ColumnType>();
+}
+
+template<typename  T, typename ColumnType>
+void deduplicatedColumn<T,ColumnType>::setSize(uint32_t size){
+    index=vector<uint32_t>(size);
+}
+
+template<typename  T, typename ColumnType>
+void deduplicatedColumn<T,ColumnType>::setValueFromColumn(Column* Container, uint32_t inputOrder,uint32_t outputOrder)
+{
+    deduplicatedColumn<T,ColumnType>* other =((deduplicatedColumn<T,ColumnType>*)Container);
+    values=other->values;
+    index[outputOrder]=other->index[inputOrder];
 
 }

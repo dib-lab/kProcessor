@@ -27,28 +27,37 @@ public:
   string kmer;
   uint64_t hashedKmer;
   uint64_t count;
+  kDataFrame * origin;
   kmerRow(){
     kmer="";
     hashedKmer=0;
     count=0;
   }
-  kmerRow(string kmer,std::uint64_t hashedKmer,std::uint64_t count)
+  kmerRow(string kmer,std::uint64_t hashedKmer,std::uint64_t count,kDataFrame* o)
   {
     this->kmer=kmer;
     this->hashedKmer=hashedKmer;
     this->count=count;
+    this->origin = o;
   }
   kmerRow(const kmerRow& other)
   {
     kmer=other.kmer;
     hashedKmer=other.hashedKmer;
     count=other.count;
+    origin = other.origin ;
   }
 
   kmerRow copy(const kmerRow& other)
   {
     return * (new kmerRow(other));
   }
+
+  template<typename T,typename Container>
+  void getColumnValue(string colName, T& res);
+
+  template<typename T,typename Container>
+  void setColumnValue(string colName, T value);
 
   bool operator==(kmerRow &other)
   {
@@ -200,7 +209,8 @@ public:
   kmerRow operator*(){
     return kmerRow(iterator->getKmer(),
                    iterator->getHashedKmer(),
-                   iterator->getCount()
+                   iterator->getCount(),
+                   origin
                   );
   }
   ~kDataFrameIterator(){
@@ -255,7 +265,7 @@ protected:
   string class_name; // Default = MQF, change if MAP. Temporary until resolving #17
   bool isStatic;
   bool isKmersOrderComputed;
-  unordered_map<string, Column*> columns;
+
 
   unordered_map<uint64_t,uint32_t> orderCheckpoints;
   uint32_t lastCheckpoint;
@@ -265,6 +275,7 @@ protected:
     virtual std::uint64_t getkmerOrder(string kmer);
   kDataFrameIterator* endIterator;
 public:
+    unordered_map<string, Column*> columns;
     typedef kDataFrameIterator iterator;
     typedef kmerRow value_type;
     kmerDecoder * KD;
@@ -352,6 +363,9 @@ The difference between setCount and insert is that setCount set the count to N n
   void setkSize(std::uint64_t k){
 
     kSize=k;
+    if(KD!= nullptr)
+        delete KD;
+    KD= new Kmers(kSize);
   }
 
 
@@ -391,6 +405,8 @@ The difference between setCount and insert is that setCount set the count to N n
 
   virtual bool kmerExist(string kmer)=0;
 
+  void setKmerColumnValueFromOtherColumn(kDataFrame* input, string inputColName, string outputColName, std::uint64_t kmer);
+  void setKmerColumnValueFromOtherColumn(kDataFrame* input, string inputColName, string outputColName, string kmer);
 
 };
 
@@ -448,6 +464,18 @@ void kDataFrame::setKmerDefaultColumnValue(std::uint64_t kmer, T value)
     setCount(kmer,i);
 }
 
+
+template<typename T,typename Container>
+void kmerRow::getColumnValue(string colName, T& res)
+{
+    res= origin->getKmerColumnValue<T,Container>(colName, kmer);
+}
+
+template<typename T,typename Container>
+void kmerRow::setColumnValue(string colName, T value)
+{
+    origin->setKmerColumnValue<T,Container>(colName, kmer,value);
+}
 
 
 class kDataFrameMQF: public kDataFrame{
