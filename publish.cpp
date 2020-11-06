@@ -13,8 +13,6 @@ currentFrame= kProcessor::transform(currentFrame,  [=](kmerRow it) -> kmerRow {
     it.setColumnValue<uint32_t,vectorColumn<uint32_t> >("count",(uint32_t)normalized);
     return it;
 });
-
-
 // index reference
 kProcessor::index(KMERS, genes_file+".names", genesFrame);
 
