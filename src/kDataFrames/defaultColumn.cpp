@@ -1449,6 +1449,7 @@ prefixTrieQueryColorColumn::prefixTrieQueryColorColumn(queryColorColumn *col) {
     cerr << "Colors Sorted" << endl;
     idsMap = sdsl::int_vector<64>(col->idsMap.size());
     sdsl::int_vector<> invIdsMap(col->idsMap.size());
+#pragma omp parallel for
     for (unsigned int i = 0; i < col->idsMap.size(); i++) {
         invIdsMap[col->idsMap[i]] = i;
     }
@@ -1573,6 +1574,7 @@ prefixTrieQueryColorColumn::prefixTrieQueryColorColumn(queryColorColumn *col) {
             tree.push_back(new sdsl::bit_vector(tmpSize * 2));
 //            exportTree("tree.",edges.size()-1);
         }
+
 
         // vector<uint32_t> tobeAdded(std::get<0>(colorTuple).size()-i);
         //   std::copy(std::get<0>(colorTuple).begin(),std::get<0>(colorTuple).end(),tobeAdded.begin());
