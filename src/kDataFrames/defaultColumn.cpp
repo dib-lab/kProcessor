@@ -26,7 +26,7 @@ template
 class vectorColumn<uint32_t>;
 
 template
-class deduplicatedColumn<vector<uint32_t>,StringColorColumn>;
+class deduplicatedColumn<vector<uint32_t>, StringColorColumn>;
 
 bool is_file_exist(const char *fileName) {
     std::ifstream infile(fileName);
@@ -108,23 +108,21 @@ T vectorColumn<T>::get(uint32_t index) {
     return dataV[index];
 }
 
-template<typename  T>
-Column* vectorColumn<T>::getTwin(){
+template<typename T>
+Column *vectorColumn<T>::getTwin() {
     return new vectorColumn<T>();
 }
 
-template<typename  T>
-void vectorColumn<T>::setSize(uint32_t size){
-    dataV=vector<T>(size);
+template<typename T>
+void vectorColumn<T>::setSize(uint32_t size) {
+    dataV = vector<T>(size);
 }
 
-template<typename  T>
-void vectorColumn<T>::setValueFromColumn(Column* Container, uint32_t inputOrder,uint32_t outputOrder)
-{
-    T val=((vectorColumn<T>*)Container)->get(inputOrder);
-    insert(val,outputOrder);
+template<typename T>
+void vectorColumn<T>::setValueFromColumn(Column *Container, uint32_t inputOrder, uint32_t outputOrder) {
+    T val = ((vectorColumn<T> *) Container)->get(inputOrder);
+    insert(val, outputOrder);
 }
-
 
 
 uint32_t insertColorColumn::insertAndGetIndex(vector<uint32_t> &item) {
@@ -201,10 +199,11 @@ void insertColorColumn::populateColors() {
 //    colorInv.populateColors(colors);
 }
 
-Column* insertColorColumn::getTwin(){
+Column *insertColorColumn::getTwin() {
     return new insertColorColumn();
 }
-void insertColorColumn::setSize(uint32_t size){
+
+void insertColorColumn::setSize(uint32_t size) {
 
 }
 
@@ -216,6 +215,7 @@ vector<string> StringColorColumn::getWithIndex(uint32_t index) {
     return res;
 
 }
+
 vector<uint32_t> StringColorColumn::get(uint32_t index) {
     return colors[index];
 }
@@ -254,10 +254,11 @@ void StringColorColumn::deserialize(string filename) {
 
 }
 
-Column* StringColorColumn::getTwin(){
+Column *StringColorColumn::getTwin() {
     new StringColorColumn();
 }
-void StringColorColumn::setSize(uint32_t size){
+
+void StringColorColumn::setSize(uint32_t size) {
 
 }
 
@@ -1044,12 +1045,11 @@ void queryColorColumn::sortColors() {
 }
 
 
-Column* queryColorColumn::getTwin()
-{
+Column *queryColorColumn::getTwin() {
     return new queryColorColumn();
 }
-void queryColorColumn::setSize(uint32_t size)
-{
+
+void queryColorColumn::setSize(uint32_t size) {
 
 }
 
@@ -1491,9 +1491,9 @@ prefixTrieQueryColorColumn::prefixTrieQueryColorColumn(queryColorColumn *col) {
     uint64_t currTree = 0;
     starts = sdsl::int_vector<64>(noSamples);
     sdsl::int_vector<> tmp_edges(tmpSize);
-    deque<uint32_t> currPrefix;
+
     starts[currTree] = 0;
-    tree.push_back(new sdsl::bit_vector(tmpSize * 2));
+
 
 
     unordered_map<int, uint64_t> addedEdgesHisto;
@@ -1501,51 +1501,137 @@ prefixTrieQueryColorColumn::prefixTrieQueryColorColumn(queryColorColumn *col) {
         addedEdgesHisto[i] = 0;
 
     uint64_t processedColors = 0;
-    uint64_t printChunk=numColors/20;
-    deque<uint64_t> pastNodes;
+    uint64_t printChunk = numColors / 20;
     uint64_t rank = 0;
     while (!nextColor.empty()) {
-        auto colorTuple = nextColor.top();
-        nextColor.pop();
-//        for(auto c:std::get<0>(colorTuple))
-//        {
-//            cout<<c<<" ";
-//        }
-//        cout<<endl;
-        vector<uint32_t> currColor(std::get<0>(colorTuple).begin(), std::get<0>(colorTuple).end());
-        unsigned int i = 0;
-        for (; i < currPrefix.size() && i < std::get<0>(colorTuple).size(); i++) {
-            if (currPrefix[i] != std::get<0>(colorTuple)[i])
-                break;
+        starts[currTree] = rank;
+        // generate the colors to be compressed and put them in colorsToProcess
+        deque<tuple<vector<uint32_t>, uint32_t, vectorBaseIterator *, vectorBaseIterator *> > colorsToProcess;
+        uint32_t firstNode = *std::get<0>(nextColor.top()).begin();
+        while (!nextColor.empty() && firstNode == *std::get<0>(nextColor.top()).begin()) {
+            auto colorTuple=nextColor.top();
+            colorsToProcess.push_back(colorTuple);
+            nextColor.pop();
+            std::get<2>(colorTuple)->next();
+            if (*std::get<2>(colorTuple) != *std::get<3>(colorTuple)) {
+                std::get<0>(colorTuple) = *(*(std::get<2>(colorTuple)));
+                std::get<1>(colorTuple) = std::get<2>(colorTuple)->getID();
+                nextColor.push(colorTuple);
+            } else {
+                delete std::get<2>(colorTuple);
+                delete std::get<3>(colorTuple);
+            }
 
         }
-        unordered_set<uint32_t> unneededNodes(currPrefix.begin() + i, currPrefix.end());
-        unordered_set<uint32_t> neededNodes(currColor.begin() , currColor.end());
-        deque<uint32_t> toBAdded;
-        toBAdded.clear();
-        bool hasUnneeded = false;
-        unsigned int j = 0;
-        for (; j < pastNodes.size(); j++) {
 
-            for (auto c:nodesCache[pastNodes[j]])
-                if (unneededNodes.find(c) != unneededNodes.end()) {
-                    hasUnneeded = true;
+
+        //process the colors
+        deque<uint64_t> pastNodes;
+        tmpEdgesTop = 0;
+        tmpTreeTop = 0;
+        tmpSize = tmp_edges.size() * 2;
+        //tmp_edges.resize(tmpSize);
+        tree.push_back(new sdsl::bit_vector(tmpSize * 2));
+        for (unsigned c=0;c<colorsToProcess.size();c++) {
+            auto colorTuple=colorsToProcess[c];
+            vector<uint32_t> prevColor;
+            if(c>0)
+                prevColor=std::get<0>(colorsToProcess[c-1]);
+            vector<uint32_t> currColor(std::get<0>(colorTuple).begin(), std::get<0>(colorTuple).end());
+            unsigned int i = 0;
+            for (; i < prevColor.size() && i < std::get<0>(colorTuple).size(); i++) {
+                if (prevColor[i] != std::get<0>(colorTuple)[i])
                     break;
+
+            }
+            unordered_set<uint32_t> unneededNodes(prevColor.begin() + i, prevColor.end());
+            unordered_set<uint32_t> neededNodes(currColor.begin(), currColor.end());
+            deque<uint32_t> toBAdded;
+            toBAdded.clear();
+            bool hasUnneeded = false;
+            unsigned int j = 0;
+            for (; j < pastNodes.size(); j++) {
+
+                for (auto c:nodesCache[pastNodes[j]])
+                    if (unneededNodes.find(c) != unneededNodes.end()) {
+                        hasUnneeded = true;
+                        break;
+                    }
+
+                if (hasUnneeded)
+                    break;
+
+            }
+            for (unsigned int k = j; k < pastNodes.size(); k++) {
+                for (auto t:nodesCache[pastNodes[k]]) {
+                    if (neededNodes.find(t) != neededNodes.end())
+                        toBAdded.push_back(t);
+                }
+                nodesCache.erase(pastNodes[k]);
+                rank++;
+                (*tree.back())[tmpTreeTop++] = 0;
+                if (tmpTreeTop == tree.back()->size()) {
+                    cerr << "Tmp bp_tree of size " << tree.back()->size() << "("
+                         << sdsl::size_in_mega_bytes(*tree.back())
+                         << "MB) is full! size will doubled" << endl;
+                    tree.back()->resize(tree.back()->size() * 2);
+                    tmpSize *= 2;
+                }
+            }
+            pastNodes.erase(pastNodes.begin() + j, pastNodes.end());
+
+            // vector<uint32_t> tobeAdded(std::get<0>(colorTuple).size()-i);
+            //   std::copy(std::get<0>(colorTuple).begin(),std::get<0>(colorTuple).end(),tobeAdded.begin());
+//        for(auto it=currColor.begin() + i;it !=currColor.end();it++)
+//            toBAdded.
+            for (auto it = currColor.begin() + i; it != currColor.end(); it++) {
+                toBAdded.push_back(*it);
+            }
+            std::sort(toBAdded.begin(), toBAdded.end());
+            auto last = std::unique(toBAdded.begin(), toBAdded.end());
+            toBAdded.erase(last, toBAdded.end());
+            addedEdgesHisto[toBAdded.size()] += 1;
+            uint32_t inputSize = toBAdded.size();
+            deque<uint32_t> shortened;
+            shortened.clear();
+            shorten(toBAdded, shortened);
+            uint32_t outputSize = 0;
+            for (auto s:shortened)
+                outputSize += nodesCache[s].size();
+            if (outputSize != inputSize) {
+                cerr << "Build error in rank " << rank << endl;
+            }
+            for (auto sample:shortened) {
+                rank++;
+                pastNodes.push_back(sample);
+                (*tree.back())[tmpTreeTop++] = 1;
+                if (tmpTreeTop == tree.back()->size()) {
+                    cerr << "Tmp bp_tree of size " << tree.back()->size() << "("
+                         << sdsl::size_in_mega_bytes(*tree.back())
+                         << "MB) is full! size will doubled" << endl;
+                    tree.back()->resize(tree.back()->size() * 2);
                 }
 
-            if (hasUnneeded)
-                break;
-
-        }
-        for (unsigned int k = j; k < pastNodes.size(); k++) {
-            for(auto t:nodesCache[pastNodes[k]])
-            {
-                if(neededNodes.find(t)!=neededNodes.end())
-                    toBAdded.push_back(t);
+                tmp_edges[tmpEdgesTop++] = sample;
+                if (tmpEdgesTop == tmp_edges.size()) {
+                    cerr << "Tmp edges of size (" << sdsl::size_in_mega_bytes(tmp_edges)
+                         << "MB) is full! size will doubled"
+                         << endl;
+                    tmp_edges.resize(tmp_edges.size() * 2);
+                }
             }
+
+            idsMap[invIdsMap[std::get<1>(colorTuple)]] = rank - 1;
+
+            processedColors++;
+        }
+        cout << "Processed " << processedColors << " / " << numColors << endl;
+
+        // 
+        for (unsigned int k = 0; k < pastNodes.size(); k++) {
             nodesCache.erase(pastNodes[k]);
             rank++;
-            (*tree.back())[tmpTreeTop++] = 0;
+            (*tree.back())[tmpTreeTop++] = false;
             if (tmpTreeTop == tree.back()->size()) {
                 cerr << "Tmp bp_tree of size " << tree.back()->size() << "(" << sdsl::size_in_mega_bytes(*tree.back())
                      << "MB) is full! size will doubled" << endl;
@@ -1553,138 +1639,30 @@ prefixTrieQueryColorColumn::prefixTrieQueryColorColumn(queryColorColumn *col) {
                 tmpSize *= 2;
             }
         }
-        pastNodes.erase(pastNodes.begin() + j, pastNodes.end());
-        currPrefix.erase(currPrefix.begin() + i, currPrefix.end());
-        if (currPrefix.empty() && rank > 0) {
-            currTree++;
-            //tmp_edges.resize(tmpEdgesTop);
-            //vector<uint64_t> tmpVec(tmpEdgesTop);
-            unCompressedEdges.push_back(new sdsl::int_vector<>(tmpEdgesTop));
-            std::copy(tmp_edges.begin(),tmp_edges.begin()+tmpEdgesTop,unCompressedEdges.back()->begin());
-            sdsl::util::bit_compress(*unCompressedEdges.back());
-            //edges.push_back(new vectype(tmpVec));
+        //tmp_edges.resize(tmpEdgesTop);
+        //vector<uint64_t> tmpVec(tmpEdgesTop);
+        unCompressedEdges.push_back(new sdsl::int_vector<>(tmpEdgesTop));
+        std::copy(tmp_edges.begin(), tmp_edges.begin() + tmpEdgesTop, unCompressedEdges.back()->begin());
+        sdsl::util::bit_compress(*unCompressedEdges.back());
+        //edges.push_back(new vectype(tmpVec));
 
-            tree.back()->resize(tmpTreeTop);
-            bp_tree.push_back(new sdsl::bp_support_sada<>(tree.back()));
-            starts[currTree] = rank;
-            tmpEdgesTop = 0;
-            tmpTreeTop = 0;
-            tmpSize = tmp_edges.size() * 2;
-            //tmp_edges.resize(tmpSize);
-            tree.push_back(new sdsl::bit_vector(tmpSize * 2));
-//            exportTree("tree.",edges.size()-1);
-        }
+        tree.back()->resize(tmpTreeTop);
+        bp_tree.push_back(new sdsl::bp_support_sada<>(tree.back()));
 
 
-        // vector<uint32_t> tobeAdded(std::get<0>(colorTuple).size()-i);
-        //   std::copy(std::get<0>(colorTuple).begin(),std::get<0>(colorTuple).end(),tobeAdded.begin());
-//        for(auto it=currColor.begin() + i;it !=currColor.end();it++)
-//            toBAdded.
-        for (auto it=currColor.begin()+i;it!=currColor.end();it++) {
-            currPrefix.push_back(*it);
-            toBAdded.push_back(*it);
-        }
-        std::sort(toBAdded.begin(), toBAdded.end());
-        auto last = std::unique(toBAdded.begin(), toBAdded.end());
-        toBAdded.erase(last, toBAdded.end());
-        addedEdgesHisto[toBAdded.size()] += 1;
-        uint32_t inputSize = toBAdded.size();
-        deque<uint32_t> shortened;
-        shortened.clear();
-        shorten(toBAdded, shortened);
-        uint32_t outputSize=0;
-        for(auto s:shortened)
-            outputSize+=nodesCache[s].size();
-        if(outputSize!=inputSize)
-        {
-            cerr<<"Build error in rank "<<rank<<endl;
-        }
-        for (auto sample:shortened) {
-            rank++;
-            pastNodes.push_back(sample);
-            (*tree.back())[tmpTreeTop++] = 1;
-            if (tmpTreeTop == tree.back()->size()) {
-                cerr << "Tmp bp_tree of size " << tree.back()->size() << "(" << sdsl::size_in_mega_bytes(*tree.back())
-                     << "MB) is full! size will doubled" << endl;
-                tree.back()->resize(tree.back()->size() * 2);
-            }
+        currTree++;
 
-            tmp_edges[tmpEdgesTop++] = sample;
-            if (tmpEdgesTop == tmp_edges.size()) {
-                cerr << "Tmp edges of size (" << sdsl::size_in_mega_bytes(tmp_edges) << "MB) is full! size will doubled"
-                     << endl;
-                tmp_edges.resize(tmp_edges.size() * 2);
-            }
-        }
-
-        idsMap[invIdsMap[std::get<1>(colorTuple)]] = rank - 1;
-        processedColors++;
-        if(processedColors%printChunk==0)
-            cout<<"Processed "<<processedColors<<" / "<<numColors<<endl;
-        std::get<2>(colorTuple)->next();
-        if (*std::get<2>(colorTuple) != *std::get<3>(colorTuple)) {
-            std::get<0>(colorTuple) = *(*(std::get<2>(colorTuple)));
-            std::get<1>(colorTuple) = std::get<2>(colorTuple)->getID();
-            nextColor.push(colorTuple);
-        } else {
-            delete std::get<2>(colorTuple);
-            delete std::get<3>(colorTuple);
-        }
 
     }
-    for (unsigned int j = 0; j < pastNodes.size(); j++) {
-        (*tree.back())[tmpTreeTop++] = false;
-        if (tmpTreeTop == tree.back()->size()) {
-            cerr << "Tmp bp_tree of size " << tree.back()->size() << "(" << sdsl::size_in_mega_bytes(*tree.back())
-                 << "MB) is full! size will doubled" << endl;
-            tree.back()->resize(tree.back()->size() * 2);
-        }
-    }
-    for (unsigned int k = 0; k < pastNodes.size(); k++) {
-        nodesCache.erase(pastNodes[k]);
-        rank++;
-        (*tree.back())[tmpTreeTop++] = false;
-        if (tmpTreeTop == tree.back()->size()) {
-            cerr << "Tmp bp_tree of size " << tree.back()->size() << "(" << sdsl::size_in_mega_bytes(*tree.back())
-                 << "MB) is full! size will doubled" << endl;
-            tree.back()->resize(tree.back()->size() * 2);
-            tmpSize *= 2;
-        }
-    }
 
-    //tmpStarts.push_back(rank);
-//    tmp_edges.resize(tmpEdgesTop);
-//    edges.push_back(new vectype(tmp_edges));
-
-    unCompressedEdges.push_back(new sdsl::int_vector<>(tmpEdgesTop));
-    std::copy(tmp_edges.begin(),tmp_edges.begin()+tmpEdgesTop,unCompressedEdges.back()->begin());
-    sdsl::util::bit_compress(*unCompressedEdges.back());
-
-
-    double unCompressedSize=0.0;
-    for(auto e:unCompressedEdges)
-    {
-        unCompressedSize+=sdsl::size_in_mega_bytes(*e);
+    double unCompressedSize = 0.0;
+    for (auto e:unCompressedEdges) {
+        unCompressedSize += sdsl::size_in_mega_bytes(*e);
         edges.push_back(new vectype(*e));
         delete e;
     }
     unCompressedEdges.clear();
-    cout<<"Uncompressed edges size = "<<unCompressedSize<<endl;
-
-    tree.back()->resize(tmpTreeTop);
-    bp_tree.push_back(new sdsl::bp_support_sada<>(tree.back()));
-
-
-    cout<<"Node Cache size = "<<nodesCache.size()<<endl;
-    for(auto c: nodesCache) {
-        cout << c.first << " -> ";
-        for(auto t:c.second)
-            cout<<t<<" ";
-        cout<<endl;
-    }
-
-
-
+    cout << "Uncompressed edges size = " << unCompressedSize << endl;
 
 
     uint64_t edgesSum = 0;
@@ -1705,7 +1683,7 @@ vector<uint32_t> prefixTrieQueryColorColumn::getWithIndex(uint32_t index) {
     deque<uint32_t> tmp;
     queue<uint64_t> Q;
     Q.push(idsMap[index]);
-   // cout<<idsMap[index]<<" -> ";
+    // cout<<idsMap[index]<<" -> ";
     while (!Q.empty()) {
         uint64_t bigIndex = Q.front();
         Q.pop();
@@ -1716,7 +1694,7 @@ vector<uint32_t> prefixTrieQueryColorColumn::getWithIndex(uint32_t index) {
         while (bigIndex != bp_tree[tIndex]->size()) {
             uint64_t edgeIndex = bp_tree[tIndex]->rank(bigIndex) - 1;
             uint64_t node = (*edges[tIndex])[edgeIndex];
-    //        cout<<node<<" ";
+            //        cout<<node<<" ";
             if (node < noSamples)
                 tmp.push_back(node);
             else
@@ -1725,7 +1703,7 @@ vector<uint32_t> prefixTrieQueryColorColumn::getWithIndex(uint32_t index) {
         }
     }
     //cout<<endl;
-    sort(tmp.begin(),tmp.end());
+    sort(tmp.begin(), tmp.end());
     vector<uint32_t> res(tmp.size());
     for (unsigned int i = 0; i < res.size(); i++)
         res[i] = tmp[i];
@@ -1855,10 +1833,9 @@ void prefixTrieQueryColorColumn::shorten(deque<uint32_t> &input, deque<uint32_t>
         uint64_t edgeIndex = bp_tree[treeIndex]->rank(treePos) - 1;
         uint32_t currNode = (*unCompressedEdges[treeIndex])[edgeIndex];
         auto it = lower_bound(i, input.end(), currNode);
-        if(it == input.end() || *it!=currNode)
-        {
+        if (it == input.end() || *it != currNode) {
             treePos = bp_tree[treeIndex]->find_close(treePos) + 1;
-        } else{
+        } else {
             for (; i < it; i++) {
                 remaining.push_back(*i);
             }
@@ -1943,21 +1920,19 @@ void prefixTrieQueryColorColumn::exportTree(string prefix, int treeIndex) {
 }
 
 
-Column* prefixTrieQueryColorColumn::getTwin()
-{
+Column *prefixTrieQueryColorColumn::getTwin() {
     return new prefixTrieQueryColorColumn();
 }
-void prefixTrieQueryColorColumn::setSize(uint32_t size)
-{
+
+void prefixTrieQueryColorColumn::setSize(uint32_t size) {
 
 }
 
 
-
-template<typename  T, typename ColumnType>
-void deduplicatedColumn<T,ColumnType>::serialize(string filename) {
-    string indexFilename=filename+".index";
-    string containerFilename=filename+".container";
+template<typename T, typename ColumnType>
+void deduplicatedColumn<T, ColumnType>::serialize(string filename) {
+    string indexFilename = filename + ".index";
+    string containerFilename = filename + ".container";
     std::ofstream os(indexFilename, std::ios::binary);
     cereal::BinaryOutputArchive archive(os);
     archive(index);
@@ -1966,39 +1941,39 @@ void deduplicatedColumn<T,ColumnType>::serialize(string filename) {
 }
 
 
-template<typename  T, typename ColumnType>
-void deduplicatedColumn<T,ColumnType>::deserialize(string filename) {
-    string indexFilename= filename + ".index";
-    string containerFilename= filename + ".container";
+template<typename T, typename ColumnType>
+void deduplicatedColumn<T, ColumnType>::deserialize(string filename) {
+    string indexFilename = filename + ".index";
+    string containerFilename = filename + ".container";
     std::ifstream os(indexFilename, std::ios::binary);
     cereal::BinaryInputArchive iarchive(os);
     iarchive(index);
     os.close();
-    values=new ColumnType();
+    values = new ColumnType();
     values->deserialize(containerFilename);
 }
 
 
-template<typename  T, typename ColumnType>
-T deduplicatedColumn<T,ColumnType>::get(uint32_t order) {
+template<typename T, typename ColumnType>
+T deduplicatedColumn<T, ColumnType>::get(uint32_t order) {
     return values->get(index[order]);
 }
 
-template<typename  T, typename ColumnType>
-Column* deduplicatedColumn<T,ColumnType>::getTwin(){
-    return new deduplicatedColumn<T,ColumnType>();
+template<typename T, typename ColumnType>
+Column *deduplicatedColumn<T, ColumnType>::getTwin() {
+    return new deduplicatedColumn<T, ColumnType>();
 }
 
-template<typename  T, typename ColumnType>
-void deduplicatedColumn<T,ColumnType>::setSize(uint32_t size){
-    index=vector<uint32_t>(size);
+template<typename T, typename ColumnType>
+void deduplicatedColumn<T, ColumnType>::setSize(uint32_t size) {
+    index = vector<uint32_t>(size);
 }
 
-template<typename  T, typename ColumnType>
-void deduplicatedColumn<T,ColumnType>::setValueFromColumn(Column* Container, uint32_t inputOrder,uint32_t outputOrder)
-{
-    deduplicatedColumn<T,ColumnType>* other =((deduplicatedColumn<T,ColumnType>*)Container);
-    values=other->values;
-    index[outputOrder]=other->index[inputOrder];
+template<typename T, typename ColumnType>
+void
+deduplicatedColumn<T, ColumnType>::setValueFromColumn(Column *Container, uint32_t inputOrder, uint32_t outputOrder) {
+    deduplicatedColumn<T, ColumnType> *other = ((deduplicatedColumn<T, ColumnType> *) Container);
+    values = other->values;
+    index[outputOrder] = other->index[inputOrder];
 
 }
