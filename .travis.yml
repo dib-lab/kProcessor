@@ -55,7 +55,7 @@ install:
   - cd ${BACK}
   - echo "******** Running kProcessor CPP Test Cases ********"
   - cd ./build/tests/kProcessorLibTests
-  - ./testKprocessorLib
+  # - ./testKprocessorLib
 
 
 script:
@@ -68,8 +68,8 @@ script:
   - echo "******** Running Python Interface Test Cases ********"
   - echo "Python version $(which python)"
   - cd ${BACK}
-  - cd ./tests/python/
-  - pytest
+  # - cd ./tests/python/
+  # - pytest
 
 branches:
   only:

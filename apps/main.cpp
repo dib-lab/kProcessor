@@ -3,7 +3,7 @@
 
 using namespace std;
 
-#define KPROCESSOR_VERSION "0.1"
+#define KPROCESSOR_VERSION "1.0"
 
 int KmerCounter_main(int argc, char *argv[]);
 int estimateMemory_main(int argc, char *argv[]);
@@ -23,7 +23,7 @@ static void usage()
     cout<<
 "\n"
 "This is Kprocessor version "<<KprocessorVersion()
-<<" developed by Mostafa Shokrof <mostafa.shokrof@gmail.com> and Tamer Mansour(UC Davis)<drtamermansour@gmail.com>\n"
+<<" developed by Mostafa Shokrof <mostafa.shokrof@gmail.com>, Mohamed Abuelanin (UC Davis) <mabuelanin@gmail.com>, and Tamer Mansour(UC Davis)<drtamermansour@gmail.com>\n"
 <<"Usage:   kprocessor <command> [options]\n"<<
 "\n"<<
 "Commands:\n"<<

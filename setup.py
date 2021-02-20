@@ -13,9 +13,10 @@ from distutils.command.build import build
 from distutils.spawn import find_executable
 import sys
 import os
+import subprocess
 
-if sys.version_info[:2] < (3, 5) or sys.version_info[:2] > (3, 7):
-    raise RuntimeError("Python version == (3.6 | 3.7) required.")
+if sys.version_info[:2] < (3, 5) or sys.version_info[:2] > (3, 8):
+    raise RuntimeError("Python version == (3.6 | 3.7 | 3.8) required.")
 
 if os.path.exists('MANIFEST'):
     os.remove('MANIFEST')
@@ -110,10 +111,14 @@ classifiers = [
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.6",
     "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
 ]
 
+commit_hash_short_name = subprocess.getoutput("git rev-parse --short HEAD").split()[0]
+branch_name = subprocess.getoutput("git rev-parse --abbrev-ref HEAD").split()[0]
+
 setup(name='kProcessor',
-      version='0.3',
+      version="1.0",
       author="Tamer Mansour, Mostafa Shokrof, Mohamed Abuelanin",
       author_email='drtamermansour@gmail.com, mostafa.shokrof@gmail.com, mabuelanin@gmail.com',
       description="""kProcessor Python interface""",
