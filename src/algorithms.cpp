@@ -799,10 +799,6 @@ namespace kProcessor {
             }
         }
 
-        flat_hash_map<uint64_t, string> inv_groupNameMap;
-            for (auto &_ : groupNameMap)
-                inv_groupNameMap[_.second] = _.first;
-
 
         vector<kDataFrameMQF *> frames;
 //        int currIndex = 0;
@@ -880,18 +876,16 @@ namespace kProcessor {
                     }
 
                     if (itc->second != currentTag) {
-                            colorsCount[currentTag]--;
-                            if (colorsCount[currentTag] == 0 && currentTag != 0) {
-                                auto _invGroupNameIT = inv_groupNameMap.find(currentTag);
-                                if (_invGroupNameIT == inv_groupNameMap.end() || groupCounter[_invGroupNameIT->second] == 0){
-                                    freeColors.push(currentTag);
-                                    legend->erase(currentTag);
-                                    if (convertMap.find(currentTag) != convertMap.end())
-                                        convertMap.erase(currentTag);
-                                }
-                            }
-                            colorsCount[itc->second]++;
+
+                        colorsCount[currentTag]--;
+                        if (colorsCount[currentTag] == 0 && currentTag != 0) {
+                            freeColors.push(currentTag);
+                            legend->erase(currentTag);
+                            if (convertMap.find(currentTag) != convertMap.end())
+                                convertMap.erase(currentTag);
                         }
+                        colorsCount[itc->second]++;
+                    }
 
                     frame->setCount(kmer.hash, itc->second);
                     if (frame->getCount(kmer.hash) != itc->second) {
@@ -1089,7 +1083,6 @@ namespace kProcessor {
                 for (auto c:tmp)
                     colorVec.push_back(c + idsOffset[i]);
 
-<<<<<<<
                 sort(colorVec.begin(), colorVec.end());
                 get<2>(colorTuple)->next();
                 if (*get<2>(colorTuple) != *get<3>(colorTuple)) {
@@ -1098,39 +1091,6 @@ namespace kProcessor {
                 } else {
                     delete get<2>(colorTuple);
                     delete get<3>(colorTuple);
-=======
-                        if (itc->second != currentTag) {
-
-                            colorsCount[currentTag]--;
-                            if (colorsCount[currentTag] == 0 && currentTag != 0) {
-                                auto _invGroupNameIT = inv_groupNameMap.find(currentTag);
-                                if (_invGroupNameIT == inv_groupNameMap.end() || groupCounter[_invGroupNameIT->second] == 0){
-                                    freeColors.push(currentTag);
-                                    legend->erase(currentTag);
-                                    if (convertMap.find(currentTag) != convertMap.end())
-                                        convertMap.erase(currentTag);
-                                }
-                            }
-                            colorsCount[itc->second]++;
-                        }
-
-                        frame->setCount(kmer.hash, itc->second);
-                        if (frame->getCount(kmer.hash) != itc->second) {
-                            //frame->setC(kmer,itc->second);
-                            cout << "Error Founded " << kmer.str << " from sequence " << readName << " expected "
-                                 << itc->second << " found " << frame->getCount(kmer.hash) << endl;
-                            return NULL;
-                        }
-                    }
-                    readID += 1;
-                    if (colorsCount[readTag] == 0) {
-                        groupCounter[groupName]--;
-                        if (groupCounter[groupName] == 0) {
-                            freeColors.push(readTag);
-                            legend->erase(readTag);
-                        }
-                    }
->>>>>>>
                 }
             }
             output->setKmerDefaultColumnValue<vector<uint32_t>, insertColorColumn>(currHash, colorVec);
