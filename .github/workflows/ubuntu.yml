@@ -30,15 +30,18 @@ jobs:
       - name: install boost
         run: sudo apt-get install libboost-all-dev
 
+      # - name: configure
+      #   run: cmake -Stest -Bbuild -DENABLE_TEST_COVERAGE=1 -DCMAKE_BUILD_TYPE=Debug
+
       - name: configure
-        run: cmake -Stest -Bbuild -DENABLE_TEST_COVERAGE=1 -DCMAKE_BUILD_TYPE=Debug
+        run: cmake -Bbuild
 
       - name: build
         run: cmake --build build -j4
 
-      - name: test
-        run: |
-          cd build
-          ctest --build-config Debug
+      # - name: test
+      #   run: |
+      #     cd build
+      #     ctest --build-config Debug
       - name: collect code coverage
         run: bash <(curl -s https://codecov.io/bash) || echo "Codecov did not collect coverage reports"
