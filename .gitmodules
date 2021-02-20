@@ -13,7 +13,3 @@
 [submodule "ThirdParty/mum-hash"]
 	path = ThirdParty/mum-hash
 	url = https://github.com/vnmakarov/mum-hash.git
-
-[submodule "ThirdParty/KMC"]
-	path = ThirdParty/KMC
-	url = https://github.com/refresh-bio/KMC.git
