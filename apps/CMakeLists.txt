@@ -1,4 +1,4 @@
-file(GLOB SRCS *.cpp)
+#file(GLOB SRCS *.cpp)
 
 #ADD_EXECUTABLE(kProcessorApp ${SRCS})
 #
