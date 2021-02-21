@@ -2,9 +2,6 @@
 #include <iostream>
 #include "Utils/kmer.h"
 #include <fstream>
-#include <seqan/seq_io.h>
-#include <seqan/parallel.h>
-#include "KmerDecoder/FastqReader.hpp"
 #include <limits>
 #include <omp.h>
 #include <stdexcept>
@@ -26,10 +23,12 @@ using std::cerr;
 using std::cout;
 
 using phmap::flat_hash_map;
-using namespace seqan;
+
 #define QBITS_LOCAL_QF 16
 
 namespace kProcessor {
+    // TO BE REMOVED TODO V2
+    /*
     static inline void insertToLevels(uint64_t item, QF *local, QF *main, QF *diskMQF = NULL) {
         if (!qf_insert(main, item, 1,
                        true, false)) {
@@ -75,9 +74,12 @@ namespace kProcessor {
             }
         }
     }
+    */
 
-
-    void loadIntoMQF(string sequenceFilename, int ksize, int noThreads, Hasher *hasher, QF *memoryMQF, QF *diskMQF) {
+// TO BE REMOVED TODO V2
+/*
+    void loadIntoMQF(string sequenceFilename, unsigned int ksize, int noThreads, Hasher *hasher, QF *memoryMQF,
+                     QF *diskMQF) {
         FastqReaderSqueker reader(sequenceFilename);
         omp_set_num_threads(noThreads);
         QF *localMQF;
@@ -183,6 +185,7 @@ namespace kProcessor {
         }
 
     }
+*/
 
     void dumpMQF(QF *MQF, int ksize, std::string outputFilename) {
         IntegerHasher Ihasher(BITMASK(2 * ksize));
@@ -330,31 +333,8 @@ namespace kProcessor {
         }
     }
 
-    void parseSequences(string seqFileName, int nThreads, kDataFrame *output) {
-//  if(dynamic_cast<kDataFrameMQF*>(output))
-//  {
-//    loadIntoMQF(seqFileName,output->getkSize(),nThreads, output->getHasher(),((kDataFrameMQF*)output)->getMQF(),NULL);
-//    return;
-//  }
-        vector<uint64_t> countHistogram= estimateKmersHistogram(seqFileName, output->getkSize() ,1);
-        output->reserve(countHistogram);
-        FastqReaderSqueker reader(seqFileName);
-        deque<pair<string, string> > reads;
-        int k = output->getkSize();
-        while (!reader.isEOF()) {
-            reader.readNSeq(&reads, 5000);
-            for (auto seqPair:reads) {
-                string seq = seqPair.first;
-                for (int i = 0; i < seq.size() - k + 1; i++) {
-                    string kmer = seq.substr(i, k);
-                    output->insert(kmer);
-                }
-            }
-            reads.clear();
-        }
-    }
 
-    void countKmersFromFile(kDataFrame * kframe, std::map<std::string, int> parse_params, string filename, int chunk_size){
+    void countKmersFromFile(kDataFrame *kframe, std::map<std::string, int> parse_params, string filename, int chunk_size) {
         // parse_params["mode"] = 1 > Default: Kmers
         // parse_params["mode"] = 2 > Skipmers
         // parse_params["mode"] = 3 > Minimizers

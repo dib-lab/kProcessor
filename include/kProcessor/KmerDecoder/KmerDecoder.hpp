@@ -1,3 +1,6 @@
+// TO BE REMOVED TODO V2
+
+/*
 #include <stdio.h>
 #include <stdint.h>
 #include <vector>
@@ -16,3 +19,4 @@ public:
   void readNSeq(deque<pair<string,string> > *res,uint64_t N=0);
   bool isEOF();
 };
+*/

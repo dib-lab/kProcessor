@@ -3,7 +3,6 @@
 ## [ ] Build with debug option
 ## [ ] Build test cases option
 ## [ ] Build and generate static library option
-## create a cmake file for build seqan
 ## change the static linking options to something cmake
 
 
@@ -47,8 +46,23 @@ set(ntcardLib "${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/ntCard/libntcard.a")
 set(LIBRARY_NAME
     kProcessor
 )
-file(GLOB kProcessorLibSrc "src/*.cpp" "src/kDataFrames/*.cpp" "src/KmerDecoder/*.cpp" "src/Utils/*.cpp")
 
+set(kProcessorLibSrc
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/algorithms.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/batchQuery.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/colorTable.cpp
+
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/kDataFrames/colored_kDataFrame.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/kDataFrames/defaultColumn.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/kDataFrames/kDataFrameBlight.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/kDataFrames/kDataFrameBMQF.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/kDataFrames/kDataFrame.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/kDataFrames/kDataFrameMAP.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/kDataFrames/kDataFrameMQF.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/kDataFrames/kDataFramePHMAP.cpp
+
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/Utils/utils.cpp
+    )
 
 add_library(${LIBRARY_NAME} STATIC
     ${kProcessorLibSrc}
@@ -56,7 +70,8 @@ add_library(${LIBRARY_NAME} STATIC
 
 
 target_link_libraries(kProcessor MQF)
-target_link_libraries (kProcessor ${SEQAN_LIBRARIES})
+# TO BE REMOVED TODO V2
+# target_link_libraries (kProcessor ${SEQAN_LIBRARIES})
 target_link_libraries (kProcessor ${ntcardLib}  -ldl)
 #set_property(TARGET sdsl PROPERTY POSITION_INDEPENDENT_CODE ON)
 target_link_libraries(kProcessor sdsl)

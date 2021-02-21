@@ -1,3 +1,7 @@
+// TO BE REMOVED TODO V2
+
+/*
+
 #include "KmerDecoder.hpp"
 #include <vector>
 #include <deque>
@@ -36,3 +40,5 @@ public:
   void readNSeq(deque<pair<string,string> >* res,uint64_t N=0);
   bool isEOF();
 };
+
+ */

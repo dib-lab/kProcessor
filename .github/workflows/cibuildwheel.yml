@@ -1,0 +1,94 @@
+name: cibuildwheel
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build_wheels:
+    name: Build wheels on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ ubuntu-latest ] # , windows-2019, macos-10.15 ]
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: recursive
+
+      - name: Build wheels
+        uses: joerick/cibuildwheel@v1.10.0
+
+        env:
+          CIBW_BUILD_VERBOSITY: 3
+          CIBW_PROJECT_REQUIRES_PYTHON: ">=3.6"
+          CIBW_SKIP: pp* cp27-manylinux* *-manylinux_{aarch64,ppc64le,s390x}
+          CIBW_ARCHS_LINUX: x86_64
+          CIBW_MANYLINUX_X86_64_IMAGE: quay.io/pypa/manylinux2014_x86_64:latest
+          CIBW_BEFORE_BUILD: |
+            yum install bzip2 -y
+            pip install --upgrade pip
+            pip install cmake
+            yum install zlib-devel -y
+            yum install centos-release-scl-rh -y
+            yum install doxygen -y
+            yum install devtoolset-7-toolchain -y
+            yum groupinstall -y "development tools"
+            yum install boost-devel -y
+            yum install -y zlib-devel bzip2-devel openssl-devel ncurses-devel sqlite-devel readline-devel tk-devel gdbm-devel db4-devel libpcap-devel xz-devel expat-devel
+            cmake -BKP_BUILD
+            cmake --build KP_BUILD -j4
+
+
+      - uses: actions/upload-artifact@v2
+        with:
+          path: ./wheelhouse/*.whl
+
+  upload_pypi:
+    needs: build_wheels
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/download-artifact@v2
+        id: fetch_artifacts
+        with:
+          path: 'wheels/'
+
+      - name: Publish package to TestPyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          user: __token__
+          password: ${{ secrets.TEST_PYPI_KPROCESSOR_API_KEY }} #PYPI_KPROCESSOR_API_KEY
+          repository_url: https://test.pypi.org/legacy/
+          packages_dir: ${{steps.fetch_artifacts.outputs.download-path}}/artifact/
+          skip_existing: true
+          verbose: true
+
+  upload_bintray:
+    needs: build_wheels
+    runs-on: ubuntu-latest
+    env:
+      kProcessor_version: 2.0
+
+    steps:
+      - uses: actions/checkout@v1
+      - name: Fetch wheels from artifacts
+        id: fetch_artifacts
+        uses: actions/download-artifact@v2
+        with:
+          path: 'wheels/'
+
+
+      - name: Bintray
+        run: |
+          for whl_file in ${{steps.fetch_artifacts.outputs.download-path}}/artifact/*whl;
+          do
+            curl -T $whl_file -umr-eyes:${{ secrets.BINTRAY_API_KEY }} -H "X-Bintray-Override:1" -H "X-Bintray-Version:${{env.kProcessor_version}}" -H "X-Bintray-Package:kProcessor" https://api.bintray.com/content/mr-eyes/wheels/
+          done
+          curl -X POST -umr-eyes:${{ secrets.BINTRAY_API_KEY }} https://api.bintray.com/content/mr-eyes/wheels/kProcessor/${{env.kProcessor_version}}/publish
