@@ -24,7 +24,7 @@ if os.path.exists('MANIFEST'):
 try:
     from setuptools import setup, Extension
 except ImportError:
-    from distutils.core import setup, Extension    
+    from distutils.core import setup, Extension
 
 try:
     with open('README.md') as f:
@@ -45,8 +45,11 @@ INCLUDES = [
     'ThirdParty/MQF/include',
     'ThirdParty/sdsl-lite/include',
     'ThirdParty/kmerDecoder/include',
-    'ThirdParty/kmerDecoder/lib/seqan/include',
     'ThirdParty/kmerDecoder/lib/parallel-hashmap',
+    'ThirdParty/kmerDecoder/lib/kseq/include',
+    'ThirdParty/Blight',
+    'ThirdParty/mum-hash',
+    # 'ThirdParty/KMC/kmc_api',
 ]
 
 LINK_ARGS = [
@@ -59,16 +62,20 @@ LINK_ARGS = [
 
 LIBRARIES_DIRS = [
     "build",
+    # "ThirdParty/KMC/kmc_api",
     "build/ThirdParty/MQF/src",
     "ThirdParty/ntCard",
     "build/ThirdParty/sdsl-lite/lib",
     "build/ThirdParty/kmerDecoder",
     "build/ThirdParty/MQF/ThirdParty/stxxl/lib",
+    "ThirdParty/Blight",
 
 ]
 
 LIBRARIES = [
+    # 'KMCAPI',
     'kProcessor',
+    'blight',
     'sdsl',
     'MQF',
     'ntcard',
@@ -99,7 +106,7 @@ kProcessor_module = Extension('_kProcessor',
                               sources=SOURCES,
                               include_dirs=INCLUDES,
                               extra_link_args=LINK_ARGS,
-                              extra_compile_args = ["-O3", "-Ofast", "-std=c++17"],
+                              extra_compile_args=["-O3", "-Ofast", "-std=c++17"],
                               swig_opts=SWIG_OPTS,
                               )
 
