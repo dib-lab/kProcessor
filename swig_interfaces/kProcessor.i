@@ -49,7 +49,7 @@ typedef unsigned long int 	uint64_t;
 %include "swig_interfaces/kDataFrame/kDataFrameMAP.i"
 %include "swig_interfaces/kDataFrame/kDataFramePHMAP.i"
 %include "swig_interfaces/kDataFrame/kDataFrameBlight.i"
-// %include "swig_interfaces/kDataFrame/kDataFrameBMQF.i"
+ %include "swig_interfaces/kDataFrame/kDataFrameBMQF.i"
 /******** kDataFrame Interface ************/
 
 
