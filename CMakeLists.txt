@@ -82,12 +82,12 @@ ExternalProject_Add(
         libKMCAPI_a
         SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/KMC/kmc_api
         CONFIGURE_COMMAND ls
-        BUILD_COMMAND make -C ../ kmc_api/kmc_file.o  kmc_api/kmer_api.o  kmc_api/mmer.o && ar -rc libKMCAPI.a  kmc_file.o  kmer_api.o  mmer.o && ranlib libKMCAPI.a
+        BUILD_COMMAND make -C ../ kmc_api/kmc_file.o  kmc_api/kmer_api.o  kmc_api/mmer.o && ar -rc libKMCAPI.so  kmc_file.o  kmer_api.o  mmer.o && ranlib libKMCAPI.so
         INSTALL_COMMAND ls
         BUILD_IN_SOURCE 1
 )
 
-set(kmcLib "${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/KMC/kmc_api/libKMCAPI.a")
+set(kmcLib "${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/KMC/kmc_api/libKMCAPI.so")
 
 set(LIBRARY_NAME
     kProcessor
