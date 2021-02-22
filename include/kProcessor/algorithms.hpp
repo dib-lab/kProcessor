@@ -21,8 +21,9 @@
 
 
 namespace kProcessor {
-    void
-    loadIntoMQF(std::string sequenceFilename, int k, int noThreads, Hasher *hasher, QF *memoryMQF, QF *diskMQF = NULL);
+
+    // TO BE REMOVED TODO V2
+    // void loadIntoMQF(std::string sequenceFilename, int k, int noThreads, Hasher *hasher, QF *memoryMQF, QF *diskMQF = NULL);
 
     void dumpMQF(QF *memoryMQF, int ksize, std::string outputFilename);
 
