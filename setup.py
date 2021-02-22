@@ -49,7 +49,7 @@ INCLUDES = [
     'ThirdParty/kmerDecoder/lib/kseq/include',
     'ThirdParty/Blight',
     'ThirdParty/mum-hash',
-    # 'ThirdParty/KMC/kmc_api',
+    'ThirdParty/KMC/kmc_api',
 ]
 
 LINK_ARGS = [
@@ -62,7 +62,7 @@ LINK_ARGS = [
 
 LIBRARIES_DIRS = [
     "build",
-    # "ThirdParty/KMC/kmc_api",
+    "ThirdParty/KMC/kmc_api",
     "build/ThirdParty/MQF/src",
     "ThirdParty/ntCard",
     "build/ThirdParty/sdsl-lite/lib",
@@ -72,8 +72,12 @@ LIBRARIES_DIRS = [
 
 ]
 
+RUNTIME_LIBRARIES_DIRS = [
+    'ThirdParty/KMC/kmc_api',
+]
+
 LIBRARIES = [
-    # 'KMCAPI',
+    'KMCAPI',
     'kProcessor',
     'blight',
     'sdsl',
@@ -91,6 +95,7 @@ SWIG_OPTS = [
     '-Isrc'
 ]
 
+
 class CustomBuild(build):
     sub_commands = [
         ('build_ext', build.has_ext_modules),
@@ -101,6 +106,7 @@ class CustomBuild(build):
 
 
 kProcessor_module = Extension('_kProcessor',
+                              runtime_library_dirs=RUNTIME_LIBRARIES_DIRS,
                               library_dirs=LIBRARIES_DIRS,
                               libraries=LIBRARIES,
                               sources=SOURCES,
