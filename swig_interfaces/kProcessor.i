@@ -55,21 +55,21 @@ typedef unsigned long int 	uint64_t;
 
 /******** colored_kDataFrame Interface ************/
 
-//%{
-//#include "colored_kDataFrame.hpp"
-//%}
-//
-//%include "swig_interfaces/colored_kDataFrame.i"
+%{
+#include "colored_kDataFrame.hpp"
+%}
+
+%include "swig_interfaces/colored_kDataFrame.i"
 
 
 /******** colored_kDataFrame Interface ************/
 
 /******** colorTable Interface ************/
 
-//%{
-//#include "colorTable.hpp"
-//%}
-//%include "swig_interfaces/colorTable.i"
+%{
+#include "colorTable.hpp"
+%}
+%include "swig_interfaces/colorTable.i"
 
 /******** colorTable Interface ************/
 
