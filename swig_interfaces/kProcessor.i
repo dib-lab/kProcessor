@@ -71,23 +71,23 @@ typedef unsigned long int 	uint64_t;
 %}
 %include "swig_interfaces/colorTable.i"
 
-/******** colorTable Interface ************/
+/******** batchQuery Interface ************/
 
-//%{
-//#include "batchQuery.hpp"
-//%}
+%{
+#include "batchQuery.hpp"
+%}
 
-//%include "swig_interfaces/batchQuery.i"
+%include "swig_interfaces/batchQuery.i"
 
-/******** colorTable Interface ************/
+/******** batchQuery  Interface ************/
 
-//%{
-//#include "algorithms.hpp" // including algorithms
-//%}
+%{
+#include "algorithms.hpp" // including algorithms
+%}
 
 %template(kFramesVector) vector<kDataFrame*>; /*vector to tuple conversion*/
 
-//%include "swig_interfaces/algorithms/algorithms.i"
+%include "swig_interfaces/algorithms/algorithms.i"
 
 
 /******** HashUtils Interface ************/
