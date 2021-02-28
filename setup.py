@@ -92,7 +92,8 @@ SWIG_OPTS = [
     '-py3',
     '-outdir',
     '.',
-    '-Isrc'
+    '-Isrc',
+    '-doxygen',
 ]
 
 
@@ -106,7 +107,7 @@ class CustomBuild(build):
 
 
 kProcessor_module = Extension('_kProcessor',
-                              runtime_library_dirs=RUNTIME_LIBRARIES_DIRS,
+                              # runtime_library_dirs=RUNTIME_LIBRARIES_DIRS,
                               library_dirs=LIBRARIES_DIRS,
                               libraries=LIBRARIES,
                               sources=SOURCES,
