@@ -11,15 +11,22 @@ recursive-include ThirdParty/MQF/include *
 recursive-include ThirdParty/json *
 recursive-include ThirdParty/sdsl-lite/include *
 recursive-include ThirdParty/kmerDecoder/include *
-recursive-include ThirdParty/kmerDecoder/lib/seqan/include *
 recursive-include ThirdParty/kmerDecoder/lib/parallel-hashmap *
+recursive-include ThirdParty/KMC/kmc_api *
+recursive-include ThirdParty/Blight *
+recursive-include ThirdParty/kmerDecoder/lib/kseq/include *
+
+recursive-include KP_BUILD lib*a
+recursive-include ThirdParty lib*a
 
 # Include static libs
-include build/libkProcessor.a
-include build/ThirdParty/kmerDecoder/libkmerDecoder.a
-include build/ThirdParty/MQF/liblMQF.a
-include build/ThirdParty/sdsl-lite/lib/libsdsl.a
+include KP_BUILD/libkProcessor.a
+include KP_BUILD/ThirdParty/kmerDecoder/libkmerDecoder.a
+include KP_BUILD/ThirdParty/MQF/liblMQF.a
+include KP_BUILD/ThirdParty/sdsl-lite/lib/libsdsl.a
 
+# include shared libs
+include ThirdParty/KMC/kmc_api/libKMCAPI.a
 
 # Include SWIG interfaces
 recursive-include swig_interfaces *

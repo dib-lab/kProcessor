@@ -1,5 +1,11 @@
 #!/usr/bin/env python
 
+from distutils.command.build import build
+from distutils.spawn import find_executable
+import sys
+import os
+import subprocess
+
 KPROCESSOR = r"""
   _    _____                                        
  | |  |  __ \                                       
@@ -8,12 +14,6 @@ KPROCESSOR = r"""
  |   <| |   | | | (_) | (_|  __/\__ \__ \ (_) | |   
  |_|\_\_|   |_|  \___/ \___\___||___/___/\___/|_|                                                                                                        
 """
-
-from distutils.command.build import build
-from distutils.spawn import find_executable
-import sys
-import os
-import subprocess
 
 if sys.version_info[:2] < (3, 5) or sys.version_info[:2] > (3, 8):
     raise RuntimeError("Python version == (3.6 | 3.7 | 3.8) required.")
@@ -31,6 +31,9 @@ try:
         readme = f.read()
 except IOError:
     readme = ''
+
+if os.path.exists("build/libkProcessor.a"):
+    os.symlink("build", "KP_BUILD")
 
 SOURCES = [
     'swig_interfaces/kProcessor.i',
@@ -60,14 +63,16 @@ LINK_ARGS = [
     "-ldl",
 ]
 
+kp_build_dir = "KP_BUILD"
+
 LIBRARIES_DIRS = [
-    "build",
+    f"{kp_build_dir}",
     "ThirdParty/KMC/kmc_api",
-    "build/ThirdParty/MQF/src",
+    f"{kp_build_dir}/ThirdParty/MQF/src",
     "ThirdParty/ntCard",
-    "build/ThirdParty/sdsl-lite/lib",
-    "build/ThirdParty/kmerDecoder",
-    "build/ThirdParty/MQF/ThirdParty/stxxl/lib",
+    f"{kp_build_dir}/ThirdParty/sdsl-lite/lib",
+    f"{kp_build_dir}/ThirdParty/kmerDecoder",
+    f"{kp_build_dir}/ThirdParty/MQF/ThirdParty/stxxl/lib",
     "ThirdParty/Blight",
 
 ]
@@ -151,3 +156,7 @@ setup(name='kProcessor',
           'Source': 'https://github.com/dib-lab/kProcessor',
       },
       )
+
+
+if os.path.exists("build/libkProcessor.a"):
+    os.unlink("KP_BUILD")
