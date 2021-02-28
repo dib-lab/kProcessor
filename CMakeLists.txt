@@ -92,7 +92,7 @@ ExternalProject_Add(
         libKMCAPI_a
         SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/KMC/kmc_api
         CONFIGURE_COMMAND ls
-        BUILD_COMMAND  g++ -fPIC -Wall -Wextra kmer_api.cpp mmer.cpp kmc_file.cpp -shared -o libKMCAPI.so
+        BUILD_COMMAND gcc -c -Wall -Werror -fpic kmer_api.cpp mmer.cpp kmc_file.cpp &&  ar crv libKMCAPI.a kmc_file.o mmer.o kmer_api.o
         INSTALL_COMMAND ls
         BUILD_IN_SOURCE 1
 )
