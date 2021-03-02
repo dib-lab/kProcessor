@@ -14,36 +14,7 @@ env:
   CPM_SOURCE_CACHE: ${{ github.workspace }}/cpm_modules
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v2
-        with:
-          submodules: recursive
-
-      - uses: actions/cache@v2
-        with:
-          path: "**/cpm_modules"
-          key: ${{ github.workflow }}-cpm-modules-${{ hashFiles('**/CMakeLists.txt', '**/*.cmake') }}
-
-      - name: install boost
-        run: sudo apt-get install libboost-all-dev
-
-      - name: configure
-        run: cmake -Bbuild
-
-      - name: build
-        run: cmake --build build -j4
-
-      - uses: actions/upload-artifact@v2
-        with:
-          path: './build'
-
-
-
   build_wheels:
-    needs: build
     name: Build wheels on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
@@ -53,21 +24,25 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Fetch wheels from artifacts
-        id: fetch_artifacts
-        uses: actions/download-artifact@v2
-        with:
-          path: './'
-
-      - name: Install Visual C++ for Python 2.7
-        if: runner.os == 'Windows'
-        run: choco install vcpython27 -f -y
-
       - name: Build wheels
         uses: joerick/cibuildwheel@v1.10.0
-        # to supply options, put them in 'env', like:
-        # env:
-        #   CIBW_SOME_OPTION: value
+
+        env:
+          CIBW_PROJECT_REQUIRES_PYTHON: ">=3.6"
+          CIBW_SKIP: "*-manylinux_i686"
+          CIBW_BEFORE_BUILD: |
+            yum install bzip2 -y
+            pip install --upgrade pip
+            pip install cmake
+            yum install zlib-devel -y
+            yum install centos-release-scl-rh -y
+            yum install devtoolset-7-toolchain -y
+            yum groupinstall -y "development tools"
+            yum install boost-devel -y
+            yum install -y zlib-devel bzip2-devel openssl-devel ncurses-devel sqlite-devel readline-devel tk-devel gdbm-devel db4-devel libpcap-devel xz-devel expat-devel
+            cmake -Bbuild
+            cmake --build build -j4
+
 
       - uses: actions/upload-artifact@v2
         with:
