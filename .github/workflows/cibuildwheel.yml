@@ -31,9 +31,8 @@ jobs:
 
         env:
           CIBW_PROJECT_REQUIRES_PYTHON: ">=3.6"
-          CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014
-          CIBW_MANYLINUX_I686_IMAGE: manylinux2014
-          CIBW_SKIP: "*-manylinux_i686"
+          CIBW_MANYLINUX_X86_64_IMAGE: quay.io/pypa/manylinux2014_x86_64:latest
+          CIBW_MANYLINUX_I686_IMAGE: quay.io/pypa/manylinux2014_x86_64:latest
           CIBW_BEFORE_BUILD: |
             yum install bzip2 -y
             pip install --upgrade pip
