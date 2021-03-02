@@ -106,6 +106,7 @@ set(LIBRARY_NAME
 
 set(kProcessorLibSrc
         ${CMAKE_CURRENT_SOURCE_DIR}/src/algorithms.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/extend_algorithms.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/batchQuery.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/colorTable.cpp
 

@@ -89,6 +89,13 @@ typedef unsigned long int 	uint64_t;
 
 %include "swig_interfaces/algorithms/algorithms.i"
 
+// extend_algorithms
+
+%{
+#include "extend_algorithms.hpp" // including algorithms
+%}
+
+%include "swig_interfaces/algorithms/extend_algorithms.i"
 
 /******** HashUtils Interface ************/
 
