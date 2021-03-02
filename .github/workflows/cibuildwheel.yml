@@ -67,6 +67,8 @@ jobs:
 
       - name: Bintray
         run: |
+          ls
+          ls wheels
           for whl_file in wheels/*whl;
           do
             curl -T $whl_file -umr-eyes:${{ secrets.BINTRAY_API_KEY }} -H "X-Bintray-Override:1" -H "X-Bintray-Version:${{env.kProcessor_version}}" -H "X-Bintray-Package:kProcessor" https://api.bintray.com/content/mr-eyes/wheels/
