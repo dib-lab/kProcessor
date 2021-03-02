@@ -60,12 +60,12 @@ jobs:
         id: fetch_artifacts
         uses: actions/download-artifact@v2
         with:
-          path: 'wheels'
+          path: 'wheels/'
 
       - name: Upload wheels to Bintray
         uses: bpicode/github-action-upload-bintray@master
         with:
-          file: ./wheels/*
+          file: wheels/*.whl
           api_user: mr-eyes
           api_key: ${{ secrets.BINTRAY_API_KEY }} # An API key can be obtained from the user profile page.
           gpg_passphrase: ${{ secrets.BINTRAY_GPG_PASSPHRASE }} # Optional, for this to work Bintray requires a GPG public/private keypair configured for the repository owner (individual or organization).
