@@ -42,8 +42,8 @@ jobs:
             yum groupinstall -y "development tools"
             yum install boost-devel -y
             yum install -y zlib-devel bzip2-devel openssl-devel ncurses-devel sqlite-devel readline-devel tk-devel gdbm-devel db4-devel libpcap-devel xz-devel expat-devel
-            cmake -Bbuild
-            cmake --build build -j4
+            cmake -BKP_BUILD
+            cmake --build KP_BUILD -j4
 
 
       - uses: actions/upload-artifact@v2
