@@ -1,0 +1,103 @@
+name: cibuildwheel
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+env:
+  CTEST_OUTPUT_ON_FAILURE: 1
+  CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+  CPM_SOURCE_CACHE: ${{ github.workspace }}/cpm_modules
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: recursive
+
+      - uses: actions/cache@v2
+        with:
+          path: "**/cpm_modules"
+          key: ${{ github.workflow }}-cpm-modules-${{ hashFiles('**/CMakeLists.txt', '**/*.cmake') }}
+
+      - name: install boost
+        run: sudo apt-get install libboost-all-dev
+
+      - name: configure
+        run: cmake -Bbuild
+
+      - name: build
+        run: cmake --build build -j4
+
+      - uses: actions/upload-artifact@v2
+        with:
+          path: './build'
+
+
+
+  build_wheels:
+    name: Build wheels on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ ubuntu-20.04, windows-2019, macos-10.15 ]
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Fetch wheels from artifacts
+        id: fetch_artifacts
+        uses: actions/download-artifact@v2
+        with:
+          path: './'
+
+      - name: Install Visual C++ for Python 2.7
+        if: runner.os == 'Windows'
+        run: choco install vcpython27 -f -y
+
+      - name: Build wheels
+        uses: joerick/cibuildwheel@v1.10.0
+        # to supply options, put them in 'env', like:
+        # env:
+        #   CIBW_SOME_OPTION: value
+
+      - uses: actions/upload-artifact@v2
+        with:
+          path: ./wheelhouse/*.whl
+
+
+  upload_bintray:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+
+      - name: Fetch wheels from artifacts
+        id: fetch_artifacts
+        uses: actions/download-artifact@v2
+        with:
+          path: 'wheels'
+
+      - name: Upload wheels to Bintray
+        uses: bpicode/github-action-upload-bintray@master
+        with:
+          file: ./path/to/example-package_1.0_amd64.deb
+          api_user: example-user
+          api_key: ${{ secrets.BINTRAY_API_KEY }} # An API key can be obtained from the user profile page.
+          gpg_passphrase: ${{ secrets.BINTRAY_GPG_PASSPHRASE }} # Optional, for this to work Bintray requires a GPG public/private keypair configured for the repository owner (individual or organization).
+          repository_user: mr-eyes
+          repository: wheels
+          package: kProcessor
+          version: '1.0'
+#          upload_path: pool/main/m # Typical for debian repository layout
+          publish: 1
+#          calculate_metadata: true # Schedule metadata calculation after upload
+#          deb_distribution: stretch,buster,sid
+#          deb_component: main
+#          deb_architecture: amd64
