@@ -98,7 +98,7 @@ SWIG_OPTS = [
     '-outdir',
     '.',
     '-Isrc',
-    # '-doxygen', # Later
+    '-doxygen',
 ]
 
 

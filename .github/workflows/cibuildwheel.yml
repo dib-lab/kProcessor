@@ -8,18 +8,13 @@ on:
     branches:
       - master
 
-env:
-  CTEST_OUTPUT_ON_FAILURE: 1
-  CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-  CPM_SOURCE_CACHE: ${{ github.workspace }}/cpm_modules
-
 jobs:
   build_wheels:
     name: Build wheels on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ ubuntu-20.04 ] # , windows-2019, macos-10.15 ]
+        os: [ ubuntu-latest ] # , windows-2019, macos-10.15 ]
 
     steps:
       - uses: actions/checkout@v2
@@ -30,7 +25,9 @@ jobs:
         uses: joerick/cibuildwheel@v1.10.0
 
         env:
-          CIBW_PROJECT_REQUIRES_PYTHON: ">=3.6"
+          CIBW_BUILD_VERBOSITY: 3
+          CIBW_PROJECT_REQUIRES_PYTHON: "3.7" # ">=3.6"
+          CIBW_SKIP: pp* cp27-manylinux* *-manylinux_{aarch64,ppc64le,s390x}
           CIBW_MANYLINUX_X86_64_IMAGE: quay.io/pypa/manylinux2014_x86_64:latest
           CIBW_MANYLINUX_I686_IMAGE: quay.io/pypa/manylinux2014_x86_64:latest
           CIBW_BEFORE_BUILD: |
@@ -68,8 +65,8 @@ jobs:
       - name: Upload wheels to Bintray
         uses: bpicode/github-action-upload-bintray@master
         with:
-          file: ./path/to/example-package_1.0_amd64.deb
-          api_user: example-user
+          file: ./wheels/*
+          api_user: mr-eyes
           api_key: ${{ secrets.BINTRAY_API_KEY }} # An API key can be obtained from the user profile page.
           gpg_passphrase: ${{ secrets.BINTRAY_GPG_PASSPHRASE }} # Optional, for this to work Bintray requires a GPG public/private keypair configured for the repository owner (individual or organization).
           repository_user: mr-eyes
