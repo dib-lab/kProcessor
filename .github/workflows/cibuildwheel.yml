@@ -43,11 +43,12 @@ jobs:
 
 
   build_wheels:
+    needs: build
     name: Build wheels on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ ubuntu-20.04, windows-2019, macos-10.15 ]
+        os: [ ubuntu-20.04 ] # , windows-2019, macos-10.15 ]
 
     steps:
       - uses: actions/checkout@v2
@@ -74,6 +75,7 @@ jobs:
 
 
   upload_bintray:
+    needs: build_wheels
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
