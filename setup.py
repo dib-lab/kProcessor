@@ -15,8 +15,8 @@ KPROCESSOR = r"""
  |_|\_\_|   |_|  \___/ \___\___||___/___/\___/|_|                                                                                                        
 """
 
-if sys.version_info[:2] < (3, 5) or sys.version_info[:2] > (3, 8):
-    raise RuntimeError("Python version == (3.6 | 3.7 | 3.8) required.")
+if sys.version_info[:2] < (3, 6):
+    raise RuntimeError("Python version >=3.6")
 
 if os.path.exists('MANIFEST'):
     os.remove('MANIFEST')
