@@ -53,29 +53,22 @@ jobs:
   upload_bintray:
     needs: build_wheels
     runs-on: ubuntu-latest
+    env:
+      kProcessor_version: 1
+
     steps:
       - uses: actions/checkout@v1
-
       - name: Fetch wheels from artifacts
         id: fetch_artifacts
         uses: actions/download-artifact@v2
         with:
           path: 'wheels/'
 
-      - name: Upload wheels to Bintray
-        uses: bpicode/github-action-upload-bintray@master
-        with:
-          file: wheels/*.whl
-          api_user: mr-eyes
-          api_key: ${{ secrets.BINTRAY_API_KEY }} # An API key can be obtained from the user profile page.
-          gpg_passphrase: ${{ secrets.BINTRAY_GPG_PASSPHRASE }} # Optional, for this to work Bintray requires a GPG public/private keypair configured for the repository owner (individual or organization).
-          repository_user: mr-eyes
-          repository: wheels
-          package: kProcessor
-          version: '1.0'
-#          upload_path: pool/main/m # Typical for debian repository layout
-          publish: 1
-#          calculate_metadata: true # Schedule metadata calculation after upload
-#          deb_distribution: stretch,buster,sid
-#          deb_component: main
-#          deb_architecture: amd64
+
+      - name: Bintray
+        run: |
+          for whl_file in wheels/*whl;
+          do
+            curl -T $whl_file -umr-eyes:${{ secrets.BINTRAY_API_KEY }} -H "X-Bintray-Override:1" -H "X-Bintray-Version:${{env.kProcessor_version}}" -H "X-Bintray-Package:kProcessor" https://api.bintray.com/content/mr-eyes/wheels/
+          done
+          curl -X POST -umr-eyes:${{ secrets.BINTRAY_API_KEY }} https://api.bintray.com/content/mr-eyes/wheels/kProcessor/${{env.kProcessor_version}}/publish
