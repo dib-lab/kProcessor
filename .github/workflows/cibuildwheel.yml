@@ -31,6 +31,8 @@ jobs:
 
         env:
           CIBW_PROJECT_REQUIRES_PYTHON: ">=3.6"
+          CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014
+          CIBW_MANYLINUX_I686_IMAGE: manylinux2014
           CIBW_SKIP: "*-manylinux_i686"
           CIBW_BEFORE_BUILD: |
             yum install bzip2 -y
@@ -38,6 +40,7 @@ jobs:
             pip install cmake
             yum install zlib-devel -y
             yum install centos-release-scl-rh -y
+            yum install doxygen -y
             yum install devtoolset-7-toolchain -y
             yum groupinstall -y "development tools"
             yum install boost-devel -y
