@@ -70,7 +70,7 @@ include(ExternalProject)
 ExternalProject_Add(
   libntcard_a
   SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/ntCard
-        CONFIGURE_COMMAND  ${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/ntCard/autogen.sh && ${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/ntCard/configure --prefix=${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/ntCard/  CXXFLAGS=-fPIC
+  CONFIGURE_COMMAND  ${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/ntCard/autogen.sh && ${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/ntCard/configure --prefix=${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/ntCard/  CXXFLAGS=-fPIC
   BUILD_COMMAND make
   BUILD_IN_SOURCE 1
 )
@@ -83,6 +83,7 @@ ExternalProject_Add(
         CONFIGURE_COMMAND ls
         BUILD_COMMAND make
         INSTALL_COMMAND ls
+        BUILD_ALWAYS 1
         BUILD_IN_SOURCE 1
 )
 

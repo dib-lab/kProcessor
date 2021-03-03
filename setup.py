@@ -134,9 +134,9 @@ class CustomBuild(build):
     ]
 
 
-BLIGHT_HEADERS = glob("ThirdParty/Blight/*h")
+# BLIGHT_HEADERS = glob("ThirdParty/Blight/*h")
 
-print(BLIGHT_HEADERS)
+# print(BLIGHT_HEADERS)
 
 kProcessor_module = Extension('_kProcessor',
                               # runtime_library_dirs=RUNTIME_LIBRARIES_DIRS,
@@ -144,7 +144,7 @@ kProcessor_module = Extension('_kProcessor',
                               libraries=LIBRARIES,
                               sources=SOURCES,
                               include_dirs=INCLUDES,
-                              includes=BLIGHT_HEADERS,
+                              # includes=BLIGHT_HEADERS,
                               extra_link_args=LINK_ARGS,
                               extra_compile_args=["-O3", "-Ofast", "-std=c++17", "-fPIC"],
                               swig_opts=SWIG_OPTS,
