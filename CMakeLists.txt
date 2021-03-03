@@ -77,15 +77,16 @@ ExternalProject_Add(
 set(ntcardLib "${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/ntCard/libntcard.a")
 
 
-ExternalProject_Add(
-        libblight_a
-        SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/Blight
-        CONFIGURE_COMMAND ls
-        BUILD_COMMAND make
-        INSTALL_COMMAND ls
-        BUILD_IN_SOURCE 1
-)
-set(blightLib "${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/Blight/libblight.a")
+#ExternalProject_Add(
+#        libblight_a
+#        SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/Blight
+#        CONFIGURE_COMMAND ls
+#        BUILD_COMMAND make
+#        INSTALL_COMMAND ls
+#        BUILD_IN_SOURCE 1
+#)
+#
+#set(blightLib "${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/Blight/libblight.a")
 
 
 #ExternalProject_Add(
@@ -104,7 +105,7 @@ set(LIBRARY_NAME
     kProcessor
 )
 
-set(kProcessorLibSrc
+set(GLOB kProcessorLibSrc
         ${CMAKE_CURRENT_SOURCE_DIR}/src/algorithms.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/extend_algorithms.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/batchQuery.cpp
@@ -121,10 +122,11 @@ set(kProcessorLibSrc
 
         ${CMAKE_CURRENT_SOURCE_DIR}/src/Utils/utils.cpp
 
-        ${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/KMC/kmc_api/kmc_file.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/KMC/kmc_api/kmer_api.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/KMC/kmc_api/mmer.cpp
-    )
+        ${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/KMC/kmc_api/*cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/Blight/*cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/Blight/*c
+
+        )
 
 add_library(${LIBRARY_NAME} STATIC
     ${kProcessorLibSrc}
@@ -135,7 +137,7 @@ target_link_libraries(kProcessor MQF)
 # TO BE REMOVED TODO V2
 # target_link_libraries (kProcessor ${SEQAN_LIBRARIES})
 target_link_libraries (kProcessor ${ntcardLib}  -ldl)
-target_link_libraries (kProcessor ${blightLib})
+#target_link_libraries (kProcessor ${blightLib})
 #target_link_libraries (kProcessor ${kmcLib})
 #set_property(TARGET sdsl PROPERTY POSITION_INDEPENDENT_CODE ON)
 target_link_libraries(kProcessor sdsl)

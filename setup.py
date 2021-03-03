@@ -94,7 +94,7 @@ LIBRARIES_DIRS = [
     f"{kp_build_dir}/ThirdParty/sdsl-lite/lib",
     f"{kp_build_dir}/ThirdParty/kmerDecoder",
     f"{kp_build_dir}/ThirdParty/MQF/ThirdParty/stxxl/lib",
-    "ThirdParty/Blight",
+    # "ThirdParty/Blight",
 
 ]
 
@@ -107,7 +107,7 @@ RUNTIME_LIBRARIES_DIRS = [
 LIBRARIES = [
     # 'KMCAPI',
     'kProcessor',
-    'blight',
+    # 'blight',
     'sdsl',
     'MQF',
     'ntcard',
