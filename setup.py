@@ -88,7 +88,7 @@ kp_build_dir = "KP_BUILD"
 
 LIBRARIES_DIRS = [
     f"{kp_build_dir}",
-    "ThirdParty/KMC/kmc_api",
+    # "ThirdParty/KMC/kmc_api",
     f"{kp_build_dir}/ThirdParty/MQF/src",
     "ThirdParty/ntCard",
     f"{kp_build_dir}/ThirdParty/sdsl-lite/lib",
@@ -105,7 +105,7 @@ RUNTIME_LIBRARIES_DIRS = [
 ]
 
 LIBRARIES = [
-    'KMCAPI',
+    # 'KMCAPI',
     'kProcessor',
     'blight',
     'sdsl',
@@ -141,7 +141,7 @@ kProcessor_module = Extension('_kProcessor',
                               sources=SOURCES,
                               include_dirs=INCLUDES,
                               extra_link_args=LINK_ARGS,
-                              extra_compile_args=["-O3", "-Ofast", "-std=c++17"],
+                              extra_compile_args=["-O3", "-Ofast", "-std=c++17", "-fPIC"],
                               swig_opts=SWIG_OPTS,
                               )
 

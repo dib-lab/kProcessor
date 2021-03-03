@@ -12,7 +12,7 @@ recursive-include ThirdParty/json *
 recursive-include ThirdParty/sdsl-lite/include *
 recursive-include ThirdParty/kmerDecoder/include *
 recursive-include ThirdParty/kmerDecoder/lib/parallel-hashmap *
-recursive-include ThirdParty/KMC/kmc_api *
+recursive-include ThirdParty/KMC/kmc_api *h
 recursive-include ThirdParty/Blight *
 recursive-include ThirdParty/kmerDecoder/lib/kseq/include *
 

@@ -88,17 +88,17 @@ ExternalProject_Add(
 set(blightLib "${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/Blight/libblight.a")
 
 
-ExternalProject_Add(
-        libKMCAPI_a
-        SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/KMC/kmc_api
-        CONFIGURE_COMMAND ls
-        BUILD_COMMAND gcc -c -Wall -Werror -fpic kmer_api.cpp mmer.cpp kmc_file.cpp &&  ar crv libKMCAPI.a kmc_file.o mmer.o kmer_api.o
-        INSTALL_COMMAND ls
-        BUILD_IN_SOURCE 1
-)
+#ExternalProject_Add(
+#        libKMCAPI_a
+#        SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/KMC/kmc_api
+#        CONFIGURE_COMMAND ls
+#        BUILD_COMMAND gcc -c -Wall -Werror -fpic kmer_api.cpp mmer.cpp kmc_file.cpp &&  ar crv libKMCAPI.a kmc_file.o mmer.o kmer_api.o
+#        INSTALL_COMMAND ls
+#        BUILD_IN_SOURCE 1
+#)
 
-LINK_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/KMC/kmc_api/)
-set(kmcLib "${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/KMC/kmc_api/libKMCAPI.a")
+#LINK_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/KMC/kmc_api/)
+#set(kmcLib "${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/KMC/kmc_api/libKMCAPI.a")
 
 set(LIBRARY_NAME
     kProcessor
@@ -121,9 +121,9 @@ set(kProcessorLibSrc
 
         ${CMAKE_CURRENT_SOURCE_DIR}/src/Utils/utils.cpp
 
-#        ${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/KMC/kmc_file.cpp
-#        ${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/KMC/kmer_api.cpp
-#        ${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/KMC/mmer.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/KMC/kmc_api/kmc_file.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/KMC/kmc_api/kmer_api.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/KMC/kmc_api/mmer.cpp
     )
 
 add_library(${LIBRARY_NAME} STATIC
@@ -136,7 +136,7 @@ target_link_libraries(kProcessor MQF)
 # target_link_libraries (kProcessor ${SEQAN_LIBRARIES})
 target_link_libraries (kProcessor ${ntcardLib}  -ldl)
 target_link_libraries (kProcessor ${blightLib})
-target_link_libraries (kProcessor ${kmcLib})
+#target_link_libraries (kProcessor ${kmcLib})
 #set_property(TARGET sdsl PROPERTY POSITION_INDEPENDENT_CODE ON)
 target_link_libraries(kProcessor sdsl)
 target_link_libraries(kProcessor kmerDecoder)
