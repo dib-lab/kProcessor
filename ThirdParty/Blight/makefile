@@ -4,8 +4,8 @@ CC=gcc
 
 
 #Here snippet should be your program
-all: snippet bench_blight libblight.a
-lib: libblight.a
+# all: snippet bench_blight libblight.a
+all: libblight.a
 #bench_blight is only here for benchmark purpose and can be removed
 
 
@@ -14,7 +14,7 @@ lib: libblight.a
 CFLAGS_CUSTOM= -O9000  -std=c++11
 
 #Other compilation flags
-CFLAGS_LZ4+= -w -Wall -std=gnu99 -DUSE_THREADS  -fstrict-aliasing -Iext $(DEFS)
+CFLAGS_LZ4+= -w -Wall -std=gnu99 -DUSE_THREADS -fPIC  -fstrict-aliasing -Iext $(DEFS)
 CFLAGS_BLIGHT+= -DNDEBUG -Ofast -flto -march=native -fPIC -mtune=native -g -std=c++11 -pipe -lz -fopenmp -msse4 -Ilz4
 
 #Needed object files
