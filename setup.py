@@ -6,6 +6,7 @@ import sys
 import os
 import subprocess
 import errno
+from glob import glob
 
 KPROCESSOR = r"""
   _    _____                                        
@@ -36,7 +37,6 @@ except IOError:
 if os.path.islink("KP_BUILD"):
     os.unlink("KP_BUILD")
 
-
 if os.path.exists("build/libkProcessor.a"):
     os.symlink("build", "KP_BUILD")
 
@@ -46,7 +46,7 @@ def check_exist(dirs):
     not_found_files = list()
     for directory in dirs:
         if not (os.path.isdir(directory)):
-            print(f"[ERROR] | DIR: {directory} does not exist.", file = sys.stderr)
+            print(f"[ERROR] | DIR: {directory} does not exist.", file=sys.stderr)
             ALL_EXIST = False
             not_found_files.append(directory)
 
@@ -134,12 +134,17 @@ class CustomBuild(build):
     ]
 
 
+BLIGHT_HEADERS = glob("ThirdParty/Blight/*h")
+
+print(BLIGHT_HEADERS)
+
 kProcessor_module = Extension('_kProcessor',
                               # runtime_library_dirs=RUNTIME_LIBRARIES_DIRS,
                               library_dirs=LIBRARIES_DIRS,
                               libraries=LIBRARIES,
                               sources=SOURCES,
                               include_dirs=INCLUDES,
+                              includes=BLIGHT_HEADERS,
                               extra_link_args=LINK_ARGS,
                               extra_compile_args=["-O3", "-Ofast", "-std=c++17", "-fPIC"],
                               swig_opts=SWIG_OPTS,
