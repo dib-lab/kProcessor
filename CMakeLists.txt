@@ -88,14 +88,14 @@ ExternalProject_Add(
 set(blightLib "${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/Blight/libblight.a")
 
 
-#ExternalProject_Add(
-#        libKMCAPI_a
-#        SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/KMC/kmc_api
-#        CONFIGURE_COMMAND ls
-#        BUILD_COMMAND gcc -c -Wall -Werror -fpic kmer_api.cpp mmer.cpp kmc_file.cpp &&  ar crv libKMCAPI.a kmc_file.o mmer.o kmer_api.o
-#        INSTALL_COMMAND ls
-#        BUILD_IN_SOURCE 1
-#)
+ExternalProject_Add(
+        libKMCAPI_a
+        SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/KMC/kmc_api
+        CONFIGURE_COMMAND ls
+        BUILD_COMMAND gcc -c -Wall -Werror -fpic kmer_api.cpp mmer.cpp kmc_file.cpp &&  ar crv libKMCAPI.a kmc_file.o mmer.o kmer_api.o
+        INSTALL_COMMAND ls
+        BUILD_IN_SOURCE 1
+)
 
 LINK_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/KMC/kmc_api/)
 set(kmcLib "${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/KMC/kmc_api/libKMCAPI.a")
