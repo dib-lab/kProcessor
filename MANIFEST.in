@@ -22,7 +22,7 @@ recursive-include ThirdParty lib*a
 # Include static libs
 include KP_BUILD/libkProcessor.a
 include KP_BUILD/ThirdParty/kmerDecoder/libkmerDecoder.a
-include KP_BUILD/ThirdParty/MQF/liblMQF.a
+include KP_BUILD/ThirdParty/MQF/src/libMQF.a
 include KP_BUILD/ThirdParty/sdsl-lite/lib/libsdsl.a
 
 # include shared libs
