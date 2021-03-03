@@ -14,7 +14,7 @@ CFLAGS_CUSTOM= -O9000  -std=c++11
 
 #Other compilation flags
 CFLAGS_LZ4+= -w -Wall -std=gnu99 -DUSE_THREADS  -fstrict-aliasing -Iext $(DEFS)
-CFLAGS_BLIGHT+= -DNDEBUG -Ofast -flto -march=native -mtune=native -g -std=c++11 -pipe -lz -fopenmp -msse4 -Ilz4
+CFLAGS_BLIGHT+= -DNDEBUG -Ofast -flto -march=native -fPIC -mtune=native -g -std=c++11 -pipe -lz -fopenmp -msse4 -Ilz4
 
 #Needed object files
 LZ4O=lz4/lz4frame.o lz4/lz4.o lz4/xxhash.o lz4/lz4hc.o
