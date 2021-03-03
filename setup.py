@@ -5,6 +5,7 @@ from distutils.spawn import find_executable
 import sys
 import os
 import subprocess
+import errno
 
 KPROCESSOR = r"""
   _    _____                                        
@@ -32,8 +33,26 @@ try:
 except IOError:
     readme = ''
 
+if os.path.islink("KP_BUILD"):
+    os.unlink("KP_BUILD")
+
+
 if os.path.exists("build/libkProcessor.a"):
     os.symlink("build", "KP_BUILD")
+
+
+def check_exist(dirs):
+    ALL_EXIST = True
+    not_found_files = list()
+    for directory in dirs:
+        if not (os.path.isdir(directory)):
+            print(f"[ERROR] | DIR: {directory} does not exist.", file = sys.stderr)
+            ALL_EXIST = False
+            not_found_files.append(directory)
+
+    if not ALL_EXIST:
+        raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), ",".join(not_found_files))
+
 
 SOURCES = [
     'swig_interfaces/kProcessor.i',
@@ -54,6 +73,8 @@ INCLUDES = [
     'ThirdParty/mum-hash',
     'ThirdParty/KMC/kmc_api',
 ]
+
+check_exist(INCLUDES)
 
 LINK_ARGS = [
     "-fopenmp",
@@ -76,6 +97,8 @@ LIBRARIES_DIRS = [
     "ThirdParty/Blight",
 
 ]
+
+check_exist(LIBRARIES_DIRS)
 
 RUNTIME_LIBRARIES_DIRS = [
     'ThirdParty/KMC/kmc_api',
@@ -157,6 +180,5 @@ setup(name='kProcessor',
       },
       )
 
-
-if os.path.exists("build/libkProcessor.a"):
+if os.path.exists("build/libkProcessor.a") and os.path.islink("KP_BUILD"):
     os.unlink("KP_BUILD")
