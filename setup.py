@@ -41,6 +41,9 @@ if os.path.exists("build/libkProcessor.a"):
     os.symlink("build", "KP_BUILD")
 
 
+def get_version():
+    return "2.0"
+
 def check_exist(dirs):
     ALL_EXIST = True
     not_found_files = list()
@@ -165,7 +168,7 @@ commit_hash_short_name = subprocess.getoutput("git rev-parse --short HEAD").spli
 branch_name = subprocess.getoutput("git rev-parse --abbrev-ref HEAD").split()[0]
 
 setup(name='kProcessor',
-      version="1.0",
+      version=get_version(),
       author="Tamer Mansour, Mostafa Shokrof, Mohamed Abuelanin",
       author_email='drtamermansour@gmail.com, mostafa.shokrof@gmail.com, mabuelanin@gmail.com',
       description="""kProcessor Python interface""",
