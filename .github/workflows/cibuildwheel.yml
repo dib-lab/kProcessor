@@ -64,7 +64,7 @@ jobs:
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           user: __token__
-          password: ${{ secrets.PYPI_KPROCESSOR_API_KEY }}
+          password: ${{ secrets.TEST_PYPI_KPROCESSOR_API_KEY }} #PYPI_KPROCESSOR_API_KEY
           repository_url: https://test.pypi.org/legacy/
           packages_dir: ${{steps.fetch_artifacts.outputs.download-path}}/artifact/
           skip_existing: true
