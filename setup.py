@@ -42,7 +42,7 @@ if os.path.exists("build/libkProcessor.a"):
 
 
 def get_version():
-    return "2.0"
+    return "2.0.1"
 
 def check_exist(dirs):
     ALL_EXIST = True
