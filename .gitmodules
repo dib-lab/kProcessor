@@ -7,6 +7,12 @@
 [submodule "ThirdParty/cereal"]
 	path = ThirdParty/cereal
 	url = https://github.com/USCiLab/cereal.git
+[submodule "ThirdParty/mum-hash"]
+	path = ThirdParty/mum-hash
+	url = https://github.com/vnmakarov/mum-hash.git
+[submodule "ThirdParty/KMC"]
+	path = ThirdParty/KMC
+	url = https://github.com/refresh-bio/KMC.git
 [submodule "ThirdParty/MQF"]
 	path = ThirdParty/MQF
-	url = https://github.com/dib-lab/MQF
+	url = https://github.com/dib-lab/MQF.git

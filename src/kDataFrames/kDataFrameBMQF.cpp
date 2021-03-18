@@ -11,8 +11,8 @@
 kDataFrameBMQF::kDataFrameBMQF():kDataFrame(){
     bufferedmqf=new bufferedMQF();
     int randNum=rand();
-    string fileName="tmp"+to_string(randNum);
-    bufferedMQF_init(bufferedmqf, (1ULL<<16), (1ULL<<16), 2*kSize, 0,2, fileName.c_str());
+    fileName="tmp"+to_string(randNum);
+    bufferedMQF_init(bufferedmqf, (1ULL<<16), (1ULL<<16), 2*kSize, 0,2, (fileName+".bmqf").c_str());
     KD = (new Kmers(kSize));
     falsePositiveRate=0;
     hashbits=2*kSize;
@@ -24,12 +24,12 @@ kDataFrameBMQF::kDataFrameBMQF():kDataFrame(){
 
 }
 
-kDataFrameBMQF::kDataFrameBMQF(uint64_t ksize,uint8_t q,uint8_t fixedCounterSize,uint8_t value_bits,double falsePositiveRate):
+kDataFrameBMQF::kDataFrameBMQF(uint64_t ksize,uint8_t q,uint8_t fixedCounterSize,uint8_t value_bits,double falsePositiveRate,string path):
         kDataFrame(ksize){
     bufferedmqf=new bufferedMQF();
     int randNum=rand();
-    string fileName="tmp"+to_string(randNum);
-    bufferedMQF_init(bufferedmqf, (1ULL<<q-2), (1ULL<<q), 2*kSize, value_bits,fixedCounterSize, fileName.c_str());
+    fileName=path;
+    bufferedMQF_init(bufferedmqf, (1ULL<<q-2), (1ULL<<q), 2*kSize, value_bits,fixedCounterSize, (fileName+".bmqf").c_str());
     this->falsePositiveRate=falsePositiveRate;
     if(falsePositiveRate==0){
         KD = (new Kmers(kSize));
@@ -46,8 +46,12 @@ kDataFrameBMQF::kDataFrameBMQF(uint64_t ksize,uint8_t q,uint8_t fixedCounterSize
 
 }
 
+void kDataFrameBMQF::deleteMemoryBuffer()
+{
+    bufferedMQF_deleteMemoryBuffer(bufferedmqf);
+}
 
-kDataFrameBMQF::kDataFrameBMQF(uint64_t ksize):
+kDataFrameBMQF::kDataFrameBMQF(uint64_t ksize,string path):
         kDataFrame(ksize){
     this->falsePositiveRate=0.0;
     KD = (new Kmers(kSize));
@@ -55,12 +59,14 @@ kDataFrameBMQF::kDataFrameBMQF(uint64_t ksize):
     range=(1ULL<<hashbits);
     bufferedmqf=NULL;
     endIterator=NULL;
+    fileName=path;
     reserve(10000);
 }
 
 kDataFrameBMQF::kDataFrameBMQF(bufferedMQF* bufferedmqf,uint64_t ksize,double falsePositiveRate):
         kDataFrame(ksize)
 {
+    fileName=bufferedmqf->filename.substr(0,bufferedmqf->filename.size()-5);
     this->bufferedmqf=bufferedmqf;
     this->falsePositiveRate=falsePositiveRate;
     if(falsePositiveRate==0){
@@ -81,21 +87,22 @@ kDataFrameBMQF::kDataFrameBMQF(bufferedMQF* bufferedmqf,uint64_t ksize,double fa
 kDataFrame* kDataFrameBMQF::getTwin(){
     uint64_t q=log2(bufferedmqf->disk->metadata->nslots);
     return ((kDataFrame*)new kDataFrameBMQF(kSize,q,bufferedmqf->memoryBuffer->metadata->fixed_counter_size,
-                                            bufferedmqf->memoryBuffer->metadata->label_bits,falsePositiveRate));
+                                            bufferedmqf->memoryBuffer->metadata->label_bits,falsePositiveRate,getFilename()+".twin"));
 }
-
+string kDataFrameBMQF::getFilename(){
+    return fileName;
+}
 void kDataFrameBMQF::reserve(uint64_t n)
 {
     bufferedMQF* old=bufferedmqf;
     bufferedmqf=new bufferedMQF();
-    uint64_t q=(uint64_t)ceil(log2((double)n*1.4));
-    int randNum=rand();
-    string fileName="tmp"+to_string(randNum);
-    bufferedMQF_init(bufferedmqf, (1ULL<<(q-2)), (1ULL<<q), hashbits, 0,2, fileName.c_str());
+    uint64_t q=(uint64_t)ceil(log2((double)n*1.5));
+    q=max(q,(uint64_t)19);
+    bufferedMQF_init(bufferedmqf, (1ULL<<(q-2)), (1ULL<<q), hashbits, 0,2, (fileName+".bmqf").c_str());
     if(old!=NULL)
     {
         // ERROR FLAG: bufferedMQF_copy(bufferedmqf,old)
-        bufferedMQF_copy(bufferedmqf,old);
+        bufferedMQF_migrate(old,bufferedmqf);
         //bufferedMQF_destroy(old);
         delete old;
     }
@@ -118,8 +125,8 @@ void kDataFrameBMQF::reserve(vector<uint64_t> countHistogram) {
                                       &nSlots, &fixedCounterSize, &memory);
 //    std::cerr << "[DEBUG] Q: " << q << std::endl;
     int randNum=rand();
-    string fileName="tmp"+to_string(randNum);
-    bufferedMQF_init(bufferedmqf, nSlots/2, nSlots, hashbits, 0,2, fileName.c_str());
+    fileName="tmp"+to_string(randNum);
+    bufferedMQF_init(bufferedmqf, nSlots/2, nSlots, hashbits, 0,2, (fileName+".bmqf").c_str());
     if (old != NULL) {
         bufferedMQF_migrate(old, bufferedmqf);
        // qf_destroy(old);
@@ -140,8 +147,8 @@ kDataFrameBMQF::kDataFrameBMQF(uint64_t ksize,vector<uint64_t> countHistogram,ui
                                        &nSlots,&fixedCounterSize,&memory);
     // bufferedMQF_init requires different arguments
     int randNum=rand();
-    string fileName="tmp"+to_string(randNum);
-    bufferedMQF_init(bufferedmqf, nSlots, 2*ksize,value_bits,fixedCounterSize, 2,fileName.c_str());
+    fileName="tmp"+to_string(randNum);
+    bufferedMQF_init(bufferedmqf, nSlots, 2*ksize,value_bits,fixedCounterSize, 2,(fileName+".bmqf").c_str());
 }
 
 uint64_t kDataFrameBMQF::estimateMemory(uint64_t nslots,uint64_t slotSize, uint64_t fcounter, uint64_t value_bits)
@@ -250,6 +257,10 @@ bool kDataFrameBMQF::setCount(string kmer,uint64_t count){
             return setCount(kmer,count);
         }
     }
+    if(load_factor()>0.85){
+        // ERROR FLAG: reserve(bufferedmqf->memoryBuffer->metadata->nslots)
+        reserve(bufferedmqf->disk->metadata->nslots);
+    }
     return true;
 }
 
@@ -263,10 +274,14 @@ bool kDataFrameBMQF::insert(string kmer,uint64_t count){
         reserve(bufferedmqf->disk->metadata->nslots);
         return insert(kmer,count);
     }
+    if(load_factor()>0.85){
+        // ERROR FLAG: reserve(bufferedmqf->memoryBuffer->metadata->nslots)
+        reserve(bufferedmqf->disk->metadata->nslots);
+    }
     return true;
 }
 bool kDataFrameBMQF::insert(string kmer){
-    if(load_factor()>0.9){
+    if(load_factor()>0.85){
         // ERROR FLAG: reserve(bufferedmqf->memoryBuffer->metadata->nslots)
         reserve(bufferedmqf->disk->metadata->nslots);
     }
@@ -312,6 +327,10 @@ bool kDataFrameBMQF::setCount(uint64_t  hash,uint64_t count){
             return setCount(hash,count);
         }
     }
+    if(load_factor()>0.85){
+        // ERROR FLAG: reserve(bufferedmqf->memoryBuffer->metadata->nslots)
+        reserve(bufferedmqf->disk->metadata->nslots);
+    }
     return true;
 }
 
@@ -323,6 +342,10 @@ bool kDataFrameBMQF::insert(uint64_t hash,uint64_t count){
     {
         reserve(bufferedmqf->disk->metadata->nslots);
         return insert(hash,count);
+    }
+    if(load_factor()>0.85){
+        // ERROR FLAG: reserve(bufferedmqf->memoryBuffer->metadata->nslots)
+        reserve(bufferedmqf->disk->metadata->nslots);
     }
     return true;
 }
@@ -338,6 +361,10 @@ bool kDataFrameBMQF::insert(uint64_t hash){
     {
         reserve(bufferedmqf->disk->metadata->nslots);
         return insert(hash);
+    }
+    if(load_factor()>0.85){
+        // ERROR FLAG: reserve(bufferedmqf->memoryBuffer->metadata->nslots)
+        reserve(bufferedmqf->disk->metadata->nslots);
     }
     return true;
 }
@@ -369,25 +396,20 @@ float kDataFrameBMQF::max_load_factor(){
 }
 
 
-void kDataFrameBMQF::save(string filePath){
-    throw logic_error("Not Implemented yet!");
+void kDataFrameBMQF::serialize(string filePath){
+    if(filePath!=this->fileName)
+        throw logic_error("kDataframeBMQF has to be saved on the file path that it was created in");
+
     //filePath += ".mqf";
     ofstream file(filePath+".extra");
     file<<kSize<<endl;
     file << this->KD->hash_mode << endl;
-    // uint64_t legendSize=tagsLegend.size();
-    // file<<legendSize<<endl;
-    // auto it = tagsLegend.begin();
-    // while(it==tagsLegend.end())
-    // {
-    //   file<<it->first<<" "<<it->second<<endl;
-    //   it++;
-    // }
-    // file.close();
-    qf_serialize(bufferedmqf->memoryBuffer,(filePath+".mqf").c_str());
+    file.close();
+
+    bufferedMQF_serialize(bufferedmqf);
+
 }
 kDataFrame* kDataFrameBMQF::load(string filePath){
-    throw logic_error("Not Implemented yet!");
     ifstream file(filePath+".extra");
     uint64_t filekSize;
     int hashing_mode;
@@ -398,7 +420,7 @@ kDataFrame* kDataFrameBMQF::load(string filePath){
     flasePositiveRate = (hashing_mode == 1) ? 0 : 0.5;
 
     bufferedMQF* bufferedmqf=new bufferedMQF();
-    qf_deserialize(bufferedmqf->memoryBuffer,(filePath+".mqf").c_str());
+    bufferedMQF_deserialize(bufferedmqf,(filePath+".bmqf").c_str());
     return new kDataFrameBMQF(bufferedmqf,filekSize, flasePositiveRate);
 }
 
@@ -409,12 +431,7 @@ kDataFrameIterator kDataFrameBMQF::begin(){
             (kDataFrame*)this));
 }
 
-kDataFrameIterator kDataFrameBMQF::end(){
-//    kDataFrameBMQFIterator* it=new kDataFrameBMQFIterator(bufferedmqf,kSize,KD);
-//    it->endIterator();
-//    return (kDataFrameIterator(it,(kDataFrame*)this));
-    return *endIterator;
-}
+
 
 kDataFrameIterator kDataFrameBMQF::find(string kmer) {
     bufferedMQFIterator* mqfIt = new bufferedMQFIterator();
@@ -423,6 +440,14 @@ kDataFrameIterator kDataFrameBMQF::find(string kmer) {
     kDataFrameBMQFIterator* it=new kDataFrameBMQFIterator(bufferedmqf,mqfIt,kSize,KD);
     return (kDataFrameIterator(it, (kDataFrame *) this));
 }
+kDataFrameIterator kDataFrameBMQF::find(uint64_t kmer) {
+    bufferedMQFIterator* mqfIt = new bufferedMQFIterator();
+    uint64_t hash=kmer;
+    bufferedMQF_find(bufferedmqf,mqfIt,hash);
+    kDataFrameBMQFIterator* it=new kDataFrameBMQFIterator(bufferedmqf,mqfIt,kSize,KD);
+    return (kDataFrameIterator(it, (kDataFrame *) this));
+}
+
 
 /*
  *****************************
@@ -536,3 +561,7 @@ kDataFrameBMQFIterator::~kDataFrameBMQFIterator() {
     delete qfi;
 }
 
+
+bool kDataFrameBMQF::kmerExist(string kmerS) {
+    return getCount(kmerS) > 0 ;
+}

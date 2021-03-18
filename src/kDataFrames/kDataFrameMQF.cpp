@@ -114,14 +114,21 @@ kDataFrameIterator kDataFrameMQF::begin() {
             (kDataFrame *) this));
 }
 
-kDataFrameIterator kDataFrameMQF::end() {
-    kDataFrameMQFIterator *it = new kDataFrameMQFIterator(mqf, kSize, KD);
-    it->endIterator();
-    return (kDataFrameIterator(it, (kDataFrame *) this));
-}
+//kDataFrameIterator kDataFrameMQF::end() {
+//    kDataFrameMQFIterator *it = new kDataFrameMQFIterator(mqf, kSize, KD);
+//    it->endIterator();
+//    return (kDataFrameIterator(it, (kDataFrame *) this));
+//}
 kDataFrameIterator kDataFrameMQF::find(string kmer) {
     QFi* mqfIt = new QFi();
     uint64_t hash = KD->hash_kmer(kmer) % mqf->metadata->range;
+    qfi_find(mqf,mqfIt,hash);
+    kDataFrameMQFIterator *it = new kDataFrameMQFIterator(mqfIt, kSize, KD);
+    return (kDataFrameIterator(it, (kDataFrame *) this));
+}
+kDataFrameIterator kDataFrameMQF::find(uint64_t kmer) {
+    QFi* mqfIt = new QFi();
+    uint64_t hash = kmer;
     qfi_find(mqf,mqfIt,hash);
     kDataFrameMQFIterator *it = new kDataFrameMQFIterator(mqfIt, kSize, KD);
     return (kDataFrameIterator(it, (kDataFrame *) this));
@@ -142,6 +149,10 @@ kDataFrameMQF::kDataFrameMQF() : kDataFrame() {
     falsePositiveRate = 0;
     hashbits = 2 * kSize;
     range = (1ULL << hashbits);
+
+    kDataFrameMQFIterator *it = new kDataFrameMQFIterator(mqf, kSize, KD);
+    it->endIterator();
+    endIterator=new  kDataFrameIterator(it,(kDataFrame*)this);
 }
 
 kDataFrameMQF::kDataFrameMQF(uint64_t ksize, uint8_t q, int mode) : kDataFrame(ksize) {
@@ -179,6 +190,10 @@ kDataFrameMQF::kDataFrameMQF(uint64_t ksize, uint8_t q, int mode) : kDataFrame(k
     hashbits = 2 * kSize;
     range = (1ULL << hashbits);
 
+    kDataFrameMQFIterator *it = new kDataFrameMQFIterator(mqf, kSize, KD);
+    it->endIterator();
+    endIterator=new  kDataFrameIterator(it,(kDataFrame*)this);
+
 }
 
 kDataFrameMQF::kDataFrameMQF(uint64_t ksize, uint8_t q, uint8_t fixedCounterSize, uint8_t tagSize,
@@ -196,6 +211,9 @@ kDataFrameMQF::kDataFrameMQF(uint64_t ksize, uint8_t q, uint8_t fixedCounterSize
     hashbits = 2 * kSize;
     range = (1ULL << hashbits);
 
+    kDataFrameMQFIterator *it = new kDataFrameMQFIterator(mqf, kSize, KD);
+    it->endIterator();
+    endIterator=new  kDataFrameIterator(it,(kDataFrame*)this);
 }
 
 kDataFrameMQF::kDataFrameMQF(uint64_t ksize, int mode) :
@@ -206,7 +224,9 @@ kDataFrameMQF::kDataFrameMQF(uint64_t ksize, int mode) :
     hashbits = 2 * kSize;
     range = (1ULL << hashbits);
     mqf = NULL;
+    endIterator=NULL;
     reserve(1000000);
+
 }
 
 kDataFrameMQF::kDataFrameMQF(uint64_t ksize) :
@@ -217,6 +237,7 @@ kDataFrameMQF::kDataFrameMQF(uint64_t ksize) :
     hashbits = 2 * kSize;
     range = (1ULL << hashbits);
     mqf = NULL;
+    endIterator=NULL;
     reserve(1000000);
 }
 
@@ -233,6 +254,9 @@ kDataFrameMQF::kDataFrameMQF(QF *mqf, uint64_t ksize, double falsePositiveRate) 
     hashbits = this->mqf->metadata->key_bits;
     hashbits = 2 * kSize;
     range = (1ULL << hashbits);
+    kDataFrameMQFIterator *it = new kDataFrameMQFIterator(mqf, kSize, KD);
+    it->endIterator();
+    endIterator=new  kDataFrameIterator(it,(kDataFrame*)this);
 }
 
 kDataFrame *kDataFrameMQF::getTwin() {
@@ -252,6 +276,11 @@ void kDataFrameMQF::reserve(uint64_t n) {
         qf_destroy(old);
         delete old;
     }
+    if(endIterator!=NULL)
+        delete endIterator;
+    kDataFrameMQFIterator *it = new kDataFrameMQFIterator(mqf, kSize, KD);
+    it->endIterator();
+    endIterator=new  kDataFrameIterator(it,(kDataFrame*)this);
 }
 void kDataFrameMQF::reserve(vector<uint64_t> countHistogram) {
     QF *old = mqf;
@@ -492,15 +521,16 @@ float kDataFrameMQF::load_factor() {
 }
 
 float kDataFrameMQF::max_load_factor() {
-    return 0.9;
+    return 0.8;
 }
 
 
-void kDataFrameMQF::save(string filePath) {
+void kDataFrameMQF::serialize(string filePath) {
     //filePath += ".mqf";
     ofstream file(filePath + ".extra");
     file << kSize << endl;
     file << this->KD->hash_mode << endl;
+    file.close();
     // uint64_t legendSize=tagsLegend.size();
     // file<<legendSize<<endl;
     // auto it = tagsLegend.begin();
@@ -520,7 +550,7 @@ kDataFrame *kDataFrameMQF::load(string filePath) {
     file >> hashing_mode;
     double flasePositiveRate;
     flasePositiveRate = (hashing_mode == 1) ? 0 : 0.5;
-
+    file.close();
     QF *mqf = new QF();
     qf_deserialize(mqf, (filePath + ".mqf").c_str());
     return new kDataFrameMQF(mqf, filekSize, flasePositiveRate);
@@ -534,4 +564,8 @@ uint64_t kDataFrameMQF::getkmerOrder(string kmer)
 {
   uint64_t hash = KD->hash_kmer(kmer) % mqf->metadata->range;
   return itemOrder(mqf,hash);
+}
+
+bool kDataFrameMQF::kmerExist(string kmerS) {
+    return getCount(kmerS) > 0 ;
 }

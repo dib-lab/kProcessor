@@ -3,6 +3,7 @@
 %{
 /* Everything in this block will be copied in the wrapper file. We include the C header file necessary to compile the interface */
 #include "kDataFrame.hpp" // including kDataframe
+#include "defaultColumn.hpp"
 %}
 
 using namespace std; // Extremly important
@@ -11,6 +12,11 @@ using namespace std; // Extremly important
 %include std_map.i
 
 %template(IntVector) vector<int>; /*vector to tuple conversion*/
+
+//typedef long int 		    int64_t;
+typedef unsigned long int 	uint64_t;
+//%apply long int  { int64_t };
+%apply unsigned long int { uint64_t };
 
 %include "stdint.i"            /*This mainly used for converting python int to C++ uint64_t*/
 %include std_string.i       /*And this for converting python str to C++ std::string*/
@@ -37,11 +43,13 @@ using namespace std; // Extremly important
 /******** kDataFrame Interface ************/
 %include "swig_interfaces/kDataFrame/kDataFrameIterator.i"
 %include "swig_interfaces/kDataFrame/kmerRow.i"
+%include "swig_interfaces/kDataFrame/defaultColumn.i"
 %include "swig_interfaces/kDataFrame/kDataFrame.i"
 %include "swig_interfaces/kDataFrame/kDataFrameMQF.i"
 %include "swig_interfaces/kDataFrame/kDataFrameMAP.i"
 %include "swig_interfaces/kDataFrame/kDataFramePHMAP.i"
-%include "swig_interfaces/kDataFrame/kDataFrameBMQF.i"
+%include "swig_interfaces/kDataFrame/kDataFrameBlight.i"
+ %include "swig_interfaces/kDataFrame/kDataFrameBMQF.i"
 /******** kDataFrame Interface ************/
 
 
@@ -63,7 +71,7 @@ using namespace std; // Extremly important
 %}
 %include "swig_interfaces/colorTable.i"
 
-/******** colorTable Interface ************/
+/******** batchQuery Interface ************/
 
 %{
 #include "batchQuery.hpp"
@@ -71,7 +79,7 @@ using namespace std; // Extremly important
 
 %include "swig_interfaces/batchQuery.i"
 
-/******** colorTable Interface ************/
+/******** batchQuery  Interface ************/
 
 %{
 #include "algorithms.hpp" // including algorithms
@@ -81,19 +89,26 @@ using namespace std; // Extremly important
 
 %include "swig_interfaces/algorithms/algorithms.i"
 
+// extend_algorithms
+
+%{
+#include "extend_algorithms.hpp" // including algorithms
+%}
+
+%include "swig_interfaces/algorithms/extend_algorithms.i"
 
 /******** HashUtils Interface ************/
 
-%{
-#include "HashUtils/hashutil.hpp" // including HashUtils
-%}
+//%{
+//#include "HashUtils/hashutil.hpp" // including HashUtils
+//%}
 
-%include "swig_interfaces/HashUtils/hashutil.i"
+//%include "swig_interfaces/HashUtils/hashutil.i"
 
-%{
-#include "Utils/kmer.h" // including Kmer
-%}
+//%{
+//#include "Utils/kmer.h" // including Kmer
+//%}
 
-%include "swig_interfaces/Utils/kmer.i"
+//%include "swig_interfaces/Utils/kmer.i"
 
 /******** END kDataFrame ************/

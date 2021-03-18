@@ -1,0 +1,21 @@
+rule all:
+    input: "sample.kmc_pre" , "control.kmc_pre"
+
+rule kmc:
+    input:
+         "{sample}.fastq"
+    output:
+         pre="{sample}.kmc_pre",
+         suf="{sample}.kmc_suf",
+         time="{sample}.kmc.time"
+    params:
+        outPrefix="{sample}"
+    conda:
+         "env.yaml"
+    threads: 4
+    log: "{sample}kmc.log"
+    shell:
+       	"""
+			/usr/bin/time -v -o {output.time} kmc -ci1 -t{threads} -k31 -m2  {input} {params.outPrefix}  ./ &> {log}
+        """
+

@@ -36,3 +36,8 @@ Kprocessor
 docs/doxygen/*
 
 cmake-build-debug/tests/gtest/src/gtest2/googletest/scripts/test/Makefile
+.idea/*
+cmake-build-debug/*
+.vscode/launch.json
+.vscode/settings.json
+.vscode/tasks.json
