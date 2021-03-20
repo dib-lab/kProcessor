@@ -16,6 +16,7 @@ jobs:
     strategy:
       matrix:
         os: [ ubuntu-18.04 ] # , windows-2019, macos-10.15 ]
+        py_version: [3.6, 3.7, 3.8, 3.9]
 
     steps:
       - uses: actions/checkout@v2
@@ -27,7 +28,7 @@ jobs:
 
         env:
           CIBW_BUILD_VERBOSITY: 3
-          CIBW_PROJECT_REQUIRES_PYTHON: ">=3.6"
+          CIBW_PROJECT_REQUIRES_PYTHON: "==${{ matrix.py_version }}"
           CIBW_SKIP: pp* cp27-manylinux* *-manylinux_{aarch64,ppc64le,s390x}
           CIBW_ARCHS_LINUX: x86_64
           CIBW_MANYLINUX_X86_64_IMAGE: quay.io/pypa/manylinux2014_x86_64:latest
@@ -50,9 +51,9 @@ jobs:
         with:
           path: ./wheelhouse/*.whl
 
-  upload_pypi:
+  upload_pypi_test:
     needs: build_wheels
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-18.04
     steps:
       - uses: actions/checkout@v2
 
@@ -73,9 +74,7 @@ jobs:
 
   upload_bintray:
     needs: build_wheels
-    runs-on: ubuntu-latest
-    env:
-      kProcessor_version: 1.1
+    runs-on: ubuntu-18.04
 
     steps:
       - uses: actions/checkout@v1
@@ -84,12 +83,37 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           path: 'wheels/'
+      - run: |
+          kp_version = $(python version.py)
+          echo "::set-output name=kProcessor_version::$kp_version"
 
 
       - name: Bintray
         run: |
           for whl_file in ${{steps.fetch_artifacts.outputs.download-path}}/artifact/*whl;
           do
-            curl -T $whl_file -umr-eyes:${{ secrets.BINTRAY_API_KEY }} -H "X-Bintray-Override:1" -H "X-Bintray-Version:${{env.kProcessor_version}}" -H "X-Bintray-Package:kProcessor" https://api.bintray.com/content/mr-eyes/wheels/
+            curl -T $whl_file -umr-eyes:${{ secrets.BINTRAY_API_KEY }} -H "X-Bintray-Override:1" -H "X-Bintray-Version:${{ steps.fetch_artifacts.outputs.kProcessor_version }}" -H "X-Bintray-Package:kProcessor" https://api.bintray.com/content/mr-eyes/wheels/
           done
-          curl -X POST -umr-eyes:${{ secrets.BINTRAY_API_KEY }} https://api.bintray.com/content/mr-eyes/wheels/kProcessor/${{env.kProcessor_version}}/publish
+          curl -X POST -umr-eyes:${{ secrets.BINTRAY_API_KEY }} https://api.bintray.com/content/mr-eyes/wheels/kProcessor/${{ steps.fetch_artifacts.outputs.kProcessor_version }}/publish
+
+
+  upload_pypi_release:
+    needs: build_wheels
+    runs-on: ubuntu-18.04
+    if: github.event_name == 'pull_request' && github.event.pull_request.merged == 'true'
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/download-artifact@v2
+        id: fetch_artifacts
+        with:
+          path: 'wheels/'
+
+      - name: Publish package to TestPyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          user: __token__
+          password: ${{ secrets.PYPI_KPROCESSOR_API_KEY }}
+          packages_dir: ${{steps.fetch_artifacts.outputs.download-path}}/artifact/
+          skip_existing: true
+          verbose: true
