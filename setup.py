@@ -6,7 +6,7 @@ import sys
 import os
 import subprocess
 import errno
-import version
+from version import __version__
 
 KPROCESSOR = r"""
   _    _____                                        
@@ -155,7 +155,7 @@ commit_hash_short_name = subprocess.getoutput("git rev-parse --short HEAD").spli
 branch_name = subprocess.getoutput("git rev-parse --abbrev-ref HEAD").split()[0]
 
 setup(name='kProcessor',
-      version=version.get_version(),
+      version=__version__,
       author="Mostafa Shokrof, Mohamed Abuelanin, Tamer Mansour",
       author_email='mostafa.shokrof@gmail.com, mabuelanin@gmail.com, drtamermansour@gmail.com',
       description="""kProcessor Python interface""",

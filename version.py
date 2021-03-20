@@ -11,7 +11,7 @@ def get_version():
         if branch_name == "master":
             version_tag = kProcessor_version
         else:
-            version_tag = commit_hash_short_name
+            version_tag = f"{kProcessor_version}.dev0+{commit_hash_short_name}"
 
     else:
         version_tag = kProcessor_version
@@ -20,4 +20,5 @@ def get_version():
     return version_tag
 
 
-print(get_version())
+__version__ = get_version()
+print(__version__)
