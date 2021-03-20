@@ -27,7 +27,7 @@ jobs:
 
         env:
           CIBW_BUILD_VERBOSITY: 3
-          CIBW_PROJECT_REQUIRES_PYTHON: "==${{ matrix.py_version }}"
+          CIBW_PROJECT_REQUIRES_PYTHON: "~=${{ matrix.py_version }}"
           CIBW_SKIP: pp* cp27-manylinux* *-manylinux_{aarch64,ppc64le,s390x}
           CIBW_ARCHS_LINUX: x86_64
           CIBW_MANYLINUX_X86_64_IMAGE: quay.io/pypa/manylinux2014_x86_64:latest
