@@ -9,7 +9,11 @@
 # Minimum cmake version
 cmake_minimum_required (VERSION 2.6.4)
 # Name of project and that it is C/C++.
-project (kProcessor C CXX)
+project (
+        kProcessor
+        LANGUAGES CXX C
+        VERSION 1.1
+)
 
 # IMPORTANT == -FPIC #SDSL-LINKING
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
