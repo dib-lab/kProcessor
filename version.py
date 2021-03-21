@@ -1,24 +1,52 @@
 import os
-import subprocess
+import urllib.request, json
+import semantic_version
+import sys
+
+STAGE = str()
+if len(sys.argv) > 1:
+    if sys.argv[1] != "release":
+        STAGE = "dev"
+else:
+    STAGE = "release"
+
+
+def is_github_action():
+    if "GITHUB_WORKFLOW" in dict(os.environ.items()):
+        return True
+    else:
+        return False
+    
+
+def get_pypa_dev_latest():
+    with urllib.request.urlopen("https://test.pypi.org/pypi/kProcessor/json") as url:
+        data = json.loads(url.read().decode())
+        return data["info"]["version"]
+
+
+MAJOR = 1
+MINOR = 1
+PATCH = 0
+
+dev_version = semantic_version.Version(major=MAJOR, minor=MINOR, patch=PATCH, prerelease=('dev', '0'))
+release_version = semantic_version.Version(major=MAJOR, minor=MINOR, patch=PATCH)
 
 def get_version():
-    kProcessor_version = 1.1
     version_tag = str()
 
-    if os.path.isdir(os.path.join(os.path.dirname(os.path.realpath(__file__)), ".git")):
-        commit_hash_short_name = subprocess.getoutput("git rev-parse --short HEAD").split()[0]
-        branch_name = subprocess.getoutput("git rev-parse --abbrev-ref HEAD").split()[0]
-        if branch_name == "master":
-            version_tag = kProcessor_version
-        else:
-            version_tag = f"{kProcessor_version}.dev0"
-
+    if STAGE == "release":
+        version_tag = release_version
     else:
-        version_tag = kProcessor_version
-        pass
+        # If it's running on github action, increment the dev patch number
+        if is_github_action():
+            test_pypa_latest_version = get_pypa_dev_latest()
+            version_tag = semantic_version.Version(test_pypa_latest_version).next_patch()
+        
+        # Running on local machine
+        else:
+            version_tag = dev_version
 
     return version_tag
 
 
 __version__ = get_version()
-print(__version__)

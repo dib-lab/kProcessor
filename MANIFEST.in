@@ -23,5 +23,8 @@ include KP_BUILD/ThirdParty/kmerDecoder/libkmerDecoder.a
 include KP_BUILD/ThirdParty/MQF/src/libMQF.a
 include KP_BUILD/ThirdParty/sdsl-lite/lib/libsdsl.a
 
+#include version
+include version.py
+
 # Include SWIG interfaces
 recursive-include swig_interfaces *

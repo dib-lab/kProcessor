@@ -80,6 +80,11 @@ jobs:
         with:
           python-version: 3.9
 
+      - name: Extract branch name
+        shell: bash
+        run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
+        id: extract_branch
+
       - uses: actions/checkout@v1
       - name: Fetch wheels from artifacts
         id: fetch_artifacts
@@ -87,7 +92,7 @@ jobs:
         with:
           path: 'wheels/'
       - run: |
-          kp_version = $(python version.py)
+          kp_version=$(python version.py ${{ steps.extract_branch.outputs.branch }})
           echo "::set-output name=kProcessor_version::$kp_version"
 
 
