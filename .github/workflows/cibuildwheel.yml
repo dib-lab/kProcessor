@@ -92,6 +92,7 @@ jobs:
         with:
           path: 'wheels/'
       - run: |
+          pip install semantic_version
           kp_version=$(python version.py ${{ steps.extract_branch.outputs.branch }})
           echo "::set-output name=kProcessor_version::$kp_version"
 
