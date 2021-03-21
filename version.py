@@ -49,4 +49,4 @@ def get_version():
     return version_tag
 
 
-__version__ = "1.1.0-dev0"  # get_version() #tmp to calibrate
+__version__ = get_version()
