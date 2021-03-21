@@ -49,4 +49,4 @@ def get_version():
     return version_tag
 
 
-__version__ = "1.1.1-dev0" #get_version()
+__version__ = get_version()
