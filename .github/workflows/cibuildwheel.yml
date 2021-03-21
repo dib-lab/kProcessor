@@ -34,7 +34,7 @@ jobs:
           CIBW_BEFORE_BUILD: |
             yum install bzip2 -y
             pip install --upgrade pip
-            pip install cmake
+            pip install -r requirements.txt
             yum install zlib-devel -y
             yum install centos-release-scl-rh -y
             yum install doxygen -y
