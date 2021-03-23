@@ -6,7 +6,7 @@ import sys
 import os
 import subprocess
 import errno
-from version import __version__
+from version import get_version
 
 KPROCESSOR = r"""
   _    _____                                        
@@ -151,11 +151,9 @@ classifiers = [
     "Programming Language :: Python :: 3.9",
 ]
 
-commit_hash_short_name = subprocess.getoutput("git rev-parse --short HEAD").split()[0]
-branch_name = subprocess.getoutput("git rev-parse --abbrev-ref HEAD").split()[0]
 
 setup(name='kProcessor',
-      version=__version__,
+      version=get_version(release=True) if "release" in sys.argv else get_version(),
       author="Mostafa Shokrof, Mohamed Abuelanin, Tamer Mansour",
       author_email='mostafa.shokrof@gmail.com, mabuelanin@gmail.com, drtamermansour@gmail.com',
       description="""kProcessor Python interface""",

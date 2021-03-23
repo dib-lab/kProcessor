@@ -34,7 +34,7 @@ jobs:
           CIBW_BEFORE_BUILD: |
             yum install bzip2 -y
             pip install --upgrade pip
-            pip install -r requirements.txt
+            pip install cmake
             yum install zlib-devel -y
             yum install centos-release-scl-rh -y
             yum install doxygen -y
@@ -81,9 +81,15 @@ jobs:
           python-version: 3.9
 
       - name: Extract branch name
+        if: github.event_name != 'pull_request'
         shell: bash
-        run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
+        run: echo "::set-env name=BRANCH_NAME::$(echo ${GITHUB_REF#refs/heads/})"
         id: extract_branch
+
+      # extract branch name on pull request
+      - name: Print branch name
+        if: github.event_name == 'pull_request'
+        run: echo "::set-env name=BRANCH_NAME::$(echo ${GITHUB_HEAD_REF})"
 
       - uses: actions/checkout@v1
       - name: Fetch wheels from artifacts
@@ -92,8 +98,7 @@ jobs:
         with:
           path: 'wheels/'
       - run: |
-          pip install semantic_version
-          kp_version=$(python version.py ${{ steps.extract_branch.outputs.branch }})
+          kp_version=$(python version.py $BRANCH_NAME)
           echo "::set-output name=kProcessor_version::$kp_version"
 
 

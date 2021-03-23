@@ -1,14 +1,7 @@
 import os
 import urllib.request, json
-import semantic_version
 import sys
 
-STAGE = str()
-if len(sys.argv) > 1:
-    if sys.argv[1] != "release":
-        STAGE = "dev"
-else:
-    STAGE = "release"
 
 
 def is_github_action():
@@ -24,23 +17,28 @@ def get_pypa_dev_latest():
         return data["info"]["version"]
 
 
+def increment_patch_version(patch_version):
+    patch_version = patch_version.split('.')
+    return f"{patch_version[0]}.{patch_version[1]}.{int(patch_version[2]) + 1}.{patch_version[3]}"
+
+
 MAJOR = 1
 MINOR = 1
 PATCH = 0
 
-dev_version = semantic_version.Version(major=MAJOR, minor=MINOR, patch=PATCH, prerelease=('dev', '0'))
-release_version = semantic_version.Version(major=MAJOR, minor=MINOR, patch=PATCH)
+dev_version = f"{MAJOR}.{MINOR}.{PATCH}.dev0"
+release_version = f"{MAJOR}.{MINOR}.{PATCH}"
 
-def get_version():
+def get_version(release=False):
     version_tag = str()
 
-    if STAGE == "release":
+    if release:
         version_tag = release_version
     else:
         # If it's running on github action, increment the dev patch number
         if is_github_action():
             test_pypa_latest_version = get_pypa_dev_latest()
-            version_tag = semantic_version.Version(test_pypa_latest_version).next_patch()
+            version_tag = increment_patch_version(test_pypa_latest_version)
         
         # Running on local machine
         else:
@@ -49,4 +47,8 @@ def get_version():
     return version_tag
 
 
-__version__ = get_version()
+if len(sys.argv):
+    if "master" in "".join(sys.argv):
+        print(get_version(release=True))
+    else:
+        print(get_version())
