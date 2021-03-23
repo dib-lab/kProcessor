@@ -1,2 +1,0 @@
-cmake
-semantic_version
