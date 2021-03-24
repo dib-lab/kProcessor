@@ -7,6 +7,7 @@ import os
 import subprocess
 import errno
 from version import get_version
+import numpy
 
 KPROCESSOR = r"""
   _    _____                                        
@@ -40,6 +41,12 @@ if os.path.islink("KP_BUILD"):
 if os.path.exists("build/libkProcessor.a"):
     os.symlink("build", "KP_BUILD")
 
+
+# Obtain the numpy include directory.  This logic works across numpy versions.
+try:
+    numpy_include = numpy.get_include()
+except AttributeError:
+    numpy_include = numpy.get_numpy_include()
 
 def check_exist(dirs):
     ALL_EXIST = True
@@ -132,7 +139,7 @@ kProcessor_module = Extension('_kProcessor',
                               library_dirs=LIBRARIES_DIRS,
                               libraries=LIBRARIES,
                               sources=SOURCES,
-                              include_dirs=INCLUDES,
+                              include_dirs=INCLUDES + [numpy_include],
                               # includes=BLIGHT_HEADERS,
                               extra_link_args=LINK_ARGS,
                               extra_compile_args=["-O3", "-Ofast", "-std=c++17", "-fPIC"],

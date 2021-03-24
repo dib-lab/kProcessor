@@ -23,5 +23,7 @@ class kDataFramePHMAP : public kDataFrame {
         void save(string filePath);
         static kDataFrame* load(string filePath);
 
+        void to_numpy(unsigned long long *rangevec, int rows, int cols);
+
         ~kDataFramePHMAP() { this->MAP.clear(); }
 };
