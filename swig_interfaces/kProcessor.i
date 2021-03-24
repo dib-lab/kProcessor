@@ -40,7 +40,7 @@ using namespace std; // Extremly important
 %include "swig_interfaces/kDataFrame/kDataFrame.i"
 %include "swig_interfaces/kDataFrame/kDataFrameMQF.i"
 %include "swig_interfaces/kDataFrame/kDataFrameMAP.i"
-%include "swig_interfaces/kDataFrame/kDataFramePHMAP.i"
+// %include "swig_interfaces/kDataFrame/kDataFramePHMAP.i"
 %include "swig_interfaces/kDataFrame/kDataFrameBMQF.i"
 /******** kDataFrame Interface ************/
 
@@ -97,3 +97,6 @@ using namespace std; // Extremly important
 %include "swig_interfaces/Utils/kmer.i"
 
 /******** END kDataFrame ************/
+
+%include "numpy_bindings.i"
+%include "swig_interfaces/kDataFrame/kDataFramePHMAP.i"
