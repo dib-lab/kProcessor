@@ -151,9 +151,17 @@ classifiers = [
     "Programming Language :: Python :: 3.9",
 ]
 
+KP_VERSION = str()
+
+if "release" in sys.argv:
+    KP_VERSION = get_version(release=True)
+else:
+    KP_VERSION = get_version()
+
+print(f"Building kProcessor={KP_VERSION}")
 
 setup(name='kProcessor',
-      version=get_version(release=True) if "release" in sys.argv else get_version(),
+      version=KP_VERSION,
       author="Mostafa Shokrof, Mohamed Abuelanin, Tamer Mansour",
       author_email='mostafa.shokrof@gmail.com, mabuelanin@gmail.com, drtamermansour@gmail.com',
       description="""kProcessor Python interface""",
