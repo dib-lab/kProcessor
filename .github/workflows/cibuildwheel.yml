@@ -74,6 +74,7 @@ jobs:
   upload_bintray:
     needs: build_wheels
     runs-on: ubuntu-18.04
+    if: "contains(github.event.head_commit.message, 'bintray')"
 
     steps:
       - uses: actions/setup-python@v2
