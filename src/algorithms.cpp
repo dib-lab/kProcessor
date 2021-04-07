@@ -766,13 +766,21 @@ namespace kProcessor {
                     if (itc->second != currentTag) {
                             colorsCount[currentTag]--;
                             if (colorsCount[currentTag] == 0 && currentTag != 0) {
+
                                 auto _invGroupNameIT = inv_groupNameMap.find(currentTag);
-                                if (_invGroupNameIT == inv_groupNameMap.end() || groupCounter[_invGroupNameIT->second] == 0){
+                                if (_invGroupNameIT == inv_groupNameMap.end()){
                                     freeColors.push(currentTag);
+                                    vector<uint32_t> colors = legend->find(currentTag)->second;
+                                    string colorsString = to_string(colors[0]);
+                                    for (unsigned int k = 1; k < colors.size(); k++) {
+                                        colorsString += ";" + to_string(colors[k]);
+                                    }
+                                    tagsMap.erase(colorsString);
                                     legend->erase(currentTag);
                                     if (convertMap.find(currentTag) != convertMap.end())
                                         convertMap.erase(currentTag);
-                                }
+                                }                                
+                            
                             }
                             colorsCount[itc->second]++;
                         }
@@ -786,8 +794,8 @@ namespace kProcessor {
                     }
                 }
                 readID += 1;
+                groupCounter[groupName]--;
                 if (colorsCount[readTag] == 0) {
-                    groupCounter[groupName]--;
                     if (groupCounter[groupName] == 0) {
                         freeColors.push(readTag);
                         legend->erase(readTag);
@@ -958,14 +966,22 @@ namespace kProcessor {
                         if (itc->second != currentTag) {
 
                             colorsCount[currentTag]--;
-                            if (colorsCount[currentTag] == 0 && currentTag != 0) {
+                             if (colorsCount[currentTag] == 0 && currentTag != 0) {
+
                                 auto _invGroupNameIT = inv_groupNameMap.find(currentTag);
-                                if (_invGroupNameIT == inv_groupNameMap.end() || groupCounter[_invGroupNameIT->second] == 0){
+                                if (_invGroupNameIT == inv_groupNameMap.end()){
                                     freeColors.push(currentTag);
+                                    vector<uint32_t> colors = legend->find(currentTag)->second;
+                                    string colorsString = to_string(colors[0]);
+                                    for (unsigned int k = 1; k < colors.size(); k++) {
+                                        colorsString += ";" + to_string(colors[k]);
+                                    }
+                                    tagsMap.erase(colorsString);
                                     legend->erase(currentTag);
                                     if (convertMap.find(currentTag) != convertMap.end())
                                         convertMap.erase(currentTag);
-                                }
+                                }                                
+                            
                             }
                             colorsCount[itc->second]++;
                         }
@@ -979,8 +995,8 @@ namespace kProcessor {
                         }
                     }
                     readID += 1;
+                    groupCounter[groupName]--;
                     if (colorsCount[readTag] == 0) {
-                        groupCounter[groupName]--;
                         if (groupCounter[groupName] == 0) {
                             freeColors.push(readTag);
                             legend->erase(readTag);
