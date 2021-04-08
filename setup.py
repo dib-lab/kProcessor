@@ -151,20 +151,9 @@ classifiers = [
     "Programming Language :: Python :: 3.9",
 ]
 
-KP_VERSION = str()
-
-if "BRANCH_NAME" in os.environ:
-    if "master" in os.environ["BRANCH_NAME"]:
-        KP_VERSION = get_version(release=True)
-    else:
-        KP_VERSION = get_version()
-else:
-    KP_VERSION = get_version()
-
-print(f"Building kProcessor={KP_VERSION}")
 
 setup(name='kProcessor',
-      version=KP_VERSION,
+      version=get_version(),
       author="Mostafa Shokrof, Mohamed Abuelanin, Tamer Mansour",
       author_email='mostafa.shokrof@gmail.com, mabuelanin@gmail.com, drtamermansour@gmail.com',
       description="""kProcessor Python interface""",
