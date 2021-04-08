@@ -21,11 +21,15 @@ jobs:
       - uses: actions/checkout@v2
         with:
           submodules: recursive
+      
+      - name: write_branchName_to_file
+        run: echo ${GITHUB_REF##*/} > branch_name.tmp
 
       - name: Build wheels
         uses: joerick/cibuildwheel@v1.10.0
 
         env:
+          CIBW_ENVIRONMENT: "BRANCH_NAME=$(cat branch_name.tmp)"
           CIBW_BUILD_VERBOSITY: 3
           CIBW_PROJECT_REQUIRES_PYTHON: "~=${{ matrix.py_version }}"
           CIBW_SKIP: pp* cp27-manylinux* *-manylinux_{aarch64,ppc64le,s390x}
