@@ -39,7 +39,7 @@ jobs:
         run: cmake -Bbuild
 
       - name: build
-        run: cmake --build build -j1
+        run: cmake --build build -j4
 
       # - name: test
       #   run: |
