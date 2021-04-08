@@ -153,14 +153,14 @@ classifiers = [
 
 KP_VERSION = str()
 
-if "GITHUB_REF" in os.environ:
-    if "master" in os.environ["GITHUB_REF"]:
+if "BRANCH_NAME" in os.environ:
+    if "master" in os.environ["BRANCH_NAME"]:
         KP_VERSION = get_version(release=True)
     else:
         KP_VERSION = get_version()
 else:
     KP_VERSION = get_version()
-    
+
 print(f"Building kProcessor={KP_VERSION}")
 
 setup(name='kProcessor',
