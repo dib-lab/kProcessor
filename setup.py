@@ -1,5 +1,13 @@
 #!/usr/bin/env python
 
+from distutils.command.build import build
+from distutils.spawn import find_executable
+import sys
+import os
+import subprocess
+import errno
+from version import get_version
+
 KPROCESSOR = r"""
   _    _____                                        
  | |  |  __ \                                       
@@ -9,14 +17,8 @@ KPROCESSOR = r"""
  |_|\_\_|   |_|  \___/ \___\___||___/___/\___/|_|                                                                                                        
 """
 
-from distutils.command.build import build
-from distutils.spawn import find_executable
-import sys
-import os
-import subprocess
-
-if sys.version_info[:2] < (3, 5) or sys.version_info[:2] > (3, 8):
-    raise RuntimeError("Python version == (3.6 | 3.7 | 3.8) required.")
+if sys.version_info[:2] < (3, 6):
+    raise RuntimeError("Python version >=3.6")
 
 if os.path.exists('MANIFEST'):
     os.remove('MANIFEST')
@@ -24,13 +26,33 @@ if os.path.exists('MANIFEST'):
 try:
     from setuptools import setup, Extension
 except ImportError:
-    from distutils.core import setup, Extension    
+    from distutils.core import setup, Extension
 
 try:
     with open('README.md') as f:
         readme = f.read()
 except IOError:
     readme = ''
+
+if os.path.islink("KP_BUILD"):
+    os.unlink("KP_BUILD")
+
+if os.path.exists("build/libkProcessor.a"):
+    os.symlink("build", "KP_BUILD")
+
+
+def check_exist(dirs):
+    ALL_EXIST = True
+    not_found_files = list()
+    for directory in dirs:
+        if not (os.path.isdir(directory)):
+            print(f"[ERROR] | DIR: {directory} does not exist.", file=sys.stderr)
+            ALL_EXIST = False
+            not_found_files.append(directory)
+
+    if not ALL_EXIST:
+        raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), ",".join(not_found_files))
+
 
 SOURCES = [
     'swig_interfaces/kProcessor.i',
@@ -45,9 +67,11 @@ INCLUDES = [
     'ThirdParty/MQF/include',
     'ThirdParty/sdsl-lite/include',
     'ThirdParty/kmerDecoder/include',
-    'ThirdParty/kmerDecoder/lib/seqan/include',
     'ThirdParty/kmerDecoder/lib/parallel-hashmap',
+    'ThirdParty/kmerDecoder/lib/kseq/include',
 ]
+
+check_exist(INCLUDES)
 
 LINK_ARGS = [
     "-fopenmp",
@@ -57,14 +81,22 @@ LINK_ARGS = [
     "-ldl",
 ]
 
-LIBRARIES_DIRS = [
-    "build",
-    "build/ThirdParty/MQF/src",
-    "ThirdParty/ntCard",
-    "build/ThirdParty/sdsl-lite/lib",
-    "build/ThirdParty/kmerDecoder",
-    "build/ThirdParty/MQF/ThirdParty/stxxl/lib",
+kp_build_dir = "KP_BUILD"
 
+LIBRARIES_DIRS = [
+    f"{kp_build_dir}",
+    f"{kp_build_dir}/ThirdParty/MQF/src",
+    "ThirdParty/ntCard",
+    f"{kp_build_dir}/ThirdParty/sdsl-lite/lib",
+    f"{kp_build_dir}/ThirdParty/kmerDecoder",
+    f"{kp_build_dir}/ThirdParty/MQF/ThirdParty/stxxl/lib",
+
+]
+
+check_exist(LIBRARIES_DIRS)
+
+RUNTIME_LIBRARIES_DIRS = [
+    #Placeholder
 ]
 
 LIBRARIES = [
@@ -81,8 +113,10 @@ SWIG_OPTS = [
     '-py3',
     '-outdir',
     '.',
-    '-Isrc'
+    '-Isrc',
+    '-doxygen',
 ]
+
 
 class CustomBuild(build):
     sub_commands = [
@@ -94,12 +128,14 @@ class CustomBuild(build):
 
 
 kProcessor_module = Extension('_kProcessor',
+                              # runtime_library_dirs=RUNTIME_LIBRARIES_DIRS,
                               library_dirs=LIBRARIES_DIRS,
                               libraries=LIBRARIES,
                               sources=SOURCES,
                               include_dirs=INCLUDES,
+                              # includes=BLIGHT_HEADERS,
                               extra_link_args=LINK_ARGS,
-                              extra_compile_args = ["-O3", "-Ofast", "-std=c++17"],
+                              extra_compile_args=["-O3", "-Ofast", "-std=c++17", "-fPIC"],
                               swig_opts=SWIG_OPTS,
                               )
 
@@ -112,15 +148,14 @@ classifiers = [
     "Programming Language :: Python :: 3.6",
     "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
 ]
 
-commit_hash_short_name = subprocess.getoutput("git rev-parse --short HEAD").split()[0]
-branch_name = subprocess.getoutput("git rev-parse --abbrev-ref HEAD").split()[0]
 
 setup(name='kProcessor',
-      version="1.0",
-      author="Tamer Mansour, Mostafa Shokrof, Mohamed Abuelanin",
-      author_email='drtamermansour@gmail.com, mostafa.shokrof@gmail.com, mabuelanin@gmail.com',
+      version=get_version(),
+      author="Mostafa Shokrof, Mohamed Abuelanin, Tamer Mansour",
+      author_email='mostafa.shokrof@gmail.com, mabuelanin@gmail.com, drtamermansour@gmail.com',
       description="""kProcessor Python interface""",
       ext_modules=[kProcessor_module],
       py_modules=['kProcessor'],
@@ -137,3 +172,6 @@ setup(name='kProcessor',
           'Source': 'https://github.com/dib-lab/kProcessor',
       },
       )
+
+if os.path.exists("build/libkProcessor.a") and os.path.islink("KP_BUILD"):
+    os.unlink("KP_BUILD")

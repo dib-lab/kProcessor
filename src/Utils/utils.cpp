@@ -1,7 +1,6 @@
 #include <stdint.h>
 #include <string>
 #include <gqf.h>
-#include <seqan/seq_io.h>
 #include <sys/stat.h>
 #include <vector>
 
@@ -42,6 +41,8 @@ bool has_suffix(const std::string& s, const std::string& suffix)
 		}
 // Taken from
 // https://stackoverflow.com/questions/19189014/how-do-i-find-files-with-a-specific-extension-in-a-directory-that-is-provided-by
+// TO BE REMOVED TODO V2
+/*
 std::vector<std::string> GetFilesExt(const char *dir, const char *ext)
   {
     DIR *folder = opendir(dir);
@@ -64,6 +65,7 @@ std::vector<std::string> GetFilesExt(const char *dir, const char *ext)
 
 		return ret;
 }
+*/
 
 std::string last_part(std::string str, char c) {
 	uint64_t found = str.find_last_of(c);

@@ -939,7 +939,8 @@ TEST_P(kDataFrameBufferedTest,parsingTest)
 //kDataFrame* kframe=get<0>(GetParam())->getTwin();
 //string fileName=get<1>(GetParam());
     int kSize=kframe->getkSize();
-    kProcessor::countKmersFromFile(kframe, {{"mode", 1}}, fileName, 1000); // Mode 1 : kmers, KmerSize will be cloned from the kFrame
+    int chunkSize = 1000;
+    kProcessor::countKmersFromFile(kframe, {{"mode", 1}}, fileName, chunkSize); // Mode 1 : kmers, KmerSize will be cloned from the kFrame
 
     ifstream kmerCountGoldFile("test.noN.dsk.txt");
     string kmer;
@@ -950,30 +951,17 @@ TEST_P(kDataFrameBufferedTest,parsingTest)
         ASSERT_EQ(count,kDatframe_count);
     }
     kmerCountGoldFile.close();
+    
+    unordered_map<string, uint64_t> insertedKmers;
+    kmerDecoder *KMERS = new Kmers(fileName, chunkSize, kSize);
+    while (!KMERS->end()) {
+        KMERS->next_chunk();
+        for (const auto &seq : *KMERS->getKmers()) 
+          for (const auto &kmer : seq.second) 
+            insertedKmers[kmer.str]++;
+      }
 
-    seqan::SeqFileIn seqIn(fileName.c_str());
-    seqan::StringSet<seqan::CharString> ids;
-    seqan::StringSet<seqan::CharString> reads;
-    int chunkSize=1000;
-    unordered_map<string,uint64_t > insertedKmers;
-    while(!atEnd(seqIn)){
-        clear(reads);
-        clear(ids);
 
-        seqan::readRecords(ids, reads, seqIn,chunkSize);
-        for(int j=0;j<length(reads);j++)
-        {
-            string seq=string((char*)seqan::toCString(reads[j]));
-            for(int i=0;i<seq.size()-kSize+1;i++)
-            {
-                string kmer=seq.substr(i,kSize);
-                kmer=kmer::canonicalKmer(kmer);
-                insertedKmers[kmer]++;
-            }
-        }
-
-    }
-    seqan::close(seqIn);
     kDataFrameIterator it=kframe->begin();
     while(it!=kframe->end())
     {

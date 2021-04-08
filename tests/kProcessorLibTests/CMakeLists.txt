@@ -4,7 +4,7 @@ ADD_EXECUTABLE(testKprocessorLib ${SRCS})
 
 
 
-TARGET_LINK_LIBRARIES(testKprocessorLib kProcessor MQF ${SEQAN_LIBRARIES} libgtest ${ntcardLib} )
+TARGET_LINK_LIBRARIES(testKprocessorLib kProcessor MQF libgtest ${ntcardLib} )
 
 add_test(NAME testKprocessorLib
          COMMAND testKprocessorLib)
