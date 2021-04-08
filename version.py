@@ -27,24 +27,24 @@ MINOR = 1
 PATCH = 0
 
 
-def get_version(release=False):
+def get_version():
     
     dev_version = f"{MAJOR}.{MINOR}.{PATCH}.dev0"
     release_version = f"{MAJOR}.{MINOR}.{PATCH}"
     
     version_tag = str()
 
-    if release:
-        version_tag = release_version
-    else:
-        # If it's running on github action, increment the dev patch number
-        if is_github_action():
-            print("Gihub action detected")
+    if "BRANCH_NAME" in os.environ:
+        print(f"BRANCH_NAME: {os.environ['BRANCH_NAME']}")
+
+        if "master" in os.environ["BRANCH_NAME"]:
+            version_tag = release_version
+        else:
             test_pypa_latest_version = get_pypa_dev_latest()
             version_tag = increment_patch_version(test_pypa_latest_version)
-        
+
         # Running on local machine
-        else:
-            version_tag = dev_version
+    else:
+        version_tag = dev_version
 
     return version_tag
