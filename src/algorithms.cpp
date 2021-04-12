@@ -560,6 +560,13 @@ namespace kProcessor {
                 std::cerr << func_name << "kmerDecoder Kmers parameters {k_size} validation failed" << std::endl;
                 exit(1);
             }
+        } else if(mode == "protein"){
+            if (parse_params.find("k_size") != parse_params.end()) {
+                return new aaKmers(filename, chunkSize, parse_params["k_size"]);
+            } else {
+                std::cerr << func_name << "kmerDecoder Kmers parameters {k_size} validation failed" << std::endl;
+                exit(1);
+            }
         } else if (mode == "skipmers") {
             bool check_k = (parse_params.find("k_size") != parse_params.end());
             bool check_m = (parse_params.find("m") != parse_params.end());
@@ -831,6 +838,7 @@ namespace kProcessor {
         if (check_mode){
             if (parse_params["mode"] == 2) mode = "skipmers";
             else if (parse_params["mode"] == 3) mode = "minimizers";
+            else if (parse_params["mode"] == 4) mode = "protein";
         }
 
         parse_params["k_size"] = frame->ksize();
