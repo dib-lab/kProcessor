@@ -30,6 +30,7 @@ jobs:
         uses: joerick/cibuildwheel@v1.10.0
 
         env:
+          CIBW_ENVIRONMENT: "BRANCH_NAME=$(cat branch_name.tmp)"
           CIBW_BUILD_VERBOSITY: 3
           CIBW_BUILD: cp36-manylinux_x86_64 cp37-manylinux_x86_64 cp38-manylinux_x86_64 cp39-manylinux_x86_64
           CIBW_SKIP: pp* cp27-manylinux* *-manylinux_{aarch64,ppc64le,s390x}
