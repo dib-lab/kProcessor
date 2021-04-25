@@ -1,21 +1,42 @@
+pepfile: "project_config.yaml"
+configfile: "config.yaml"
+
+kSize=config["kSize"]
+transpictome=list(filter(lambda x:x.library=="transpictome",pep.samples))[0].file[0]
+
+
+def getFastq(name):
+    return list(filter(lambda x:x.library==name,pep.samples))[0].file
+
+
 rule all:
-    input: "sample.kmc_pre" , "control.kmc_pre"
+    input: "kDifferntialExpression.medianChange.lst"
+
+rule kDifferntialExpression:
+    input:
+         sample="sample.kmc_pre",
+         control="control.kmc_pre",
+         transpictome=transpictome
+    output: "kDifferntialExpression.medianChange.lst"
+    log: "kDifferntialExpression.log"
+    shell:
+       	"""
+	./kDifferntialExpression -g {input.transpictome} -s sample -c control -o {output} &> {log}
+        """
 
 rule kmc:
-    input:
-         "{sample}.fastq"
+    input: lambda wildcards: getFastq(f"{wildcards.experiment}"),         
     output:
-         pre="{sample}.kmc_pre",
-         suf="{sample}.kmc_suf",
-         time="{sample}.kmc.time"
-    params:
-        outPrefix="{sample}"
+         pre="{experiment}.kmc_pre",
+         suf="{experiment}.kmc_suf",
+         time="{experiment}.kmc.time"
     conda:
          "env.yaml"
     threads: 4
-    log: "{sample}kmc.log"
+    log: "{experiment}.kmc.log"
     shell:
        	"""
-			/usr/bin/time -v -o {output.time} kmc -ci1 -t{threads} -k31 -m2  {input} {params.outPrefix}  ./ &> {log}
+	echo {input} |tr -s ' ' $'\n' > {wildcards.experiment}.lst
+	/usr/bin/time -v -o {output.time} kmc -ci1 -t{threads} -k{kSize} -m2  @{wildcards.experiment}.lst {wildcards.experiment}  ./ &> {log}
         """
 
