@@ -112,15 +112,18 @@ void differntialExpression(string genes_file,
         }
         return (any)(dict);
     });
+    ofstream output(outputFilename.c_str());
+
     for(auto k:*foldChangeByGene)
     {
         if(!k.second.empty()) {
             sort(k.second.begin(), k.second.end());
             double median = k.second[k.second.size() / 2];
-            cout<<k.first<<"\t"<<median<<endl;
+            output<<k.first<<"\t"<<median<<endl;
         }
 
     }
+    output.close();
 
 
     return;
