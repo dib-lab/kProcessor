@@ -241,7 +241,7 @@ bool kDataFrameBMQF::isEnough(vector<uint64_t> histogram,uint64_t noSlots,uint64
     return true;
 }
 
-bool kDataFrameBMQF::setCount(string kmer,uint64_t count){
+bool kDataFrameBMQF::setCount(const string &kmer, uint64_t count){
     uint64_t hash=KD->hash_kmer(kmer)% bufferedmqf->memoryBuffer->metadata->range;
     uint64_t currentCount=bufferedMQF_count_key(bufferedmqf,hash);
     if(currentCount>count){
@@ -264,7 +264,7 @@ bool kDataFrameBMQF::setCount(string kmer,uint64_t count){
     return true;
 }
 
-bool kDataFrameBMQF::insert(string kmer,uint64_t count){
+bool kDataFrameBMQF::insert(const string &kmer, uint64_t count){
     uint64_t hash=KD->hash_kmer(kmer) % bufferedmqf->memoryBuffer->metadata->range;
     try{
         bufferedMQF_insert(bufferedmqf,hash,count,true,true);
@@ -280,7 +280,7 @@ bool kDataFrameBMQF::insert(string kmer,uint64_t count){
     }
     return true;
 }
-bool kDataFrameBMQF::insert(string kmer){
+bool kDataFrameBMQF::insert(const string &kmer){
     if(load_factor()>0.85){
         // ERROR FLAG: reserve(bufferedmqf->memoryBuffer->metadata->nslots)
         reserve(bufferedmqf->disk->metadata->nslots);
@@ -297,14 +297,14 @@ bool kDataFrameBMQF::insert(string kmer){
     return true;
 }
 
-uint64_t kDataFrameBMQF::getCount(string kmer){
+uint64_t kDataFrameBMQF::getCount(const string &kmer){
     uint64_t hash=KD->hash_kmer(kmer) % bufferedmqf->memoryBuffer->metadata->range;
     return bufferedMQF_count_key(bufferedmqf,hash);
 }
 
 
 
-bool kDataFrameBMQF::erase(string kmer){
+bool kDataFrameBMQF::erase(const string &kmer){
     uint64_t hash=KD->hash_kmer(kmer)% bufferedmqf->memoryBuffer->metadata->range;
     uint64_t currentCount=bufferedMQF_count_key(bufferedmqf,hash);
 
@@ -433,7 +433,7 @@ kDataFrameIterator kDataFrameBMQF::begin(){
 
 
 
-kDataFrameIterator kDataFrameBMQF::find(string kmer) {
+kDataFrameIterator kDataFrameBMQF::find(const string &kmer) {
     bufferedMQFIterator* mqfIt = new bufferedMQFIterator();
     uint64_t hash=KD->hash_kmer(kmer)% bufferedmqf->memoryBuffer->metadata->range;
     bufferedMQF_find(bufferedmqf,mqfIt,hash);
@@ -501,6 +501,7 @@ _kDataFrameIterator *kDataFrameBMQFIterator::clone() {
 
 
 kDataFrameBMQFIterator &kDataFrameBMQFIterator::operator++(int) {
+    order++;
     qfi->next();
     return *this;
 }

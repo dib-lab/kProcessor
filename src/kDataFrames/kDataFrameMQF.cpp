@@ -43,6 +43,7 @@ _kDataFrameIterator *kDataFrameMQFIterator::clone() {
 }
 
 kDataFrameMQFIterator &kDataFrameMQFIterator::operator++(int) {
+    order++;
     qfi_next(qfi);
     return *this;
 }
@@ -119,7 +120,7 @@ kDataFrameIterator kDataFrameMQF::begin() {
 //    it->endIterator();
 //    return (kDataFrameIterator(it, (kDataFrame *) this));
 //}
-kDataFrameIterator kDataFrameMQF::find(string kmer) {
+kDataFrameIterator kDataFrameMQF::find(const string &kmer) {
     QFi* mqfIt = new QFi();
     uint64_t hash = KD->hash_kmer(kmer) % mqf->metadata->range;
     qfi_find(mqf,mqfIt,hash);
@@ -269,7 +270,7 @@ void kDataFrameMQF::reserve(uint64_t n) {
     QF *old = mqf;
     mqf = new QF();
     uint64_t q = (uint64_t) ceil(log2((double) n * 1.4));
-//    std::cerr << "[DEBUG] Q: " << q << std::endl;
+    std::cerr << "[DEBUG] Q: " << q << std::endl;
     qf_init(mqf, (1ULL << q), hashbits, 0, 2, 32, true, "", 2038074761);
     if (old != NULL) {
         qf_migrate(old, mqf);
@@ -392,7 +393,7 @@ kDataFrameMQF::isEnough(vector<uint64_t> histogram, uint64_t noSlots, uint64_t f
 }
 
 
-bool kDataFrameMQF::setCount(string kmer, uint64_t count) {
+bool kDataFrameMQF::setCount(const string &kmer, uint64_t count) {
     uint64_t hash = KD->hash_kmer(kmer) % mqf->metadata->range;
     uint64_t currentCount = qf_count_key(mqf, hash);
     if (currentCount > count) {
@@ -426,7 +427,7 @@ bool kDataFrameMQF::setCount(uint64_t kmer, uint64_t count) {
     return true;
 }
 
-bool kDataFrameMQF::insert(string kmer, uint64_t count) {
+bool kDataFrameMQF::insert(const string &kmer, uint64_t count) {
     uint64_t hash = KD->hash_kmer(kmer) % mqf->metadata->range;
     try {
         qf_insert(mqf, hash, count, true, true);
@@ -438,7 +439,7 @@ bool kDataFrameMQF::insert(string kmer, uint64_t count) {
     return true;
 }
 
-bool kDataFrameMQF::insert(string kmer) {
+bool kDataFrameMQF::insert(const string &kmer) {
     if (load_factor() > 0.9)
         reserve(mqf->metadata->nslots);
     uint64_t hash = KD->hash_kmer(kmer) % mqf->metadata->range;
@@ -481,7 +482,7 @@ bool kDataFrameMQF::insert(uint64_t kmer) {
     return true;
 }
 
-uint64_t kDataFrameMQF::getCount(string kmer) {
+uint64_t kDataFrameMQF::getCount(const string &kmer) {
     uint64_t hash = KD->hash_kmer(kmer) % mqf->metadata->range;
     return qf_count_key(mqf, hash);
 }
@@ -492,7 +493,7 @@ uint64_t kDataFrameMQF::getCount(uint64_t kmer) {
 }
 
 
-bool kDataFrameMQF::erase(string kmer) {
+bool kDataFrameMQF::erase(const string &kmer) {
     uint64_t hash = KD->hash_kmer(kmer) % mqf->metadata->range;
     uint64_t currentCount = qf_count_key(mqf, hash);
 
@@ -560,7 +561,7 @@ void kDataFrameMQF::preprocessKmerOrder()
 {
   qf_ComputeItemsOrder(mqf);
 }
-uint64_t kDataFrameMQF::getkmerOrder(string kmer)
+uint64_t kDataFrameMQF::getkmerOrder(const string &kmer)
 {
   uint64_t hash = KD->hash_kmer(kmer) % mqf->metadata->range;
   return itemOrder(mqf,hash);

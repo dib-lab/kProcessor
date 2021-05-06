@@ -1,25 +1,15 @@
 #include "algorithms.hpp"
 #include <iostream>
 #include "Utils/kmer.h"
-#include <fstream>
 #include <limits>
-#include <omp.h>
-#include <stdexcept>
-#include <math.h>
-#include <deque>
-#include <gqf.h>
 #include <string>
 #include <queue>
 #include <functional>
-#include <limits>
-#include <parallel_hashmap/phmap.h>
 #include "ntcard.hpp"
 #include <cstdio>
-#include <stack>
 #include <chrono>
 #include "defaultColumn.hpp"
 #include "kmc_file.h"
-
 
 using namespace std::chrono;
 
@@ -337,7 +327,7 @@ namespace kProcessor {
             }
             if(exists) {
                 uint32_t i=kmersToKeep[0];
-                return kmerRow(input[i].kmer,input[i].hashedKmer,input[i].count,nullptr);
+                return kmerRow(input[i].kmer,input[i].hashedKmer,input[i].count,input[i].order,nullptr);
             }
             return kmerRow();
         });
@@ -545,7 +535,7 @@ namespace kProcessor {
             //  cout<<top.first.hashedKmer<<" "<<top.second<<endl;
             if (iterators[top.second] != input[top.second]->end())
                 Q.push(make_pair(*iterators[top.second], top.second));
-            while (Q.size() > 0 && top.first.hashedKmer == Q.top().first.hashedKmer) {
+            while (!Q.empty() && top.first.hashedKmer == Q.top().first.hashedKmer) {
                 top = Q.top();
                 Q.pop();
                 current[top.second] = top.first;
@@ -570,12 +560,12 @@ namespace kProcessor {
         res->reserve((uint64_t) ((double) numKmers * 0.75));
         merge(input, res, [](vector<kmerRow> &input) -> kmerRow {
             kmerRow res;
-            for (unsigned int i = 0; i < input.size(); i++) {
-                if (input[i].count != 0) {
-                    res.kmer = input[i].kmer;
-                    res.hashedKmer = input[i].hashedKmer;
+            for (auto & i : input) {
+                if (i.count != 0) {
+                    res.kmer = i.kmer;
+                    res.hashedKmer = i.hashedKmer;
                 }
-                res.count += input[i].count;
+                res.count += i.count;
             }
             return res;
         });
@@ -745,7 +735,7 @@ namespace kProcessor {
         flat_hash_map<string, string> namesMap;
         flat_hash_map<string, uint64_t> tagsMap;
         flat_hash_map<string, uint64_t> groupNameMap;
-        flat_hash_map<uint64_t, std::vector<uint32_t>> *legend = new flat_hash_map<uint64_t, std::vector<uint32_t>>();
+        auto *legend = new flat_hash_map<uint64_t, std::vector<uint32_t>>();
         flat_hash_map<uint64_t, uint64_t> colorsCount;
         uint64_t readID = 0, groupID = 1;
         ifstream namesFile(names_fileName.c_str());
@@ -835,7 +825,7 @@ namespace kProcessor {
                         auto itTag = tagsMap.find(colorsString);
                         if (itTag == tagsMap.end()) {
                             uint64_t newColor;
-                            if (freeColors.size() == 0) {
+                            if (freeColors.empty()) {
                                 newColor = groupID++;
                             } else {
                                 newColor = freeColors.top();
@@ -899,7 +889,7 @@ namespace kProcessor {
                 }
             }
         }
-        StringColorColumn *col = new StringColorColumn();
+        auto *col = new StringColorColumn();
         frame->changeDefaultColumnType((Column *) col);
         col->colors = vector<vector<uint32_t> >(legend->size());
         col->colors.push_back(vector<uint32_t>());
@@ -908,9 +898,9 @@ namespace kProcessor {
         }
 
 
-        for (auto iit = namesMap.begin(); iit != namesMap.end(); iit++) {
-            uint32_t sampleID = groupNameMap[iit->second];
-            col->namesMap[sampleID] = iit->second;
+        for (auto & iit : namesMap) {
+            uint32_t sampleID = groupNameMap[iit.second];
+            col->namesMap[sampleID] = iit.second;
         }
 
     }
@@ -950,7 +940,7 @@ namespace kProcessor {
     }
 
     void indexPriorityQueue(vector<kDataFrame *> &input, string tmpFolder, kDataFrame *output) {
-        insertColorColumn *colors = new insertColorColumn(input.size(), tmpFolder);
+        auto *colors = new insertColorColumn(input.size(), tmpFolder);
         output->changeDefaultColumnType(colors);
         for (unsigned int i = 0; i < input.size(); i++) {
             vector<uint32_t> tmp = {i};
@@ -969,20 +959,20 @@ namespace kProcessor {
                 compare);
 
         for (unsigned int i = 0; i < input.size(); i++) {
-            kDataFrameIterator *it = new kDataFrameIterator(input[i]->begin());
-            kDataFrameIterator *itend = new kDataFrameIterator(input[i]->end());
+            auto *it = new kDataFrameIterator(input[i]->begin());
+            auto *itend = new kDataFrameIterator(input[i]->end());
             nextKmer.push(make_tuple(it->getHashedKmer(), i, it, itend));
         }
 
         uint64_t processedKmers = 0;
-        while (nextKmer.size() > 0) {
+        while (!nextKmer.empty()) {
             vector<uint32_t> colorVec;
             colorVec.clear();
             uint64_t currHash = get<0>(nextKmer.top());
             processedKmers++;
             if (processedKmers % 1000000 == 0)
                 cout << processedKmers << " Kmers Processed" << endl;
-            while (nextKmer.size() > 0 && get<0>(nextKmer.top()) == currHash) {
+            while (!nextKmer.empty() && get<0>(nextKmer.top()) == currHash) {
                 auto colorTuple = nextKmer.top();
                 nextKmer.pop();
                 colorVec.push_back(get<1>(colorTuple));
@@ -1028,7 +1018,7 @@ namespace kProcessor {
         cout << noColors << " colors created" << endl;
         delete colors;
 
-        queryColorColumn *qcolors = new queryColorColumn(input.size(), noColors, tmpFolder);
+        auto *qcolors = new queryColorColumn(input.size(), noColors, tmpFolder);
         qcolors->explainSize();
         output->changeDefaultColumnType(qcolors);
     }
@@ -1041,7 +1031,7 @@ namespace kProcessor {
             idsOffset[i] = idsOffset[i - 1];
             idsOffset[i] += ((insertColorColumn *) input[i - 1]->getDefaultColumn())->noSamples;
         }
-        insertColorColumn *colors = new insertColorColumn();
+        auto *colors = new insertColorColumn();
         output->changeDefaultColumnType(colors);
 
 
@@ -1056,23 +1046,23 @@ namespace kProcessor {
                 compare);
 
         for (unsigned int i = 0; i < input.size(); i++) {
-            kDataFrameIterator *it = new kDataFrameIterator(input[i]->begin());
-            kDataFrameIterator *itend = new kDataFrameIterator(input[i]->end());
+            auto *it = new kDataFrameIterator(input[i]->begin());
+            auto *itend = new kDataFrameIterator(input[i]->end());
             nextKmer.push(make_tuple(it->getHashedKmer(), i, it, itend));
         }
 
         uint64_t processedKmers = 0;
-        while (nextKmer.size() > 0) {
+        while (!nextKmer.empty()) {
             vector<uint32_t> colorVec;
             colorVec.clear();
             uint64_t currHash = get<0>(nextKmer.top());
             processedKmers++;
-            while (nextKmer.size() > 0 && get<0>(nextKmer.top()) == currHash) {
+            while (!nextKmer.empty() && get<0>(nextKmer.top()) == currHash) {
                 auto colorTuple = nextKmer.top();
                 nextKmer.pop();
 
                 uint32_t i = get<1>(colorTuple);
-                vector<uint32_t> tmp = input[i]->getKmerDefaultColumnValue<vector<uint32_t>, insertColorColumn>(
+                auto tmp = input[i]->getKmerDefaultColumnValue<vector<uint32_t>, insertColorColumn>(
                         get<0>(colorTuple));
                 for (auto c:tmp)
                     colorVec.push_back(c + idsOffset[i]);
@@ -1134,7 +1124,8 @@ namespace kProcessor {
         std::string str;
 
         kframe->setkSize(_kmer_length);
-        kframe->reserve(_total_kmers);
+        kframe->reserve(_total_kmers*3);
+        cout<<_kmer_length<<"\t"<<_total_kmers<<endl;
         while (kmer_data_base.ReadNextKmer(kmer_object, counter)) {
             kmer_object.to_string(str);
             kframe->insert(str, counter);
@@ -1143,14 +1134,16 @@ namespace kProcessor {
     }
 
     void createCountColumn(kDataFrame* frame){
-        frame->addColumn("count",new vectorColumn<uint32_t>(frame->size()));
-        for(auto k:*frame)
-        {
-            frame->setKmerColumnValue<uint32_t,vectorColumn<uint32_t> >("count",k.kmer,k.count);
+        const string columnName="count";
+        frame->addColumn(columnName,new vectorColumn<uint32_t>(frame->size()));
+        kDataFrameIterator it = frame->begin();
+        while (it != frame->end()) {
+            frame->setKmerColumnValueByOrder<uint32_t,vectorColumn<uint32_t> >(columnName,it.getOrder(),it.getCount());
+            it++;
         }
     }
     void createColorColumn(kDataFrame* frame){
-        deduplicatedColumn<vector<uint32_t>,StringColorColumn>* newColumn=new deduplicatedColumn<vector<uint32_t>,StringColorColumn>(frame->size());
+        auto* newColumn=new deduplicatedColumn<vector<uint32_t>,StringColorColumn>(frame->size());
         newColumn->values=(StringColorColumn*)frame->getDefaultColumn();
         uint32_t i=0;
         for(auto k:*frame)

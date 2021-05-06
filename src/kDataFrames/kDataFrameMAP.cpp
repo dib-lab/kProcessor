@@ -30,6 +30,7 @@ _kDataFrameIterator *kDataFrameMAPIterator::clone() {
 }
 
 kDataFrameMAPIterator &kDataFrameMAPIterator::operator++(int) {
+    order++;
     iterator++;
     return *this;
 }
@@ -115,12 +116,12 @@ bool kDataFrameMAP::kmerExist(string kmerS) {
 }
 
 
-bool kDataFrameMAP::insert(string kmerS, uint64_t count) {
+bool kDataFrameMAP::insert(const string &kmerS, uint64_t count) {
     this->MAP[KD->hash_kmer(kmerS)] += count;
     return true;
 }
 
-bool kDataFrameMAP::insert(string kmerS) {
+bool kDataFrameMAP::insert(const string &kmerS) {
     this->MAP[KD->hash_kmer(kmerS)] += 1;
     return true;
 }
@@ -136,7 +137,7 @@ bool kDataFrameMAP::insert(uint64_t kmer) {
 }
 
 
-bool kDataFrameMAP::setCount(string kmerS, uint64_t tag) {
+bool kDataFrameMAP::setCount(const string &kmerS, uint64_t tag) {
     this->MAP[KD->hash_kmer(kmerS)] = tag;
     return true;
 }
@@ -146,7 +147,7 @@ bool kDataFrameMAP::setCount(uint64_t kmerS, uint64_t tag) {
     return true;
 }
 
-uint64_t kDataFrameMAP::getCount(string kmerS) {
+uint64_t kDataFrameMAP::getCount(const string &kmerS) {
     auto it= this->MAP.find(KD->hash_kmer(kmerS));
     if(it==this->MAP.end())
         return 0;
@@ -168,7 +169,7 @@ uint64_t kDataFrameMAP::bucket(string kmerS) {
 }
 
 
-bool kDataFrameMAP::erase(string kmerS) {
+bool kDataFrameMAP::erase(const string &kmerS) {
     return this->MAP.erase(KD->hash_kmer(kmerS));
 }
 
@@ -259,7 +260,7 @@ kDataFrameIterator kDataFrameMAP::begin() {
 //            (_kDataFrameIterator *) new kDataFrameMAPIterator(MAP.end(), this, kSize),
 //            (kDataFrame *) this));
 //}
-kDataFrameIterator kDataFrameMAP::find(string kmer) {
+kDataFrameIterator kDataFrameMAP::find(const string &kmer) {
   return ( kDataFrameIterator(
           (_kDataFrameIterator *) new kDataFrameMAPIterator(MAP.find(KD->hash_kmer(kmer)), this, kSize),
           (kDataFrame *) this));

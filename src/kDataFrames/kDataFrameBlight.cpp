@@ -101,12 +101,12 @@ bool kDataFrameBlight::kmerExist(string kmerS) {
 }
 
 
-bool kDataFrameBlight::insert(string kmerS, uint64_t count) {
+bool kDataFrameBlight::insert(const string &kmerS, uint64_t count) {
     throw logic_error("kDataFrameBlight is static. Insertion is not allowed");
     return true;
 }
 
-bool kDataFrameBlight::insert(string kmerS) {
+bool kDataFrameBlight::insert(const string &kmerS) {
     throw logic_error("kDataFrameBlight is static. Insertion is not allowed");
     return true;
 }
@@ -123,7 +123,7 @@ bool kDataFrameBlight::insert(uint64_t kmer) {
 }
 
 
-bool kDataFrameBlight::setCount(string kmerS, uint64_t tag) {
+bool kDataFrameBlight::setCount(const string &kmerS, uint64_t tag) {
     throw logic_error("Use setKmerColumn value instead");
     return true;
 }
@@ -133,7 +133,7 @@ bool kDataFrameBlight::setCount(uint64_t kmerS, uint64_t tag) {
     return true;
 }
 
-uint64_t kDataFrameBlight::getCount(string kmerS) {
+uint64_t kDataFrameBlight::getCount(const string &kmerS) {
     return blight_index->get_hashes_query(kmerS)[0];
 }
 
@@ -144,7 +144,7 @@ uint64_t kDataFrameBlight::getCount(uint64_t kmerS) {
 
 
 
-bool kDataFrameBlight::erase(string kmerS) {
+bool kDataFrameBlight::erase(const string &kmerS) {
     throw logic_error("kDataFrameBlight is static. Deletion is not allowed");
     return true;
 }
@@ -241,7 +241,7 @@ kDataFrameIterator kDataFrameBlight::begin() {
 //            (_kDataFrameIterator *) new kDataFrameBlightIterator(MAP.end(), this, kSize),
 //            (kDataFrame *) this));
 //}
-kDataFrameIterator kDataFrameBlight::find(string kmer) {
+kDataFrameIterator kDataFrameBlight::find(const string &kmer) {
     throw logic_error("not implemented yet");
 }
 kDataFrameIterator kDataFrameBlight::find(uint64_t kmer) {
@@ -249,7 +249,7 @@ kDataFrameIterator kDataFrameBlight::find(uint64_t kmer) {
 }
 
 void kDataFrameBlight::preprocessKmerOrder(){}
-uint64_t kDataFrameBlight::getkmerOrder(string kmer)
+uint64_t kDataFrameBlight::getkmerOrder(const string &kmer)
 {
     return getCount(kmer);
 }

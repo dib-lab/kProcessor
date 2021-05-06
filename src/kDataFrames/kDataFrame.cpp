@@ -164,7 +164,7 @@ uint64_t kDataFrame::getkmerOrder(uint64_t kmer)
   return orderCheckpoints[it.getHashedKmer()]-offset;
 }
 
-uint64_t kDataFrame::getkmerOrder(string kmer)
+uint64_t kDataFrame::getkmerOrder(const string &kmer)
 {
     kDataFrameIterator it=this->find(KD->hash_kmer(kmer));
     uint32_t offset=0;
@@ -336,7 +336,7 @@ void dbgIterator::nextREV(uint32_t index){
 }
 
 
-dbgIterator kDataFrame::getDBGIterator(string kmer)
+dbgIterator kDataFrame::getDBGIterator(const string &kmer)
 {
     if(!this->kmerExist(kmer))
         throw std::logic_error("Kmer not found in the frame");
