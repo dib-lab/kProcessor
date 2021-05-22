@@ -100,7 +100,7 @@ vector<kDataFrame*> BuildTestFrames()
   vector<int> kSizes={21};
   for(auto k:kSizes)
   {
-   framesToBeTested.push_back(new kDataFrameMQF(k));
+   framesToBeTested.push_back(new kDataFrameMQF(k, integer_hasher));
   }
   for(auto k:kSizes)
   {
@@ -116,7 +116,7 @@ kDataFrame* getFrame(tuple<string,int> input)
 
     if(type=="MQF")
     {
-        return new kDataFrameMQF(kSize);
+        return new kDataFrameMQF(kSize, integer_hasher);
     }
     else if(type=="MAP")
     {
@@ -177,10 +177,10 @@ vector<vector<kDataFrame*> > BuildTestFramesForSetFunctions()
   int k=31;
   for(auto file:setFunctionsTestInput[0])
   {
-    framesToBeTested[0].push_back(new kDataFrameMQF(k));
+    framesToBeTested[0].push_back(new kDataFrameMQF(k, integer_hasher));
 //    kProcessor::countKmersFromFile(framesToBeTested[0].back(), {{"mode", 1}}, file, 1000); // Mode 1 : kmers, KmerSize will be cloned from the kFrame
 
-    framesToBeTested[1].push_back(new kDataFrameMQF(k)); // Temporary until resolving #17
+    framesToBeTested[1].push_back(new kDataFrameMQF(k, integer_hasher)); // Temporary until resolving #17
 //    kProcessor::countKmersFromFile(framesToBeTested[1].back(), {{"mode", 1}}, file, 1000); // Mode 1 : kmers, KmerSize will be cloned from the kFrame
   }
   return framesToBeTested;
@@ -765,7 +765,7 @@ TEST_P(indexingTest,index)
   string filename=GetParam();
   int chunkSize = 1000;
 
-  kDataFrame *KF = new kDataFrameMQF(25, 28, 1);
+  kDataFrame *KF = new kDataFrameMQF(25, 28, integer_hasher);
   kmerDecoder *KMERS = kProcessor::initialize_kmerDecoder(filename, chunkSize, "kmers", {{"k_size", 25}});
   colored_kDataFrame* res= kProcessor::index(KMERS, filename+".names", KF);
 
@@ -797,7 +797,7 @@ TEST_P(indexingTest,saveAndLoad)
 {
   string filename=GetParam();
   int chunkSize = 1000;
-  kDataFrame *KF = new kDataFrameMQF(25, 28, 1);
+  kDataFrame *KF = new kDataFrameMQF(25, 28, integer_hasher);
   kmerDecoder *KMERS = kProcessor::initialize_kmerDecoder(filename, chunkSize, "kmers", {{"k_size", 25}});
   colored_kDataFrame* res1= kProcessor::index(KMERS,filename+".names", KF);
   res1->save("tmp.coloredKdataFrame");

@@ -32,10 +32,10 @@ kDataFrameBMQF::kDataFrameBMQF(uint64_t ksize,uint8_t q,uint8_t fixedCounterSize
     bufferedMQF_init(bufferedmqf, (1ULL<<q-2), (1ULL<<q), 2*kSize, value_bits,fixedCounterSize, fileName.c_str());
     this->falsePositiveRate=falsePositiveRate;
     if(falsePositiveRate==0){
-        KD = (new Kmers(kSize));
+        KD = (new Kmers(kSize, integer_hasher));
     }
     else if(falsePositiveRate<1){
-        KD = (new Kmers(kSize,0));
+        KD = (new Kmers(kSize, mumur_hasher));
     }
     hashbits=2*kSize;
     range=(1ULL<<hashbits);
@@ -47,10 +47,10 @@ kDataFrameBMQF::kDataFrameBMQF(uint64_t ksize,uint8_t q,uint8_t fixedCounterSize
 }
 
 
-kDataFrameBMQF::kDataFrameBMQF(uint64_t ksize):
+kDataFrameBMQF::kDataFrameBMQF(uint64_t ksize, hashingModes hash_mode):
         kDataFrame(ksize){
     this->falsePositiveRate=0.0;
-    KD = (new Kmers(kSize));
+    KD = (new Kmers(kSize, hash_mode));
     hashbits=2*kSize;
     range=(1ULL<<hashbits);
     bufferedmqf=NULL;
@@ -64,10 +64,10 @@ kDataFrameBMQF::kDataFrameBMQF(bufferedMQF* bufferedmqf,uint64_t ksize,double fa
     this->bufferedmqf=bufferedmqf;
     this->falsePositiveRate=falsePositiveRate;
     if(falsePositiveRate==0){
-        KD = (new Kmers(kSize));
+        KD = (new Kmers(kSize, integer_hasher));
     }
     else if(falsePositiveRate<1){
-        KD = (new Kmers(kSize,0));
+        KD = (new Kmers(kSize, mumur_hasher));
     }
     hashbits=this->bufferedmqf->memoryBuffer->metadata->key_bits;
     hashbits=2*kSize;

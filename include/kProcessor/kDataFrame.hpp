@@ -340,13 +340,15 @@ protected:
 public:
   kDataFrameMQF();
   kDataFrameMQF(uint64_t kSize);
-  kDataFrameMQF(uint64_t kSize, int mode);
+  kDataFrameMQF(uint64_t kSize, hashingModes hash_mode);
   kDataFrameMQF(uint64_t ksize,uint8_t q,uint8_t fixedCounterSize,uint8_t tagSize
     ,double falsePositiveRate);
 
-  kDataFrameMQF(uint64_t ksize, uint8_t q, int mode);
+  kDataFrameMQF(uint64_t ksize, uint8_t q, hashingModes hash_mode = integer_hasher);
 
   kDataFrameMQF(QF* mqf,uint64_t ksize,double falsePositiveRate);
+  kDataFrameMQF(QF *mqf, uint64_t ksize, hashingModes hash_mode);
+  
   //count histogram is array where count of kmers repeated n times is found at index n. index 0 holds number of distinct kmers.
   kDataFrameMQF(uint64_t ksize,vector<uint64_t> countHistogram,uint8_t tagSize
     ,double falsePositiveRate);
@@ -439,7 +441,7 @@ private:
   kDataFrameIterator* endIterator;
 public:
   kDataFrameBMQF();
-  kDataFrameBMQF(uint64_t kSize);
+  kDataFrameBMQF(uint64_t kSize, hashingModes hash_mode = integer_hasher);
   kDataFrameBMQF(uint64_t ksize,uint8_t q,uint8_t fixedCounterSize,uint8_t tagSize,double falsePositiveRate);
   kDataFrameBMQF(bufferedMQF* bufferedmqf,uint64_t ksize,double falsePositiveRate);
   //count histogram is array where count of kmers repeated n times is found at index n. index 0 holds number of distinct kmers.
@@ -590,7 +592,7 @@ public:
     kDataFramePHMAP();
 
     kDataFramePHMAP(uint64_t ksize);
-    kDataFramePHMAP(uint64_t ksize, int mode);
+    kDataFramePHMAP(uint64_t ksize, hashingModes hash_mode = integer_hasher);
     kDataFramePHMAP(uint64_t kSize,vector<uint64_t> kmersHistogram);
 
     kDataFrame *getTwin();

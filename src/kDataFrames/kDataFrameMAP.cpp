@@ -75,14 +75,14 @@ kDataFrameMAPIterator::~kDataFrameMAPIterator() {
 kDataFrameMAP::kDataFrameMAP(uint64_t ksize) {
     this->class_name = "MAP"; // Temporary until resolving #17
     this->kSize = ksize;
-    KD = new Kmers(ksize, 2);
+    KD = new Kmers(ksize, TwoBits_hasher);
 //    hasher = new wrapperHasher<std::map<uint64_t, uint64_t>::hasher>(MAP.hash_function(), ksize);
 //    this->MAP = std::map<uint64_t, uint64_t>(1000);
     // this->hasher = (new IntegerHasher(ksize));
 }
 kDataFrameMAP::kDataFrameMAP(uint64_t ksize,vector<uint64_t> kmersHistogram) {
     this->class_name = "MAP"; // Temporary until resolving #17
-    KD = new Kmers(ksize, 2);
+    KD = new Kmers(ksize, TwoBits_hasher);
     this->kSize = ksize;
     uint64_t countSum=0;
     for(auto h:kmersHistogram)
@@ -95,7 +95,7 @@ kDataFrameMAP::kDataFrameMAP(uint64_t ksize,vector<uint64_t> kmersHistogram) {
 kDataFrameMAP::kDataFrameMAP() {
     this->class_name = "MAP"; // Temporary until resolving #17
     this->kSize = 23;
-    KD = new Kmers(this->kSize, 2);
+    KD = new Kmers(this->kSize, TwoBits_hasher);
 //    this->MAP = std::map<uint64_t, uint64_t>(1000);
     // hasher=new wrapperHasher<std::map<uint64_t,uint64_t>::hasher >(MAP.hash_function(),kSize);
     // this->hasher = (new IntegerHasher(23));
@@ -199,8 +199,9 @@ kDataFrame *kDataFrameMAP::load(string filePath) {
     int hashing_mode;
     file >> kSize;
     file >> hashing_mode;
+    hashingModes hash_mode = static_cast<hashingModes>(hashing_mode);
 
-    if(hashing_mode != 2){
+    if(hash_mode != TwoBits_hasher){
         std::cerr << "Error: In the kDataFrameMAP, hashing must be 2:TwoBitsRepresentation mode" << endl;
         exit(1);
     }

@@ -355,7 +355,7 @@ namespace kProcessor {
 
         // Clone the hashing
 
-        kmerDecoder_setHashing(KD, kframe->KD->hash_mode, kframe->KD->canonical);
+        kmerDecoder_setHashing(KD, kframe->KD->hash_mode);
 
         // Processing
 
@@ -407,7 +407,7 @@ namespace kProcessor {
 
         // Clone the hashing
 
-        kmerDecoder_setHashing(KD, frame->KD->hash_mode, frame->KD->canonical);
+        kmerDecoder_setHashing(KD, frame->KD->hash_mode);
 
         if (KD->get_kSize() != (int)frame->getkSize()) {
             std::cerr << "kmerDecoder kSize must be equal to kDataFrame kSize" << std::endl;
@@ -537,12 +537,12 @@ namespace kProcessor {
     }
 
     
-    void kmerDecoder_setHashing(kmerDecoder * KD, int hash_mode, bool canonical){
-        KD->setHashingMode(hash_mode, canonical);
+    void kmerDecoder_setHashing(kmerDecoder * KD, hashingModes hash_mode){
+        KD->setHashingMode(hash_mode, KD->get_kSize());
     }
 
-    void kmerDecoder_setHashing(kDataFrame * KF, int hash_mode, bool canonical){
-        KF->KD->setHashingMode(hash_mode, canonical);
+    void kmerDecoder_setHashing(kDataFrame * KF, hashingModes hash_mode){
+        KF->KD->setHashingMode(hash_mode, KF->ksize());
     }
 
 
@@ -641,11 +641,8 @@ namespace kProcessor {
         }
     }
 
-    kmerDecoder* initialize_kmerDecoder(int kSize, int hash_mode){
-        // Mode 0: Murmar Hashing | Irreversible
-        // Mode 1: Integer Hashing | Reversible | Full Hashing
-        // Mode 2: TwoBitsHashing | Not considered hashing, just store the two bits representation
-        return new Kmers(kSize, hash_mode);
+    kmerDecoder* initialize_kmerDecoder(int kSize, hashingModes HM = integer_hasher){
+        return new Kmers(kSize, HM);
     }
 
     colored_kDataFrame *index(kmerDecoder *KD, string names_fileName, kDataFrame *frame) {
@@ -847,7 +844,7 @@ namespace kProcessor {
 
         // Clone the hashing
 
-        kmerDecoder_setHashing(KD, frame->KD->hash_mode, frame->KD->canonical);
+        kmerDecoder_setHashing(KD, frame->KD->hash_mode);
 
         // Processing
 
