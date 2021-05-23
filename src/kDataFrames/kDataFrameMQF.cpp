@@ -560,13 +560,21 @@ kDataFrame *kDataFrameMQF::load(string filePath) {
 void kDataFrameMQF::preprocessKmerOrder()
 {
   qf_ComputeItemsOrder(mqf);
+  isKmersOrderComputed=true;
 }
 uint64_t kDataFrameMQF::getkmerOrder(const string &kmer)
 {
   uint64_t hash = KD->hash_kmer(kmer) % mqf->metadata->range;
   return itemOrder(mqf,hash);
 }
+uint64_t kDataFrameMQF::getkmerOrder(uint64_t kmer)
+{
+    return itemOrder(mqf,kmer);
+}
 
 bool kDataFrameMQF::kmerExist(string kmerS) {
     return getCount(kmerS) > 0 ;
+}
+bool kDataFrameMQF::kmerExist(uint64_t kmer) {
+    return getCount(kmer) > 0 ;
 }

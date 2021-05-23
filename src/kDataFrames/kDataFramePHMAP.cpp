@@ -128,6 +128,9 @@ kDataFramePHMAP::kDataFramePHMAP() {
 bool kDataFramePHMAP::kmerExist(string kmerS) {
     return (this->MAP.find(KD->hash_kmer(kmerS)) == this->MAP.end()) ? 0 : 1;
 }
+bool kDataFramePHMAP::kmerExist(uint64_t kmer) {
+    return (this->MAP.find(kmer) == this->MAP.end()) ? 0 : 1;
+}
 
 
 bool kDataFramePHMAP::insert(const string &kmerS, uint64_t count) {

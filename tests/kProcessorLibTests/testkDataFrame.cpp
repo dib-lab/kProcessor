@@ -388,8 +388,8 @@ TEST_P(kDataFrameTest,iterateOverAllKmers)
 
     for(auto it:*kframe)
     {
-      string kmer=it.kmer;
-      uint64_t count=it.count;
+      string kmer=it.getKmer();
+      uint64_t count=it.getCount();
       ASSERT_EQ(count,(*kmers)[kmer]);
       //insertedKmers.erase(kmer);
       checkedKmers++;
@@ -733,6 +733,39 @@ TEST_P(kDataFrameTest,transformFilterLessThan5)
 
 }
 
+TEST_P(kDataFrameTest,transformFilterLessThan5MultipleColumns)
+{
+
+    kDataFrame* kframe=getFrame(GetParam());
+    EXPECT_EQ(kframe->empty(), true);
+    unordered_map<string,int>* kmers=kmersGen.getKmers((int)kframe->getkSize());
+    for(auto k:*kmers)
+    {
+        kframe->insert(k.first,k.second);
+        if(kframe->load_factor()>=kframe->max_load_factor()*0.8){
+            break;
+        }
+    }
+    int checkedKmers=0;
+    kProcessor::createCountColumn(kframe);
+    kDataFrame* kframe2=kProcessor::filter(kframe,[](kDataFrameIterator& k) -> bool
+    {
+        uint32_t count;
+        k.getColumnValue<uint32_t,vectorColumn<uint32_t> >("count",count);
+        return count>=5;
+    });
+    kDataFrameIterator it=kframe2->begin();
+    while(it!=kframe2->end())
+    {
+        string kmer=it.getKmer();
+        uint64_t count=it.getCount();
+        ASSERT_GE(count,5);
+        it++;
+    }
+    delete kframe2;
+
+}
+
 TEST_P(kDataFrameTest,aggregateSum)
 {
 
@@ -846,8 +879,8 @@ TEST_P(setFunctionsTest,unioinTest)
     auto it=kframe->begin();
     while(it!=kframe->end())
     {
-      int count=unioinResult->getCount((*it).kmer);
-      ASSERT_GE(count,((*it).count));
+      int count=unioinResult->getCount((*it).getKmer());
+      ASSERT_GE(count,((*it).getCount()));
       it++;
     }
   }
@@ -874,8 +907,8 @@ TEST_P(setFunctionsTest,intersectTest)
   {
     for(auto kframe:input)
     {
-      int count=kframe->getCount((*it).kmer);
-      ASSERT_GE(count,((*it).count));
+      int count=kframe->getCount((*it).getKmer());
+      ASSERT_GE(count,((*it).getCount()));
     }
     it++;
   }
@@ -900,11 +933,11 @@ TEST_P(setFunctionsTest,differenceTest)
   auto it=diffResult->begin();
   while(it!=diffResult->end())
   {
-      int count=input[0]->getCount((*it).kmer);
-      ASSERT_EQ(count,((*it).count));
+      int count=input[0]->getCount((*it).getKmer());
+      ASSERT_EQ(count,((*it).getCount()));
       for(int i=1;i<input.size();i++)
       {
-        int count=input[i]->getCount((*it).kmer);
+        int count=input[i]->getCount((*it).getKmer());
         ASSERT_EQ(count,0);
       }
       it++;
@@ -1249,8 +1282,8 @@ TEST_P(kDataFrameBufferedTest,iterateOverAllKmers)
     int testKmers=0;
     for(auto it:*kframe)
     {
-        string kmer=it.kmer;
-        uint64_t count=it.count;
+        string kmer=it.getKmer();
+        uint64_t count=it.getCount();
         ASSERT_EQ(count,(*kmers)[kmer]);
         //kmers->erase(kmer);
         testKmers++;

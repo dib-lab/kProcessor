@@ -287,7 +287,7 @@ namespace kProcessor {
         kDataFrame *res = input->getTwin();
         kDataFrameIterator it = input->begin();
         while (it != input->end()) {
-            kmerRow newkmer = fn(*it);
+            kmerRow newkmer = fn(it.getKmerRow());
             res->insert(newkmer);
             it++;
         }
@@ -298,15 +298,26 @@ namespace kProcessor {
             column->setSize(res->size());
             res->addColumn(newColName, column);
         }
-        for(auto kmer:*res)
+        for(auto kmer:(*res))
         {
             for (auto col: input->columns) {
                 string newColName = col.first;
-                res->setKmerColumnValueFromOtherColumn(input,col.first, newColName,kmer.kmer);
+                res->setKmerColumnValueFromOtherColumn(input,col.first, newColName,kmer.getKmer());
             }
         }
         delete input;
         return res;
+
+    }
+    void transformInPlace(kDataFrame *input,  function<void (kDataFrameIterator& i)> fn)
+    {
+        kDataFrame *res = input;
+        kDataFrameIterator it = input->begin();
+        while (it != input->end()) {
+            fn(it);
+            it++;
+        }
+       return;
 
     }
     kDataFrame* innerJoin(vector<kDataFrame *> input, vector<uint32_t> kmersToKeep) {
@@ -331,37 +342,16 @@ namespace kProcessor {
             }
             return kmerRow();
         });
-        for(unsigned int i=0; i <  input.size() ; i++)
-        {
-            for(auto col: input[i]->columns)
-            {
-                string newColName= col.first+"."+to_string(i);
-                Column* column=col.second->getTwin();
-                column->setSize(res->size());
-                res->addColumn(newColName, column);
-            }
-        }
-        for(auto kmer:*res)
-        {
-            for(unsigned int i=0; i <  input.size() ; i++)
-            {
-                if(input[i]->kmerExist(kmer.kmer)) {
-                    for (auto col: input[i]->columns) {
-                        string newColName = col.first + "." + to_string(i);
-                        res->setKmerColumnValueFromOtherColumn(input[i],col.first, newColName,kmer.kmer);
-                    }
-                }
-            }
-        }
         return res;
     }
 
-    kDataFrame *filter(kDataFrame *input, function<bool (kmerRow i)> fn) {
+    kDataFrame *filter(kDataFrame *input, function<bool (kmerRow& i)> fn) {
         kDataFrame *res = input->getTwin();
         kDataFrameIterator it = input->begin();
         while (it != input->end()) {
-            if (fn(*it))
-                res->insert(*it);
+            kmerRow k=it.getKmerRow();
+            if (fn(k))
+                res->insert(k);
             it++;
         }
         for(auto col: input->columns)
@@ -375,18 +365,69 @@ namespace kProcessor {
         {
             for (auto col: input->columns) {
                 string newColName = col.first;
-                res->setKmerColumnValueFromOtherColumn(input,col.first, newColName,kmer.kmer);
+                res->setKmerColumnValueFromOtherColumn(input,col.first, newColName,kmer.getHashedKmer());
             }
         }
         delete input;
         return res;
 
     }
+    kDataFrame *filter(kDataFrame *input, function<bool (kDataFrameIterator& i)> fn) {
+        kDataFrame *res = input->getTwin();
+        if(!input->isKmersOrderComputed) {
+            kDataFrameIterator it = input->begin();
+            while (it != input->end()) {
+                if (fn(it))
+                    res->insert(it.getHashedKmer(), it.getCount());
+                it++;
+            }
+            delete input;
+            return res;
+        }
+        else{
+            unordered_map<string,Column*> columns;
+            for(auto col: input->columns)
+            {
+                columns[col.first]=col.second->getTwin();
+                columns[col.first]->setSize(input->size());
+            }
+            kDataFrameIterator it = input->begin();
+            int index=0;
+            while (it != input->end()) {
+                if (fn(it)) {
+                    res->insert(it.getHashedKmer(), it.getCount());
+                    for(auto col: input->columns)
+                    {
+                        columns[col.first]->setValueFromColumn(col.second,it.getOrder(),index);
+                    }
+                    index++;
+                }
+                it++;
+            }
+            for(auto col: columns)
+            {
+                col.second->resize(res->size());
+                res->addColumn(col.first,col.second);
+            }
+            delete input;
+            return res;
+        }
+
+
+    }
 
     any aggregate(kDataFrame *input, any initial, function<any (kmerRow i, any v)> fn) {
         kDataFrameIterator it = input->begin();
         while (it != input->end()) {
-            initial = fn(*it, initial);
+            initial = fn(it.getKmerRow(), initial);
+            it++;
+        }
+        return initial;
+    }
+    any aggregate(kDataFrame *input, any initial, function<any (kDataFrameIterator& i, any v)> fn) {
+        kDataFrameIterator it = input->begin();
+        while (it != input->end()) {
+            initial = fn(it, initial);
             it++;
         }
         return initial;
@@ -515,16 +556,24 @@ namespace kProcessor {
 
     void merge(const vector<kDataFrame *> &input, kDataFrame *res,function<kmerRow (vector<kmerRow> &i)> fn) {
         terminate_if_kDataFrameMAP(input);
+        unordered_map<string,Column*> columns;
         priority_queue<pair<kmerRow, int>, vector<pair<kmerRow, int> >, CustomKmerRow> Q;
         vector<kDataFrameIterator> iterators(input.size());
         for (unsigned int i = 0; i < input.size(); i++) {
+            for(auto col: input[i]->columns)
+            {
+                string newColumnName=col.first+to_string(i);
+                columns[newColumnName]=col.second->getTwin();
+                columns[newColumnName]->setSize(input[i]->size());
+            }
             iterators[i] = input[i]->begin();
             if (iterators[i] != input[i]->end()) {
                 //  cout<<i<<" "<<(*iterators[i]).hashedKmer<<endl;
-                Q.push(make_pair(*iterators[i], i));
+                Q.push(make_pair(iterators[i].getKmerRow(), i));
             }
         }
         vector<kmerRow> current(input.size());
+        uint64_t index=0;
         while (Q.size() > 0) {
             for (unsigned int i = 0; i < current.size(); i++)
                 current[i] = kmerRow();
@@ -534,19 +583,37 @@ namespace kProcessor {
             current[top.second] = top.first;
             //  cout<<top.first.hashedKmer<<" "<<top.second<<endl;
             if (iterators[top.second] != input[top.second]->end())
-                Q.push(make_pair(*iterators[top.second], top.second));
+                Q.push(make_pair(iterators[top.second].getKmerRow(), top.second));
             while (!Q.empty() && top.first.hashedKmer == Q.top().first.hashedKmer) {
                 top = Q.top();
                 Q.pop();
                 current[top.second] = top.first;
                 iterators[top.second]++;
                 if (iterators[top.second] != input[top.second]->end())
-                    Q.push(make_pair(*iterators[top.second], top.second));
+                    Q.push(make_pair(iterators[top.second].getKmerRow(), top.second));
             }
 
             kmerRow newRow = fn(current);
-            if(newRow.count > 0)
+            if(newRow.count > 0) {
                 res->insert(newRow);
+                for(uint32_t i=0;i<current.size();i++)
+                {
+                    if(current[i].count!=0)
+                    {
+                        for(auto col: input[i]->columns)
+                        {
+                            string newColumnName=col.first+to_string(i);
+                            columns[newColumnName]->setValueFromColumn( col.second,iterators[i].getOrder(),index);
+                        }
+                    }
+                }
+                index++;
+            }
+        }
+        for(auto col: columns)
+        {
+            col.second->resize(res->size());
+            res->addColumn(col.first,col.second);
         }
 
     }
@@ -1124,8 +1191,7 @@ namespace kProcessor {
         std::string str;
 
         kframe->setkSize(_kmer_length);
-        kframe->reserve(_total_kmers*3);
-        cout<<_kmer_length<<"\t"<<_total_kmers<<endl;
+        kframe->reserve(_total_kmers);
         while (kmer_data_base.ReadNextKmer(kmer_object, counter)) {
             kmer_object.to_string(str);
             kframe->insert(str, counter);
@@ -1148,7 +1214,7 @@ namespace kProcessor {
         uint32_t i=0;
         for(auto k:*frame)
         {
-            newColumn->index[i++]=k.count;
+            newColumn->index[i++]=k.getCount();
         }
         frame->addColumn("color",newColumn);
 

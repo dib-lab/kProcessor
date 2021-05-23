@@ -21,6 +21,7 @@ public:
 
     virtual Column* getTwin()=0;
     virtual void setSize(uint32_t size)=0;
+    virtual void resize(uint32_t size)=0;
     static Column* getContainerByName(size_t name);
 
     virtual void serialize(string filename)=0;
@@ -54,6 +55,10 @@ public:
     uint32_t  insertAndGetIndex(T item);
     T getWithIndex(uint32_t index);
 
+    void resize(uint32_t size)
+    {
+        dataV.resize(size);
+    }
     void insert(T item,uint32_t index);
     T get(uint32_t index);
 
@@ -224,6 +229,7 @@ public:
 
     Column* getTwin();
     void setSize(uint32_t size);
+    void resize(uint32_t size);
 
 
 
@@ -718,6 +724,7 @@ public:
 
     Column* getTwin();
     void setSize(uint32_t size);
+    void resize(uint32_t size);
 
 
 };
@@ -765,6 +772,7 @@ public:
     void exportTree(string prefix,int tree);
     Column* getTwin();
     void setSize(uint32_t size);
+    void resize(uint32_t size);
 
 
 };
@@ -795,6 +803,7 @@ public:
 
     Column* getTwin();
     void setSize(uint32_t size);
+    void resize(uint32_t size);
 
 
 };
@@ -821,6 +830,7 @@ public:
     void deserialize(string filename);
     Column* getTwin();
     void setSize(uint32_t size);
+    void resize(uint32_t size);
     void setValueFromColumn(Column* Container, uint32_t inputOrder,uint32_t outputOrder);
 
 

@@ -206,7 +206,9 @@ Column *insertColorColumn::getTwin() {
 void insertColorColumn::setSize(uint32_t size) {
 
 }
+void insertColorColumn::resize(uint32_t size) {
 
+}
 
 vector<string> StringColorColumn::getWithIndex(uint32_t index) {
     vector<string> res(colors[index].size());
@@ -261,7 +263,9 @@ Column *StringColorColumn::getTwin() {
 void StringColorColumn::setSize(uint32_t size) {
 
 }
+void StringColorColumn::resize(uint32_t size) {
 
+}
 
 colorIndex::~colorIndex() {
     stack<tuple<colorNode *, bool> > S;
@@ -1050,6 +1054,10 @@ Column *queryColorColumn::getTwin() {
 }
 
 void queryColorColumn::setSize(uint32_t size) {
+
+}
+
+void queryColorColumn::resize(uint32_t size) {
 
 }
 
@@ -1928,6 +1936,10 @@ void prefixTrieQueryColorColumn::setSize(uint32_t size) {
 
 }
 
+void prefixTrieQueryColorColumn::resize(uint32_t size) {
+
+}
+
 
 template<typename T, typename ColumnType>
 void deduplicatedColumn<T, ColumnType>::serialize(string filename) {
@@ -1967,6 +1979,11 @@ Column *deduplicatedColumn<T, ColumnType>::getTwin() {
 template<typename T, typename ColumnType>
 void deduplicatedColumn<T, ColumnType>::setSize(uint32_t size) {
     index = vector<uint32_t>(size);
+}
+
+template<typename T, typename ColumnType>
+void deduplicatedColumn<T, ColumnType>::resize(uint32_t size) {
+    index.resize(size);
 }
 
 template<typename T, typename ColumnType>

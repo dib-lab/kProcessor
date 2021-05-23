@@ -59,10 +59,10 @@ public:
   }
 
   template<typename T,typename Container>
-  void getColumnValue(string colName, T& res);
+  void getColumnValue(const string& colName, T& res);
 
   template<typename T,typename Container>
-  void setColumnValue(string colName, T value);
+  void setColumnValue(const string& colName, T value);
 
   bool operator==(kmerRow &other) const
   {
@@ -143,6 +143,11 @@ public:
     iterator=it;
   }
 /// Increment the iterator to the next kmer
+    kDataFrameIterator& operator * (){
+        return *this;
+    }
+
+/// Increment the iterator to the next kmer
   kDataFrameIterator& operator ++ (int){
     (*iterator)++;
     return *this;
@@ -216,7 +221,7 @@ public:
   bool setCount(std::uint64_t count){
     return iterator->setCount(count);
   }
-  kmerRow operator*(){
+  kmerRow getKmerRow(){
     return kmerRow(iterator->getKmer(),
                    iterator->getHashedKmer(),
                    iterator->getCount(),
@@ -224,6 +229,14 @@ public:
                    origin
                   );
   }
+  template<typename T,typename Container>
+  void getColumnValue(const string& colName, T& res);
+  template<typename T,typename Container>
+  void setColumnValue(const string& colName, T value);
+
+
+  void setKmerColumnValueFromOtherColumn(kDataFrame* input, string inputColName, string outputColName);
+
   ~kDataFrameIterator(){
     delete iterator;
   }
@@ -275,17 +288,17 @@ protected:
   std::uint64_t kSize;
   string class_name; // Default = MQF, change if MAP. Temporary until resolving #17
   bool isStatic;
-  bool isKmersOrderComputed;
+
 
 
   unordered_map<uint64_t,uint32_t> orderCheckpoints;
   uint32_t lastCheckpoint;
   Column* defaultColumn;
   virtual void preprocessKmerOrder();
-  virtual std::uint64_t getkmerOrder(uint64_t kmer);
-  virtual std::uint64_t getkmerOrder(const string &kmer);
+
   kDataFrameIterator* endIterator;
 public:
+    bool isKmersOrderComputed;
     unordered_map<string, Column*> columns;
     typedef kDataFrameIterator iterator;
     typedef kmerRow value_type;
@@ -380,6 +393,9 @@ The difference between setCount and insert is that setCount set the count to N n
   }
 
 
+  virtual std::uint64_t getkmerOrder(uint64_t kmer);
+  virtual std::uint64_t getkmerOrder(const string &kmer);
+
   void addColumn(string columnName, Column*);
 
   template<typename T,typename Container>
@@ -409,18 +425,19 @@ The difference between setCount and insert is that setCount set the count to N n
   }
 
   template<typename T,typename Container>
-  T getKmerDefaultColumnValue(string kmer);
+  T getKmerDefaultColumnValue(const string& kmer);
 
   template<typename T,typename Container>
   T getKmerDefaultColumnValue(std::uint64_t kmer);
 
   template<typename T,typename Container>
-  void setKmerDefaultColumnValue(string kmer, T value);
+  void setKmerDefaultColumnValue(const string& kmer, T value);
 
   template<typename T,typename Container>
   void setKmerDefaultColumnValue(std::uint64_t kmer, T value);
 
   virtual bool kmerExist(string kmer)=0;
+  virtual bool kmerExist(uint64_t kmer)=0;
 
   void setKmerColumnValueFromOtherColumn(kDataFrame* input, string inputColName, string outputColName, std::uint64_t kmer);
   void setKmerColumnValueFromOtherColumn(kDataFrame* input, string inputColName, string outputColName, string kmer);
@@ -467,13 +484,13 @@ void kDataFrame::setKmerColumnValueByOrder(const string& columnName,uint64_t kme
 
 
 template<typename T,typename Container>
-T kDataFrame::getKmerDefaultColumnValue(string kmer)
+T kDataFrame::getKmerDefaultColumnValue(const string& kmer)
 {
     return ((Container*)defaultColumn)->getWithIndex(getCount(kmer));
 }
 
 template<typename T,typename Container>
-void kDataFrame::setKmerDefaultColumnValue(string kmer, T value)
+void kDataFrame::setKmerDefaultColumnValue(const string& kmer, T value)
 {
     uint32_t i=((Container*)defaultColumn)->insertAndGetIndex(value);
     setCount(kmer,i);
@@ -494,15 +511,28 @@ void kDataFrame::setKmerDefaultColumnValue(std::uint64_t kmer, T value)
 
 
 template<typename T,typename Container>
-void kmerRow::getColumnValue(string colName, T& res)
+void kmerRow::getColumnValue(const string& colName, T& res)
 {
-    res= origin->getKmerColumnValue<T,Container>(colName, kmer);
+    res= origin->getKmerColumnValueByOrder<T,Container>(colName, order);
 }
 
 template<typename T,typename Container>
-void kmerRow::setColumnValue(string colName, T value)
+void kmerRow::setColumnValue(const string& colName, T value)
 {
-    origin->setKmerColumnValue<T,Container>(colName, kmer,value);
+    origin->setKmerColumnValueByOrder<T,Container>(colName, order,value);
+}
+
+
+template<typename T,typename Container>
+void kDataFrameIterator::getColumnValue(const string& colName, T& res)
+{
+    res= origin->getKmerColumnValueByOrder<T,Container>(colName, iterator->getOrder());
+}
+
+template<typename T,typename Container>
+void kDataFrameIterator::setColumnValue(const string& colName, T value)
+{
+    origin->setKmerColumnValueByOrder<T,Container>(colName, iterator->getOrder(),value);
 }
 
 
@@ -518,6 +548,7 @@ private:
 protected:
   void preprocessKmerOrder() override;
   uint64_t getkmerOrder(const string &kmer);
+  uint64_t getkmerOrder(uint64_t kmer);
 public:
   kDataFrameMQF();
   explicit kDataFrameMQF(std::uint64_t kSize);
@@ -584,6 +615,7 @@ public:
     kDataFrameIterator find(uint64_t kmer);
 
     bool kmerExist(string kmerS);
+    bool kmerExist(uint64_t kmer);
 };
 
 
@@ -688,6 +720,7 @@ public:
 
   void deleteMemoryBuffer();
   bool kmerExist(string kmer);
+  bool kmerExist(uint64_t kmer);
 };
 
 // kDataFrameMAP _____________________________
@@ -705,6 +738,7 @@ public:
   void reserve (vector<std::uint64_t> countHistogram);
 
   bool kmerExist(string kmer);
+  bool kmerExist(uint64_t kmer);
 
   bool setCount(const string &kmer, std::uint64_t count);
   bool setCount(std::uint64_t kmer, std::uint64_t count);
@@ -787,6 +821,7 @@ public:
     void reserve (vector<std::uint64_t> countHistogram);
 
     bool kmerExist(string kmer);
+    bool kmerExist(uint64_t kmer);
 
     bool setCount(const string &kmer, std::uint64_t count);
     bool setCount(std::uint64_t kmer, std::uint64_t count);
@@ -912,6 +947,7 @@ public:
     void reserve (vector<std::uint64_t> countHistogram);
 
     bool kmerExist(string kmer);
+    bool kmerExist(uint64_t kmer);
 
     bool setCount(const string &kmer, std::uint64_t count);
     bool setCount(std::uint64_t kmer, std::uint64_t count);
@@ -966,13 +1002,13 @@ public:
     }
 
     template<typename T,typename Container>
-    T getKmerDefaultColumnValue(string kmer);
+    T getKmerDefaultColumnValue(const string& kmer);
 
     template<typename T,typename Container>
     T getKmerDefaultColumnValue(std::uint64_t kmer);
 
     template<typename T,typename Container>
-    void setKmerDefaultColumnValue(string kmer, T value);
+    void setKmerDefaultColumnValue(const string& kmer, T value);
 
     template<typename T,typename Container>
     void setKmerDefaultColumnValue(std::uint64_t kmer, T value);
@@ -994,14 +1030,14 @@ void kDataFrameBlight::setKmerColumnValue(const string& columnName,string kmer,T
 
 
 template<typename T,typename Container>
-T kDataFrameBlight::getKmerDefaultColumnValue(string kmer)
+T kDataFrameBlight::getKmerDefaultColumnValue(const string& kmer)
 {
   std::uint64_t kmerOrder=getkmerOrder(kmer);
   return ((Container*)defaultColumn)->getWithIndex(kmerOrder);
 }
 
 template<typename T,typename Container>
-void kDataFrameBlight::setKmerDefaultColumnValue(string kmer, T value)
+void kDataFrameBlight::setKmerDefaultColumnValue(const string& kmer, T value)
 {
   std::uint64_t kmerOrder=getkmerOrder(kmer);
   ((Container*)defaultColumn)->insert(value,kmerOrder);

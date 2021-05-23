@@ -99,6 +99,9 @@ kDataFrameBlight::kDataFrameBlight(uint64_t ksize,string input_fasta_file) {
 bool kDataFrameBlight::kmerExist(string kmerS) {
     return blight_index->get_presence_query(kmerS)[0];
 }
+bool kDataFrameBlight::kmerExist(uint64_t kmerS) {
+    throw logic_error("kDataFrameBlight doesnt implement kmerExit for uint64_T input. use string version instead");
+}
 
 
 bool kDataFrameBlight::insert(const string &kmerS, uint64_t count) {

@@ -181,7 +181,12 @@ uint64_t kDataFrame::getkmerOrder(const string &kmer)
     }
     return orderCheckpoints[it.getHashedKmer()]-offset;
 }
+void kDataFrameIterator::setKmerColumnValueFromOtherColumn(kDataFrame* input, string inputColName, string outputColName)
+{
+    std::uint64_t inputKmerOrder=input->getkmerOrder(getHashedKmer());
 
+    origin->columns[outputColName]->setValueFromColumn(input->columns[inputColName],inputKmerOrder,getOrder());
+}
 void kDataFrame::setKmerColumnValueFromOtherColumn(kDataFrame* input, string inputColName, string outputColName, std::uint64_t kmer)
 {
     std::uint64_t inputKmerOrder=input->getkmerOrder(kmer);

@@ -566,3 +566,6 @@ kDataFrameBMQFIterator::~kDataFrameBMQFIterator() {
 bool kDataFrameBMQF::kmerExist(string kmerS) {
     return getCount(kmerS) > 0 ;
 }
+bool kDataFrameBMQF::kmerExist(uint64_t kmer) {
+    return getCount(kmer) > 0 ;
+}

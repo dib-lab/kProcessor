@@ -65,11 +65,15 @@ namespace kProcessor {
 /// Applies a function on all the kmers in the input kDataframe. The output is another kDataframe with the transformed kmers.
     kDataFrame *transform(kDataFrame *input,  function<kmerRow (kmerRow i)>);
 
+    void transformInPlace(kDataFrame *input,  function<void (kDataFrameIterator& i)>);
+
 /// filter the kmers in the kdataframe. The output is another kDataframe with the filtered kmers.
-    kDataFrame *filter(kDataFrame *input,  function<bool (kmerRow i)>);
+    kDataFrame *filter(kDataFrame *input,  function<bool (kmerRow& i)>);
+    kDataFrame *filter(kDataFrame *input,  function<bool (kDataFrameIterator& i)>);
 
 /// aggregate all the kmers in the kdataframe into a single value. The output is one value.
     any aggregate(kDataFrame *input, any initial,  function<any (kmerRow i, any v)>);
+    any aggregate(kDataFrame *input, any initial,  function<any (kDataFrameIterator& i, any v)>);
 
 /*! Merge the a list of kDataframes into a one.
  *
