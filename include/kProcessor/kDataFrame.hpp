@@ -595,10 +595,9 @@ private:
     flat_hash_map<uint64_t, uint64_t> MAP;
 public:
     kDataFramePHMAP();
-
     kDataFramePHMAP(uint64_t ksize);
     kDataFramePHMAP(readingModes RM, hashingModes hash_mode, map<string, int> params);
-    kDataFramePHMAP(uint64_t ksize, hashingModes hash_mode = integer_hasher);
+    kDataFramePHMAP(uint64_t ksize, hashingModes hash_mode);
     kDataFramePHMAP(uint64_t kSize,vector<uint64_t> kmersHistogram);
 
     kDataFrame *getTwin();
