@@ -104,5 +104,7 @@ colored_kDataFrame *index(kmerDecoder *KD, string names_fileName, kDataFrame *fr
     colored_kDataFrame *
     index(kDataFrame *frame, std::map<std::string, int> parse_params, string filename, int chunks, string names_fileName);
 
+    colored_kDataFrame * index(kDataFrame *frame, string filename, int chunks, string names_fileName);
+
 }
 #endif
