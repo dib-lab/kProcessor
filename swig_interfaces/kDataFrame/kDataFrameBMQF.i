@@ -2,6 +2,7 @@ class kDataFrameBMQF: public kDataFrame{
 public:
 
   kDataFrameBMQF(uint64_t kSize);
+  kDataFrameBMQF(readingModes RM, hashingModes HM, map<string, int> params);
   kDataFrameBMQF(uint64_t ksize,uint8_t q,uint8_t fixedCounterSize,uint8_t tagSize,double falsePositiveRate);
   kDataFrameBMQF(bufferedMQF* bufferedmqf,uint64_t ksize,double falsePositiveRate);
 

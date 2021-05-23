@@ -340,13 +340,17 @@ protected:
 public:
   kDataFrameMQF();
   kDataFrameMQF(uint64_t kSize);
-  kDataFrameMQF(uint64_t kSize, int mode);
+  kDataFrameMQF(uint64_t kSize, hashingModes hash_mode);
+  kDataFrameMQF(readingModes RM, hashingModes HM, map<string, int> params);
   kDataFrameMQF(uint64_t ksize,uint8_t q,uint8_t fixedCounterSize,uint8_t tagSize
     ,double falsePositiveRate);
 
-  kDataFrameMQF(uint64_t ksize, uint8_t q, int mode);
+  kDataFrameMQF(uint64_t ksize, uint8_t q, hashingModes hash_mode = integer_hasher);
 
   kDataFrameMQF(QF* mqf,uint64_t ksize,double falsePositiveRate);
+  kDataFrameMQF(QF *mqf, uint64_t ksize, hashingModes hash_mode);
+  kDataFrameMQF(QF *mqf, readingModes RM, hashingModes HM, map<string, int> params);
+  
   //count histogram is array where count of kmers repeated n times is found at index n. index 0 holds number of distinct kmers.
   kDataFrameMQF(uint64_t ksize,vector<uint64_t> countHistogram,uint8_t tagSize
     ,double falsePositiveRate);
@@ -439,7 +443,9 @@ private:
   kDataFrameIterator* endIterator;
 public:
   kDataFrameBMQF();
-  kDataFrameBMQF(uint64_t kSize);
+  kDataFrameBMQF(readingModes RM, hashingModes HM, map<string, int> params);
+  kDataFrameBMQF(uint64_t kSize, hashingModes hash_mode = integer_hasher);
+  kDataFrameBMQF(bufferedMQF* bufferedmqf, readingModes RM, hashingModes HM, map<string, int> params);
   kDataFrameBMQF(uint64_t ksize,uint8_t q,uint8_t fixedCounterSize,uint8_t tagSize,double falsePositiveRate);
   kDataFrameBMQF(bufferedMQF* bufferedmqf,uint64_t ksize,double falsePositiveRate);
   //count histogram is array where count of kmers repeated n times is found at index n. index 0 holds number of distinct kmers.
@@ -511,6 +517,7 @@ private:
 public:
   kDataFrameMAP();
   kDataFrameMAP(uint64_t ksize);
+  kDataFrameMAP(readingModes RM, hashingModes HM, map<string, int> params);
   kDataFrameMAP(uint64_t kSize,vector<uint64_t> kmersHistogram);
   kDataFrame* getTwin();
   void reserve (uint64_t n);
@@ -588,9 +595,9 @@ private:
     flat_hash_map<uint64_t, uint64_t> MAP;
 public:
     kDataFramePHMAP();
-
     kDataFramePHMAP(uint64_t ksize);
-    kDataFramePHMAP(uint64_t ksize, int mode);
+    kDataFramePHMAP(readingModes RM, hashingModes hash_mode, map<string, int> params);
+    kDataFramePHMAP(uint64_t ksize, hashingModes hash_mode);
     kDataFramePHMAP(uint64_t kSize,vector<uint64_t> kmersHistogram);
 
     kDataFrame *getTwin();

@@ -34,6 +34,25 @@ using namespace std; // Extremly important
 
 // no need to include subclasses if all their methods (that we are interested in) are defined in the superclass
 
+// Wrapping enums of kmerDecoder hashing/reading modes
+
+
+enum readingModes{
+    KMERS = 1,
+    SKIPMERS = 2,
+    MINIMIZERS = 3,
+    PROTEIN = 4,
+};
+
+enum hashingModes{
+    mumur_hasher = 0,
+    integer_hasher = 1,
+    TwoBits_hasher = 2,
+    nonCanonicalInteger_Hasher = 3,
+    protein_hasher = 4,
+    proteinDayhoff_hasher = 5,
+};
+
 /******** kDataFrame Interface ************/
 %include "swig_interfaces/kDataFrame/kDataFrameIterator.i"
 %include "swig_interfaces/kDataFrame/kmerRow.i"
@@ -85,7 +104,7 @@ using namespace std; // Extremly important
 /******** HashUtils Interface ************/
 
 %{
-#include "HashUtils/hashutil.hpp" // including HashUtils
+#include "hashUtils/hashutil.hpp" // including HashUtils
 %}
 
 %include "swig_interfaces/HashUtils/hashutil.i"

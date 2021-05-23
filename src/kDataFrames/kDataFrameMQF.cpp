@@ -138,40 +138,17 @@ kDataFrameMQF::kDataFrameMQF() : kDataFrame() {
     this->class_name = "MQF"; // Temporary until resolving #17
     mqf = new QF();
     qf_init(mqf, (1ULL << 16), 2 * kSize, 0, 2, 32, true, "", 2038074761);
-    KD = (new Kmers(kSize));
+    KD = (new Kmers(kSize, integer_hasher));
     falsePositiveRate = 0;
     hashbits = 2 * kSize;
     range = (1ULL << hashbits);
 }
 
-kDataFrameMQF::kDataFrameMQF(uint64_t ksize, uint8_t q, int mode) : kDataFrame(ksize) {
+kDataFrameMQF::kDataFrameMQF(uint64_t ksize, uint8_t q, hashingModes hash_mode) : kDataFrame(ksize) {
 
     this->class_name = "MQF"; // Temporary until resolving #17
 
-    // Mode 0: Murmar Hashing | Irreversible
-    // Mode 1: Integer Hashing | Reversible | Full Hashing
-    // Mode 2: TwoBitsHashing | Not considered hashing, just store the two bits representation
-
-    KD = new Kmers(ksize, mode);
-
-
-//    switch (mode) {
-//        case 0:
-//            hasher = (new MumurHasher(2038074761));
-//            break;
-//        case 1:
-//            hasher = (new IntegerHasher(kSize));
-//            break;
-//        case 2:
-//            hasher = (new QHasher(kSize, q));
-//            break;
-//        case 3:
-//            hasher = (new TwoBitsHasher(kSize));
-//            break;
-//        default:
-//            hasher = (new IntegerHasher(kSize));
-//            break;
-//    }
+    KD = new Kmers(ksize, hash_mode);
 
     mqf = new QF();
     qf_init(mqf, (1ULL << q), 2 * ksize, 0, 2, 32, true, "", 2038074761);
@@ -189,20 +166,20 @@ kDataFrameMQF::kDataFrameMQF(uint64_t ksize, uint8_t q, uint8_t fixedCounterSize
     qf_init(mqf, (1ULL << q), 2 * ksize, tagSize, fixedCounterSize, 32, true, "", 2038074761);
     this->falsePositiveRate = falsePositiveRate;
     if (falsePositiveRate == 0) {
-        KD = (new Kmers(kSize,1));
+        KD = (new Kmers(kSize, integer_hasher));
     } else if (falsePositiveRate < 1) {
-        KD = (new Kmers(kSize, 0));
+        KD = (new Kmers(kSize, mumur_hasher));
     }
     hashbits = 2 * kSize;
     range = (1ULL << hashbits);
 
 }
 
-kDataFrameMQF::kDataFrameMQF(uint64_t ksize, int mode) :
+kDataFrameMQF::kDataFrameMQF(uint64_t ksize, hashingModes hash_mode) :
     kDataFrame(ksize) {
     this->class_name = "MQF"; // Temporary until resolving #17
     this->falsePositiveRate = 0.0;
-    KD = new Kmers(ksize, mode);
+    KD = new Kmers(ksize, hash_mode);
     hashbits = 2 * kSize;
     range = (1ULL << hashbits);
     mqf = NULL;
@@ -220,16 +197,49 @@ kDataFrameMQF::kDataFrameMQF(uint64_t ksize) :
     reserve(1000000);
 }
 
+kDataFrameMQF::kDataFrameMQF(readingModes RM, hashingModes HM, map<string, int> params){
+    this->class_name = "MQF"; // Temporary until resolving #17
+    this->falsePositiveRate = 0.0;
+    KD = kmerDecoder::getInstance(RM, HM, params);
+    this->kSize = KD->get_kSize();
+    hashbits = 2 * kSize;
+    range = (1ULL << hashbits);
+    mqf = NULL;
+    reserve(1000000);
+}
+
 kDataFrameMQF::kDataFrameMQF(QF *mqf, uint64_t ksize, double falsePositiveRate) :
         kDataFrame(ksize) {
     this->class_name = "MQF"; // Temporary until resolving #17
     this->mqf = mqf;
     this->falsePositiveRate = falsePositiveRate;
     if (falsePositiveRate == 0) {
-        KD = (new Kmers(kSize));
+        KD = (new Kmers(kSize, integer_hasher));
     } else if (falsePositiveRate < 1) {
-        KD = (new Kmers(kSize, 0));
+        KD = (new Kmers(kSize, mumur_hasher));
     }
+    hashbits = this->mqf->metadata->key_bits;
+    hashbits = 2 * kSize;
+    range = (1ULL << hashbits);
+}
+
+kDataFrameMQF::kDataFrameMQF(QF *mqf, uint64_t ksize, hashingModes hash_mode) :
+        kDataFrame(ksize) {
+    this->class_name = "MQF"; // Temporary until resolving #17
+    this->mqf = mqf;
+    this->falsePositiveRate = falsePositiveRate;
+    KD = (new Kmers(kSize, hash_mode));
+    hashbits = this->mqf->metadata->key_bits;
+    hashbits = 2 * kSize;
+    range = (1ULL << hashbits);
+}
+
+kDataFrameMQF::kDataFrameMQF(QF *mqf, readingModes RM, hashingModes HM, map<string, int> params){
+    this->class_name = "MQF"; // Temporary until resolving #17
+    this->mqf = mqf;
+    this->falsePositiveRate = falsePositiveRate;
+    KD = kmerDecoder::getInstance(RM, HM, params);
+    this->kSize = KD->get_kSize();
     hashbits = this->mqf->metadata->key_bits;
     hashbits = 2 * kSize;
     range = (1ULL << hashbits);
@@ -499,8 +509,11 @@ float kDataFrameMQF::max_load_factor() {
 void kDataFrameMQF::save(string filePath) {
     //filePath += ".mqf";
     ofstream file(filePath + ".extra");
+
     file << kSize << endl;
     file << this->KD->hash_mode << endl;
+    file << this->KD->slicing_mode << endl;
+    file << this->KD->params_to_string() << endl;
     // uint64_t legendSize=tagsLegend.size();
     // file<<legendSize<<endl;
     // auto it = tagsLegend.begin();
@@ -515,15 +528,25 @@ void kDataFrameMQF::save(string filePath) {
 
 kDataFrame *kDataFrameMQF::load(string filePath) {
     ifstream file(filePath + ".extra");
-    uint64_t filekSize, hashing_mode;
+    uint64_t filekSize;
+
+    int hashing_mode, reading_mode;
+
+    string KD_params_string;
+
     file >> filekSize;
     file >> hashing_mode;
-    double flasePositiveRate;
-    flasePositiveRate = (hashing_mode == 1) ? 0 : 0.5;
+    file >> reading_mode;
+    file >> KD_params_string;
+
+    hashingModes hash_mode = static_cast<hashingModes>(hashing_mode);
+    readingModes slicing_mode = static_cast<readingModes>(reading_mode);
+    map<string, int> kmerDecoder_params = kmerDecoder::string_to_params(KD_params_string);
+
 
     QF *mqf = new QF();
     qf_deserialize(mqf, (filePath + ".mqf").c_str());
-    return new kDataFrameMQF(mqf, filekSize, flasePositiveRate);
+    return new kDataFrameMQF(mqf, slicing_mode, hash_mode, kmerDecoder_params);
 }
 
 void kDataFrameMQF::preprocessKmerOrder()

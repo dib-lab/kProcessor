@@ -75,14 +75,21 @@ kDataFrameMAPIterator::~kDataFrameMAPIterator() {
 kDataFrameMAP::kDataFrameMAP(uint64_t ksize) {
     this->class_name = "MAP"; // Temporary until resolving #17
     this->kSize = ksize;
-    KD = new Kmers(ksize, 2);
+    KD = new Kmers(ksize, TwoBits_hasher);
 //    hasher = new wrapperHasher<std::map<uint64_t, uint64_t>::hasher>(MAP.hash_function(), ksize);
 //    this->MAP = std::map<uint64_t, uint64_t>(1000);
     // this->hasher = (new IntegerHasher(ksize));
 }
+
+kDataFrameMAP::kDataFrameMAP(readingModes RM, hashingModes HM, map<string, int> params) {
+    this->class_name = "MAP"; // Temporary until resolving #17
+    KD = kmerDecoder::getInstance(RM, HM, params);
+    this->kSize = KD->get_kSize();
+}
+
 kDataFrameMAP::kDataFrameMAP(uint64_t ksize,vector<uint64_t> kmersHistogram) {
     this->class_name = "MAP"; // Temporary until resolving #17
-    KD = new Kmers(ksize, 2);
+    KD = new Kmers(ksize, TwoBits_hasher);
     this->kSize = ksize;
     uint64_t countSum=0;
     for(auto h:kmersHistogram)
@@ -95,7 +102,7 @@ kDataFrameMAP::kDataFrameMAP(uint64_t ksize,vector<uint64_t> kmersHistogram) {
 kDataFrameMAP::kDataFrameMAP() {
     this->class_name = "MAP"; // Temporary until resolving #17
     this->kSize = 23;
-    KD = new Kmers(this->kSize, 2);
+    KD = new Kmers(this->kSize, TwoBits_hasher);
 //    this->MAP = std::map<uint64_t, uint64_t>(1000);
     // hasher=new wrapperHasher<std::map<uint64_t,uint64_t>::hasher >(MAP.hash_function(),kSize);
     // this->hasher = (new IntegerHasher(23));
@@ -183,7 +190,9 @@ void kDataFrameMAP::save(string filePath) {
     // Write the kmerSize
     ofstream file(filePath + ".extra");
     file << kSize << endl;
-    file << 2 << endl;
+    file << this->KD->hash_mode << endl;
+    file << this->KD->slicing_mode << endl;
+    file << this->KD->params_to_string() << endl;
 
     std::ofstream os(filePath + ".map", std::ios::binary);
     cereal::BinaryOutputArchive archive(os);
@@ -196,17 +205,27 @@ kDataFrame *kDataFrameMAP::load(string filePath) {
     // Load kSize
     ifstream file(filePath + ".extra");
     uint64_t kSize;
-    int hashing_mode;
+
+    int hashing_mode, reading_mode;
+
+    string KD_params_string;
+
     file >> kSize;
     file >> hashing_mode;
+    file >> reading_mode;
+    file >> KD_params_string;
 
-    if(hashing_mode != 2){
+    hashingModes hash_mode = static_cast<hashingModes>(hashing_mode);
+    readingModes slicing_mode = static_cast<readingModes>(reading_mode);
+    map<string, int> kmerDecoder_params = kmerDecoder::string_to_params(KD_params_string);
+
+    if(hash_mode != TwoBits_hasher){
         std::cerr << "Error: In the kDataFrameMAP, hashing must be 2:TwoBitsRepresentation mode" << endl;
         exit(1);
     }
 
     // Initialize kDataFrameMAP
-    kDataFrameMAP *KMAP = new kDataFrameMAP(kSize);
+    kDataFrameMAP *KMAP = new kDataFrameMAP(slicing_mode, hash_mode, kmerDecoder_params);
 
     // Load the hashMap into the kDataFrameMAP
     std::ifstream os(filePath + ".map", std::ios::binary);

@@ -4,7 +4,8 @@ public:
   kDataFrameMQF();
   kDataFrameMQF(uint64_t kSize);
   kDataFrameMQF(uint64_t kSize, int mode);
-  kDataFrameMQF(uint64_t ksize, uint8_t q, int mode);
+  kDataFrameMQF(uint64_t ksize, uint8_t q, hashingModes HM);
+  kDataFrameMQF(readingModes RM, hashingModes HM, map<string, int> params);
   kDataFrameMQF(uint64_t ksize,uint8_t q,uint8_t fixedCounterSize,uint8_t tagSize,double falsePositiveRate);
 
   ~kDataFrameMQF(){
