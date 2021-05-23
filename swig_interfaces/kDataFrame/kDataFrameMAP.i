@@ -3,6 +3,7 @@ class kDataFrameMAP : public kDataFrame
 public:
   kDataFrameMAP();
   kDataFrameMAP(uint64_t ksize);
+  kDataFrameMAP(readingModes RM, hashingModes HM, map<string, int> params);
   kDataFrame* getTwin();
   void reserve (uint64_t n);
 
