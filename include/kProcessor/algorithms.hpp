@@ -81,7 +81,7 @@ namespace kProcessor {
  * The function to decide the merging behavior takes a list of kmerRows,all have the same kmer hashedKmer, as an input and output one kmer row to be inserted in the result kDataFrame. If the returned kmer row has count equal zero nothing to be inserted.
  * The function will be called repeatedly through merging. This function is used to implement the set functions.
  */
-    void merge(const vector<kDataFrame *> &input, kDataFrame *result, function<kmerRow (vector<kmerRow> &i)>);
+    void merge(const vector<kDataFrame *> &input, kDataFrame *result, function<kmerRow (vector<kDataFrameIterator*> &i)>);
 
 /// Calculate the union of the kDataFrames. The result kDataframe will have all the kmers in the input list of kDataframes. The count of the kmers equals to the sum of the kmer count in the input list.
     kDataFrame *kFrameUnion(const vector<kDataFrame *> &input);

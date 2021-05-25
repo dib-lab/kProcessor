@@ -327,18 +327,18 @@ namespace kProcessor {
             numKmers += kframe->size();
         }
         res->reserve((uint64_t) ((double) numKmers * 0.75));
-        merge(input, res, [&](vector<kmerRow> &input) -> kmerRow {
+        merge(input, res, [&](vector<kDataFrameIterator*> &input) -> kmerRow {
             kmerRow res;
             bool exists=true;
             for (auto i : kmersToKeep ) {
-                if (input[i].count == 0) {
+                if (input[i] == nullptr) {
                     exists = false;
                     break;
                 }
             }
             if(exists) {
                 uint32_t i=kmersToKeep[0];
-                return kmerRow(input[i].kmer,input[i].hashedKmer,input[i].count,input[i].order,nullptr);
+                return kmerRow(input[i]->getKmer(),input[i]->getHashedKmer(),input[i]->getCount(),input[i]->getOrder(),nullptr);
             }
             return kmerRow();
         });
@@ -541,8 +541,8 @@ namespace kProcessor {
 
 
     struct CustomKmerRow {
-        bool operator()(const pair<kmerRow, int> &lhs, const pair<kmerRow, int> &rhs) {
-            return lhs.first.hashedKmer > rhs.first.hashedKmer;
+        bool operator()(const pair<kDataFrameIterator*, int> &lhs, const pair<kDataFrameIterator*, int> &rhs) {
+            return lhs.first->getHashedKmer() > rhs.first->getHashedKmer();
         }
     };
 
@@ -554,10 +554,10 @@ namespace kProcessor {
         }
     }
 
-    void merge(const vector<kDataFrame *> &input, kDataFrame *res,function<kmerRow (vector<kmerRow> &i)> fn) {
+    void merge(const vector<kDataFrame *> &input, kDataFrame *res,function<kmerRow (vector<kDataFrameIterator*> &i)> fn) {
         terminate_if_kDataFrameMAP(input);
         unordered_map<string,Column*> columns;
-        priority_queue<pair<kmerRow, int>, vector<pair<kmerRow, int> >, CustomKmerRow> Q;
+        priority_queue<pair<kDataFrameIterator*, int>, vector<pair<kDataFrameIterator*, int> >, CustomKmerRow> Q;
         vector<kDataFrameIterator> iterators(input.size());
         for (unsigned int i = 0; i < input.size(); i++) {
             for(auto col: input[i]->columns)
@@ -569,36 +569,42 @@ namespace kProcessor {
             iterators[i] = input[i]->begin();
             if (iterators[i] != input[i]->end()) {
                 //  cout<<i<<" "<<(*iterators[i]).hashedKmer<<endl;
-                Q.push(make_pair(iterators[i].getKmerRow(), i));
+                //auto tmp=iterators[i].getKmerRow();
+                Q.push(make_pair(&iterators[i], i));
             }
         }
-        vector<kmerRow> current(input.size());
+        vector<kDataFrameIterator* > current(input.size());
         uint64_t index=0;
         while (Q.size() > 0) {
             for (unsigned int i = 0; i < current.size(); i++)
-                current[i] = kmerRow();
-            pair<kmerRow, int> top = Q.top();
+                current[i] = nullptr;
+            pair<kDataFrameIterator*, int> top = Q.top();
+            uint64_t topHash=top.first->getHashedKmer();
             Q.pop();
-            iterators[top.second]++;
+//            iterators[top.second]++;
             current[top.second] = top.first;
             //  cout<<top.first.hashedKmer<<" "<<top.second<<endl;
-            if (iterators[top.second] != input[top.second]->end())
-                Q.push(make_pair(iterators[top.second].getKmerRow(), top.second));
-            while (!Q.empty() && top.first.hashedKmer == Q.top().first.hashedKmer) {
+//            if (iterators[top.second] != input[top.second]->end()) {
+//                Q.push(make_pair(&iterators[top.second], top.second));
+//            }
+
+            while (!Q.empty() && topHash == Q.top().first->getHashedKmer()) {
                 top = Q.top();
                 Q.pop();
                 current[top.second] = top.first;
-                iterators[top.second]++;
-                if (iterators[top.second] != input[top.second]->end())
-                    Q.push(make_pair(iterators[top.second].getKmerRow(), top.second));
+                //iterators[top.second]++;
+//                if (iterators[top.second] != input[top.second]->end()) {
+//                    Q.push(make_pair(&iterators[top.second], top.second));
+//                }
             }
 
             kmerRow newRow = fn(current);
+
             if(newRow.count > 0) {
                 res->insert(newRow);
                 for(uint32_t i=0;i<current.size();i++)
                 {
-                    if(current[i].count!=0)
+                    if(current[i]!= nullptr)
                     {
                         for(auto col: input[i]->columns)
                         {
@@ -609,6 +615,17 @@ namespace kProcessor {
                 }
                 index++;
             }
+            for (unsigned int i = 0; i < current.size(); i++)
+            {
+                if(current[i] != nullptr) {
+                    (*current[i])++;
+                    if (*current[i] != input[i]->end())
+                        Q.push(make_pair(current[i], top.second));
+
+                }
+            }
+
+
         }
         for(auto col: columns)
         {
@@ -625,14 +642,14 @@ namespace kProcessor {
             numKmers += kframe->size();
         }
         res->reserve((uint64_t) ((double) numKmers * 0.75));
-        merge(input, res, [](vector<kmerRow> &input) -> kmerRow {
+        merge(input, res, [](vector<kDataFrameIterator*> &input) -> kmerRow {
             kmerRow res;
             for (auto & i : input) {
-                if (i.count != 0) {
-                    res.kmer = i.kmer;
-                    res.hashedKmer = i.hashedKmer;
+                if (i->getCount() != 0) {
+                    res.kmer = i->getKmer();
+                    res.hashedKmer = i->getHashedKmer();
                 }
-                res.count += i.count;
+                res.count += i->getCount();
             }
             return res;
         });
@@ -646,11 +663,11 @@ namespace kProcessor {
             numKmers = min(numKmers, (uint64_t) kframe->size());
         }
         res->reserve((uint64_t) ((double) numKmers * 1.2));
-        merge(input, res, [](vector<kmerRow> &input) -> kmerRow {
-            kmerRow res = input[0];
+        merge(input, res, [](vector<kDataFrameIterator*> &input) -> kmerRow {
+            kmerRow res = input[0]->getKmerRow();
             for (unsigned int i = 1; i < input.size(); i++) {
                 //cout<<input[i].kmer<<endl;
-                res.count = min(res.count, input[i].count);
+                res.count = min(res.count, input[i]->getCount());
             }
             if (res.count == 0)
                 return kmerRow();
@@ -663,11 +680,11 @@ namespace kProcessor {
 
     kDataFrame *kFrameDiff(const vector<kDataFrame *> &input) {
         kDataFrame *res = input[0]->getTwin();
-        merge(input, res, [](vector<kmerRow> &input) -> kmerRow {
-            kmerRow res = input[0];
+        merge(input, res, [](vector<kDataFrameIterator*> &input) -> kmerRow {
+            kmerRow res = input[0]->getKmerRow();
             bool found = false;
             for (unsigned int i = 1; i < input.size(); i++) {
-                if (input[i].count > 0) {
+                if (input[i]->getCount() > 0) {
                     found = true;
                     break;
                 }
