@@ -20,8 +20,10 @@ cmake --build build -j4
 ```
 
 ## Download the Data
+```bash
 cd build/usecases/kDifferentialExpression
 ./downloadData.sh
+```
 
 
 ## run
