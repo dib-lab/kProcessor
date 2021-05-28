@@ -129,8 +129,8 @@ void kDataFrame::preprocessKmerOrder()
   int checkpointsDistance=64;
   uint32_t index=0;
   kDataFrameIterator it=this->begin();
-  while(it!=this->end())
-  uint32_t index=0;
+//  while(it!=this->end())
+ // uint32_t index=0;
 
   for(auto kmer:*this)
   {
