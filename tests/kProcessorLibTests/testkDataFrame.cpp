@@ -647,7 +647,7 @@ TEST_P(kDataFrameTest,saveAndIterateOverAllKmers)
         break;
       }
     }
-    string fileName="tmp.kdataframe."+gen_random(4);
+    string fileName="tmp.kdataframe."+gen_random(8);
     kframe->save(fileName);
     kDataFrame* kframeLoaded=kDataFrame::load(fileName);
     int checkedKmers=0;
@@ -699,7 +699,7 @@ TEST_P(kDataFrameTest,transformPlus10)
       it++;
     }
     EXPECT_EQ(numCheckedKmers,numInsertedkmers);
-    delete kframe;
+
 
 }
 
@@ -729,7 +729,7 @@ TEST_P(kDataFrameTest,transformFilterLessThan5)
       ASSERT_GE(count,5);
       it++;
     }
-    delete kframe;
+
 
 }
 
@@ -762,7 +762,7 @@ TEST_P(kDataFrameTest,transformFilterLessThan5MultipleColumns)
         ASSERT_GE(count,5);
         it++;
     }
-    delete kframe2;
+
 
 }
 
@@ -1358,7 +1358,7 @@ TEST_P(kDataFrameBufferedTest,saveAndIterateOverAllKmers)
         it++;
     }
     EXPECT_EQ(checkedKmers,numInsertedKmers);
-    delete kframe;
+    delete kframeLoaded;
 
 }
 
@@ -1395,7 +1395,7 @@ TEST_P(kDataFrameBufferedTest,saveAndIterateOverAllKmersNoMemory)
         it++;
     }
     EXPECT_EQ(checkedKmers,numInsertedKmers);
-    delete kframe;
+    delete kframeLoaded;
 
 }
 

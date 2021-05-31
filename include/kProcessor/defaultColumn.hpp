@@ -22,6 +22,7 @@ public:
     virtual Column* getTwin()=0;
     virtual void setSize(uint32_t size)=0;
     virtual void resize(uint32_t size)=0;
+    virtual uint32_t size()=0;
     static Column* getContainerByName(size_t name);
 
     virtual void serialize(string filename)=0;
@@ -54,7 +55,9 @@ public:
     }
     uint32_t  insertAndGetIndex(T item);
     T getWithIndex(uint32_t index);
-
+    uint32_t size(){
+        return dataV.size();
+    }
     void resize(uint32_t size)
     {
         dataV.resize(size);
@@ -230,7 +233,9 @@ public:
     Column* getTwin();
     void setSize(uint32_t size);
     void resize(uint32_t size);
-
+    uint32_t size(){
+        return colors.size();
+    }
 
 
 };
@@ -549,6 +554,9 @@ public:
     }
     void set(uint32_t index,vector<uint32_t>& v)
     {
+        (void)index;
+        (void)v;
+        
         throw logic_error("set is not supported");
 //        if(v.size()!=colorsize)
 //            cout<<"error "<<index<<" "<<colorsize<<" "<<v.size()<<endl;
@@ -773,7 +781,10 @@ public:
     Column* getTwin();
     void setSize(uint32_t size);
     void resize(uint32_t size);
-
+    uint32_t size()
+    {
+        return numColors;
+    }
 
 };
 
@@ -804,7 +815,9 @@ public:
     Column* getTwin();
     void setSize(uint32_t size);
     void resize(uint32_t size);
-
+    uint32_t size(){
+        return colors.size();
+    }
 
 };
 
@@ -823,7 +836,10 @@ public:
 
     }
 
-
+    uint32_t  size()
+    {
+        return index.size();
+    }
     T get(uint32_t index);
 
     void serialize(string filename);

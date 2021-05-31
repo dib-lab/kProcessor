@@ -62,10 +62,13 @@ void differntialExpression(string genes_file,
     requiredIndices={kFrames.size()-1};
     string colorColumn="color"+to_string(kFrames.size()-1);
     cout<<"Load "<<genes_file<< " kmers: "<<kFrames.back()->size()<<endl;
+    cout<<"Load "<<genes_file<< " kmers: "<<genesFrame->size()<<endl;
 
+
+    cout<<"Load "<<genes_file<< " kmers: "<<genesFrame->size()<<endl;
     kDataFrame* res= kProcessor::innerJoin(kFrames, requiredIndices);
 
-
+    cout<<"Joined "<<res->size()<<" kmers"<<endl;
     res=kProcessor::filter(res,[=](kDataFrameIterator& r) -> bool {
         for(unsigned i=0; i < allDatasets ;i++ ){
             uint32_t count;

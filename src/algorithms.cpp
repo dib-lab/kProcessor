@@ -564,7 +564,7 @@ namespace kProcessor {
             {
                 string newColumnName=col.first+to_string(i);
                 columns[newColumnName]=col.second->getTwin();
-                columns[newColumnName]->setSize(input[i]->size());
+                columns[newColumnName]->setSize(res->size());
             }
             iterators[i] = input[i]->begin();
             if (iterators[i] != input[i]->end()) {
@@ -609,6 +609,10 @@ namespace kProcessor {
                         for(auto col: input[i]->columns)
                         {
                             string newColumnName=col.first+to_string(i);
+                            if(index>=columns[newColumnName]->size())
+                            {
+                                columns[newColumnName]->resize(res->size());
+                            }
                             columns[newColumnName]->setValueFromColumn( col.second,iterators[i].getOrder(),index);
                         }
                     }
@@ -619,8 +623,8 @@ namespace kProcessor {
             {
                 if(current[i] != nullptr) {
                     (*current[i])++;
-                    if (*current[i] != input[i]->end())
-                        Q.push(make_pair(current[i], top.second));
+                    if ((*current[i]) != input[i]->end())
+                        Q.push(make_pair(current[i], i));
 
                 }
             }
