@@ -15,6 +15,7 @@ snakemake >=5.23
 ## Build
 
 ```bash
+git checkout v2
 cmake -Bbuild -DBUILD_USECASES=1 
 cmake --build build -j4
 ```
