@@ -107,7 +107,7 @@ void differntialExpression(string genes_file,
     });
 
     auto foldChangeByGene=new unordered_map<uint32_t ,vector<double> >();
-    any genesGatherAny=kProcessor::aggregate(res,foldChangeByGene,  [=](kmerRow it, any v) -> any {
+    any genesGatherAny=kProcessor::aggregate(res,foldChangeByGene,  [=](kDataFrameIterator& it, any v) -> any {
         auto dict=any_cast<unordered_map<uint32_t ,vector<double>>*>(v);
         double foldChange;
         it.getColumnValue<double,vectorColumn<double> >(foldChangeColName,foldChange);

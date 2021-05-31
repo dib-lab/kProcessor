@@ -36,6 +36,7 @@ kDataFrameMQFIterator::kDataFrameMQFIterator(const kDataFrameMQFIterator &other)
     qfi->num_clusters = other.qfi->num_clusters;
     qfi->c_info = other.qfi->c_info;
     KD = other.KD;
+    order=other.order;
 }
 
 _kDataFrameIterator *kDataFrameMQFIterator::clone() {
