@@ -279,11 +279,10 @@ kDataFrameIterator kDataFramePHMAP::begin() {
             (kDataFrame *) this));
 }
 
-//kDataFrameIterator kDataFramePHMAP::end() {
-//    return *(new kDataFrameIterator(
-//            (_kDataFrameIterator *) new kDataFramePHMAPIterator(MAP.end(), this, kSize),
-//            (kDataFrame *) this));
-//}
+kDataFrameIterator kDataFramePHMAP::end() {
+    ((kDataFramePHMAPIterator*)endIterator->iterator)->iterator=MAP.end();
+    return *endIterator;
+}
 kDataFrameIterator kDataFramePHMAP::find(const string &kmer) {
   return (kDataFrameIterator(
           (_kDataFrameIterator *) new kDataFramePHMAPIterator(MAP.find(KD->hash_kmer(kmer)), this, kSize),

@@ -111,8 +111,8 @@ public:
 class kDataFrameIterator{
 private:
   kDataFrame* origin;
-  _kDataFrameIterator* iterator;
 public:
+    _kDataFrameIterator* iterator;
     using iterator_category = std::forward_iterator_tag;
   kDataFrameIterator(){
     iterator=nullptr;
@@ -773,10 +773,10 @@ public:
 
 class kDataFramePHMAPIterator : public _kDataFrameIterator {
 private:
-    flat_hash_map<std::uint64_t, std::uint64_t>::iterator iterator;
     kDataFramePHMAP *origin;
     kmerDecoder * KD;
 public:
+    flat_hash_map<std::uint64_t, std::uint64_t>::iterator iterator;
     kDataFramePHMAPIterator(flat_hash_map<std::uint64_t, std::uint64_t>::iterator, kDataFramePHMAP *origin, std::uint64_t kSize);
 
     kDataFramePHMAPIterator(const kDataFramePHMAPIterator &);
@@ -850,7 +850,7 @@ public:
 
     kDataFrameIterator begin();
 
-   // kDataFrameIterator end();
+    kDataFrameIterator end();
     kDataFrameIterator find(const string &kmer);
     kDataFrameIterator find(uint64_t kmer);
 
