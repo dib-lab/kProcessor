@@ -623,10 +623,10 @@ public:
 
 class kDataFrameMAPIterator:public _kDataFrameIterator{
 private:
-    std::map<std::uint64_t, std::uint64_t>::iterator iterator;
     kDataFrameMAP* origin;
     kmerDecoder * KD;
 public:
+    std::map<std::uint64_t, std::uint64_t>::iterator iterator;
     kDataFrameMAPIterator(std::map<std::uint64_t, std::uint64_t>::iterator,kDataFrameMAP* origin,std::uint64_t kSize);
     kDataFrameMAPIterator(const kDataFrameMAPIterator&);
     kDataFrameMAPIterator& operator ++ (int);
@@ -756,7 +756,7 @@ public:
   float load_factor();
   float max_load_factor();
   kDataFrameIterator begin();
- // kDataFrameIterator end();
+  kDataFrameIterator end();
   kDataFrameIterator find(const string &kmer);
   kDataFrameIterator find(uint64_t kmer);
   std::uint64_t bucket(string kmer);

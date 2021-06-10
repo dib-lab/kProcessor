@@ -305,7 +305,6 @@ namespace kProcessor {
                 res->setKmerColumnValueFromOtherColumn(input,col.first, newColName,kmer.getKmer());
             }
         }
-        delete input;
         return res;
 
     }
@@ -368,7 +367,7 @@ namespace kProcessor {
                 res->setKmerColumnValueFromOtherColumn(input,col.first, newColName,kmer.getHashedKmer());
             }
         }
-        delete input;
+
         return res;
 
     }
@@ -409,7 +408,6 @@ namespace kProcessor {
                 col.second->resize(res->size());
                 res->addColumn(col.first,col.second);
             }
-            delete input;
             return res;
         }
 
@@ -649,7 +647,7 @@ namespace kProcessor {
         merge(input, res, [](vector<kDataFrameIterator*> &input) -> kmerRow {
             kmerRow res;
             for (auto & i : input) {
-                if (i->getCount() != 0) {
+                if (i != nullptr && i->getCount() != 0) {
                     res.kmer = i->getKmer();
                     res.hashedKmer = i->getHashedKmer();
                 }
@@ -668,10 +666,14 @@ namespace kProcessor {
         }
         res->reserve((uint64_t) ((double) numKmers * 1.2));
         merge(input, res, [](vector<kDataFrameIterator*> &input) -> kmerRow {
-            kmerRow res = input[0]->getKmerRow();
-            for (unsigned int i = 1; i < input.size(); i++) {
+            uint32_t i=0;
+            while(input[i] == nullptr)
+                i++;
+            kmerRow res = input[i]->getKmerRow();
+            for ( i = 1; i < input.size(); i++) {
                 //cout<<input[i].kmer<<endl;
-                res.count = min(res.count, input[i]->getCount());
+                if(input[i]!= nullptr)
+                    res.count = min(res.count, input[i]->getCount());
             }
             if (res.count == 0)
                 return kmerRow();
@@ -685,10 +687,13 @@ namespace kProcessor {
     kDataFrame *kFrameDiff(const vector<kDataFrame *> &input) {
         kDataFrame *res = input[0]->getTwin();
         merge(input, res, [](vector<kDataFrameIterator*> &input) -> kmerRow {
-            kmerRow res = input[0]->getKmerRow();
+            uint32_t i=0;
+            while(input[i] == nullptr)
+                i++;
+            kmerRow res = input[i]->getKmerRow();
             bool found = false;
-            for (unsigned int i = 1; i < input.size(); i++) {
-                if (input[i]->getCount() > 0) {
+            for (i = 1; i < input.size(); i++) {
+                if (input[i] != nullptr && input[i]->getCount() > 0) {
                     found = true;
                     break;
                 }

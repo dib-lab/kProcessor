@@ -233,7 +233,7 @@ kDataFrame *kDataFrameMAP::load(string filePath) {
     std::ifstream os(filePath + ".map", std::ios::binary);
     cereal::BinaryInputArchive iarchive(os);
     iarchive(KMAP->MAP);
-
+    delete KMAP->endIterator;
     KMAP->endIterator=new kDataFrameIterator(
             (_kDataFrameIterator *) new kDataFrameMAPIterator(KMAP->MAP.end(), KMAP, kSize),
             (kDataFrame *) KMAP);
@@ -258,11 +258,10 @@ kDataFrameIterator kDataFrameMAP::begin() {
             (kDataFrame *) this));
 }
 
-//kDataFrameIterator kDataFrameMAP::end() {
-//    return *(new kDataFrameIterator(
-//            (_kDataFrameIterator *) new kDataFrameMAPIterator(MAP.end(), this, kSize),
-//            (kDataFrame *) this));
-//}
+kDataFrameIterator kDataFrameMAP::end() {
+    ((kDataFrameMAPIterator*)endIterator->iterator)->iterator=MAP.end();
+    return *endIterator;
+}
 kDataFrameIterator kDataFrameMAP::find(const string &kmer) {
   return ( kDataFrameIterator(
           (_kDataFrameIterator *) new kDataFrameMAPIterator(MAP.find(KD->hash_kmer(kmer)), this, kSize),
