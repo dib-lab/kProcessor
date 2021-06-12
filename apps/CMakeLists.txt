@@ -4,6 +4,7 @@
 #
 #TARGET_LINK_LIBRARIES(kProcessorApp kProcessor MQF)
 
+TARGET_LINK_LIBRARIES(kProcessorApp kProcessor MQF ${SEQAN_LIBRARIES})
 
 add_executable(loadFromTSV loadFromTSV.cpp)
 

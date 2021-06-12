@@ -5,7 +5,8 @@ class kDataFrameMQF: public kDataFrame{
         kDataFrameMQF(std::uint64_t kSize, int mode);
         kDataFrameMQF(std::uint64_t ksize,uint8_t q,uint8_t fixedCounterSize,uint8_t tagSize ,double falsePositiveRate);
 
-        kDataFrameMQF(std::uint64_t ksize, uint8_t q, int mode);
+  kDataFrameMQF(uint64_t ksize, uint8_t q, hashingModes HM);
+  kDataFrameMQF(readingModes RM, hashingModes HM, map<string, int> params);
 
 //        kDataFrameMQF(QF* mqf,std::uint64_t ksize,double falsePositiveRate);
         //count histogram is array where count of kmers repeated n times is found at index n. index 0 holds number of distinct kmers.

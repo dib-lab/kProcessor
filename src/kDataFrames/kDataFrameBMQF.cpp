@@ -32,10 +32,10 @@ kDataFrameBMQF::kDataFrameBMQF(uint64_t ksize,uint8_t q,uint8_t fixedCounterSize
     bufferedMQF_init(bufferedmqf, (1ULL<<q-2), (1ULL<<q), 2*kSize, value_bits,fixedCounterSize, (fileName+".bmqf").c_str());
     this->falsePositiveRate=falsePositiveRate;
     if(falsePositiveRate==0){
-        KD = (new Kmers(kSize));
+        KD = (new Kmers(kSize, integer_hasher));
     }
     else if(falsePositiveRate<1){
-        KD = (new Kmers(kSize,0));
+        KD = (new Kmers(kSize, mumur_hasher));
     }
     hashbits=2*kSize;
     range=(1ULL<<hashbits);
@@ -51,15 +51,26 @@ void kDataFrameBMQF::deleteMemoryBuffer()
     bufferedMQF_deleteMemoryBuffer(bufferedmqf);
 }
 
-kDataFrameBMQF::kDataFrameBMQF(uint64_t ksize,string path):
+kDataFrameBMQF::kDataFrameBMQF(uint64_t ksize, hashingModes hash_mode):
         kDataFrame(ksize){
     this->falsePositiveRate=0.0;
-    KD = (new Kmers(kSize));
+    KD = (new Kmers(kSize, hash_mode));
     hashbits=2*kSize;
     range=(1ULL<<hashbits);
     bufferedmqf=NULL;
     endIterator=NULL;
     fileName=path;
+    reserve(10000);
+}
+
+kDataFrameBMQF::kDataFrameBMQF(readingModes RM, hashingModes HM, map<string, int> params){
+    this->falsePositiveRate=0.0;
+    KD = kmerDecoder::getInstance(RM, HM, params);
+    this->kSize = KD->get_kSize();
+    hashbits=2*kSize;
+    range=(1ULL<<hashbits);
+    bufferedmqf=NULL;
+    endIterator=NULL;
     reserve(10000);
 }
 
@@ -70,11 +81,25 @@ kDataFrameBMQF::kDataFrameBMQF(bufferedMQF* bufferedmqf,uint64_t ksize,double fa
     this->bufferedmqf=bufferedmqf;
     this->falsePositiveRate=falsePositiveRate;
     if(falsePositiveRate==0){
-        KD = (new Kmers(kSize));
+        KD = (new Kmers(kSize, integer_hasher));
     }
     else if(falsePositiveRate<1){
-        KD = (new Kmers(kSize,0));
+        KD = (new Kmers(kSize, mumur_hasher));
     }
+    hashbits=this->bufferedmqf->memoryBuffer->metadata->key_bits;
+    hashbits=2*kSize;
+    range=(1ULL<<hashbits);
+    kDataFrameBMQFIterator* it=new kDataFrameBMQFIterator(bufferedmqf,kSize,KD);
+    it->endIterator();
+    endIterator=new  kDataFrameIterator(it,(kDataFrame*)this);
+
+}
+
+kDataFrameBMQF::kDataFrameBMQF(bufferedMQF* bufferedmqf, readingModes RM, hashingModes HM, map<string, int> params){
+    this->bufferedmqf=bufferedmqf;
+    this->falsePositiveRate=falsePositiveRate;
+    KD = kmerDecoder::getInstance(RM, HM, params);
+    this->kSize = KD->get_kSize();
     hashbits=this->bufferedmqf->memoryBuffer->metadata->key_bits;
     hashbits=2*kSize;
     range=(1ULL<<hashbits);
@@ -404,21 +429,30 @@ void kDataFrameBMQF::serialize(string filePath){
     ofstream file(filePath+".extra");
     file<<kSize<<endl;
     file << this->KD->hash_mode << endl;
+    file << this->KD->slicing_mode << endl;
+    file << this->KD->params_to_string() << endl;
+    qf_serialize(bufferedmqf->memoryBuffer,(filePath+".mqf").c_str());
     file.close();
 
     bufferedMQF_serialize(bufferedmqf);
 
 }
+
 kDataFrame* kDataFrameBMQF::load(string filePath){
     ifstream file(filePath+".extra");
     uint64_t filekSize;
-    int hashing_mode;
-    double flasePositiveRate;
-    file>>filekSize;
-    file >> hashing_mode;
-    
-    flasePositiveRate = (hashing_mode == 1) ? 0 : 0.5;
+    int hashing_mode, reading_mode;
 
+    string KD_params_string;
+
+    file >> filekSize;
+    file >> hashing_mode;
+    file >> reading_mode;
+    file >> KD_params_string;
+
+    hashingModes hash_mode = static_cast<hashingModes>(hashing_mode);
+    readingModes slicing_mode = static_cast<readingModes>(reading_mode);
+    map<string, int> kmerDecoder_params = kmerDecoder::string_to_params(KD_params_string);
     bufferedMQF* bufferedmqf=new bufferedMQF();
     bufferedMQF_deserialize(bufferedmqf,(filePath+".bmqf").c_str());
     return new kDataFrameBMQF(bufferedmqf,filekSize, flasePositiveRate);

@@ -114,7 +114,7 @@ vector<kDataFrame*> BuildTestFrames()
   vector<int> kSizes={21};
   for(auto k:kSizes)
   {
-   framesToBeTested.push_back(new kDataFrameMQF(k));
+   framesToBeTested.push_back(new kDataFrameMQF(k, integer_hasher));
   }
   for(auto k:kSizes)
   {
@@ -130,7 +130,7 @@ kDataFrame* getFrame(tuple<string,int> input)
 
     if(type=="MQF")
     {
-        return new kDataFrameMQF(kSize);
+        return new kDataFrameMQF(kSize, integer_hasher);
     }
     else if(type=="MAP")
     {
@@ -1004,7 +1004,7 @@ TEST_P(indexingTest,index)
   string filename=GetParam();
   int chunkSize = 1000;
 
-  kDataFrame *KF = new kDataFrameMQF(25, 25, 1);
+  kDataFrame *KF = new kDataFrameMQF(25, 28, integer_hasher);
   kmerDecoder *KMERS = kProcessor::initialize_kmerDecoder(filename, chunkSize, "kmers", {{"k_size", 25}});
   kProcessor::index(KMERS, filename+".names", KF);
 
@@ -1206,8 +1206,7 @@ TEST_P(indexingTest,saveAndLoad)
 {
     string filename=GetParam();
     int chunkSize = 1000;
-
-    kDataFrame *KF = new kDataFrameMQF(25, 25, 1);
+  kDataFrame *KF = new kDataFrameMQF(25, 28, integer_hasher);
     kmerDecoder *KMERS = kProcessor::initialize_kmerDecoder(filename, chunkSize, "kmers", {{"k_size", 25}});
     kProcessor::index(KMERS, filename+".names", KF);
     string fileName="tmp.kdataframe."+gen_random(4);

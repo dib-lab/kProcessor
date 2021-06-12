@@ -551,14 +551,18 @@ protected:
   uint64_t getkmerOrder(uint64_t kmer);
 public:
   kDataFrameMQF();
-  explicit kDataFrameMQF(std::uint64_t kSize);
-  kDataFrameMQF(std::uint64_t kSize, int mode);
-  kDataFrameMQF(std::uint64_t ksize,uint8_t q,uint8_t fixedCounterSize,uint8_t tagSize
+  kDataFrameMQF(uint64_t kSize);
+  kDataFrameMQF(uint64_t kSize, hashingModes hash_mode);
+  kDataFrameMQF(readingModes RM, hashingModes HM, map<string, int> params);
+  kDataFrameMQF(uint64_t ksize,uint8_t q,uint8_t fixedCounterSize,uint8_t tagSize
     ,double falsePositiveRate);
 
-  kDataFrameMQF(std::uint64_t ksize, uint8_t q, int mode);
+  kDataFrameMQF(uint64_t ksize, uint8_t q, hashingModes hash_mode = integer_hasher);
 
-  kDataFrameMQF(QF* mqf,std::uint64_t ksize,double falsePositiveRate);
+  kDataFrameMQF(QF* mqf,uint64_t ksize,double falsePositiveRate);
+  kDataFrameMQF(QF *mqf, uint64_t ksize, hashingModes hash_mode);
+  kDataFrameMQF(QF *mqf, readingModes RM, hashingModes HM, map<string, int> params);
+  
   //count histogram is array where count of kmers repeated n times is found at index n. index 0 holds number of distinct kmers.
   kDataFrameMQF(std::uint64_t ksize,vector<std::uint64_t> countHistogram,uint8_t tagSize
     ,double falsePositiveRate);
@@ -655,9 +659,11 @@ private:
   string fileName;
 public:
   kDataFrameBMQF();
-  kDataFrameBMQF(std::uint64_t kSize,string path);
-  kDataFrameBMQF(std::uint64_t ksize,uint8_t q,uint8_t fixedCounterSize,uint8_t tagSize,double falsePositiveRate,string path);
-  kDataFrameBMQF(bufferedMQF* bufferedmqf,std::uint64_t ksize,double falsePositiveRate);
+  kDataFrameBMQF(readingModes RM, hashingModes HM, map<string, int> params);
+  kDataFrameBMQF(uint64_t kSize, hashingModes hash_mode = integer_hasher);
+  kDataFrameBMQF(bufferedMQF* bufferedmqf, readingModes RM, hashingModes HM, map<string, int> params);
+  kDataFrameBMQF(uint64_t ksize,uint8_t q,uint8_t fixedCounterSize,uint8_t tagSize,double falsePositiveRate);
+  kDataFrameBMQF(bufferedMQF* bufferedmqf,uint64_t ksize,double falsePositiveRate);
   //count histogram is array where count of kmers repeated n times is found at index n. index 0 holds number of distinct kmers.
   kDataFrameBMQF(std::uint64_t ksize,vector<std::uint64_t> countHistogram,uint8_t tagSize
     ,double falsePositiveRate);
@@ -731,8 +737,9 @@ private:
   std::map<std::uint64_t, std::uint64_t> MAP;
 public:
   kDataFrameMAP();
-  kDataFrameMAP(std::uint64_t ksize);
-  kDataFrameMAP(std::uint64_t kSize,vector<std::uint64_t> kmersHistogram);
+  kDataFrameMAP(uint64_t ksize);
+  kDataFrameMAP(readingModes RM, hashingModes HM, map<string, int> params);
+  kDataFrameMAP(uint64_t kSize,vector<uint64_t> kmersHistogram);
   kDataFrame* getTwin();
   void reserve (std::uint64_t n);
   void reserve (vector<std::uint64_t> countHistogram);
@@ -810,10 +817,10 @@ private:
     flat_hash_map<std::uint64_t, std::uint64_t> MAP;
 public:
     kDataFramePHMAP();
-
-    explicit kDataFramePHMAP(std::uint64_t ksize);
-    kDataFramePHMAP(std::uint64_t ksize, int mode);
-    kDataFramePHMAP(std::uint64_t kSize,vector<std::uint64_t> kmersHistogram);
+    kDataFramePHMAP(uint64_t ksize);
+    kDataFramePHMAP(readingModes RM, hashingModes hash_mode, map<string, int> params);
+    kDataFramePHMAP(uint64_t ksize, hashingModes hash_mode);
+    kDataFramePHMAP(uint64_t kSize,vector<uint64_t> kmersHistogram);
 
     kDataFrame *getTwin();
 

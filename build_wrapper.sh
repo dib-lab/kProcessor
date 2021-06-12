@@ -24,6 +24,12 @@ function cleanup() {
 }
 
 trap cleanup EXIT
+cleanup
+
+# Build the project if not already built
+BUILD_DIR="build"
+[[ -d ${BUILD_DIR} ]] || cmake -Bbuild && cmake --build build -j4
+
 
 echo "BDIST WHEEL"
 $(which python) setup.py bdist_wheel
@@ -34,6 +40,13 @@ $(which python) -m pip uninstall kProcessor -y
 
 $(which python) -m pip install kProcessor*cp*.whl
 
-rm -rf build/temp* build/lib.linux* __pycache__/ *cxx *pyc swig_interfaces/kProcessor_wrap.cpp kProcessor.py *so kProcessor.egg-info/ build/bdist.linux-x86_64
-
-cd ..
+rm -rf build/temp
+rm -rf build/lib.linux*
+rm -rf __pycache__/
+rm -rf *cxx
+rm -rf *pyc
+rm -rf swig_interfaces/kProcessor_wrap.cpp
+rm -rf kProcessor.py
+rm -rf *so
+rm -rf kProcessor.egg-info/
+rm -rf build/bdist.linux-x86_64

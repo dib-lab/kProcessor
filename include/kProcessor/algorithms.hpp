@@ -108,7 +108,8 @@ namespace kProcessor {
  * Mode 1: Integer Hashing | Reversible | Full Hashing
  * Mode 2: TwoBitsHashing | Not considered hashing, just store the two bits representation
 */
-    void kmerDecoder_setHashing(kmerDecoder *KD, int hash_mode, bool canonical = true);
+ void kmerDecoder_setHashing(kmerDecoder * KD, hashingModes hash_mode);
+ void kmerDecoder_setHashing(kDataFrame * KF, hashingModes hash_mode);
 
     void kmerDecoder_setHashing(kDataFrame *KF, int hash_mode, bool canonical = true);
 
@@ -119,6 +120,8 @@ namespace kProcessor {
     void
     index(kDataFrame *frame, std::map<std::string, int> parse_params, string filename, int chunks,
           string names_fileName);
+
+    colored_kDataFrame * index(kDataFrame *frame, string filename, int chunks, string names_fileName);
 
     void indexPriorityQueue(vector<kDataFrame *> &input, string tmpFolder, kDataFrame *output);
 

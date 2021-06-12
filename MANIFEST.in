@@ -15,6 +15,7 @@ recursive-include ThirdParty/kmerDecoder/lib/parallel-hashmap *
 recursive-include ThirdParty/KMC/kmc_api *
 recursive-include ThirdParty/Blight *
 recursive-include ThirdParty/kmerDecoder/lib/kseq/include *
+recursive-include ThirdParty/kmerDecoder/lib/kseq/include *
 
 recursive-include KP_BUILD lib*a
 recursive-include ThirdParty lib*a
@@ -25,6 +26,8 @@ include KP_BUILD/ThirdParty/kmerDecoder/libkmerDecoder.a
 include KP_BUILD/ThirdParty/MQF/src/libMQF.a
 include KP_BUILD/ThirdParty/sdsl-lite/lib/libsdsl.a
 
+#include version
+include version.py
 # include shared libs
 # include ThirdParty/KMC/kmc_api/libKMCAPI.a
 

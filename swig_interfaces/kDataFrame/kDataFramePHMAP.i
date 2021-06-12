@@ -1,6 +1,8 @@
 class kDataFramePHMAP : public kDataFrame {
     public:
         kDataFramePHMAP();
+        kDataFramePHMAP(uint64_t ksize, hashingModes hash_mode);
+        kDataFramePHMAP(readingModes RM, hashingModes hash_mode, map<string, int> params);
 
         kDataFramePHMAP(std::uint64_t ksize);
         kDataFramePHMAP(std::uint64_t ksize, int mode);
