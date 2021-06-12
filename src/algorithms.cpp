@@ -706,12 +706,12 @@ namespace kProcessor {
         return res;
     }
 
-    
+
     void kmerDecoder_setHashing(kmerDecoder * KD, hashingModes hash_mode){
         KD->setHashingMode(hash_mode, KD->get_kSize());
     }
 
-    void kmerDecoder_setHashing(kDataFrame * KF, hashingModes hash_mode){
+     void kmerDecoder_setHashing(kDataFrame * KF, hashingModes hash_mode){
         KF->KD->setHashingMode(hash_mode, KF->ksize());
     }
 
@@ -727,13 +727,6 @@ namespace kProcessor {
         if (mode == "kmers") {
             if (parse_params.find("k_size") != parse_params.end()) {
                 return new Kmers(filename, chunkSize, parse_params["k_size"]);
-            } else {
-                std::cerr << func_name << "kmerDecoder Kmers parameters {k_size} validation failed" << std::endl;
-                exit(1);
-            }
-        } else if(mode == "protein"){
-            if (parse_params.find("k_size") != parse_params.end()) {
-                return new aaKmers(filename, chunkSize, parse_params["k_size"]);
             } else {
                 std::cerr << func_name << "kmerDecoder Kmers parameters {k_size} validation failed" << std::endl;
                 exit(1);
@@ -822,10 +815,12 @@ namespace kProcessor {
         return new Kmers(kSize, HM);
     }
 
+
     void index(kmerDecoder *KD, string names_fileName, kDataFrame *frame) {
 
-        if (KD->get_kSize() != (int)frame->ksize() && (KD->hash_mode != protein_hasher || KD->hash_mode != proteinDayhoff_hasher)) {
-            std::cerr << "WARNING: kmerDecoder kSize must be equal to kDataFrame kSize" << std::endl;
+        if (KD->get_kSize() != (int) frame->ksize()) {
+            std::cerr << "kmerDecoder kSize must be equal to kDataFrame kSize" << std::endl;
+            exit(1);
         }
 
 
@@ -945,23 +940,23 @@ namespace kProcessor {
                     }
 
                     if (itc->second != currentTag) {
-                            colorsCount[currentTag]--;
-                            if (colorsCount[currentTag] == 0 && currentTag != 0) {
 
-                                auto _invGroupNameIT = inv_groupNameMap.find(currentTag);
-                                if (_invGroupNameIT == inv_groupNameMap.end()){
-                                    freeColors.push(currentTag);
-                                    vector<uint32_t> colors = legend->find(currentTag)->second;
-                                    string colorsString = to_string(colors[0]);
-                                    for (unsigned int k = 1; k < colors.size(); k++) {
-                                        colorsString += ";" + to_string(colors[k]);
-                                    }
-                                    tagsMap.erase(colorsString);
-                                    legend->erase(currentTag);
-                                    if (convertMap.find(currentTag) != convertMap.end())
-                                        convertMap.erase(currentTag);
-                                }                                
-                            
+                        colorsCount[currentTag]--;
+                        if (colorsCount[currentTag] == 0 && currentTag != 0) {
+                            auto _invGroupNameIT = inv_groupNameMap.find(currentTag);
+                            if (_invGroupNameIT == inv_groupNameMap.end()){
+                                freeColors.push(currentTag);
+
+                                vector<uint32_t> colors = legend->find(currentTag)->second;
+                                string colorsString = to_string(colors[0]);
+                                for (unsigned int k = 1; k < colors.size(); k++) {
+                                    colorsString += ";" + to_string(colors[k]);
+                                }
+                                tagsMap.erase(colorsString);
+                                
+                                legend->erase(currentTag);
+                                if (convertMap.find(currentTag) != convertMap.end())
+                                    convertMap.erase(currentTag);
                             }
 
                         }
@@ -978,7 +973,7 @@ namespace kProcessor {
                 }
                 readID += 1;
                 groupCounter[groupName]--;
-                if (colorsCount[readTag] == 0) {
+                if (colorsCount[readTag] == 0) {                   
                     if (groupCounter[groupName] == 0) {
                         freeColors.push(readTag);
                         legend->erase(readTag);
@@ -1015,7 +1010,6 @@ namespace kProcessor {
         if (check_mode) {
             if (parse_params["mode"] == 2) mode = "skipmers";
             else if (parse_params["mode"] == 3) mode = "minimizers";
-            else if (parse_params["mode"] == 4) mode = "protein";
         }
 
         parse_params["k_size"] = frame->ksize();
@@ -1120,6 +1114,7 @@ namespace kProcessor {
         qcolors->explainSize();
         output->changeDefaultColumnType(qcolors);
     }
+
 
     void mergeIndexes(vector<kDataFrame *> &input, kDataFrame *output) {
 

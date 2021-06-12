@@ -59,7 +59,6 @@ kDataFrameBMQF::kDataFrameBMQF(uint64_t ksize, hashingModes hash_mode):
     range=(1ULL<<hashbits);
     bufferedmqf=NULL;
     endIterator=NULL;
-    fileName=path;
     reserve(10000);
 }
 
@@ -455,7 +454,7 @@ kDataFrame* kDataFrameBMQF::load(string filePath){
     map<string, int> kmerDecoder_params = kmerDecoder::string_to_params(KD_params_string);
     bufferedMQF* bufferedmqf=new bufferedMQF();
     bufferedMQF_deserialize(bufferedmqf,(filePath+".bmqf").c_str());
-    return new kDataFrameBMQF(bufferedmqf,filekSize, flasePositiveRate);
+    return new kDataFrameBMQF(bufferedmqf, slicing_mode, hash_mode, kmerDecoder_params);
 }
 
 kDataFrameIterator kDataFrameBMQF::begin(){

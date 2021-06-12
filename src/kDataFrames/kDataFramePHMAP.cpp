@@ -265,7 +265,7 @@ kDataFrame *kDataFramePHMAP::load(string filePath) {
     if(KMAP->endIterator != nullptr)
         delete KMAP->endIterator;
     KMAP->endIterator= new kDataFrameIterator(
-            (_kDataFrameIterator *) new kDataFramePHMAPIterator(KMAP->MAP.end(), KMAP, kSize),
+            (_kDataFrameIterator *) new kDataFramePHMAPIterator(KMAP->MAP.end(), KMAP, filekSize),
             (kDataFrame *) KMAP);
 
     return KMAP;
