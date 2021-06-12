@@ -13,7 +13,6 @@ cmake_minimum_required (VERSION 3.14...3.20)
 project (
         kProcessor
         LANGUAGES CXX C
-<<<<<<< HEAD
         VERSION 2.0
 )
 
@@ -23,16 +22,6 @@ option(BUILD_USECASES "Build usecases" OFF)
 option(BUILD_DOCS "Build documentation" OFF)
 option(BUILD_ALL "Build everything!" OFF)
 
-=======
-        VERSION 1.1
-)
-
-option(BUILD_TESTS "Build tests" OFF)
-option(BUILD_APPS "Build kProcessor apps" OFF)
-option(BUILD_DOCS "Build documentation" OFF)
-option(BUILD_ALL "Build everything!" OFF)
-
->>>>>>> master
 #set(CMAKE_CXX_COMPILER /usr/bin/g++-10)
 # IMPORTANT == -FPIC #SDSL-LINKING
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
@@ -189,30 +178,16 @@ endif()
 
 if(BUILD_DOCS)
     if(NOT ${DOXYGEN_FOUND})
-        message(FA<<<<<<< HEAD
-    SET(BUILD_APPS ON)
-    SET(BUILD_USECASES ON)
-=======
-    # SET(BUILD_APPS ON) # Deferred
->>>>>>> master
-ation.")
+        message(FATAL_ERROR "Doxygen is needed to build the documentation.")
     else()
 
 
         include(cmake/CPM.cmake)
         CPMAddPackage(
             NAME MCSS
- <<<<<<< HEAD
-    add_subdirectory(apps/)
-endif()
-
-if(BUILD_USECASES)
-    add_subdirectory(usecases/kDifferentialExpression/)
-=======
-    # add_subdirectory(apps/) # Deferred
-    message("WARNING: Apps are not available in this release")
->>>>>>> master
-c948403b54b50574a2a
+            DOWNLOAD_ONLY YES
+            GITHUB_REPOSITORY mosra/m.css
+            GIT_TAG 42d4a9a48f31f5df6e246c948403b54b50574a2a
         )
             
     # set Doxyfile variables
