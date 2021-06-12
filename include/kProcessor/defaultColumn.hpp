@@ -20,7 +20,6 @@ public:
     virtual ~Column(){}
 
     virtual Column* getTwin()=0;
-    virtual void setSize(uint32_t size)=0;
     virtual void resize(uint32_t size)=0;
     virtual uint32_t size()=0;
     static Column* getContainerByName(size_t name);
@@ -68,85 +67,12 @@ public:
     void serialize(string filename);
     void deserialize(string filename);
     Column* getTwin();
-    void setSize(uint32_t size);
     void setValueFromColumn(Column* Container, uint32_t inputOrder,uint32_t outputOrder);
 
 
 
 };
 
-class colorNode{
-public:
-    map<uint32_t, colorNode*> edges;
-    uint32_t currColor;
-    colorNode() {
-        currColor = 0;
-    }
-    ~colorNode()
-    {
-//        for(auto e:edges)
-//            delete e.second;
-    }
-};
-class colorIndex{
-public:
-    colorNode* root;
-    uint32_t lastColor;
-    uint32_t noSamples;
-    colorIndex()
-    {
-        root=new colorNode();
-        lastColor=0;
-        noSamples=0;
-    }
-    ~colorIndex();
-
-    bool hasColorID(vector<uint32_t>& v);
-    uint32_t getColorID(vector<uint32_t>& v);
-    void serialize(string fileName);
-    void deserialize(string filename);
-
-    void populateColors(vector<vector<uint32_t > >& colors);
-
-    void optimize();
-    void stats();
-
-};
-
-class stringColorIndex{
-public:
-    flat_hash_map<string,uint32_t> colors;
-    uint32_t lastColor;
-    uint32_t noSamples;
-    stringColorIndex()
-    {
-
-        lastColor=0;
-        noSamples=0;
-    }
-    ~stringColorIndex(){
-
-    }
-    inline string toString(vector<uint32_t>& v)
-    {
-        string res="";
-        for(auto c:v)
-        {
-            res+=to_string(c);
-            res+=";";
-        }
-        return res;
-
-    }
-    bool hasColorID(vector<uint32_t>& v);
-    uint32_t getColorID(vector<uint32_t>& v);
-    void serialize(string fileName);
-    void deserialize(string filename);
-
-    void populateColors(vector<vector<uint32_t > >& colors);
-  void optimize(){}
-
-};
 
 
 
@@ -231,7 +157,6 @@ public:
     }
 
     Column* getTwin();
-    void setSize(uint32_t size);
     void resize(uint32_t size);
     uint32_t size(){
         return colors.size();
@@ -712,8 +637,8 @@ public:
     void sortColors();
     void optimizeRLE();
     void optimize(insertColorColumn* col);
-    void optimize2();
-    void optimize3(insertColorColumn* col);
+//    void optimize2();
+//    void optimize3(insertColorColumn* col);
 
     uint32_t size(){
         uint32_t res=0;
@@ -731,7 +656,7 @@ public:
     void explainSize();
 
     Column* getTwin();
-    void setSize(uint32_t size);
+
     void resize(uint32_t size);
 
 
@@ -779,7 +704,6 @@ public:
     void explainSize();
     void exportTree(string prefix,int tree);
     Column* getTwin();
-    void setSize(uint32_t size);
     void resize(uint32_t size);
     uint32_t size()
     {
@@ -813,7 +737,6 @@ public:
 
 
     Column* getTwin();
-    void setSize(uint32_t size);
     void resize(uint32_t size);
     uint32_t size(){
         return colors.size();
@@ -845,7 +768,6 @@ public:
     void serialize(string filename);
     void deserialize(string filename);
     Column* getTwin();
-    void setSize(uint32_t size);
     void resize(uint32_t size);
     void setValueFromColumn(Column* Container, uint32_t inputOrder,uint32_t outputOrder);
 

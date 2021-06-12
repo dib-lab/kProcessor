@@ -295,7 +295,7 @@ namespace kProcessor {
         {
             string newColName= col.first;
             Column* column=col.second->getTwin();
-            column->setSize(res->size());
+            column->resize(res->size());
             res->addColumn(newColName, column);
         }
         for(auto kmer:(*res))
@@ -357,7 +357,7 @@ namespace kProcessor {
         {
             string newColName= col.first;
             Column* column=col.second->getTwin();
-            column->setSize(res->size());
+            column->resize(res->size());
             res->addColumn(newColName, column);
         }
         for(auto kmer:*res)
@@ -388,7 +388,7 @@ namespace kProcessor {
             for(auto col: input->columns)
             {
                 columns[col.first]=col.second->getTwin();
-                columns[col.first]->setSize(input->size());
+                columns[col.first]->resize(input->size());
             }
             kDataFrameIterator it = input->begin();
             int index=0;
@@ -562,7 +562,7 @@ namespace kProcessor {
             {
                 string newColumnName=col.first+to_string(i);
                 columns[newColumnName]=col.second->getTwin();
-                columns[newColumnName]->setSize(res->size());
+                columns[newColumnName]->resize(res->size());
             }
             iterators[i] = input[i]->begin();
             if (iterators[i] != input[i]->end()) {
