@@ -201,11 +201,11 @@ vector<vector<kDataFrame*> > BuildTestFramesForSetFunctions()
     framesToBeTested[0].push_back(new kDataFrameMQF(k));
     kProcessor::countKmersFromFile(framesToBeTested[0].back(), {{"mode", 1}}, file, 1000); // Mode 1 : kmers, KmerSize will be cloned from the kFrame
 
-    framesToBeTested[1].push_back(new kDataFrameMQF(k)); // Temporary until resolving #17
-    kProcessor::countKmersFromFile(framesToBeTested[1].back(), {{"mode", 1}}, file, 1000); // Mode 1 : kmers, KmerSize will be cloned from the kFrame
-  }
-  return framesToBeTested;
-}
+//     framesToBeTested[1].push_back(new kDataFrameMQF(k)); // Temporary until resolving #17
+//     kProcessor::countKmersFromFile(framesToBeTested[1].back(), {{"mode", 1}}, file, 1000); // Mode 1 : kmers, KmerSize will be cloned from the kFrame
+//   }
+//   return framesToBeTested;
+// }
 //INSTANTIATE_TEST_SUITE_P(testSetFunctions,
 //                         setFunctionsTest,
 //                        ::testing::ValuesIn(BuildTestFramesForSetFunctions())
@@ -227,33 +227,33 @@ TEST_P(kDataFrameTest,emptykDataFrame)
     delete kframe;
 }
 
-TEST_P(kDataFrameTest,insertOneTime)
-{
-    EXPECT_EQ(kframe->empty(), true);
-    int insertedKmers=0;
-    unordered_map<string,int>* kmers=kmersGen->getKmers((int)kframe->getkSize());
-    for(auto k:*kmers)
-    {
-        kframe->insert(k.first);
-        if(kframe->load_factor()>=kframe->max_load_factor()*0.8)
-        {
-          break;
-        }
-        insertedKmers++;
-    }
-    int checkedKmers=0;
-    for(auto k:*kmers)
-    {
-        int c=kframe->getCount(k.first);
-        EXPECT_GE(c,1);
-        if(checkedKmers==insertedKmers)
-        {
-          break;
-        }
-        checkedKmers++;
-    }
-    delete kframe;
-    kframe= nullptr;
+// TEST_P(kDataFrameTest,insertOneTime)
+// {
+//     EXPECT_EQ(kframe->empty(), true);
+//     int insertedKmers=0;
+//     unordered_map<string,int>* kmers=kmersGen->getKmers((int)kframe->getkSize());
+//     for(auto k:*kmers)
+//     {
+//         kframe->insert(k.first);
+//         if(kframe->load_factor()>=kframe->max_load_factor()*0.8)
+//         {
+//           break;
+//         }
+//         insertedKmers++;
+//     }
+//     int checkedKmers=0;
+//     for(auto k:*kmers)
+//     {
+//         int c=kframe->getCount(k.first);
+//         EXPECT_GE(c,1);
+//         if(checkedKmers==insertedKmers)
+//         {
+//           break;
+//         }
+//         checkedKmers++;
+//     }
+//     delete kframe;
+//     kframe= nullptr;
 
 }
 
