@@ -51,6 +51,18 @@ void kDataFrameBMQF::deleteMemoryBuffer()
     bufferedMQF_deleteMemoryBuffer(bufferedmqf);
 }
 
+kDataFrameBMQF::kDataFrameBMQF(uint64_t ksize,string path):
+        kDataFrame(ksize){
+    this->falsePositiveRate=0.0;
+    KD = (new Kmers(kSize));
+    hashbits=2*kSize;
+    range=(1ULL<<hashbits);
+    bufferedmqf=NULL;
+    endIterator=NULL;
+    fileName=path;
+    reserve(10000);
+}
+
 kDataFrameBMQF::kDataFrameBMQF(uint64_t ksize, hashingModes hash_mode):
         kDataFrame(ksize){
     this->falsePositiveRate=0.0;

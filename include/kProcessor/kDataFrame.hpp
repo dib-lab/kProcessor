@@ -659,6 +659,7 @@ private:
   string fileName;
 public:
   kDataFrameBMQF();
+  kDataFrameBMQF(uint64_t ksize,string path);
   kDataFrameBMQF(readingModes RM, hashingModes HM, map<string, int> params);
   kDataFrameBMQF(uint64_t kSize, hashingModes hash_mode = integer_hasher);
   kDataFrameBMQF(bufferedMQF* bufferedmqf, readingModes RM, hashingModes HM, map<string, int> params);
