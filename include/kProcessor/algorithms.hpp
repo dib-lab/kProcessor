@@ -14,7 +14,6 @@
 #include "kDataFrame.hpp"
 #include <math.h>
 #include <vector>
-#include "colored_kDataFrame.hpp"
 #include <map>
 #include <any>
 #include <functional>
@@ -121,7 +120,7 @@ namespace kProcessor {
 
     void indexPriorityQueue(vector<kDataFrame *> &input, string tmpFolder, kDataFrame *output);
 
-    void mergeIndexes(vector<kDataFrame *> &input, kDataFrame *output);
+    void mergeIndexes(vector<kDataFrame *> &input, string tmpFolder, kDataFrame *output);
 
     kDataFrame* innerJoin(vector<kDataFrame *> input, vector<uint32_t> kmersToKeep);
     //colored_kDataFrame * indexPriorityQueue(kmerDecoder *KD, string names_fileName, kDataFrame *frame);

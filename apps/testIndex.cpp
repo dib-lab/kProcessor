@@ -39,7 +39,7 @@ int main(int argc, char *argv[])
         while(inp>>kmer>>count)
         {
             testedKmers++;
-            vector<uint32_t> colors=indexFrame->getKmerDefaultColumnValue<vector<uint32_t >, queryColorColumn >(kmer);
+            vector<uint32_t> colors=indexFrame->getKmerDefaultColumnValue<vector<uint32_t >, mixVectors >(kmer);
 	        if(colors.size()==0)
 	        {
 		        notFoundKmers++;

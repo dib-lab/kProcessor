@@ -20,7 +20,6 @@ public:
     virtual ~Column(){}
 
     virtual Column* getTwin()=0;
-    virtual void setSize(uint32_t size)=0;
     virtual void resize(uint32_t size)=0;
     virtual uint32_t size()=0;
     static Column* getContainerByName(size_t name);
@@ -68,85 +67,12 @@ public:
     void serialize(string filename);
     void deserialize(string filename);
     Column* getTwin();
-    void setSize(uint32_t size);
     void setValueFromColumn(Column* Container, uint32_t inputOrder,uint32_t outputOrder);
 
 
 
 };
 
-class colorNode{
-public:
-    map<uint32_t, colorNode*> edges;
-    uint32_t currColor;
-    colorNode() {
-        currColor = 0;
-    }
-    ~colorNode()
-    {
-//        for(auto e:edges)
-//            delete e.second;
-    }
-};
-class colorIndex{
-public:
-    colorNode* root;
-    uint32_t lastColor;
-    uint32_t noSamples;
-    colorIndex()
-    {
-        root=new colorNode();
-        lastColor=0;
-        noSamples=0;
-    }
-    ~colorIndex();
-
-    bool hasColorID(vector<uint32_t>& v);
-    uint32_t getColorID(vector<uint32_t>& v);
-    void serialize(string fileName);
-    void deserialize(string filename);
-
-    void populateColors(vector<vector<uint32_t > >& colors);
-
-    void optimize();
-    void stats();
-
-};
-
-class stringColorIndex{
-public:
-    flat_hash_map<string,uint32_t> colors;
-    uint32_t lastColor;
-    uint32_t noSamples;
-    stringColorIndex()
-    {
-
-        lastColor=0;
-        noSamples=0;
-    }
-    ~stringColorIndex(){
-
-    }
-    inline string toString(vector<uint32_t>& v)
-    {
-        string res="";
-        for(auto c:v)
-        {
-            res+=to_string(c);
-            res+=";";
-        }
-        return res;
-
-    }
-    bool hasColorID(vector<uint32_t>& v);
-    uint32_t getColorID(vector<uint32_t>& v);
-    void serialize(string fileName);
-    void deserialize(string filename);
-
-    void populateColors(vector<vector<uint32_t > >& colors);
-  void optimize(){}
-
-};
 
 
 
@@ -231,11 +157,11 @@ public:
     }
 
     Column* getTwin();
-    void setSize(uint32_t size);
     void resize(uint32_t size);
     uint32_t size(){
         return colors.size();
     }
+    void cleanFiles();
 
 
 };
@@ -682,25 +608,48 @@ public:
     }
 
 };
-class queryColorColumn: public Column{
+class queryColorColumn : public Column{
+public:
+    uint64_t  noSamples;
+
+    uint64_t numColors;
+    queryColorColumn(){}
+    ~queryColorColumn() override = default;
+    uint32_t  insertAndGetIndex(vector<uint32_t >& item);
+    virtual vector<uint32_t > getWithIndex(uint32_t index)=0;
+
+    virtual void insert(vector<uint32_t >& item,uint32_t index) = 0;
+    virtual vector<uint32_t > get(uint32_t index)=0;
+
+    virtual void serialize(string filename)=0;
+    virtual void deserialize(string filename)=0;
+
+    virtual uint32_t size()=0;
+    virtual uint64_t sizeInBytes()=0;
+    virtual void explainSize()=0;
+
+    virtual Column* getTwin()=0;
+
+    virtual void resize(uint32_t size)=0;
+
+};
+class mixVectors: public queryColorColumn{
 public:
     deque<vectorBase*> colors;
-    uint64_t  noSamples;
     sdsl::int_vector<> idsMap;
-    uint64_t numColors;
-    queryColorColumn(){
+    mixVectors(){
         colors.push_back(new vectorOfVectors());
     }
-    queryColorColumn(uint64_t noSamples){
+    mixVectors(uint64_t noSamples){
         this->noSamples=noSamples;
         colors.push_back(new vectorOfVectors());
     }
-    queryColorColumn(uint64_t noSamples,uint64_t noColors,string tmpFolder);
-    queryColorColumn(insertColorColumn* col);
-    ~queryColorColumn(){
+    mixVectors(insertColorColumn* col);
+    ~mixVectors(){
         for(auto v:colors)
             delete v;
     }
+
     uint32_t  insertAndGetIndex(vector<uint32_t >& item);
     vector<uint32_t > getWithIndex(uint32_t index);
 
@@ -711,9 +660,9 @@ public:
     void deserialize(string filename);
     void sortColors();
     void optimizeRLE();
-    void optimize(insertColorColumn* col);
-    void optimize2();
-    void optimize3(insertColorColumn* col);
+
+//    void optimize2();
+//    void optimize3(insertColorColumn* col);
 
     uint32_t size(){
         uint32_t res=0;
@@ -731,14 +680,14 @@ public:
     void explainSize();
 
     Column* getTwin();
-    void setSize(uint32_t size);
+
     void resize(uint32_t size);
 
 
 };
 
 
-class prefixTrieQueryColorColumn: public Column{
+class prefixTrie: public queryColorColumn{
 private:
     unordered_map<uint64_t ,vector<uint32_t > > nodesCache;
     deque<sdsl::int_vector<>*>  unCompressedEdges;
@@ -748,14 +697,15 @@ public:
     deque<sdsl::bit_vector*> tree;
     deque<sdsl::bp_support_sada<>*> bp_tree;
     sdsl::int_vector<64> starts;
-    uint64_t  noSamples;
     sdsl::int_vector<64> idsMap;
-    uint64_t numColors;
-    prefixTrieQueryColorColumn(){
+    prefixTrie(){
 
     }
-    prefixTrieQueryColorColumn(queryColorColumn* col);
-    ~prefixTrieQueryColorColumn(){
+    prefixTrie(insertColorColumn* col);
+    prefixTrie(mixVectors* col);
+
+    void loadFromQueryColorColumn(mixVectors* col);
+    ~prefixTrie(){
         for(auto t:tree)
             delete t;
         for(auto b:bp_tree)
@@ -768,7 +718,7 @@ public:
     vector<uint32_t > getWithIndex(uint32_t index);
 
     void insert(vector<uint32_t >& item,uint32_t index);
-    //vector<uint32_t > get(uint32_t index);
+    vector<uint32_t > get(uint32_t index);
 
     void serialize(string filename);
     void deserialize(string filename);
@@ -779,7 +729,6 @@ public:
     void explainSize();
     void exportTree(string prefix,int tree);
     Column* getTwin();
-    void setSize(uint32_t size);
     void resize(uint32_t size);
     uint32_t size()
     {
@@ -813,7 +762,6 @@ public:
 
 
     Column* getTwin();
-    void setSize(uint32_t size);
     void resize(uint32_t size);
     uint32_t size(){
         return colors.size();
@@ -845,7 +793,6 @@ public:
     void serialize(string filename);
     void deserialize(string filename);
     Column* getTwin();
-    void setSize(uint32_t size);
     void resize(uint32_t size);
     void setValueFromColumn(Column* Container, uint32_t inputOrder,uint32_t outputOrder);
 

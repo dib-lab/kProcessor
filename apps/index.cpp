@@ -65,7 +65,7 @@ int main(int argc, char *argv[])
      	  if(notFoundKmers+failedKmers==1000)
      	    break;
              testedKmers++;
-             vector<uint32_t> colors=output->getKmerDefaultColumnValue<vector<uint32_t >, queryColorColumn >(kmer);
+             vector<uint32_t> colors=output->getKmerDefaultColumnValue<vector<uint32_t >, mixVectors >(kmer);
              sizeHist[colors.size()]++;
              if(colors.size()==0)
              {

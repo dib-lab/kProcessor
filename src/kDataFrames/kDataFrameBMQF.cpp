@@ -526,6 +526,9 @@ kDataFrameBMQFIterator::kDataFrameBMQFIterator(const kDataFrameBMQFIterator &oth
     qfi->bufferIt->num_clusters = other.qfi->bufferIt->num_clusters;
     qfi->bufferIt->c_info = other.qfi->bufferIt->c_info;
 
+    qfi->currentCount=other.qfi->currentCount;
+    qfi->currentKey=other.qfi->currentKey;
+    qfi->currentLabel=other.qfi->currentLabel;
   //  qfi->diskIt=new onDiskMQF_Namespace::onDiskMQFIterator();
     qfi->diskIt->qf = other.qfi->diskIt->qf;
     qfi->diskIt->run = other.qfi->diskIt->run;

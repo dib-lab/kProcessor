@@ -296,7 +296,7 @@ namespace kProcessor {
         {
             string newColName= col.first;
             Column* column=col.second->getTwin();
-            column->setSize(res->size());
+            column->resize(res->size());
             res->addColumn(newColName, column);
         }
         for(auto kmer:(*res))
@@ -358,7 +358,7 @@ namespace kProcessor {
         {
             string newColName= col.first;
             Column* column=col.second->getTwin();
-            column->setSize(res->size());
+            column->resize(res->size());
             res->addColumn(newColName, column);
         }
         for(auto kmer:*res)
@@ -389,7 +389,7 @@ namespace kProcessor {
             for(auto col: input->columns)
             {
                 columns[col.first]=col.second->getTwin();
-                columns[col.first]->setSize(input->size());
+                columns[col.first]->resize(input->size());
             }
             kDataFrameIterator it = input->begin();
             int index=0;
@@ -563,7 +563,7 @@ namespace kProcessor {
             {
                 string newColumnName=col.first+to_string(i);
                 columns[newColumnName]=col.second->getTwin();
-                columns[newColumnName]->setSize(res->size());
+                columns[newColumnName]->resize(res->size());
             }
             iterators[i] = input[i]->begin();
             if (iterators[i] != input[i]->end()) {
@@ -1108,23 +1108,26 @@ namespace kProcessor {
         colors->populateColors();
         uint64_t noColors = colors->noColors;
         cout << noColors << " colors created" << endl;
-        delete colors;
 
-        auto *qcolors = new queryColorColumn(input.size(), noColors, tmpFolder);
+
+        auto *qcolors = new mixVectors(colors);
+        delete colors;
         qcolors->explainSize();
         output->changeDefaultColumnType(qcolors);
     }
 
-
-    void mergeIndexes(vector<kDataFrame *> &input, kDataFrame *output) {
+    void mergeIndexes(vector<kDataFrame *> &input, string tmpFolder, kDataFrame *output) {
 
         vector<uint32_t> idsOffset(input.size());
         idsOffset[0] = 0;
+        uint32_t noSamples=0;
         for (unsigned int i = 1; i < input.size(); i++) {
             idsOffset[i] = idsOffset[i - 1];
-            idsOffset[i] += ((insertColorColumn *) input[i - 1]->getDefaultColumn())->noSamples;
+            idsOffset[i] += ((mixVectors *) input[i - 1]->getDefaultColumn())->noSamples;
         }
-        auto *colors = new insertColorColumn();
+        noSamples+=((mixVectors *) input[input.size() - 1]->getDefaultColumn())->noSamples;
+
+        auto *colors = new insertColorColumn(noSamples,tmpFolder);
         output->changeDefaultColumnType(colors);
 
 
@@ -1155,7 +1158,7 @@ namespace kProcessor {
                 nextKmer.pop();
 
                 uint32_t i = get<1>(colorTuple);
-                auto tmp = input[i]->getKmerDefaultColumnValue<vector<uint32_t>, insertColorColumn>(
+                auto tmp = input[i]->getKmerDefaultColumnValue<vector<uint32_t>, mixVectors>(
                         get<0>(colorTuple));
                 for (auto c:tmp)
                     colorVec.push_back(c + idsOffset[i]);
@@ -1174,7 +1177,14 @@ namespace kProcessor {
 
         }
         colors->populateColors();
+        uint64_t noColors = colors->noColors;
+        cout << noColors << " colors created!" << endl;
 
+
+        auto *qcolors = new mixVectors(colors);
+        delete colors;
+        qcolors->explainSize();
+        output->changeDefaultColumnType(qcolors);
 
     }
 

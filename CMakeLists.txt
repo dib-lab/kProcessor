@@ -109,10 +109,6 @@ set(LIBRARY_NAME
 file(GLOB kProcessorLibSrc
         ${CMAKE_CURRENT_SOURCE_DIR}/src/algorithms.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/extend_algorithms.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/batchQuery.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/colorTable.cpp
-
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/kDataFrames/colored_kDataFrame.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/kDataFrames/defaultColumn.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/kDataFrames/kDataFrameBlight.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/kDataFrames/kDataFrameBMQF.cpp
