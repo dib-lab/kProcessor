@@ -11,6 +11,7 @@
 #include <regex>
 #include <sdsl/util.hpp>
 #include "mum.h"
+#include <unistd.h>
 
 template
 class vectorColumn<int>;
@@ -44,10 +45,10 @@ Column *Column::getContainerByName(std::size_t hash) {
         return new insertColorColumn();
     } else if (hash == typeid(StringColorColumn).hash_code()) {
         return new StringColorColumn();
-    } else if (hash == typeid(queryColorColumn).hash_code()) {
-        return new queryColorColumn();
-    } else if (hash == typeid(prefixTrieQueryColorColumn).hash_code()) {
-        return new prefixTrieQueryColorColumn();
+    } else if (hash == typeid(mixVectors).hash_code()) {
+        return new mixVectors();
+    } else if (hash == typeid(prefixTrie).hash_code()) {
+        return new prefixTrie();
     } else {
         throw logic_error("Failed to load Unknown Column " + hash);
     }
@@ -182,6 +183,17 @@ void insertColorColumn::deserialize(string filename) {
     noSamples = colorInv.noSamples;
 }
 
+void insertColorColumn::cleanFiles() {
+    for (uint32_t colorSize = 1; colorSize < NUM_VECTORS; colorSize++) {
+
+        string colorsFileName = tmpFolder + "insertOnlyColumn." + to_string(colorSize) + "." +
+                                to_string(vecCount[colorSize]);
+
+        unlink(colorsFileName.c_str());
+
+    }
+//    colorInv.populateColors(colors);
+}
 void insertColorColumn::populateColors() {
     for (uint32_t colorSize = 1; colorSize < NUM_VECTORS; colorSize++) {
         if (colorsTop[colorSize] != VECTOR_SIZE)
@@ -281,15 +293,7 @@ uint32_t inExactColorIndex::getColorID(vector<uint32_t> &v) {
 }
 
 
-queryColorColumn::queryColorColumn(insertColorColumn *col) {
-    noSamples = col->noSamples;
-    colors.push_back(new constantVector(noSamples));
-//    colors.push_back(new vectorOfVectors(noSamples+1,col->size()-noSamples+1));
-    // optimize3(col);
-    //optimize2();
-}
-
-void queryColorColumn::insert(vector<uint32_t> &item, uint32_t index) {
+void mixVectors::insert(vector<uint32_t> &item, uint32_t index) {
     auto it = lower_bound(colors.begin(), colors.end(), index + 1,
                           [](vectorBase *lhs, uint32_t rhs) -> bool { return lhs->beginID < rhs; });
     // if(it==colors.end())
@@ -300,12 +304,12 @@ void queryColorColumn::insert(vector<uint32_t> &item, uint32_t index) {
 }
 
 uint32_t queryColorColumn::insertAndGetIndex(vector<uint32_t> &item) {
-    throw std::logic_error("insertAndGetIndex is not supported in queryColorColumn");
+    throw std::logic_error("insertAndGetIndex is not supported in mixVectors");
     return 0;
 
 }
 
-vector<uint32_t> queryColorColumn::getWithIndex(uint32_t index) {
+vector<uint32_t> mixVectors::getWithIndex(uint32_t index) {
     if (index == 0)
         return vector<uint32_t>();
     index = idsMap[index];
@@ -346,55 +350,56 @@ vector<uint32_t> queryColorColumn::getWithIndex(uint32_t index) {
     return res;
 }
 
-queryColorColumn::queryColorColumn(uint64_t noSamples, uint64_t noColors, string tmpFolder) {
+mixVectors::mixVectors(insertColorColumn *col) {
+    col->populateColors();
     colors.push_back(new vectorOfVectors(0, 1));
-    this->noSamples = noSamples;
+    this->noSamples = col->noSamples;
     uint32_t colorId = 1;
-    numColors = noColors;
+    numColors = col->noColors;
     idsMap = sdsl::int_vector<>(numColors + 1);
     for (int colorSize = 1; colorSize < NUM_VECTORS - 1; colorSize++) {
         int chunkNum = 0;
-        string colorsFileName = tmpFolder + "insertOnlyColumn." + to_string(colorSize) + "." +
+        string colorsFileName = col->tmpFolder + "insertOnlyColumn." + to_string(colorSize) + "." +
                                 to_string(chunkNum++);
         while (is_file_exist(colorsFileName.c_str())) {
             fixedSizeVector *f = new fixedSizeVector(colorId, colorSize);
             f->loadFromInsertOnly(colorsFileName, idsMap);
             colors.push_back(f);
             colorId += f->size();
-            colorsFileName = tmpFolder + "insertOnlyColumn." + to_string(colorSize) + "." +
+            colorsFileName = col->tmpFolder + "insertOnlyColumn." + to_string(colorSize) + "." +
                              to_string(chunkNum++);
         }
     }
 
     int chunkNum = 0;
-    string colorsFileName = tmpFolder + "insertOnlyColumn." + to_string(NUM_VECTORS - 1) + "." +
+    string colorsFileName = col->tmpFolder + "insertOnlyColumn." + to_string(NUM_VECTORS - 1) + "." +
                             to_string(chunkNum++);
     while (is_file_exist(colorsFileName.c_str())) {
         vectorOfVectors *f = new vectorOfVectors(colorId);
         f->loadFromInsertOnly(colorsFileName, idsMap);
         colorId += f->size();
         colors.push_back(f);
-        colorsFileName = tmpFolder + "insertOnlyColumn." + to_string(NUM_VECTORS - 1) + "." +
+        colorsFileName = col->tmpFolder + "insertOnlyColumn." + to_string(NUM_VECTORS - 1) + "." +
                          to_string(chunkNum++);
     }
 
 
 }
 
-void queryColorColumn::sortColors() {
+void mixVectors::sortColors() {
 #pragma omp parallel for
     for (unsigned int i = 0; i < colors.size(); i++)
         colors[i]->sort(idsMap);
 }
 
 
-Column *queryColorColumn::getTwin() {
-    return new queryColorColumn();
+Column *mixVectors::getTwin() {
+    return new mixVectors();
 }
 
 
 
-void queryColorColumn::resize(uint32_t size) {
+void mixVectors::resize(uint32_t size) {
 
 }
 
@@ -448,7 +453,7 @@ void vectorOfVectors::loadFromInsertOnly(string path, sdsl::int_vector<> &idsMap
     starts = vectype(tmpStarts);
 }
 
-void queryColorColumn::serialize(string filename) {
+void mixVectors::serialize(string filename) {
     ofstream out(filename.c_str());
     out.write((char *) (&(noSamples)), sizeof(uint32_t));
     idsMap.serialize(out);
@@ -470,8 +475,11 @@ void queryColorColumn::serialize(string filename) {
     out.close();
 
 }
+vector<uint32_t > mixVectors::get(uint32_t index) {
+    throw std::logic_error("get is not implemented use getWithIndex instead");
 
-void queryColorColumn::deserialize(string filename) {
+}
+void mixVectors::deserialize(string filename) {
     ifstream input(filename.c_str());
     input.read((char *) (&(noSamples)), sizeof(uint32_t));
     idsMap.load(input);
@@ -500,7 +508,7 @@ void queryColorColumn::deserialize(string filename) {
 
 }
 
-uint64_t queryColorColumn::sizeInBytes() {
+uint64_t mixVectors::sizeInBytes() {
     uint64_t res = 0;
     for (auto vec:colors) {
         res += vec->sizeInBytes();
@@ -510,7 +518,7 @@ uint64_t queryColorColumn::sizeInBytes() {
     return res;
 }
 
-void queryColorColumn::explainSize() {
+void mixVectors::explainSize() {
     cout << "Query Column" << endl;
     uint64_t numIntegers = 0;
     cout << "Ids Size = " << sdsl::size_in_bytes(idsMap) / (1024.0 * 1024.0) << "MB" << endl;
@@ -527,7 +535,7 @@ void queryColorColumn::explainSize() {
 }
 
 
-void queryColorColumn::optimizeRLE() {
+void mixVectors::optimizeRLE() {
     explainSize();
     for (unsigned int i = 0; i < colors.size(); i++) {
         if (dynamic_cast<fixedSizeVector *>(colors[i])) {
@@ -787,7 +795,17 @@ void RLEfixedSizeVector::serialize(ofstream &of) {}
 
 void RLEfixedSizeVector::deserialize(ifstream &iif) {}
 
-prefixTrieQueryColorColumn::prefixTrieQueryColorColumn(queryColorColumn *col) {
+prefixTrie::prefixTrie(insertColorColumn *col)
+{
+    mixVectors* qq= new mixVectors(col);
+    loadFromQueryColorColumn(qq);
+    delete qq;
+}
+prefixTrie::prefixTrie(mixVectors *col) {
+    loadFromQueryColorColumn(col);
+
+}
+void prefixTrie::loadFromQueryColorColumn(mixVectors *col) {
     noSamples = col->noSamples;
     numColors = col->size();
     col->sortColors();
@@ -1019,12 +1037,17 @@ prefixTrieQueryColorColumn::prefixTrieQueryColorColumn(queryColorColumn *col) {
 }
 
 
-uint32_t prefixTrieQueryColorColumn::insertAndGetIndex(vector<uint32_t> &item) {
-    throw std::logic_error("insertAndGetIndex is not supported in queryColorColumn");
+uint32_t prefixTrie::insertAndGetIndex(vector<uint32_t> &item) {
+    throw std::logic_error("insertAndGetIndex is not supported in mixVectors");
 
 }
 
-vector<uint32_t> prefixTrieQueryColorColumn::getWithIndex(uint32_t index) {
+vector<uint32_t > prefixTrie::get(uint32_t index) {
+    throw std::logic_error("get is not implemented use getWithIndex instead");
+
+}
+
+vector<uint32_t> prefixTrie::getWithIndex(uint32_t index) {
     deque<uint32_t> tmp;
     queue<uint64_t> Q;
     Q.push(idsMap[index]);
@@ -1055,15 +1078,15 @@ vector<uint32_t> prefixTrieQueryColorColumn::getWithIndex(uint32_t index) {
     return res;
 }
 
-void prefixTrieQueryColorColumn::insert(vector<uint32_t> &item, uint32_t index) {
-    throw std::logic_error("insertAndGetIndex is not supported in queryColorColumn");
+void prefixTrie::insert(vector<uint32_t> &item, uint32_t index) {
+    throw std::logic_error("insertAndGetIndex is not supported in mixVectors");
 
 }
-//vector<uint32_t > prefixTrieQueryColorColumn::get(uint32_t index){
+//vector<uint32_t > prefixTrie::get(uint32_t index){
 //    return vector<uint32_t >();
 //}
 
-void prefixTrieQueryColorColumn::serialize(string filename) {
+void prefixTrie::serialize(string filename) {
     ofstream out(filename.c_str());
     out.write((char *) (&(noSamples)), sizeof(uint32_t));
     out.write((char *) (&(numColors)), sizeof(uint32_t));
@@ -1078,7 +1101,7 @@ void prefixTrieQueryColorColumn::serialize(string filename) {
     out.close();
 }
 
-void prefixTrieQueryColorColumn::deserialize(string filename) {
+void prefixTrie::deserialize(string filename) {
     ifstream input(filename.c_str());
     input.read((char *) (&(noSamples)), sizeof(uint32_t));
     input.read((char *) (&(numColors)), sizeof(uint32_t));
@@ -1098,11 +1121,11 @@ void prefixTrieQueryColorColumn::deserialize(string filename) {
 }
 
 
-uint32_t prefixTrieQueryColorColumn::getNumColors() {
+uint32_t prefixTrie::getNumColors() {
     return numColors;
 }
 
-uint64_t prefixTrieQueryColorColumn::sizeInBytes() {
+uint64_t prefixTrie::sizeInBytes() {
     uint64_t res = 0;
     for (auto t:tree)
         res += sdsl::size_in_bytes(*t);
@@ -1114,7 +1137,7 @@ uint64_t prefixTrieQueryColorColumn::sizeInBytes() {
     return res;
 }
 
-void prefixTrieQueryColorColumn::explainSize() {
+void prefixTrie::explainSize() {
     double treeSize = 0;
     double treeCompressedSize = 0;
     double bpSize = 0;
@@ -1150,7 +1173,7 @@ void prefixTrieQueryColorColumn::explainSize() {
 }
 
 
-void prefixTrieQueryColorColumn::shorten(deque<uint32_t> &input, deque<uint32_t> &output) {
+void prefixTrie::shorten(deque<uint32_t> &input, deque<uint32_t> &output) {
     if (input.size() == 1) {
         output.push_back(input[0]);
         nodesCache[input[0]] = {input[0]};
@@ -1208,7 +1231,7 @@ void prefixTrieQueryColorColumn::shorten(deque<uint32_t> &input, deque<uint32_t>
 
 }
 
-void prefixTrieQueryColorColumn::exportTree(string prefix, int treeIndex) {
+void prefixTrie::exportTree(string prefix, int treeIndex) {
     string outFilename = prefix + to_string(treeIndex);
     ofstream out(outFilename.c_str());
     int tabs = 0;
@@ -1265,12 +1288,12 @@ void prefixTrieQueryColorColumn::exportTree(string prefix, int treeIndex) {
 }
 
 
-Column *prefixTrieQueryColorColumn::getTwin() {
-    return new prefixTrieQueryColorColumn();
+Column *prefixTrie::getTwin() {
+    return new prefixTrie();
 }
 
 
-void prefixTrieQueryColorColumn::resize(uint32_t size) {
+void prefixTrie::resize(uint32_t size) {
 
 }
 

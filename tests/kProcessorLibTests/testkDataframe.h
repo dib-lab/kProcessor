@@ -1,7 +1,8 @@
+#ifndef TESTING_HPP
+#define TESTING_HPP
 #include "gtest/gtest.h"
 #include "kDataFrame.hpp"
 #include <unordered_map>
-#include "colorTable.hpp"
 #include <unistd.h>
 
 using namespace std;
@@ -77,6 +78,7 @@ class kDataFrameBufferedTest : public ::testing::TestWithParam<int >{
 public:
     kDataFrameBMQF* kframe;
     kDataFrameBMQF* kframeLoaded;
+
     virtual void SetUp()
     {
         kframe=(kDataFrameBMQF*)getFrame(make_tuple("BMQF",GetParam()));
@@ -124,20 +126,28 @@ class estimateTest : public ::testing::TestWithParam<string >{
 };
 //string is the name of color table class
 //and the first integer is the number of samples and the second one is the number of colors
-class colorsTableTest : public ::testing::TestWithParam<tuple<string, uint64_t,uint64_t> >{
+
+class queryColumnTest : public ::testing::TestWithParam<tuple<string, uint64_t,uint64_t> >{
   public:
     unordered_map<uint64_t,vector<uint32_t> > simColors;
+    queryColorColumn* testColumn;
+    queryColorColumn* testColumnLoaded;
+
+
+    static void TearDownTestSuite();
     virtual void SetUp();
+    virtual void TearDown();
+
 };
 
-class colorsTableInvTest : public ::testing::TestWithParam<colorTableInv* >{
-public:
-  const uint64_t numColors=10000;
-  const uint64_t numSamples=1000;
-  unordered_map<uint64_t,vector<uint32_t> > simColors;
-  virtual void SetUp();
- // virtual void TearDown();
-};
+//class colorsTableInvTest : public ::testing::TestWithParam<colorTableInv* >{
+//public:
+//  const uint64_t numColors=10000;
+//  const uint64_t numSamples=1000;
+//  unordered_map<uint64_t,vector<uint32_t> > simColors;
+//  virtual void SetUp();
+// // virtual void TearDown();
+//};
 
 class setFunctionsTest : public ::testing::TestWithParam<vector<kDataFrame*>  >{
 
@@ -151,3 +161,4 @@ class indexingTest : public ::testing::TestWithParam<string>{
 
 };
 
+#endif

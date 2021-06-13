@@ -27,15 +27,15 @@ int main(int argc, char *argv[]) {
     }
 
     kDataFrame *indexFrame = kDataFrame::load(framePath);
-    ((queryColorColumn *) indexFrame->getDefaultColumn())->explainSize();
-    //((queryColorColumn*)indexFrame->getDefaultColumn())->sortColors();
+    ((mixVectors *) indexFrame->getDefaultColumn())->explainSize();
+    //((mixVectors*)indexFrame->getDefaultColumn())->sortColors();
 
     uint64_t testedKmers = 0;
     uint64_t failedKmers = 0;
     uint64_t notFoundKmers = 0;
 
-    queryColorColumn *qColumn = ((queryColorColumn *) indexFrame->getDefaultColumn());
-    prefixTrieQueryColorColumn *pColumn = new prefixTrieQueryColorColumn(qColumn);
+    mixVectors *qColumn = ((mixVectors *) indexFrame->getDefaultColumn());
+    prefixTrie *pColumn = new prefixTrie(qColumn);
     pColumn->serialize(outputColumn);
 
 
@@ -52,7 +52,7 @@ int main(int argc, char *argv[]) {
         uint64_t count;
         while (inp >> kmer >> count && failedKmers<1000) {
             testedKmers++;
-            vector<uint32_t> colors = indexFrame->getKmerDefaultColumnValue<vector<uint32_t>, prefixTrieQueryColorColumn>(
+            vector<uint32_t> colors = indexFrame->getKmerDefaultColumnValue<vector<uint32_t>, prefixTrie>(
                     kmer);
 
             if (colors.size() == 0) {
@@ -68,7 +68,7 @@ int main(int argc, char *argv[]) {
                 cerr << endl;
 
                 indexFrame->changeDefaultColumnType(qColumn);
-                vector<uint32_t> colors = indexFrame->getKmerDefaultColumnValue<vector<uint32_t>, queryColorColumn>(
+                vector<uint32_t> colors = indexFrame->getKmerDefaultColumnValue<vector<uint32_t>, mixVectors>(
                         kmer);
                 cerr << "It should be ";
                 for (auto c: colors)

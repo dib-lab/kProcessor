@@ -15,86 +15,6 @@
 #include <set>
 using namespace std;
 
-
-INSTANTIATE_TEST_SUITE_P(testcolorsTable,
-                         colorsTableTest,
-                        ::testing::Combine(
-                        ::testing::Values("bitVector","intVector"),
-                        ::testing::Values(10,20,100),
-                        ::testing::Values(10,100,1000)
-                      ));
-void colorsTableTest::SetUp(){
-  uint64_t numSamples=get<1>(GetParam());
-  uint64_t numColors=get<2>(GetParam());
-  for(int i=1;i<=numColors;i++)
-  {
-    int n=rand()%(numSamples*2);
-    set<uint32_t> colors;
-    colors.clear();
-    for(int j=0;j<n;j++)
-    {
-      colors.insert(rand()%numSamples);
-    }
-    vector<uint32_t> colorsVec;
-    colorsVec.clear();
-    copy(colors.begin(),colors.end(),back_inserter(colorsVec));
-    simColors[i]=colorsVec;
-  }
-}
-colorTable* createColorTables(string name,uint64_t numSamples,uint64_t numColors)
-{
-  if(name=="bitVector")
-    return new BitVectorsTable(numSamples);
-  if(name=="intVector")
-      return new intVectorsTable();
-  return NULL;
-}
-
-
-TEST_P(colorsTableTest,insertAndQuery)
-{
-  string colorTableName=get<0>(GetParam());
-  uint64_t numSamples=get<1>(GetParam());
-  uint64_t numColors=get<2>(GetParam());
-  colorTable* table=createColorTables(colorTableName,numSamples,numColors);
-  for(int i=1;i<=numColors;i++)
-  {
-    table->setColor(i,simColors[i]);
-  }
-  for(auto it:simColors)
-  {
-    vector<uint32_t> res;
-    res.clear();
-    table->getSamples(it.first,res);
-    EXPECT_EQ(res,it.second);
-  }
-  delete table;
-}
-
-TEST_P(colorsTableTest,saveAndLoad)
-{
-  string colorTableName=get<0>(GetParam());
-  uint64_t numSamples=get<1>(GetParam());
-  uint64_t numColors=get<2>(GetParam());
-  colorTable* table=createColorTables(colorTableName,numSamples,numColors);
-  for(uint32_t i=1;i<=numColors;i++)
-  {
-    table->setColor(i,simColors[i]);
-  }
-  string fileName="colorTable.test";
-  table->save(fileName);
-  delete table;
-  colorTable* loadedTable=colorTable::load(fileName);
-  for(auto it:simColors)
-  {
-    vector<uint32_t> res;
-    res.clear();
-    loadedTable->getSamples(it.first,res);
-    EXPECT_EQ(res,it.second);
-  }
-  delete loadedTable;
-}
-
 string gen_random(const int len) {
     srand (time(NULL));
     static const char alphanum[] =
@@ -108,6 +28,121 @@ string gen_random(const int len) {
 
     return s;
 }
+map< pair<uint64_t,uint64_t>, insertColorColumn*> insertColumns;
+INSTANTIATE_TEST_SUITE_P(testcolorsTable,
+                         queryColumnTest,
+                        ::testing::Combine(
+                        ::testing::Values("mixVectors","prefixTrie"),
+                        ::testing::Values(10,20,100),
+                        ::testing::Values(10,100,1000)
+                      ));
+
+void queryColumnTest::SetUp(){
+  uint64_t numSamples=get<1>(GetParam());
+  uint64_t numColors=get<2>(GetParam());
+  auto searchPair=make_pair(numSamples,numColors);
+  auto it=insertColumns.find(searchPair);
+  insertColorColumn* insertColumn;
+  if(it == insertColumns.end()){
+      string tmpFolder = "tmp.colorColumn."+gen_random(8);
+      insertColumn =new insertColorColumn(numSamples,tmpFolder);
+      while(simColors.size() < numColors)
+      {
+          int n=rand()%(numSamples*2);
+          set<uint32_t> colors;
+          colors.clear();
+          for(int j=0;j<n;j++)
+          {
+              colors.insert(rand()%numSamples);
+          }
+          vector<uint32_t> colorsVec;
+          colorsVec.clear();
+          copy(colors.begin(),colors.end(),back_inserter(colorsVec));
+          uint64_t index=insertColumn->insertAndGetIndex(colorsVec);
+          simColors[index]=colorsVec;
+
+      }
+      insertColumns[searchPair]=insertColumn;
+
+  }
+
+  testColumn=nullptr;
+  testColumnLoaded=nullptr;
+
+
+
+
+}
+void queryColumnTest::TearDownTestSuite(){
+    for(auto it: insertColumns)
+    {
+        it.second->cleanFiles();
+        delete it.second;
+    }
+}
+void queryColumnTest::TearDown(){
+    if(testColumn!=nullptr)
+        delete testColumn;
+    if(testColumnLoaded!=nullptr)
+        delete testColumnLoaded;
+}
+queryColorColumn* createIndexingColumn(string name, insertColorColumn* col)
+{
+  if(name=="mixVectors")
+    return new mixVectors(col);
+  if(name=="prefixTrie")
+      return new prefixTrie(col);
+  return NULL;
+}
+
+
+TEST_P(queryColumnTest, insertAndQuery)
+{
+  string colorTableName=get<0>(GetParam());
+  uint64_t numSamples=get<1>(GetParam());
+  uint64_t numColors=get<2>(GetParam());
+  auto inputPair= make_pair(numSamples,numColors);
+  testColumn= createIndexingColumn(colorTableName,insertColumns[inputPair]);
+  EXPECT_EQ(numSamples,testColumn->noSamples);
+  EXPECT_EQ(numColors,testColumn->numColors);
+
+  for(auto it:simColors)
+  {
+    vector<uint32_t> res=testColumn->getWithIndex(it.first);
+    EXPECT_EQ(res,it.second);
+  }
+
+}
+
+TEST_P(queryColumnTest, saveAndLoad)
+{
+  string colorTableName=get<0>(GetParam());
+  uint64_t numSamples=get<1>(GetParam());
+  uint64_t numColors=get<2>(GetParam());
+  auto inputPair= make_pair(numSamples,numColors);
+  testColumn= createIndexingColumn(colorTableName,insertColumns[inputPair]);
+  EXPECT_EQ(numSamples,testColumn->noSamples);
+  EXPECT_EQ(numColors,testColumn->numColors);
+
+
+  string fileName="colorTable.test."+ gen_random(8);
+  testColumn->serialize(fileName);
+  testColumnLoaded=(queryColorColumn*)Column::getContainerByName(typeid(*(testColumn)).hash_code());
+  delete testColumn;
+  testColumnLoaded->deserialize(fileName);
+
+  EXPECT_EQ(numSamples,testColumnLoaded->noSamples);
+  EXPECT_EQ(numColors,testColumnLoaded->numColors);
+
+  for(auto it:simColors)
+  {
+      vector<uint32_t> res=testColumn->getWithIndex(it.first);
+      EXPECT_EQ(res,it.second);
+  }
+
+}
+
+
 vector<kDataFrame*> BuildTestFrames()
 {
   vector<kDataFrame*> framesToBeTested;
@@ -944,55 +979,55 @@ TEST_P(setFunctionsTest,differenceTest)
 
 }
 
-vector<colorTableInv*> BuildColorTableInv()
-{
-  vector<colorTableInv*> tablesToBeTested;
-  tablesToBeTested.push_back(new stringColorTableInv());
-  return tablesToBeTested;
-}
-
-void colorsTableInvTest::SetUp(){
-  for(int i=1;i<=numColors;i++)
-  {
-    int n=rand()%(numSamples*2)+1;
-    set<uint32_t> colors;
-    colors.clear();
-    for(int j=0;j<n;j++)
-    {
-      colors.insert(rand()%numSamples);
-    }
-    vector<uint32_t> colorsVec;
-    colorsVec.clear();
-    copy(colors.begin(),colors.end(),back_inserter(colorsVec));
-    simColors[i]=colorsVec;
-  }
-}
-
+//vector<colorTableInv*> BuildColorTableInv()
+//{
+//  vector<colorTableInv*> tablesToBeTested;
+//  tablesToBeTested.push_back(new stringColorTableInv());
+//  return tablesToBeTested;
+//}
+//
+//void colorsTableInvTest::SetUp(){
+//  for(int i=1;i<=numColors;i++)
+//  {
+//    int n=rand()%(numSamples*2)+1;
+//    set<uint32_t> colors;
+//    colors.clear();
+//    for(int j=0;j<n;j++)
+//    {
+//      colors.insert(rand()%numSamples);
+//    }
+//    vector<uint32_t> colorsVec;
+//    colorsVec.clear();
+//    copy(colors.begin(),colors.end(),back_inserter(colorsVec));
+//    simColors[i]=colorsVec;
+//  }
+//}
+//
 //INSTANTIATE_TEST_SUITE_P(testcolorsTableInvTest,
 //                        colorsTableInvTest,
 //                        ::testing::ValuesIn(BuildColorTableInv()));
-
-
-TEST_P(colorsTableInvTest,setAndGet)
-{
-    colorTableInv* table=GetParam();
-    for(int i=1;i<=numColors;i++)
-    {
-      if(table->getColorId(simColors[i])==0)
-        table->setColorId(i,simColors[i]);
-      else{
-        simColors.erase(i);
-      }
-    }
-    for(auto it:simColors)
-    {
-      vector<uint32_t> res;
-      res.clear();
-      uint64_t colorId =table->getColorId(it.second);
-      EXPECT_EQ(colorId,it.first);
-    }
-
-}
+//
+//
+//TEST_P(colorsTableInvTest,setAndGet)
+//{
+//    colorTableInv* table=GetParam();
+//    for(int i=1;i<=numColors;i++)
+//    {
+//      if(table->getColorId(simColors[i])==0)
+//        table->setColorId(i,simColors[i]);
+//      else{
+//        simColors.erase(i);
+//      }
+//    }
+//    for(auto it:simColors)
+//    {
+//      vector<uint32_t> res;
+//      res.clear();
+//      uint64_t colorId =table->getColorId(it.second);
+//      EXPECT_EQ(colorId,it.first);
+//    }
+//
+//}
 
 INSTANTIATE_TEST_SUITE_P(testIndexing,
                         indexingTest,
@@ -1122,7 +1157,7 @@ TEST_P(indexingTest,indexPriorityQ)
         kDataFrameIterator it=inputFrames[i]->begin();
         while(it!=inputFrames[i]->end())
         {
-            vector<uint32_t> colors=KF->getKmerDefaultColumnValue<vector<uint32_t >, queryColorColumn>(it.getHashedKmer());
+            vector<uint32_t> colors=KF->getKmerDefaultColumnValue<vector<uint32_t >, mixVectors>(it.getHashedKmer());
             ASSERT_NE(colors.size(),0);
             auto colorIt=colors.end();
             colorIt=find(colors.begin(),colors.end(),i);
@@ -1188,7 +1223,7 @@ TEST_P(indexingTest,mergeIndexes)
         kDataFrameIterator it=inputFrames[i]->begin();
         while(it!=inputFrames[i]->end())
         {
-            vector<uint32_t> colors=KF->getKmerDefaultColumnValue<vector<uint32_t >, queryColorColumn>(it.getHashedKmer());
+            vector<uint32_t> colors=KF->getKmerDefaultColumnValue<vector<uint32_t >, mixVectors>(it.getHashedKmer());
             ASSERT_NE(colors.size(),0);
             auto colorIt=colors.end();
             colorIt=find(colors.begin(),colors.end(),i);

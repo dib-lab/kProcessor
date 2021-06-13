@@ -14,7 +14,6 @@
 #include "kDataFrame.hpp"
 #include <math.h>
 #include <vector>
-#include "colored_kDataFrame.hpp"
 #include <map>
 #include <any>
 #include <functional>
