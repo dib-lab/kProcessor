@@ -1122,7 +1122,7 @@ TEST_P(indexingTest,indexPriorityQ)
         kDataFrameIterator it=inputFrames[i]->begin();
         while(it!=inputFrames[i]->end())
         {
-            vector<uint32_t> colors=KF->getKmerDefaultColumnValue<vector<uint32_t >, insertColorColumn>(it.getHashedKmer());
+            vector<uint32_t> colors=KF->getKmerDefaultColumnValue<vector<uint32_t >, queryColorColumn>(it.getHashedKmer());
             ASSERT_NE(colors.size(),0);
             auto colorIt=colors.end();
             colorIt=find(colors.begin(),colors.end(),i);
@@ -1178,7 +1178,7 @@ TEST_P(indexingTest,mergeIndexes)
     }
 
 
-    kProcessor::mergeIndexes(indexes, KF);
+    kProcessor::mergeIndexes(indexes, "",KF);
 
     for(int i=0;i<numIndexes;i++)
         delete indexes[i];
@@ -1188,7 +1188,7 @@ TEST_P(indexingTest,mergeIndexes)
         kDataFrameIterator it=inputFrames[i]->begin();
         while(it!=inputFrames[i]->end())
         {
-            vector<uint32_t> colors=KF->getKmerDefaultColumnValue<vector<uint32_t >, insertColorColumn>(it.getHashedKmer());
+            vector<uint32_t> colors=KF->getKmerDefaultColumnValue<vector<uint32_t >, queryColorColumn>(it.getHashedKmer());
             ASSERT_NE(colors.size(),0);
             auto colorIt=colors.end();
             colorIt=find(colors.begin(),colors.end(),i);
