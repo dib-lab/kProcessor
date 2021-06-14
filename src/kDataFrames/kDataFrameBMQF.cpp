@@ -35,7 +35,7 @@ kDataFrameBMQF::kDataFrameBMQF(uint64_t ksize,uint8_t q,uint8_t fixedCounterSize
         KD = (new Kmers(kSize));
     }
     else if(falsePositiveRate<1){
-        KD = (new Kmers(kSize,0));
+        KD = (new Kmers(kSize, mumur_hasher));
     }
     hashbits=2*kSize;
     range=(1ULL<<hashbits);
@@ -73,7 +73,7 @@ kDataFrameBMQF::kDataFrameBMQF(bufferedMQF* bufferedmqf,uint64_t ksize,double fa
         KD = (new Kmers(kSize));
     }
     else if(falsePositiveRate<1){
-        KD = (new Kmers(kSize,0));
+        KD = (new Kmers(kSize, mumur_hasher));
     }
     hashbits=this->bufferedmqf->memoryBuffer->metadata->key_bits;
     hashbits=2*kSize;

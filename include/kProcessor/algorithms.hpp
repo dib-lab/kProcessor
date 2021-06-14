@@ -99,7 +99,7 @@ namespace kProcessor {
     kmerDecoder *initialize_kmerDecoder(std::string mode, std::map<std::string, int> parse_params);
 
 // Initialize kmerDecoder to hash and Ihash single kmer.
-    kmerDecoder *initialize_kmerDecoder(int kmer_size, int hash_mode = 1);
+    kmerDecoder *initialize_kmerDecoder(int kSize, hashingModes HM);
 
 /* set hashing mode for kmerDecoder object
  *
@@ -107,9 +107,9 @@ namespace kProcessor {
  * Mode 1: Integer Hashing | Reversible | Full Hashing
  * Mode 2: TwoBitsHashing | Not considered hashing, just store the two bits representation
 */
-    void kmerDecoder_setHashing(kmerDecoder *KD, int hash_mode, bool canonical = true);
+    void kmerDecoder_setHashing(kmerDecoder *KD, hashingModes hash_mode);
 
-    void kmerDecoder_setHashing(kDataFrame *KF, int hash_mode, bool canonical = true);
+    void kmerDecoder_setHashing(kDataFrame *KF, hashingModes hash_mode);
 
 /// Perform indexing to a sequences file with predefined kmers decoding mode, returns a colored kDataframe.
     void index(kmerDecoder *KD, string names_fileName, kDataFrame *frame);
