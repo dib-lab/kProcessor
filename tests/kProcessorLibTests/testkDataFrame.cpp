@@ -29,6 +29,9 @@ string gen_random(const int len) {
     return s;
 }
 map< pair<uint64_t,uint64_t>, insertColorColumn*> insertColumns;
+
+
+
 INSTANTIATE_TEST_SUITE_P(testcolorsTable,
                          queryColumnTest,
                         ::testing::Combine(
@@ -834,18 +837,18 @@ TEST_P(algorithmsTest,parsingTest)
   int chunkSize=1000;
 
   kProcessor::countKmersFromFile(kframe, {{"mode", 1}}, fileName, 1000); // Mode 1 : kmers, KmerSize will be cloned from the kFrame
-  kmerDecoder *KMERS = kProcessor::initialize_kmerDecoder(fileName, 1000, "kmers", {{"k_size", kSize}});
+  kmerDecoder *KD_KMERS = kProcessor::initialize_kmerDecoder(fileName, 1000, "kmers", {{"k_size", kSize}});
 
-    while (!KMERS->end()) {
-        KMERS->next_chunk();
-        for (const auto &seq : *KMERS->getKmers()) {
+    while (!KD_KMERS->end()) {
+        KD_KMERS->next_chunk();
+        for (const auto &seq : *KD_KMERS->getKmers()) {
             for (const auto &kmer : seq.second) {
                 ASSERT_GE(kframe->getCount(kmer.str),1);
             }
         }
     }
 
-    delete KMERS;
+    delete KD_KMERS;
     delete kframe;
     
     
@@ -862,18 +865,18 @@ TEST_P(algorithmsTest,loadingKMCTest)
 
     kProcessor::loadFromKMC(kframe,db);
 
-    kmerDecoder *KMERS = kProcessor::initialize_kmerDecoder(fileName, 1000, "kmers", {{"k_size", kSize}});
+    kmerDecoder *KD_KMERS = kProcessor::initialize_kmerDecoder(fileName, 1000, "kmers", {{"k_size", kSize}});
 
-    while (!KMERS->end()) {
-        KMERS->next_chunk();
-        for (const auto &seq : *KMERS->getKmers()) {
+    while (!KD_KMERS->end()) {
+        KD_KMERS->next_chunk();
+        for (const auto &seq : *KD_KMERS->getKmers()) {
             for (const auto &kmer : seq.second) {
                 ASSERT_GE(kframe->getCount(kmer.str),1);
             }
         }
     }
 
-    delete KMERS;
+    delete KD_KMERS;
     delete kframe;
 
 
@@ -1038,14 +1041,14 @@ TEST_P(indexingTest,index)
 {
   string filename=GetParam();
   int chunkSize = 1000;
-
-  kDataFrame *KF = new kDataFrameMQF(25, 25, 1);
-  kmerDecoder *KMERS = kProcessor::initialize_kmerDecoder(filename, chunkSize, "kmers", {{"k_size", 25}});
-  kProcessor::index(KMERS, filename+".names", KF);
+  int q = 25;
+  kDataFrame *KF = new kDataFrameMQF(25, q, integer_hasher);
+  kmerDecoder *KD_KMERS = kProcessor::initialize_kmerDecoder(filename, chunkSize, "kmers", {{"k_size", 25}});
+  kProcessor::index(KD_KMERS, filename+".names", KF);
 
   uint64_t kSize=KF->getkSize();
 
-  delete KMERS;
+  delete KD_KMERS;
   string names_fileName=filename+".names";
   ifstream namesFile(names_fileName.c_str());
   string seqName, groupName,line;
@@ -1062,11 +1065,11 @@ TEST_P(indexingTest,index)
     }
     namesFile.close();
 
-    KMERS = kProcessor::initialize_kmerDecoder(filename, chunkSize, "kmers", {{"k_size", 25}});
+    KD_KMERS = kProcessor::initialize_kmerDecoder(filename, chunkSize, "kmers", {{"k_size", 25}});
 
-    while (!KMERS->end()) {
-            KMERS->next_chunk();
-            for (const auto &seq : *KMERS->getKmers()) {
+    while (!KD_KMERS->end()) {
+            KD_KMERS->next_chunk();
+            for (const auto &seq : *KD_KMERS->getKmers()) {
                 string readName = seq.first;
                 string groupName=namesMap[readName];
                 for (const auto &kmer : seq.second) {
@@ -1078,7 +1081,7 @@ TEST_P(indexingTest,index)
                 }
             }
     }
-    delete KF,KMERS;
+    delete KF,KD_KMERS;
 
 }
 
@@ -1087,15 +1090,16 @@ TEST_P(indexingTest,indexPriorityQSaveAndLoad)
     string filename=GetParam();
     int chunkSize = 1000;
 
-    kDataFrame *KF = new kDataFrameMQF(25, 25, 1);
-    kmerDecoder *KMERS = kProcessor::initialize_kmerDecoder(filename, chunkSize, "kmers", {{"k_size", 25}});
+    int q = 25;
+    kDataFrame *KF = new kDataFrameMQF(25, q, integer_hasher);
+    kmerDecoder *KD_KMERS = kProcessor::initialize_kmerDecoder(filename, chunkSize, "kmers", {{"k_size", 25}});
 
 
     vector<kDataFrame*> inputFrames;
-    while (!KMERS->end()) {
-        KMERS->next_chunk();
-        for (const auto &seq : *KMERS->getKmers()) {
-            kDataFrame* curr=new kDataFrameMAP(KMERS->get_kSize());
+    while (!KD_KMERS->end()) {
+        KD_KMERS->next_chunk();
+        for (const auto &seq : *KD_KMERS->getKmers()) {
+            kDataFrame* curr=new kDataFrameMAP(KD_KMERS->get_kSize());
             for (const auto &kmer : seq.second) {
                 curr->insert(kmer.hash);
             }
@@ -1123,7 +1127,7 @@ TEST_P(indexingTest,indexPriorityQSaveAndLoad)
     }
 
     delete kframeLoaded;
-    delete KMERS;
+    delete KD_KMERS;
 
 }
 
@@ -1131,16 +1135,16 @@ TEST_P(indexingTest,indexPriorityQ)
 {
     string filename=GetParam();
     int chunkSize = 1000;
-
-    kDataFrame *KF = new kDataFrameMQF(25, 25, 1);
-    kmerDecoder *KMERS = kProcessor::initialize_kmerDecoder(filename, chunkSize, "kmers", {{"k_size", 25}});
+    int q = 25;
+    kDataFrame *KF = new kDataFrameMQF(25, q, integer_hasher);
+    kmerDecoder *KD_KMERS = kProcessor::initialize_kmerDecoder(filename, chunkSize, "kmers", {{"k_size", 25}});
 
 
     vector<kDataFrame*> inputFrames;
-    while (!KMERS->end()) {
-        KMERS->next_chunk();
-        for (const auto &seq : *KMERS->getKmers()) {
-            kDataFrame* curr=new kDataFrameMAP(KMERS->get_kSize());
+    while (!KD_KMERS->end()) {
+        KD_KMERS->next_chunk();
+        for (const auto &seq : *KD_KMERS->getKmers()) {
+            kDataFrame* curr=new kDataFrameMAP(KD_KMERS->get_kSize());
             for (const auto &kmer : seq.second) {
                 curr->insert(kmer.hash);
             }
@@ -1167,7 +1171,7 @@ TEST_P(indexingTest,indexPriorityQ)
     }
 
     delete KF;
-    delete KMERS;
+    delete KD_KMERS;
 
 }
 
@@ -1176,15 +1180,16 @@ TEST_P(indexingTest,mergeIndexes)
     string filename=GetParam();
     int chunkSize = 1000;
 
-    kDataFrame *KF = new kDataFrameMQF(25, 25, 1);
-    kmerDecoder *KMERS = kProcessor::initialize_kmerDecoder(filename, chunkSize, "kmers", {{"k_size", 25}});
+    int q = 25;
+    kDataFrame *KF = new kDataFrameMQF(25, q, integer_hasher);
+    kmerDecoder *KD_KMERS = kProcessor::initialize_kmerDecoder(filename, chunkSize, "kmers", {{"k_size", 25}});
 
 
     vector<kDataFrame*> inputFrames;
-    while (!KMERS->end()) {
-        KMERS->next_chunk();
-        for (const auto &seq : *KMERS->getKmers()) {
-            kDataFrame* curr=new kDataFrameMAP(KMERS->get_kSize());
+    while (!KD_KMERS->end()) {
+        KD_KMERS->next_chunk();
+        for (const auto &seq : *KD_KMERS->getKmers()) {
+            kDataFrame* curr=new kDataFrameMAP(KD_KMERS->get_kSize());
             for (const auto &kmer : seq.second) {
                 curr->insert(kmer.hash);
             }
@@ -1207,7 +1212,8 @@ TEST_P(indexingTest,mergeIndexes)
             for(int j=(i+1)*sizeOfIndexes; j<inputFrames.size();j++)
                 input.push_back(inputFrames[j]);
         }
-        kDataFrame *KF2 = new kDataFrameMQF(25,25,2);
+        int q = 25;
+        kDataFrame *KF2 = new kDataFrameMQF(25, q, TwoBits_hasher);
         kProcessor::indexPriorityQueue(input,"", KF2);
         indexes[i]=KF2;
     }
@@ -1233,7 +1239,7 @@ TEST_P(indexingTest,mergeIndexes)
     }
 
     delete KF;
-    delete KMERS;
+    delete KD_KMERS;
 
 }
 
@@ -1242,9 +1248,10 @@ TEST_P(indexingTest,saveAndLoad)
     string filename=GetParam();
     int chunkSize = 1000;
 
-    kDataFrame *KF = new kDataFrameMQF(25, 25, 1);
-    kmerDecoder *KMERS = kProcessor::initialize_kmerDecoder(filename, chunkSize, "kmers", {{"k_size", 25}});
-    kProcessor::index(KMERS, filename+".names", KF);
+    int q = 25;
+    kDataFrame *KF = new kDataFrameMQF(25, q, integer_hasher);
+    kmerDecoder *KD_KMERS = kProcessor::initialize_kmerDecoder(filename, chunkSize, "kmers", {{"k_size", 25}});
+    kProcessor::index(KD_KMERS, filename+".names", KF);
     string fileName="tmp.kdataframe."+gen_random(4);
     KF->save(fileName);
     delete KF;
@@ -1253,7 +1260,7 @@ TEST_P(indexingTest,saveAndLoad)
 
     uint64_t kSize=kframeLoaded->getkSize();
     //vector<uint32_t> colors;
-    delete KMERS;
+    delete KD_KMERS;
     string names_fileName=filename+".names";
     ifstream namesFile(names_fileName.c_str());
     string seqName, groupName,line;
@@ -1270,11 +1277,11 @@ TEST_P(indexingTest,saveAndLoad)
     }
     namesFile.close();
 
-    KMERS = kProcessor::initialize_kmerDecoder(filename, chunkSize, "kmers", {{"k_size", 25}});
+    KD_KMERS = kProcessor::initialize_kmerDecoder(filename, chunkSize, "kmers", {{"k_size", 25}});
 
-    while (!KMERS->end()) {
-        KMERS->next_chunk();
-        for (const auto &seq : *KMERS->getKmers()) {
+    while (!KD_KMERS->end()) {
+        KD_KMERS->next_chunk();
+        for (const auto &seq : *KD_KMERS->getKmers()) {
             string readName = seq.first;
             string groupName=namesMap[readName];
             for (const auto &kmer : seq.second) {
@@ -1286,7 +1293,7 @@ TEST_P(indexingTest,saveAndLoad)
             }
         }
     }
-    delete kframeLoaded,KMERS;
+    delete kframeLoaded,KD_KMERS;
 
 }
 
