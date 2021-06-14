@@ -37,7 +37,7 @@ INSTANTIATE_TEST_SUITE_P(testcolorsTable,
                         ::testing::Combine(
                         ::testing::Values("mixVectors","prefixTrie"),
                         ::testing::Values(10,20,100),
-                        ::testing::Values(10,100,1000)
+                        ::testing::Values(10,100)
                       ));
 
 void queryColumnTest::SetUp(){
@@ -132,6 +132,7 @@ TEST_P(queryColumnTest, saveAndLoad)
   testColumn->serialize(fileName);
   testColumnLoaded=(queryColorColumn*)Column::getContainerByName(typeid(*(testColumn)).hash_code());
   delete testColumn;
+  testColumn=nullptr;
   testColumnLoaded->deserialize(fileName);
 
   EXPECT_EQ(numSamples,testColumnLoaded->noSamples);
@@ -139,7 +140,7 @@ TEST_P(queryColumnTest, saveAndLoad)
 
   for(auto it:simColors)
   {
-      vector<uint32_t> res=testColumn->getWithIndex(it.first);
+      vector<uint32_t> res=testColumnLoaded->getWithIndex(it.first);
       EXPECT_EQ(res,it.second);
   }
 
@@ -263,6 +264,7 @@ TEST_P(kDataFrameTest,emptykDataFrame)
     kframe->insert(kmers->begin()->first);
     EXPECT_EQ(kframe->empty(),false);
     delete kframe;
+    kframe=nullptr;
 }
 
 TEST_P(kDataFrameTest,insertOneTime)
@@ -641,18 +643,9 @@ TEST_P(kDataFrameTest,saveAndLoadChangeDefaultColumn)
     for(auto simRow:simColumns)
     {
         string kmer=simRow.first;
-        int randInt=get<0>(simRow.second);
         double randDouble=get<1>(simRow.second);
-        bool randBool=get<2>(simRow.second);
-
-        //int retInt=kframe->getKmerColumnValue<int,vector<int> >("intColumn",kmer);
         double retDouble=kframeLoaded->getKmerDefaultColumnValue<double, vectorColumn<double> >(kmer);
-        //bool retBool=kframe->getKmerColumnValue<bool,vector<bool> >("boolColumn",kmer);
-
-        // ASSERT_EQ(randInt,retInt);
         ASSERT_EQ(randDouble,retDouble);
-        // ASSERT_EQ(randBool,retBool);
-
     }
     delete kframeLoaded;
     kframeLoaded= nullptr;
@@ -681,6 +674,7 @@ TEST_P(kDataFrameTest,saveAndIterateOverAllKmers)
     string fileName="tmp.kdataframe."+gen_random(8);
     kframe->save(fileName);
     delete kframe;
+    kframe=nullptr;
     kDataFrame* kframeLoaded=kDataFrame::load(fileName);
     int checkedKmers=0;
     kDataFrameIterator it=kframeLoaded->begin();
@@ -695,6 +689,7 @@ TEST_P(kDataFrameTest,saveAndIterateOverAllKmers)
     }
     EXPECT_EQ(checkedKmers,numInsertedKmers);
     delete kframeLoaded;
+    kframeLoaded=nullptr;
 
 
 }
@@ -850,6 +845,7 @@ TEST_P(algorithmsTest,parsingTest)
 
     delete KD_KMERS;
     delete kframe;
+    kframe=nullptr;
     
     
 }
@@ -878,6 +874,7 @@ TEST_P(algorithmsTest,loadingKMCTest)
 
     delete KD_KMERS;
     delete kframe;
+    kframe=nullptr;
 
 
 }
@@ -1081,7 +1078,8 @@ TEST_P(indexingTest,index)
                 }
             }
     }
-    delete KF,KD_KMERS;
+    delete KF;
+    delete KD_KMERS;
 
 }
 
@@ -1117,7 +1115,7 @@ TEST_P(indexingTest,indexPriorityQSaveAndLoad)
         kDataFrameIterator it=inputFrames[i]->begin();
         while(it!=inputFrames[i]->end())
         {
-            vector<uint32_t> colors=kframeLoaded->getKmerDefaultColumnValue<vector<uint32_t >, insertColorColumn>(it.getHashedKmer());
+            vector<uint32_t> colors=kframeLoaded->getKmerDefaultColumnValue<vector<uint32_t >, mixVectors>(it.getHashedKmer());
             ASSERT_NE(colors.size(),0);
             auto colorIt=colors.end();
             colorIt=find(colors.begin(),colors.end(),i);
@@ -1127,6 +1125,7 @@ TEST_P(indexingTest,indexPriorityQSaveAndLoad)
     }
 
     delete kframeLoaded;
+    kframeLoaded=nullptr;
     delete KD_KMERS;
 
 }
@@ -1293,7 +1292,9 @@ TEST_P(indexingTest,saveAndLoad)
             }
         }
     }
-    delete kframeLoaded,KD_KMERS;
+    delete kframeLoaded;
+    kframeLoaded=nullptr;
+    delete KD_KMERS;
 
 }
 
@@ -1593,4 +1594,5 @@ TEST_P(algorithmsTest,parsingTest2)
 //    }
 //    EXPECT_EQ(insertedKmers.size(),0);
     delete kframe;
+    kframe=nullptr;
 }

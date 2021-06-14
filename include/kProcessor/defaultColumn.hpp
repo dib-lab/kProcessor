@@ -665,6 +665,7 @@ public:
 //    void optimize3(insertColorColumn* col);
 
     uint32_t size(){
+        return numColors;
         uint32_t res=0;
         for(unsigned int i=1;i<colors.size();i++)
             res+=colors[i]->size();
