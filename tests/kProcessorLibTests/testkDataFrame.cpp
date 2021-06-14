@@ -255,7 +255,7 @@ TEST_P(kDataFrameTest,emptykDataFrame)
 {
 
 
-    kDataFrame* kframe=getFrame(GetParam());
+    kframe=getFrame(GetParam());
     EXPECT_EQ(kframe->empty(), true);
     unordered_map<string,int>* kmers=kmersGen->getKmers((int)kframe->getkSize());
     kframe->insert(kmers->begin()->first);
@@ -655,7 +655,6 @@ TEST_P(kDataFrameTest,saveAndLoadChangeDefaultColumn)
 TEST_P(kDataFrameTest,saveAndIterateOverAllKmers)
 {
 
-    kDataFrame* kframe=getFrame(GetParam());
     EXPECT_EQ(kframe->empty(), true);
     unordered_map<string,int>* kmers=kmersGen->getKmers((int)kframe->getkSize());
     int numInsertedKmers=0;
@@ -672,7 +671,7 @@ TEST_P(kDataFrameTest,saveAndIterateOverAllKmers)
     kframe->save(fileName);
     delete kframe;
     kframe=nullptr;
-    kDataFrame* kframeLoaded=kDataFrame::load(fileName);
+    kframeLoaded=kDataFrame::load(fileName);
     int checkedKmers=0;
     kDataFrameIterator it=kframeLoaded->begin();
     while(it!=kframeLoaded->end())
@@ -766,7 +765,7 @@ TEST_P(kDataFrameTest,transformFilterLessThan5MultipleColumns)
     unordered_map<string,int>* kmers=kmersGen->getKmers((int)kframe->getkSize());
     for(auto k:*kmers)
     {
-        kframe->insert(k.first,k.second);
+        kframe->insert(k.first,k.second%10+1);
         if(kframe->load_factor()>=kframe->max_load_factor()*0.8){
             break;
         }

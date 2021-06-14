@@ -21,13 +21,16 @@ public:
             srand (time(NULL));
             db[kSize]=new unordered_map<string,int>();
             size_t nKmers=100000;
-            uint64_t range=(1ULL<<kSize);
+            uint64_t range=(1ULL<<(2*kSize));
             while(db[kSize]->size() < nKmers)
             {
                 uint64_t kmerInt=rand()%range;
                 string kmerStr=kmer::int_to_str(kmerInt,kSize);
-//        uint64_t kmerCount=(rand()%1000)+1;
-                db[kSize]->insert(make_pair(kmerStr,kmerInt));
+                kmerStr=kmer::canonicalKmer(kmerStr);
+                uint64_t count=kmerInt%10000+1;
+
+                if(db[kSize]->find(kmerStr) == db[kSize]->end())
+                    db[kSize]->insert(make_pair(kmerStr,count));
             }
             it=db.find(kSize);
         }
