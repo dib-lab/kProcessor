@@ -34,7 +34,7 @@ INSTANTIATE_TEST_SUITE_P(testcolorsTable,
                         ::testing::Combine(
                         ::testing::Values("mixVectors","prefixTrie"),
                         ::testing::Values(10,20,100),
-                        ::testing::Values(10,100,1000)
+                        ::testing::Values(10,100)
                       ));
 
 void queryColumnTest::SetUp(){
@@ -129,6 +129,7 @@ TEST_P(queryColumnTest, saveAndLoad)
   testColumn->serialize(fileName);
   testColumnLoaded=(queryColorColumn*)Column::getContainerByName(typeid(*(testColumn)).hash_code());
   delete testColumn;
+  testColumn=nullptr;
   testColumnLoaded->deserialize(fileName);
 
   EXPECT_EQ(numSamples,testColumnLoaded->noSamples);
@@ -136,7 +137,7 @@ TEST_P(queryColumnTest, saveAndLoad)
 
   for(auto it:simColors)
   {
-      vector<uint32_t> res=testColumn->getWithIndex(it.first);
+      vector<uint32_t> res=testColumnLoaded->getWithIndex(it.first);
       EXPECT_EQ(res,it.second);
   }
 
@@ -1113,7 +1114,7 @@ TEST_P(indexingTest,indexPriorityQSaveAndLoad)
         kDataFrameIterator it=inputFrames[i]->begin();
         while(it!=inputFrames[i]->end())
         {
-            vector<uint32_t> colors=kframeLoaded->getKmerDefaultColumnValue<vector<uint32_t >, insertColorColumn>(it.getHashedKmer());
+            vector<uint32_t> colors=kframeLoaded->getKmerDefaultColumnValue<vector<uint32_t >, mixVectors>(it.getHashedKmer());
             ASSERT_NE(colors.size(),0);
             auto colorIt=colors.end();
             colorIt=find(colors.begin(),colors.end(),i);
