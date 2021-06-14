@@ -302,14 +302,11 @@ namespace kProcessor {
             if (parse_params["mode"] == 2) mode = "skipmers";
             else if (parse_params["mode"] == 3) mode = "minimizers";
         }
-
-        parse_params["k_size"] = kframe->ksize();
-        parse_params["k"] = kframe->ksize();
-        kmerDecoder *KD = kmerDecoder::getInstance(filename, chunk_size, kframe->KD->slicing_mode, kframe->KD->hash_mode, parse_params);
+        kmerDecoder *KD = kmerDecoder::getInstance(filename, chunk_size, kframe->KD->slicing_mode, kframe->KD->hash_mode, {{"kSize", kframe->ksize()}});
 
         // Clone the hashing
 
-        kmerDecoder_setHashing(KD, kframe->KD->hash_mode);
+        // kmerDecoder_setHashing(KD, kframe->KD->hash_mode);
 
         // Processing
 
