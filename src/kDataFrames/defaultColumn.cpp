@@ -845,7 +845,16 @@ void prefixTrie::loadFromQueryColorColumn(mixVectors  *col) {
             vector<uint32_t> arr = **it;
             if (!arr.empty())
                 nextColor.push(make_tuple(arr, it->getID(), it, itEnd));
+            else{
+                delete it;
+                delete itEnd;
+            }
         }
+        else{
+            delete it;
+            delete itEnd;
+        }
+
     }
 
     uint64_t tmpSize = col->numIntegers() / 10;
@@ -864,7 +873,7 @@ void prefixTrie::loadFromQueryColorColumn(mixVectors  *col) {
         tree[i]=new sdsl::bit_vector(2);
         (*tree[i])[0]=1;
         (*tree[i])[1]=0;
-        bp_tree[i]=new sdsl::bp_support_sada<>(tree[currTree]);
+        bp_tree[i]=new sdsl::bp_support_sada<>(tree[i]);
         unCompressedEdges[i]= new sdsl::int_vector<>(1);
         (*unCompressedEdges[i])[0]=noSamples-i-1;
         starts[i]=0;
@@ -888,7 +897,10 @@ void prefixTrie::loadFromQueryColorColumn(mixVectors  *col) {
     uint64_t rank = 0;
     uint32_t firstNode=std::get<0>(nextColor.top())[0];
     currTree=noSamples-firstNode-1;
+    cout<<"first tree -> "<<currTree<<endl;
     delete tree[currTree];
+    delete bp_tree[currTree];
+    delete unCompressedEdges[currTree];
     tree[currTree]=new sdsl::bit_vector(tmpSize * 2);
     for(uint32_t i=1;i<currTree;i++)
     {
@@ -897,12 +909,12 @@ void prefixTrie::loadFromQueryColorColumn(mixVectors  *col) {
     while (!nextColor.empty()) {
         auto colorTuple = nextColor.top();
         nextColor.pop();
-//        cout<<"c: ";
-//        for(auto c:std::get<0>(colorTuple))
-//        {
-//            cout<<c<<" ";
-//        }
-//        cout<<endl;
+        cout<<"c: ";
+        for(auto c:std::get<0>(colorTuple))
+        {
+            cout<<c<<" ";
+        }
+        cout<<endl;
         vector<uint32_t> currColor(std::get<0>(colorTuple).begin(), std::get<0>(colorTuple).end());
 
         unsigned int i = 0;
@@ -955,6 +967,7 @@ void prefixTrie::loadFromQueryColorColumn(mixVectors  *col) {
             sdsl::util::bit_compress(*unCompressedEdges[currTree]);
 
             currTree=noSamples-currColor[0]-1;
+            cout<<"Curr Tree "<<currTree<<endl;
             // dont update current tree becuase shortern starts[currTree] to be 0
             for(uint32_t i=1;i<currTree;i++)
             {
@@ -965,7 +978,10 @@ void prefixTrie::loadFromQueryColorColumn(mixVectors  *col) {
             tmpSize = tmp_edges.size() * 2;
             //tmp_edges.resize(tmpSize);
             delete tree[currTree];
+            delete bp_tree[currTree];
+            delete unCompressedEdges[currTree];
             tree[currTree]=new sdsl::bit_vector(tmpSize * 2);
+
 //            exportTree("tree.",edges.size()-1);
         }
 
@@ -1254,6 +1270,7 @@ void prefixTrie::shorten(deque<uint32_t> &input, deque<uint32_t> &output) {
     auto i = input.begin();
     uint64_t treePos = 0;
     uint64_t result = tree.size();
+    cout<<"T -> "<<treeIndex<<endl;
     while (i != input.end() && treePos < tree[treeIndex]->size() && (*tree[treeIndex])[treePos] == 1) {
         uint64_t edgeIndex = bp_tree[treeIndex]->rank(treePos) - 1;
         uint32_t currNode = (*unCompressedEdges[treeIndex])[edgeIndex];

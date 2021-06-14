@@ -380,7 +380,6 @@ namespace kProcessor {
                     res->insert(it.getHashedKmer(), it.getCount());
                 it++;
             }
-            delete input;
             return res;
         }
         else{
