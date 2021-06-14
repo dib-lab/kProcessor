@@ -149,13 +149,13 @@ class queryColumnTest : public ::testing::TestWithParam<tuple<string, uint64_t,u
 // // virtual void TearDown();
 //};
 
-class setFunctionsTest : public ::testing::TestWithParam<vector<kDataFrame*>  >{
-
-    virtual void TearDown()
-    {
-        cout<<"here"<<endl;
-    }
-};
+//class setFunctionsTest : public ::testing::TestWithParam<vector<kDataFrame*>  >{
+//
+//    virtual void TearDown()
+//    {
+//        cout<<"here"<<endl;
+//    }
+//};
 
 class indexingTest : public ::testing::TestWithParam<string>{
 
