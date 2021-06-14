@@ -261,6 +261,7 @@ TEST_P(kDataFrameTest,emptykDataFrame)
     kframe->insert(kmers->begin()->first);
     EXPECT_EQ(kframe->empty(),false);
     delete kframe;
+    kframe=nullptr;
 }
 
 TEST_P(kDataFrameTest,insertOneTime)
@@ -639,18 +640,9 @@ TEST_P(kDataFrameTest,saveAndLoadChangeDefaultColumn)
     for(auto simRow:simColumns)
     {
         string kmer=simRow.first;
-        int randInt=get<0>(simRow.second);
         double randDouble=get<1>(simRow.second);
-        bool randBool=get<2>(simRow.second);
-
-        //int retInt=kframe->getKmerColumnValue<int,vector<int> >("intColumn",kmer);
         double retDouble=kframeLoaded->getKmerDefaultColumnValue<double, vectorColumn<double> >(kmer);
-        //bool retBool=kframe->getKmerColumnValue<bool,vector<bool> >("boolColumn",kmer);
-
-        // ASSERT_EQ(randInt,retInt);
         ASSERT_EQ(randDouble,retDouble);
-        // ASSERT_EQ(randBool,retBool);
-
     }
     delete kframeLoaded;
     kframeLoaded= nullptr;
@@ -679,6 +671,7 @@ TEST_P(kDataFrameTest,saveAndIterateOverAllKmers)
     string fileName="tmp.kdataframe."+gen_random(8);
     kframe->save(fileName);
     delete kframe;
+    kframe=nullptr;
     kDataFrame* kframeLoaded=kDataFrame::load(fileName);
     int checkedKmers=0;
     kDataFrameIterator it=kframeLoaded->begin();
@@ -693,6 +686,7 @@ TEST_P(kDataFrameTest,saveAndIterateOverAllKmers)
     }
     EXPECT_EQ(checkedKmers,numInsertedKmers);
     delete kframeLoaded;
+    kframeLoaded=nullptr;
 
 
 }
@@ -848,6 +842,7 @@ TEST_P(algorithmsTest,parsingTest)
 
     delete KMERS;
     delete kframe;
+    kframe=nullptr;
     
     
 }
@@ -876,6 +871,7 @@ TEST_P(algorithmsTest,loadingKMCTest)
 
     delete KMERS;
     delete kframe;
+    kframe=nullptr;
 
 
 }
@@ -1079,7 +1075,8 @@ TEST_P(indexingTest,index)
                 }
             }
     }
-    delete KF,KMERS;
+    delete KF;
+    delete KMERS;
 
 }
 
@@ -1124,6 +1121,7 @@ TEST_P(indexingTest,indexPriorityQSaveAndLoad)
     }
 
     delete kframeLoaded;
+    kframeLoaded=nullptr;
     delete KMERS;
 
 }
@@ -1287,7 +1285,9 @@ TEST_P(indexingTest,saveAndLoad)
             }
         }
     }
-    delete kframeLoaded,KMERS;
+    delete kframeLoaded;
+    kframeLoaded=nullptr;
+    delete KMERS;
 
 }
 
@@ -1587,4 +1587,5 @@ TEST_P(algorithmsTest,parsingTest2)
 //    }
 //    EXPECT_EQ(insertedKmers.size(),0);
     delete kframe;
+    kframe=nullptr;
 }
