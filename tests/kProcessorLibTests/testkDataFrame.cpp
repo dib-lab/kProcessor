@@ -524,7 +524,7 @@ TEST_P(kDataFrameTest,saveAndLoadMultiColumns)
         kframe->setKmerColumnValue<bool, vectorColumn<bool> >("boolColumn",kmer,randBool);
         it++;
     }
-    string fileName="tmp.kdataframe."+gen_random(4);
+    string fileName="tmp.kdataframe."+gen_random(8);
     kframe->save(fileName);
     delete kframe;
     kframe=nullptr;
@@ -629,7 +629,7 @@ TEST_P(kDataFrameTest,saveAndLoadChangeDefaultColumn)
         insertedKmers++;
     }
     int checkedKmers=0;
-    string fileName="tmp.kdataframe."+gen_random(4);
+    string fileName="tmp.kdataframe."+gen_random(8);
     kframe->save(fileName);
     delete kframe;
     kframe=nullptr;
@@ -1101,7 +1101,7 @@ TEST_P(indexingTest,indexPriorityQSaveAndLoad)
     }
 
     kProcessor::indexPriorityQueue(inputFrames,"", KF);
-    string fileName="tmp.kdataframe."+gen_random(4);
+    string fileName="tmp.kdataframe."+gen_random(8);
     KF->save(fileName);
     delete KF;
     kDataFrame* kframeLoaded=kDataFrame::load(fileName);
@@ -1148,7 +1148,7 @@ TEST_P(indexingTest,indexPriorityQ)
     }
 
     kProcessor::indexPriorityQueue(inputFrames,"", KF);
-    string fileName="tmp.kdataframe."+gen_random(4);
+    string fileName="tmp.kdataframe."+gen_random(8);
 
 
     for(int i=0;i<inputFrames.size();i++)
@@ -1245,7 +1245,7 @@ TEST_P(indexingTest,saveAndLoad)
     kDataFrame *KF = new kDataFrameMQF(25, 25, 1);
     kmerDecoder *KMERS = kProcessor::initialize_kmerDecoder(filename, chunkSize, "kmers", {{"k_size", 25}});
     kProcessor::index(KMERS, filename+".names", KF);
-    string fileName="tmp.kdataframe."+gen_random(4);
+    string fileName="tmp.kdataframe."+gen_random(8);
     KF->save(fileName);
     delete KF;
     kDataFrame* kframeLoaded=kDataFrame::load(fileName);
