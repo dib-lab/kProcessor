@@ -814,7 +814,7 @@ private:
 public:
     kDataFramePHMAP();
 
-    kDataFramePHMAP(uint64_t ksize);
+    explicit kDataFramePHMAP(uint64_t ksize);
     kDataFramePHMAP(std::uint64_t kSize,uint64_t nKmers);
     kDataFramePHMAP(readingModes RM, hashingModes hash_mode, map<string, int> params);
     kDataFramePHMAP(uint64_t ksize, hashingModes hash_mode);
@@ -822,10 +822,9 @@ public:
 
 
 
-    explicit kDataFramePHMAP(std::uint64_t ksize);
-    kDataFramePHMAP(std::uint64_t ksize, int mode);
-    kDataFramePHMAP(std::uint64_t kSize,vector<std::uint64_t> kmersHistogram);
-    
+
+
+
 
     kDataFrame *getTwin();
 
