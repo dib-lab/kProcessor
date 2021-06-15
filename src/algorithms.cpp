@@ -24,165 +24,6 @@ using phmap::flat_hash_map;
 #define QBITS_LOCAL_QF 16
 
 namespace kProcessor {
-    // TO BE REMOVED TODO V2
-    /*
-    static inline void insertToLevels(uint64_t item, QF *local, QF *main, QF *diskMQF = NULL) {
-        if (!qf_insert(main, item, 1,
-                       true, false)) {
-            qf_insert(local, item, 1,
-                      false, false);
-            // check of the load factor of the local QF is more than 50%
-            if (qf_space(local) > 50) {
-
-                {
-                    if (main->metadata->noccupied_slots + local->metadata->noccupied_slots
-                        < main->metadata->maximum_occupied_slots) {
-                        qf_migrate(local, main);
-                    } else if (diskMQF != NULL) {
-                        SEQAN_OMP_PRAGMA(critical){
-                            qf_general_lock(main, true);
-                            qf_migrate(main, diskMQF);
-                            qf_reset(main);
-                            qf_general_unlock(main);
-                            qf_migrate(local, main);
-                        }
-                    } else {
-                        throw overflow_error("memory MQF doesn't have enough space to migrate");
-                    }
-
-                }
-                qf_reset(local);
-            }
-        } else {
-            if (qf_space(main) > 90) {
-                SEQAN_OMP_PRAGMA(critical)
-                {
-                    if (qf_space(main) > 90) {
-                        if (diskMQF != NULL) {
-                            qf_general_lock(main, true);
-                            qf_migrate(main, diskMQF);
-                            qf_reset(main);
-                            qf_general_unlock(main);
-                        } else {
-                            throw overflow_error("memory MQF doesn't have enough space");
-                        }
-                    }
-                }
-            }
-        }
-    }
-    */
-
-// TO BE REMOVED TODO V2
-/*
-    void loadIntoMQF(string sequenceFilename, unsigned int ksize, int noThreads, Hasher *hasher, QF *memoryMQF,
-                     QF *diskMQF) {
-        FastqReaderSqueker reader(sequenceFilename);
-        omp_set_num_threads(noThreads);
-        QF *localMQF;
-        bool moreWork = true;
-        uint64_t numReads = 0;
-        deque<pair<string, string> > reads;
-        string read, tag;
-#pragma omp parallel private(reads, localMQF, read, tag) shared(reader, moreWork, numReads)  firstprivate(ksize, noThreads, memoryMQF, diskMQF)
-        {
-            auto localHasher = hasher->clone();
-            localMQF = new QF();
-            reads = deque<pair<string, string> >(15000);
-            qf_init(localMQF, (1ULL << QBITS_LOCAL_QF), memoryMQF->metadata->key_bits,
-                    0, memoryMQF->metadata->fixed_counter_size, 0, true, "", 2038074761);
-            while (moreWork) {
-                SEQAN_OMP_PRAGMA(critical)
-                {
-                    reader.readNSeq(&reads, 15000);
-                    numReads += 15000;
-                    bool tmp = !reader.isEOF();
-                    moreWork = tmp;
-                }
-
-                for (unsigned int j = 0; j < reads.size(); j++) {
-                    read = reads[j].first;
-                    start_read:
-                    if (read.size() < ksize) {
-                        continue;
-                    }
-
-                    uint64_t first = 0;
-                    uint64_t first_rev = 0;
-                    uint64_t item = 0;
-
-                    for (unsigned int i = 0; i < ksize; i++) {
-                        //First kmer
-                        uint8_t curr = kmer::map_base(read[i]);
-                        if (curr > DNA_MAP::G) {
-                            // 'N' is encountered
-
-                            read = read.substr(i + 1, read.length());
-
-                            //continue;
-                            goto start_read;
-                        }
-                        first = first | curr;
-                        first = first << 2;
-                    }
-                    first = first >> 2;
-                    first_rev = kmer::reverse_complement(first, ksize);
-
-
-                    if (kmer::compare_kmers(first, first_rev))
-                        item = first;
-                    else
-                        item = first_rev;
-
-                    item = localHasher->hash(item) % memoryMQF->metadata->range;
-                    insertToLevels(item, localMQF, memoryMQF, diskMQF);
-
-                    uint64_t next = (first << 2) & BITMASK(2 * ksize);
-                    uint64_t next_rev = first_rev >> 2;
-
-                    for (uint32_t i = ksize; i < length(read); i++) {
-                        //next kmers
-                        //cout << "K: " << read.substr(i-K+1,K) << endl;
-                        uint8_t curr = kmer::map_base(read[i]);
-                        if (curr > DNA_MAP::G) {
-                            // 'N' is encountered
-                            //continue;
-                            //read = read.substr(i+1, length(read));
-                            read = read.substr(i + 1, read.length());
-                            //erase(read,0,i+1);
-
-                            goto start_read;
-                        }
-                        next |= curr;
-                        uint64_t tmp = kmer::reverse_complement_base(curr);
-                        tmp <<= (ksize * 2 - 2);
-                        next_rev = next_rev | tmp;
-                        if (kmer::compare_kmers(next, next_rev))
-                            item = next;
-                        else
-                            item = next_rev;
-
-
-                        item = localHasher->hash(item) % memoryMQF->metadata->range;
-                        insertToLevels(item, localMQF, memoryMQF, diskMQF);
-                        next = (next << 2) & BITMASK(2 * ksize);
-                        next_rev = next_rev >> 2;
-                    }
-                }
-
-            }
-            //    #pragma omp critical
-            {
-                qf_migrate(localMQF, memoryMQF);
-            }
-            qf_destroy(localMQF);
-        }
-        if (diskMQF != NULL) {
-            qf_migrate(memoryMQF, diskMQF);
-        }
-
-    }
-*/
 
     void dumpMQF(QF *MQF, int ksize, std::string outputFilename) {
         IntegerHasher Ihasher(BITMASK(2 * ksize));
@@ -461,14 +302,11 @@ namespace kProcessor {
             if (parse_params["mode"] == 2) mode = "skipmers";
             else if (parse_params["mode"] == 3) mode = "minimizers";
         }
-
-        parse_params["k_size"] = kframe->ksize();
-        parse_params["k"] = kframe->ksize();
-        kmerDecoder *KD = initialize_kmerDecoder(filename, chunk_size, mode, parse_params);
+        kmerDecoder *KD = kmerDecoder::getInstance(filename, chunk_size, kframe->KD->slicing_mode, kframe->KD->hash_mode, {{"kSize", kframe->ksize()}});
 
         // Clone the hashing
 
-        kmerDecoder_setHashing(KD, kframe->KD->hash_mode, kframe->KD->canonical);
+        // kmerDecoder_setHashing(KD, kframe->KD->hash_mode);
 
         // Processing
 
@@ -520,7 +358,7 @@ namespace kProcessor {
 
         // Clone the hashing
 
-        kmerDecoder_setHashing(KD, frame->KD->hash_mode, frame->KD->canonical);
+        kmerDecoder_setHashing(KD, frame->KD->hash_mode);
 
         if (KD->get_kSize() != (int) frame->getkSize()) {
             std::cerr << "kmerDecoder kSize must be equal to kDataFrame kSize" << std::endl;
@@ -705,12 +543,12 @@ namespace kProcessor {
     }
 
 
-    void kmerDecoder_setHashing(kmerDecoder *KD, int hash_mode, bool canonical) {
-        KD->setHashingMode(hash_mode, canonical);
+    void kmerDecoder_setHashing(kmerDecoder * KD, hashingModes hash_mode){
+        KD->setHashingMode(hash_mode, KD->get_kSize());
     }
 
-    void kmerDecoder_setHashing(kDataFrame *KF, int hash_mode, bool canonical) {
-        KF->KD->setHashingMode(hash_mode, canonical);
+    void kmerDecoder_setHashing(kDataFrame * KF, hashingModes hash_mode){
+        KF->KD->setHashingMode(hash_mode, KF->ksize());
     }
 
 
@@ -809,11 +647,8 @@ namespace kProcessor {
         }
     }
 
-    kmerDecoder *initialize_kmerDecoder(int kSize, int hash_mode) {
-        // Mode 0: Murmar Hashing | Irreversible
-        // Mode 1: Integer Hashing | Reversible | Full Hashing
-        // Mode 2: TwoBitsHashing | Not considered hashing, just store the two bits representation
-        return new Kmers(kSize, hash_mode);
+    kmerDecoder* initialize_kmerDecoder(int kSize, hashingModes HM = integer_hasher){
+        return new Kmers(kSize, HM);
     }
 
     void index(kmerDecoder *KD, string names_fileName, kDataFrame *frame) {
@@ -1018,7 +853,7 @@ namespace kProcessor {
 
         // Clone the hashing
 
-        kmerDecoder_setHashing(KD, frame->KD->hash_mode, frame->KD->canonical);
+        kmerDecoder_setHashing(KD, frame->KD->hash_mode);
 
         // Processing
 
