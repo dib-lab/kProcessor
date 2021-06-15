@@ -988,7 +988,7 @@ namespace kProcessor {
         for (auto it : *legend) {
             col->colors[it.first] = it.second;
         }
-
+        delete legend;
 
         for (auto & iit : namesMap) {
             uint32_t sampleID = groupNameMap[iit.second];

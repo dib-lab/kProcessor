@@ -30,6 +30,7 @@ _kDataFrameIterator *kDataFramePHMAPIterator::clone() {
 }
 
 kDataFramePHMAPIterator &kDataFramePHMAPIterator::operator++(int) {
+    order++;
     iterator++;
     return *this;
 }
@@ -76,7 +77,18 @@ kDataFramePHMAP::kDataFramePHMAP(uint64_t ksize) {
     this->kSize = ksize;
     KD = new Kmers(kSize, 2);
 //    hasher = new wrapperHasher<flat_hash_map<uint64_t, uint64_t>::hasher>(MAP.hash_function(), ksize);
-    this->MAP = flat_hash_map<uint64_t, uint64_t>(1000);
+    this->MAP = flat_hash_map<uint64_t, uint64_t>(10000);
+    endIterator= new kDataFrameIterator(
+            (_kDataFrameIterator *) new kDataFramePHMAPIterator(MAP.end(), this, kSize),
+            (kDataFrame *) this);
+    // this->hasher = (new IntegerHasher(ksize));
+}
+kDataFramePHMAP::kDataFramePHMAP(uint64_t ksize,uint64_t nKmers) {
+    this->class_name = "PHMAP"; // Temporary until resolving #17
+    this->kSize = ksize;
+    KD = new Kmers(kSize, 2);
+//    hasher = new wrapperHasher<flat_hash_map<uint64_t, uint64_t>::hasher>(MAP.hash_function(), ksize);
+    this->MAP = flat_hash_map<uint64_t, uint64_t>(nKmers);
     endIterator= new kDataFrameIterator(
             (_kDataFrameIterator *) new kDataFramePHMAPIterator(MAP.end(), this, kSize),
             (kDataFrame *) this);

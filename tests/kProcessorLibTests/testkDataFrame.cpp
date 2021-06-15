@@ -166,20 +166,20 @@ kDataFrame* getFrame(tuple<string,int> input)
 
     if(type=="MQF")
     {
-        return new kDataFrameMQF(kSize);
+        return new kDataFrameMQF(kSize,NKmersTEST);
     }
     else if(type=="MAP")
     {
-        return new kDataFrameMAP(kSize);
+        return new kDataFrameMAP(kSize,NKmersTEST);
     }
     else if(type=="PHMAP")
     {
-        return new kDataFramePHMAP(kSize);
+        return new kDataFramePHMAP(kSize,NKmersTEST);
     }
     else if(type=="BMQF")
     {
         string fileName="tmp.kdataframeMQF."+gen_random(8);
-        return new kDataFrameBMQF((uint64_t)kSize,fileName);
+        return new kDataFrameBMQF((uint64_t)kSize,NKmersTEST,fileName);
     }
     else{
         throw std::logic_error("Unknown kdataframe type");
@@ -257,7 +257,7 @@ TEST_P(kDataFrameTest,emptykDataFrame)
 
     kframe=getFrame(GetParam());
     EXPECT_EQ(kframe->empty(), true);
-    unordered_map<string,int>* kmers=kmersGen->getKmers((int)kframe->getkSize());
+
     kframe->insert(kmers->begin()->first);
     EXPECT_EQ(kframe->empty(),false);
     delete kframe;
@@ -268,7 +268,7 @@ TEST_P(kDataFrameTest,insertOneTime)
 {
     EXPECT_EQ(kframe->empty(), true);
     int insertedKmers=0;
-    unordered_map<string,int>* kmers=kmersGen->getKmers((int)kframe->getkSize());
+
     for(auto k:*kmers)
     {
         kframe->insert(k.first);
@@ -297,7 +297,7 @@ TEST_P(kDataFrameTest,insertOneTime)
 TEST_P(kDataFrameTest,insertNTimes)
 {
     EXPECT_EQ(kframe->empty(), true);
-    unordered_map<string,int>* kmers=kmersGen->getKmers((int)kframe->getkSize());
+
     int insertedKmers=0;
     for(auto k:*kmers)
     {
@@ -325,7 +325,7 @@ TEST_P(kDataFrameTest,insertNTimes)
 TEST_P(kDataFrameTest,eraseKmers)
 {
     EXPECT_EQ(kframe->empty(), true);
-    unordered_map<string,int>* kmers=kmersGen->getKmers((int)kframe->getkSize());
+
     int insertedKmers=0;
     for(auto k:*kmers)
     {
@@ -376,7 +376,6 @@ TEST_P(kDataFrameTest,eraseKmers)
 TEST_P(kDataFrameTest,autoResize)
 {
     EXPECT_EQ(kframe->empty(), true);
-    unordered_map<string,int>* kmers=kmersGen->getKmers((int)kframe->getkSize());
     int insertedKmers=0;
     for(auto k:*kmers)
     {
@@ -401,7 +400,6 @@ TEST_P(kDataFrameTest,autoResize)
 TEST_P(kDataFrameTest,iterateOverAllKmers)
 {
     EXPECT_EQ(kframe->empty(), true);
-    unordered_map<string,int>* kmers=kmersGen->getKmers((int)kframe->getkSize());
    // unordered_set<string> insertedKmers;
 //    insertedKmers.clear();
     bool first=true;
@@ -434,7 +432,7 @@ TEST_P(kDataFrameTest,iterateOverAllKmers)
 TEST_P(kDataFrameTest,multiColumns)
 {
     EXPECT_EQ(kframe->empty(), true);
-    unordered_map<string,int>* kmers=kmersGen->getKmers((int)kframe->getkSize());
+
     int insertedKmers=0;
     for(auto k:*kmers)
     {
@@ -492,7 +490,7 @@ TEST_P(kDataFrameTest,multiColumns)
 TEST_P(kDataFrameTest,saveAndLoadMultiColumns)
 {
     EXPECT_EQ(kframe->empty(), true);
-    unordered_map<string,int>* kmers=kmersGen->getKmers((int)kframe->getkSize());
+
     int insertedKmers=0;
     for(auto k:*kmers)
     {
@@ -557,7 +555,7 @@ TEST_P(kDataFrameTest,saveAndLoadMultiColumns)
 TEST_P(kDataFrameTest,changeDefaultColumn)
 {
     EXPECT_EQ(kframe->empty(), true);
-    unordered_map<string,int>* kmers=kmersGen->getKmers((int)kframe->getkSize());
+
     kframe->changeDefaultColumnType(new vectorColumn<double>());
     map<string,tuple<int,double,bool> > simColumns;
 
@@ -608,7 +606,7 @@ TEST_P(kDataFrameTest,saveAndLoadChangeDefaultColumn)
 {
 
     EXPECT_EQ(kframe->empty(), true);
-    unordered_map<string,int>* kmers=kmersGen->getKmers((int)kframe->getkSize());
+
     kframe->changeDefaultColumnType(new vectorColumn<double>());
     map<string,tuple<int,double,bool> > simColumns;
 
@@ -656,7 +654,7 @@ TEST_P(kDataFrameTest,saveAndIterateOverAllKmers)
 {
 
     EXPECT_EQ(kframe->empty(), true);
-    unordered_map<string,int>* kmers=kmersGen->getKmers((int)kframe->getkSize());
+
     int numInsertedKmers=0;
   //  unordered_map<string,int> insertedKmers;
     for(auto k:*kmers)
@@ -694,7 +692,7 @@ TEST_P(kDataFrameTest,saveAndIterateOverAllKmers)
 TEST_P(kDataFrameTest,transformPlus10)
 {
     EXPECT_EQ(kframe->empty(), true);
-    unordered_map<string,int>* kmers=kmersGen->getKmers((int)kframe->getkSize());
+
     //unordered_map<string,int> insertedKmers;
     int numInsertedkmers=0;
     for(auto k:*kmers)
@@ -730,7 +728,7 @@ TEST_P(kDataFrameTest,transformPlus10)
 TEST_P(kDataFrameTest,transformFilterLessThan5)
 {
     EXPECT_EQ(kframe->empty(), true);
-    unordered_map<string,int>* kmers=kmersGen->getKmers((int)kframe->getkSize());
+
     for(auto k:*kmers)
     {
       kframe->insert(k.first,k.second);
@@ -762,10 +760,10 @@ TEST_P(kDataFrameTest,transformFilterLessThan5)
 TEST_P(kDataFrameTest,transformFilterLessThan5MultipleColumns)
 {
     EXPECT_EQ(kframe->empty(), true);
-    unordered_map<string,int>* kmers=kmersGen->getKmers((int)kframe->getkSize());
+
     for(auto k:*kmers)
     {
-        kframe->insert(k.first,k.second%10+1);
+        kframe->insert(k.first,(k.second%9)+1);
         if(kframe->load_factor()>=kframe->max_load_factor()*0.8){
             break;
         }
@@ -774,7 +772,7 @@ TEST_P(kDataFrameTest,transformFilterLessThan5MultipleColumns)
     kProcessor::createCountColumn(kframe);
     kframe2=kProcessor::filter(kframe,[](kDataFrameIterator& k) -> bool
     {
-        uint32_t count;
+        uint32_t count=0;
         k.getColumnValue<uint32_t,vectorColumn<uint32_t> >("count",count);
         return count>=5;
     });
@@ -782,7 +780,9 @@ TEST_P(kDataFrameTest,transformFilterLessThan5MultipleColumns)
     while(it!=kframe2->end())
     {
         string kmer=it.getKmer();
-        uint64_t count=it.getCount();
+        uint32_t count;
+        it.getColumnValue<uint32_t, vectorColumn<uint32_t> >("count",count);
+        //ASSERT_EQ(count,((*kmers)[kmer]%9)+1);
         ASSERT_GE(count,5);
         it++;
     }
@@ -796,7 +796,7 @@ TEST_P(kDataFrameTest,transformFilterLessThan5MultipleColumns)
 TEST_P(kDataFrameTest,aggregateSum)
 {
     EXPECT_EQ(kframe->empty(), true);
-    unordered_map<string,int>* kmers=kmersGen->getKmers((int)kframe->getkSize());
+
     uint64_t goldSum=0;
     for(auto k:*kmers)
     {

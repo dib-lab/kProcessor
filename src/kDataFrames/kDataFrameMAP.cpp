@@ -84,6 +84,18 @@ kDataFrameMAP::kDataFrameMAP(uint64_t ksize) {
             (_kDataFrameIterator *) new kDataFrameMAPIterator(MAP.end(), this, kSize),
             (kDataFrame *) this);
 }
+
+kDataFrameMAP::kDataFrameMAP(uint64_t ksize,uint64_t nKmers) {
+    this->class_name = "MAP"; // Temporary until resolving #17
+    this->kSize = ksize;
+    KD = new Kmers(ksize, 2);
+//    hasher = new wrapperHasher<std::map<uint64_t, uint64_t>::hasher>(MAP.hash_function(), ksize);
+//    this->MAP = std::map<uint64_t, uint64_t>(1000);
+    // this->hasher = (new IntegerHasher(ksize));
+    endIterator=new kDataFrameIterator(
+            (_kDataFrameIterator *) new kDataFrameMAPIterator(MAP.end(), this, kSize),
+            (kDataFrame *) this);
+}
 kDataFrameMAP::kDataFrameMAP(uint64_t ksize,vector<uint64_t> kmersHistogram) {
     this->class_name = "MAP"; // Temporary until resolving #17
     KD = new Kmers(ksize, 2);

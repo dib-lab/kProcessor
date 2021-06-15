@@ -26,6 +26,7 @@ _kDataFrameIterator *kDataFrameBlightIterator::clone() {
 }
 
 kDataFrameBlightIterator &kDataFrameBlightIterator::operator++(int) {
+    order++;
     iterator.next();
     if(iterator.kmer_id > iterator.index_ptr->number_kmer+1)
         iterator.kmer_id = iterator.index_ptr->number_kmer+1;

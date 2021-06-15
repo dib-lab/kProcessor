@@ -62,7 +62,17 @@ kDataFrameBMQF::kDataFrameBMQF(uint64_t ksize,string path):
     fileName=path;
     reserve(10000);
 }
-
+kDataFrameBMQF::kDataFrameBMQF(uint64_t ksize,uint64_t nKmers,string path):
+        kDataFrame(ksize){
+    this->falsePositiveRate=0.0;
+    KD = (new Kmers(kSize));
+    hashbits=2*kSize;
+    range=(1ULL<<hashbits);
+    bufferedmqf=NULL;
+    endIterator=NULL;
+    fileName=path;
+    reserve(nKmers);
+}
 kDataFrameBMQF::kDataFrameBMQF(bufferedMQF* bufferedmqf,uint64_t ksize,double falsePositiveRate):
         kDataFrame(ksize)
 {
