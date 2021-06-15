@@ -6,6 +6,7 @@
 #include <unistd.h>
 
 using namespace std;
+const uint64_t NKmersTEST=100000;
 kDataFrame* getFrame(tuple<string,int> input);
 
 class kmersGenerator{
@@ -20,7 +21,7 @@ public:
         {
             srand (time(NULL));
             db[kSize]=new unordered_map<string,int>();
-            size_t nKmers=100000;
+            size_t nKmers=NKmersTEST;
             uint64_t range=(1ULL<<(2*kSize));
             while(db[kSize]->size() < nKmers)
             {
@@ -49,11 +50,13 @@ public:
     kDataFrame* kframe;
     kDataFrame* kframeLoaded;
     kDataFrame* kframe2;
+    unordered_map<string,int>* kmers;
     virtual void SetUp()
     {
         kframe=getFrame(GetParam());
         kframeLoaded=nullptr;
         kframe2=nullptr;
+        kmers=kmersGen->getKmers((int)kframe->getkSize());
     }
     static void SetUpTestSuite()
     {

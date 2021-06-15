@@ -212,6 +212,7 @@ kDataFrameMQF::kDataFrameMQF(uint64_t ksize, uint8_t q, uint8_t fixedCounterSize
     }
     hashbits = 2 * kSize;
     range = (1ULL << hashbits);
+    KD = (new Kmers(kSize));
 
     kDataFrameMQFIterator *it = new kDataFrameMQFIterator(mqf, kSize, KD);
     it->endIterator();
@@ -260,6 +261,33 @@ kDataFrameMQF::kDataFrameMQF(QF *mqf, uint64_t ksize, double falsePositiveRate) 
     it->endIterator();
     endIterator=new  kDataFrameIterator(it,(kDataFrame*)this);
 }
+kDataFrameMQF::kDataFrameMQF(uint64_t ksize, vector<uint64_t> countHistogram, uint8_t tagSize, double falsePositiveRate)
+        :
+        kDataFrame(ksize) {
+    this->class_name = "MQF"; // Temporary until resolving #17
+    uint64_t nSlots;
+    uint64_t fixedCounterSize;
+    uint64_t memory;
+    KD = (new Kmers(ksize));
+    kDataFrameMQF::estimateParameters(countHistogram, 2 * ksize, tagSize,
+                                      &nSlots, &fixedCounterSize, &memory);
+    qf_init(mqf, nSlots, 2 * ksize, tagSize, fixedCounterSize, 32, true, "", 2038074761);
+}
+kDataFrameMQF::kDataFrameMQF(uint64_t ksize, vector<uint64_t> countHistogram)
+        :
+        kDataFrameMQF(ksize,countHistogram,0,0.0) {
+}
+kDataFrameMQF::kDataFrameMQF(uint64_t ksize,uint64_t nKmers) :
+        kDataFrame(ksize) {
+    this->class_name = "MQF"; // Temporary until resolving #17
+    this->falsePositiveRate = 0.0;
+    KD = (new Kmers(kSize));
+    hashbits = 2 * kSize;
+    range = (1ULL << hashbits);
+    mqf = NULL;
+    endIterator=NULL;
+    reserve(nKmers);
+}
 
 kDataFrame *kDataFrameMQF::getTwin() {
     uint64_t q = log2(mqf->metadata->nslots);
@@ -300,21 +328,7 @@ void kDataFrameMQF::reserve(vector<uint64_t> countHistogram) {
         delete old;
     }
 }
-kDataFrameMQF::kDataFrameMQF(uint64_t ksize, vector<uint64_t> countHistogram, uint8_t tagSize, double falsePositiveRate)
-        :
-        kDataFrame(ksize) {
-    this->class_name = "MQF"; // Temporary until resolving #17
-    uint64_t nSlots;
-    uint64_t fixedCounterSize;
-    uint64_t memory;
-    kDataFrameMQF::estimateParameters(countHistogram, 2 * ksize, tagSize,
-                                      &nSlots, &fixedCounterSize, &memory);
-    qf_init(mqf, nSlots, 2 * ksize, tagSize, fixedCounterSize, 32, true, "", 2038074761);
-}
-kDataFrameMQF::kDataFrameMQF(uint64_t ksize, vector<uint64_t> countHistogram)
-        :
-        kDataFrameMQF(ksize,countHistogram,0,0.0) {
-}
+
 uint64_t kDataFrameMQF::estimateMemory(uint64_t nslots, uint64_t slotSize, uint64_t fcounter, uint64_t tagSize) {
     uint64_t SLOTS_PER_BLOCK_2 = 64;
     uint64_t xnslots = nslots + 10 * sqrt((double) nslots);
