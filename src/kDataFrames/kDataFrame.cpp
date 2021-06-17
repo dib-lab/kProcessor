@@ -347,3 +347,93 @@ dbgIterator kDataFrame::getDBGIterator(const string &kmer)
         throw std::logic_error("Kmer not found in the frame");
     return dbgIterator(this,kmer);
 }
+
+any kDataFrame::getKmerColumnValue(const string& columnName,string kmer)
+{
+    std::uint64_t kmerOrder=getkmerOrder(kmer);
+    return columns[columnName]->get(kmerOrder);
+}
+
+void kDataFrame::setKmerColumnValue(const string& columnName,string kmer,any value)
+{
+    std::uint64_t kmerOrder=getkmerOrder(kmer);
+    columns[columnName]->insert(value,kmerOrder);
+}
+
+
+
+any kDataFrame::getKmerColumnValue(const string& columnName,uint64_t kmer)
+{
+    std::uint64_t kmerOrder=getkmerOrder(kmer);
+    return columns[columnName]->get(kmerOrder);
+}
+
+void kDataFrame::setKmerColumnValue(const string& columnName,uint64_t kmer,any value)
+{
+    std::uint64_t kmerOrder=getkmerOrder(kmer);
+    columns[columnName]->insert(value,kmerOrder);
+}
+
+
+any kDataFrame::getKmerColumnValueByOrder(const string& columnName,uint64_t kmerOrder)
+{
+    return columns[columnName]->get(kmerOrder);
+}
+
+void kDataFrame::setKmerColumnValueByOrder(const string& columnName,uint64_t kmerOrder,any value)
+{
+    columns[columnName]->insert(value,kmerOrder);
+}
+
+
+
+any kDataFrame::getKmerDefaultColumnValue(const string& kmer)
+{
+    return defaultColumn->get(getCount(kmer));
+}
+
+
+void kDataFrame::setKmerDefaultColumnValue(const string& kmer, any value)
+{
+    uint32_t i=(defaultColumn)->insertAndGetIndex(value);
+    setCount(kmer,i);
+}
+
+
+any kDataFrame::getKmerDefaultColumnValue(std::uint64_t kmer)
+{
+    return defaultColumn->get(getCount(kmer));
+}
+
+
+void kDataFrame::setKmerDefaultColumnValue(std::uint64_t kmer, any value)
+{
+    uint32_t i=defaultColumn->insertAndGetIndex(value);
+    setCount(kmer,i);
+}
+
+
+
+void kmerRow::getColumnValue(const string& colName, any& res)
+{
+    res= origin->getKmerColumnValueByOrder(colName, order);
+}
+
+
+void kmerRow::setColumnValue(const string& colName, any value)
+{
+    origin->setKmerColumnValueByOrder(colName, order,value);
+}
+
+
+
+void kDataFrameIterator::getColumnValue(const string& colName, any& res)
+{
+    res= origin->getKmerColumnValueByOrder(colName, iterator->getOrder());
+}
+
+
+void kDataFrameIterator::setColumnValue(const string& colName, any value)
+{
+    origin->setKmerColumnValueByOrder(colName, iterator->getOrder(),value);
+}

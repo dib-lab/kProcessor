@@ -12,6 +12,7 @@
 #include <sdsl/util.hpp>
 #include "mum.h"
 #include <unistd.h>
+#include <any>
 
 template
 class vectorColumn<int>;
@@ -27,7 +28,10 @@ template
 class vectorColumn<uint32_t>;
 
 template
-class deduplicatedColumn<vector<uint32_t>, StringColorColumn>;
+class vectorColumn<uint64_t>;
+
+template
+class deduplicatedColumn<vector<string>, StringColorColumn>;
 
 bool is_file_exist(const char *fileName) {
     std::ifstream infile(fileName);
@@ -55,15 +59,17 @@ Column *Column::getContainerByName(std::size_t hash) {
 }
 
 template<typename T>
-uint32_t vectorColumn<T>::insertAndGetIndex(T item) {
+uint32_t vectorColumn<T>::insertAndGetIndex(any itemany) {
+    T item=any_cast<T>(itemany);
     dataV.push_back(item);
     return dataV.size() - 1;
 }
 
 
 template<typename T>
-T vectorColumn<T>::getWithIndex(uint32_t index) {
-    return dataV[index];
+any  vectorColumn<T>::get(uint32_t index) {
+    T tmp=dataV[index];
+    return tmp;
 }
 
 template<typename T>
@@ -100,14 +106,11 @@ void vectorColumn<T>::deserialize(string filename) {
 }
 
 template<typename T>
-void vectorColumn<T>::insert(T item, uint32_t index) {
-    dataV[index] = item;
+void vectorColumn<T>::insert(any item, uint32_t index) {
+    dataV[index] = any_cast<T>(item);
 }
 
-template<typename T>
-T vectorColumn<T>::get(uint32_t index) {
-    return dataV[index];
-}
+
 
 template<typename T>
 Column *vectorColumn<T>::getTwin() {
@@ -116,14 +119,20 @@ Column *vectorColumn<T>::getTwin() {
 
 
 
-template<typename T>
-void vectorColumn<T>::setValueFromColumn(Column *Container, uint32_t inputOrder, uint32_t outputOrder) {
-    T val = ((vectorColumn<T> *) Container)->get(inputOrder);
+
+void Column::setValueFromColumn(Column *Container, uint32_t inputOrder, uint32_t outputOrder) {
+    any val =  Container->get(inputOrder);
     insert(val, outputOrder);
 }
 
-
-uint32_t insertColorColumn::insertAndGetIndex(vector<uint32_t> &item) {
+any insertColorColumn::get(uint32_t index){
+    throw std::logic_error("get is not supported in insertColorColumn");
+}
+void insertColorColumn::insert(any item,uint32_t index) {
+    throw std::logic_error("insert is not supported in insertColorColumn use insert nd get index instead");
+}
+uint32_t insertColorColumn::insertAndGetIndex(any itemany) {
+    vector<uint32_t>& item=any_cast<vector<uint32_t>& >(itemany);
     //return colorInv.getColorID(item);
     if (colorInv.hasColorID(item))
         return colorInv.getColorID(item);
@@ -167,10 +176,6 @@ uint32_t insertColorColumn::insertAndGetIndex(vector<uint32_t> &item) {
 
 /*
  * * */
-vector<uint32_t> insertColorColumn::getWithIndex(uint32_t index) {
-    throw logic_error("it is insert only color column");
-//    return colors[index];
-}
 
 
 void insertColorColumn::serialize(string filename) {
@@ -217,17 +222,21 @@ void insertColorColumn::resize(uint32_t size) {
 
 }
 
-vector<string> StringColorColumn::getWithIndex(uint32_t index) {
+any StringColorColumn::get(uint32_t index) {
     vector<string> res(colors[index].size());
     for (unsigned int i = 0; i < colors[index].size(); i++)
         res[i] = namesMap[colors[index][i]];
     return res;
 
 }
-
-vector<uint32_t> StringColorColumn::get(uint32_t index) {
-    return colors[index];
+uint32_t  StringColorColumn::insertAndGetIndex(any item){
+    throw std::logic_error("insert is not supported in string color column");
 }
+void StringColorColumn::insert(any item,uint32_t index)
+{
+    throw std::logic_error("insert is not supported in string color column");
+}
+
 
 void StringColorColumn::serialize(string filename) {
     std::ofstream os(filename + ".colors", std::ios::binary);
@@ -293,23 +302,30 @@ uint32_t inExactColorIndex::getColorID(vector<uint32_t> &v) {
 }
 
 
-void mixVectors::insert(vector<uint32_t> &item, uint32_t index) {
-    auto it = lower_bound(colors.begin(), colors.end(), index + 1,
-                          [](vectorBase *lhs, uint32_t rhs) -> bool { return lhs->beginID < rhs; });
-    // if(it==colors.end())
-    it--;
-    (*it)->set(index - (*it)->beginID, item);
+//void mixVectors::insert(any itemany, uint32_t index) {
+//    vector<uint32_t>& item=any_cast<vector<uint32_t>&>(itemany);
+//    auto it = lower_bound(colors.begin(), colors.end(), index + 1,
+//                          [](vectorBase *lhs, uint32_t rhs) -> bool { return lhs->beginID < rhs; });
+//    // if(it==colors.end())
+//    it--;
+//    (*it)->set(index - (*it)->beginID, item);
+//
+//
+//}
 
-
-}
-
-uint32_t queryColorColumn::insertAndGetIndex(vector<uint32_t> &item) {
+uint32_t queryColorColumn::insertAndGetIndex(any item) {
     throw std::logic_error("insertAndGetIndex is not supported in mixVectors");
     return 0;
 
 }
 
-vector<uint32_t> mixVectors::getWithIndex(uint32_t index) {
+void queryColorColumn::insert(any item,uint32_t index){
+    throw std::logic_error("insertAndGetIndex is not supported in mixVectors");
+
+
+}
+
+any mixVectors::get(uint32_t index) {
     if (index == 0)
         return vector<uint32_t>();
     index = idsMap[index];
@@ -476,10 +492,7 @@ void mixVectors::serialize(string filename) {
     out.close();
 
 }
-vector<uint32_t > mixVectors::get(uint32_t index) {
-    throw std::logic_error("get is not implemented use getWithIndex instead");
 
-}
 void mixVectors::deserialize(string filename) {
     ifstream input(filename.c_str());
     input.read((char *) (&(noSamples)), sizeof(uint64_t));
@@ -1108,17 +1121,14 @@ void prefixTrie::loadFromQueryColorColumn(mixVectors  *col) {
 
 
 
-uint32_t prefixTrie::insertAndGetIndex(vector<uint32_t> &item) {
-    throw std::logic_error("insertAndGetIndex is not supported in mixVectors");
+//uint32_t prefixTrie::insertAndGetIndex(any item) {
+//    throw std::logic_error("insertAndGetIndex is not supported in mixVectors");
+//
+//}
 
-}
 
-vector<uint32_t > prefixTrie::get(uint32_t index) {
-    throw std::logic_error("get is not implemented use getWithIndex instead");
 
-}
-
-vector<uint32_t> prefixTrie::getWithIndex(uint32_t index) {
+any prefixTrie::get(uint32_t index) {
     deque<uint32_t> tmp;
     queue<uint64_t> Q;
     Q.push(idsMap[index]);
@@ -1149,10 +1159,10 @@ vector<uint32_t> prefixTrie::getWithIndex(uint32_t index) {
     return res;
 }
 
-void prefixTrie::insert(vector<uint32_t> &item, uint32_t index) {
-    throw std::logic_error("insertAndGetIndex is not supported in mixVectors");
-
-}
+//void prefixTrie::insert(vector<uint32_t> &item, uint32_t index) {
+//    throw std::logic_error("insert is not supported in prefixtrie");
+//
+//}
 //vector<uint32_t > prefixTrie::get(uint32_t index){
 //    return vector<uint32_t >();
 //}
@@ -1395,7 +1405,7 @@ void deduplicatedColumn<T, ColumnType>::deserialize(string filename) {
 
 
 template<typename T, typename ColumnType>
-T deduplicatedColumn<T, ColumnType>::get(uint32_t order) {
+any deduplicatedColumn<T, ColumnType>::get(uint32_t order) {
     return values->get(index[order]);
 }
 
@@ -1411,11 +1421,15 @@ void deduplicatedColumn<T, ColumnType>::resize(uint32_t size) {
     index.resize(size);
 }
 
+
+
 template<typename T, typename ColumnType>
-void
-deduplicatedColumn<T, ColumnType>::setValueFromColumn(Column *Container, uint32_t inputOrder, uint32_t outputOrder) {
-    deduplicatedColumn<T, ColumnType> *other = ((deduplicatedColumn<T, ColumnType> *) Container);
-    values = other->values;
-    index[outputOrder] = other->index[inputOrder];
+uint32_t deduplicatedColumn<T, ColumnType>::insertAndGetIndex(any item) {
+    throw std::logic_error("insertAndGetIndex is not implemented in deduplicated");
+
+}
+template<typename T, typename ColumnType>
+void  deduplicatedColumn<T, ColumnType>::insert(any item,uint32_t index) {
+    throw std::logic_error("insert is not implemented in deduplicated");
 
 }

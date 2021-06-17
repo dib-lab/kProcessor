@@ -915,7 +915,7 @@ namespace kProcessor {
 
             uint64_t prevColor = output->getCount(currHash);
             if (prevColor != 0) {
-                auto res = output->getKmerDefaultColumnValue<vector<uint32_t>, insertColorColumn>(currHash);
+                auto res = any_cast<vector<uint32_t>>(output->getKmerDefaultColumnValue(currHash));
                 cout << "Error in Indexing detected at kmer " << currHash << endl;
                 cout << "should be empty vector and found  ";
                 for (auto a:res)
@@ -923,7 +923,7 @@ namespace kProcessor {
                 cout << endl << endl;
             }
 
-            output->setKmerDefaultColumnValue<vector<uint32_t> &, insertColorColumn>(currHash, colorVec);
+            output->setKmerDefaultColumnValue(currHash, colorVec);
 
             // auto res=output->getKmerDefaultColumnValue<vector<uint32_t >, insertColorColumn>(currHash);
             // //	cout<<res.size()<<endl;
@@ -993,8 +993,8 @@ namespace kProcessor {
                 nextKmer.pop();
 
                 uint32_t i = get<1>(colorTuple);
-                auto tmp = input[i]->getKmerDefaultColumnValue<vector<uint32_t>, mixVectors>(
-                        get<0>(colorTuple));
+                auto tmp = any_cast<vector<uint32_t> >(input[i]->getKmerDefaultColumnValue
+                        (get<0>(colorTuple)));
                 for (auto c:tmp)
                     colorVec.push_back(c + idsOffset[i]);
 
@@ -1008,7 +1008,7 @@ namespace kProcessor {
                     delete get<3>(colorTuple);
                 }
             }
-            output->setKmerDefaultColumnValue<vector<uint32_t>, insertColorColumn>(currHash, colorVec);
+            output->setKmerDefaultColumnValue(currHash, colorVec);
 
         }
         colors->populateColors();
@@ -1072,15 +1072,16 @@ namespace kProcessor {
 
     void createCountColumn(kDataFrame* frame){
         const string columnName="count";
-        frame->addColumn(columnName,new vectorColumn<uint32_t>(frame->size()));
+        frame->addColumn(columnName,new vectorColumn<uint64_t>(frame->size()));
         kDataFrameIterator it = frame->begin();
         while (it != frame->end()) {
-            frame->setKmerColumnValueByOrder<uint32_t,vectorColumn<uint32_t> >(columnName,it.getOrder(),it.getCount());
+            uint64_t count=it.getCount();
+            frame->setKmerColumnValueByOrder(columnName,it.getOrder(),count);
             it++;
         }
     }
     void createColorColumn(kDataFrame* frame){
-        auto* newColumn=new deduplicatedColumn<vector<uint32_t>,StringColorColumn>(frame->size());
+        auto* newColumn=new deduplicatedColumn<vector<string>,StringColorColumn>(frame->size());
         newColumn->values=(StringColorColumn*)frame->getDefaultColumn();
         uint32_t i=0;
         for(auto k:*frame)

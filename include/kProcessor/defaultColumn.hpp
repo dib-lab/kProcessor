@@ -9,6 +9,7 @@
 #include "sdsl/bp_support.hpp"
 #include <stack>
 #include <unordered_set>
+#include <any>
 
 using phmap::flat_hash_map;
 using namespace std;
@@ -23,13 +24,13 @@ public:
     virtual void resize(uint32_t size)=0;
     virtual uint32_t size()=0;
     static Column* getContainerByName(size_t name);
-
+    virtual uint32_t  insertAndGetIndex(any item)=0;
+    virtual void insert(any item,uint32_t index) = 0;
+    virtual any get(uint32_t index)=0;
     virtual void serialize(string filename)=0;
     virtual void deserialize(string filename)=0;
 
-    virtual void setValueFromColumn(Column* Container, uint32_t inputOrder,uint32_t outputOrder){
-
-    }
+    void setValueFromColumn(Column* Container, uint32_t inputOrder,uint32_t outputOrder);
 
 
 };
@@ -52,8 +53,7 @@ public:
     ~vectorColumn(){
 
     }
-    uint32_t  insertAndGetIndex(T item);
-    T getWithIndex(uint32_t index);
+    uint32_t  insertAndGetIndex(any item);
     uint32_t size(){
         return dataV.size();
     }
@@ -61,13 +61,12 @@ public:
     {
         dataV.resize(size);
     }
-    void insert(T item,uint32_t index);
-    T get(uint32_t index);
+    void insert(any item,uint32_t index);
+    any get(uint32_t index);
 
     void serialize(string filename);
     void deserialize(string filename);
     Column* getTwin();
-    void setValueFromColumn(Column* Container, uint32_t inputOrder,uint32_t outputOrder);
 
 
 
@@ -141,11 +140,10 @@ public:
     ~insertColorColumn(){
 
     }
-    uint32_t  insertAndGetIndex(vector<uint32_t >& item);
-    vector<uint32_t > getWithIndex(uint32_t index);
+    uint32_t  insertAndGetIndex(any item);
 
-    void insert(vector<uint32_t >& item,uint32_t index);
-    vector<uint32_t >& get(uint32_t index);
+    void insert(any item,uint32_t index);
+    any get(uint32_t index);
 
     void serialize(string filename);
     void deserialize(string filename);
@@ -615,12 +613,8 @@ public:
     uint64_t numColors;
     queryColorColumn(){}
     ~queryColorColumn() override = default;
-    uint32_t  insertAndGetIndex(vector<uint32_t >& item);
-    virtual vector<uint32_t > getWithIndex(uint32_t index)=0;
-
-    virtual void insert(vector<uint32_t >& item,uint32_t index) = 0;
-    virtual vector<uint32_t > get(uint32_t index)=0;
-
+    uint32_t  insertAndGetIndex(any item);
+    void insert(any item,uint32_t index);
     virtual void serialize(string filename)=0;
     virtual void deserialize(string filename)=0;
 
@@ -650,11 +644,8 @@ public:
             delete v;
     }
 
-    uint32_t  insertAndGetIndex(vector<uint32_t >& item);
-    vector<uint32_t > getWithIndex(uint32_t index);
 
-    void insert(vector<uint32_t >& item,uint32_t index);
-    vector<uint32_t > get(uint32_t index);
+    any get(uint32_t index);
 
     void serialize(string filename);
     void deserialize(string filename);
@@ -715,11 +706,8 @@ public:
             delete e;
 
     }
-    uint32_t  insertAndGetIndex(vector<uint32_t >& item);
-    vector<uint32_t > getWithIndex(uint32_t index);
 
-    void insert(vector<uint32_t >& item,uint32_t index);
-    vector<uint32_t > get(uint32_t index);
+    any get(uint32_t index);
 
     void serialize(string filename);
     void deserialize(string filename);
@@ -751,10 +739,10 @@ public:
 
     }
 
-    vector<string > getWithIndex(uint32_t index);
-    //uint32_t  insertAndGetIndex(vector<uint32_t > item);
+    uint32_t  insertAndGetIndex(any item);
+    void insert(any item,uint32_t index);
 //    void insert(vector<uint32_t > item,uint32_t index);
-    vector<uint32_t > get(uint32_t index);
+    any get(uint32_t index);
 
     void serialize(string filename);
     void deserialize(string filename);
@@ -789,14 +777,15 @@ public:
     {
         return index.size();
     }
-    T get(uint32_t index);
+    any get(uint32_t index);
 
     void serialize(string filename);
     void deserialize(string filename);
     Column* getTwin();
     void resize(uint32_t size);
-    void setValueFromColumn(Column* Container, uint32_t inputOrder,uint32_t outputOrder);
 
+    uint32_t insertAndGetIndex(any item);
+    void insert(any item,uint32_t index);
 
 
 };

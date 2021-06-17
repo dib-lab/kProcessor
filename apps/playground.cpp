@@ -12,22 +12,21 @@ using namespace std;
 
 int main(int argc, char *argv[]){
 
-    const uint64_t n=10;
-    uint64_t sums[n+1];
-    sums[0]=0;
-    sums[1]=1;
-    for(uint64_t i=2;i<n;i++)
-    {
-        sums[i]=1;
-        for(uint64_t j=0;j<i;j++)
-            sums[i]+=sums[j];
-    }
-    uint64_t totalSum=0;
-    for(uint64_t i=0;i<n;i++)
-    {
-        totalSum+=sums[i];
-        cout<<i<<" -> "<<sums[i]<<"- >"<<totalSum<<endl;
-    }
+    any v=(uint64_t)10;
+    uint64_t tmp=any_cast<uint64_t>(v);
+    cout<<tmp<<endl;
+
+    vector<uint32_t> arr(10);
+    for(int i=0;i<10;i++)
+        arr[i]=i;
+
+    any v2=arr;
+    vector<uint32_t> v3=any_cast<vector<uint32_t> >(v2);
+
+    for(int i=0;i<10;i++)
+        cout<<v3[i]<<endl;
+
+
 //    CLI::App app;
 //    string input_file;
 //
