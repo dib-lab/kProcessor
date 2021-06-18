@@ -123,6 +123,12 @@ kDataFrameMAP::kDataFrameMAP() {
     // this->hasher = (new IntegerHasher(23));
 }
 
+kDataFrameMAP::kDataFrameMAP(readingModes RM, hashingModes HM, map<string, int> params) {
+    this->class_name = "MAP"; // Temporary until resolving #17
+    KD = kmerDecoder::getInstance(RM, HM, params);
+    this->kSize = KD->get_kSize();
+}
+
 bool kDataFrameMAP::kmerExist(string kmerS) {
     return (this->MAP.find(kmer::str_to_canonical_int(kmerS)) == this->MAP.end()) ? 0 : 1;
 }
@@ -216,8 +222,11 @@ void kDataFrameMAP::serialize(string filePath) {
     // Write the kmerSize
     ofstream file(filePath + ".extra");
     file << kSize << endl;
-    file << 2 << endl;
+    file << this->KD->hash_mode << endl;
+    file << this->KD->slicing_mode << endl;
+    file << this->KD->params_to_string() << endl;
     file.close();
+
     std::ofstream os(filePath + ".map", std::ios::binary);
     cereal::BinaryOutputArchive archive(os);
     archive(this->MAP);
@@ -227,19 +236,22 @@ void kDataFrameMAP::serialize(string filePath) {
 kDataFrame *kDataFrameMAP::load(string filePath) {
 
     // Load kSize
-    ifstream file(filePath + ".extra");
     uint64_t kSize;
-    int hashing_mode;
+    int hashing_mode, reading_mode;
+    string KD_params_string;
+
+    ifstream file(filePath + ".extra");
     file >> kSize;
     file >> hashing_mode;
+    file >> reading_mode;
+    file >> KD_params_string;
 
-    if(hashing_mode != 2){
-        std::cerr << "Error: In the kDataFrameMAP, hashing must be 2:TwoBitsRepresentation mode" << endl;
-        exit(1);
-    }
+    hashingModes hash_mode = static_cast<hashingModes>(hashing_mode);
+    readingModes slicing_mode = static_cast<readingModes>(reading_mode);
+    map<string, int> kmerDecoder_params = kmerDecoder::string_to_params(KD_params_string);
     file.close();
     // Initialize kDataFrameMAP
-    kDataFrameMAP *KMAP = new kDataFrameMAP(kSize);
+    kDataFrameMAP *KMAP = new kDataFrameMAP(slicing_mode, hash_mode, kmerDecoder_params);
 
     // Load the hashMap into the kDataFrameMAP
     std::ifstream os(filePath + ".map", std::ios::binary);

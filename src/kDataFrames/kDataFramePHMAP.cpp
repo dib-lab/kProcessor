@@ -237,7 +237,8 @@ void kDataFramePHMAP::serialize(string filePath) {
     ofstream file(filePath + ".extra");
     file << kSize << endl;
     file << this->KD->hash_mode << endl;
-    file.close();
+    file << this->KD->slicing_mode << endl;
+    file << this->KD->params_to_string() << endl;
     filePath += ".phmap";
     {   
         phmap::BinaryOutputArchive ar_out(filePath.c_str());
@@ -249,15 +250,23 @@ void kDataFramePHMAP::serialize(string filePath) {
 kDataFrame *kDataFramePHMAP::load(string filePath) {
 
     // Load kSize
+    int kSize, hashing_mode, reading_mode;
+    string KD_params_string;
+
     ifstream file(filePath + ".extra");
-    uint64_t kSize;
-    int hashing_mode;
     file >> kSize;
     file >> hashing_mode;
+    file >> reading_mode;
+    file >> KD_params_string;
     file.close();
-    filePath += ".phmap";
+
     hashingModes hash_mode = static_cast<hashingModes>(hashing_mode);
-    kDataFramePHMAP *KMAP = new kDataFramePHMAP(kSize, hash_mode);
+    readingModes slicing_mode = static_cast<readingModes>(reading_mode);
+    map<string, int> kmerDecoder_params = kmerDecoder::string_to_params(KD_params_string);
+
+    filePath += ".phmap";
+
+    kDataFramePHMAP *KMAP = new kDataFramePHMAP(slicing_mode, hash_mode, kmerDecoder_params);
     {
         phmap::BinaryInputArchive ar_in(filePath.c_str());
         KMAP->MAP.load(ar_in);

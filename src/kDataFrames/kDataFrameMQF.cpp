@@ -261,6 +261,26 @@ kDataFrameMQF::kDataFrameMQF(QF *mqf, uint64_t ksize, double falsePositiveRate) 
     it->endIterator();
     endIterator=new  kDataFrameIterator(it,(kDataFrame*)this);
 }
+
+
+kDataFrameMQF::kDataFrameMQF(QF *mqf, readingModes slicing_mode, hashingModes hash_mode, map<string, int> kmerDecoder_params){
+    this->class_name = "MQF"; // Temporary until resolving #17
+    this->mqf = mqf;
+    this->falsePositiveRate = falsePositiveRate;
+    if (falsePositiveRate == 0) {
+        KD = (new Kmers(kSize, integer_hasher));
+    } else if (falsePositiveRate < 1) {
+        KD = (new Kmers(kSize, mumur_hasher));
+    }
+    hashbits = this->mqf->metadata->key_bits;
+    hashbits = 2 * kSize;
+    range = (1ULL << hashbits);
+    kDataFrameMQFIterator *it = new kDataFrameMQFIterator(mqf, kSize, KD);
+    it->endIterator();
+    endIterator = new  kDataFrameIterator(it,(kDataFrame*)this);
+}
+
+
 kDataFrameMQF::kDataFrameMQF(uint64_t ksize, vector<uint64_t> countHistogram, uint8_t tagSize, double falsePositiveRate)
         :
         kDataFrame(ksize) {
@@ -542,34 +562,36 @@ float kDataFrameMQF::max_load_factor() {
 
 
 void kDataFrameMQF::serialize(string filePath) {
-    //filePath += ".mqf";
     ofstream file(filePath + ".extra");
     file << kSize << endl;
     file << this->KD->hash_mode << endl;
+    file << this->KD->slicing_mode << endl;
+    file << this->KD->params_to_string() << endl;    
     file.close();
-    // uint64_t legendSize=tagsLegend.size();
-    // file<<legendSize<<endl;
-    // auto it = tagsLegend.begin();
-    // while(it==tagsLegend.end())
-    // {
-    //   file<<it->first<<" "<<it->second<<endl;
-    //   it++;
-    // }
-    // file.close();
     qf_serialize(mqf, (filePath + ".mqf").c_str());
 }
 
 kDataFrame *kDataFrameMQF::load(string filePath) {
+
+    int kSize, hashing_mode, reading_mode;
+    string KD_params_string;
+
     ifstream file(filePath + ".extra");
-    uint64_t filekSize, hashing_mode;
-    file >> filekSize;
+    file >> kSize;
     file >> hashing_mode;
+    file >> reading_mode;
+    file >> KD_params_string;
+
+    hashingModes hash_mode = static_cast<hashingModes>(hashing_mode);
+    readingModes slicing_mode = static_cast<readingModes>(reading_mode);
+    map<string, int> kmerDecoder_params = kmerDecoder::string_to_params(KD_params_string);
+
     double flasePositiveRate;
     flasePositiveRate = (hashing_mode == 1) ? 0 : 0.5;
     file.close();
     QF *mqf = new QF();
     qf_deserialize(mqf, (filePath + ".mqf").c_str());
-    return new kDataFrameMQF(mqf, filekSize, flasePositiveRate);
+    return new kDataFrameMQF(mqf, slicing_mode, hash_mode, kmerDecoder_params);
 }
 
 void kDataFrameMQF::preprocessKmerOrder()

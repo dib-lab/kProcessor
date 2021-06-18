@@ -73,6 +73,21 @@ kDataFrameBMQF::kDataFrameBMQF(uint64_t ksize,uint64_t nKmers,string path):
     fileName=path;
     reserve(nKmers);
 }
+
+kDataFrameBMQF::kDataFrameBMQF(bufferedMQF* bufferedmqf, readingModes RM, hashingModes HM, map<string, int> params){
+    this->bufferedmqf=bufferedmqf;
+    this->falsePositiveRate=falsePositiveRate;
+    KD = kmerDecoder::getInstance(RM, HM, params);
+    this->kSize = KD->get_kSize();
+    hashbits=this->bufferedmqf->memoryBuffer->metadata->key_bits;
+    hashbits=2*kSize;
+    range=(1ULL<<hashbits);
+    kDataFrameBMQFIterator* it=new kDataFrameBMQFIterator(bufferedmqf,kSize,KD);
+    it->endIterator();
+    endIterator=new  kDataFrameIterator(it,(kDataFrame*)this);
+
+}
+
 kDataFrameBMQF::kDataFrameBMQF(bufferedMQF* bufferedmqf,uint64_t ksize,double falsePositiveRate):
         kDataFrame(ksize)
 {
@@ -414,24 +429,29 @@ void kDataFrameBMQF::serialize(string filePath){
     ofstream file(filePath+".extra");
     file<<kSize<<endl;
     file << this->KD->hash_mode << endl;
-    file.close();
-
+    file << this->KD->slicing_mode << endl;
+    file << this->KD->params_to_string() << endl;
     bufferedMQF_serialize(bufferedmqf);
 
 }
 kDataFrame* kDataFrameBMQF::load(string filePath){
-    ifstream file(filePath+".extra");
-    uint64_t filekSize;
-    int hashing_mode;
-    double flasePositiveRate;
-    file>>filekSize;
-    file >> hashing_mode;
     
-    flasePositiveRate = (hashing_mode == 1) ? 0 : 0.5;
+    uint64_t filekSize;
+    int hashing_mode, reading_mode;
+    string KD_params_string;
+
+    ifstream file(filePath+".extra");
+    file >> filekSize;
+    file >> hashing_mode;
+    file >> reading_mode;
+    file >> KD_params_string;
+    hashingModes hash_mode = static_cast<hashingModes>(hashing_mode);
+    readingModes slicing_mode = static_cast<readingModes>(reading_mode);
+    map<string, int> kmerDecoder_params = kmerDecoder::string_to_params(KD_params_string);
 
     bufferedMQF* bufferedmqf=new bufferedMQF();
     bufferedMQF_deserialize(bufferedmqf,(filePath+".bmqf").c_str());
-    return new kDataFrameBMQF(bufferedmqf,filekSize, flasePositiveRate);
+    return new kDataFrameBMQF(bufferedmqf, slicing_mode, hash_mode, kmerDecoder_params);
 }
 
 kDataFrameIterator kDataFrameBMQF::begin(){
