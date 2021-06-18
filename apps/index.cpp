@@ -7,16 +7,39 @@
 #include "kDataFrame.hpp"
 #include <vector>
 #include "algorithms.hpp"
+#include "CLI11.hpp"
 #include <typeinfo>
 
 using namespace std;
 
 int main(int argc, char *argv[])
 {
-    string inputPath=argv[1];
-    uint64_t  q=atoi(argv[2]);
-    string tmpFolder=argv[3];
-    string outPath=argv[4];
+    CLI::App app;
+    string inputPath;
+    uint64_t  q;
+    string tmpFolder="";
+    string outPath;
+    uint32_t num_vectors=20;
+    uint32_t vector_size=1000000;
+
+    app.add_option("-i,--input", inputPath,
+                   "File containig a list of kDataframe paths")->required();
+    app.add_option("-q", q,
+                   "Q size of the result MQF frame")->required();
+    app.add_option("-t,--tempFolder", tmpFolder,
+                   "Path for Temporary Folder");
+    app.add_option("-o,--output", outPath,
+                   "Output Path")->required();
+    app.add_option("-n,--numVectors", num_vectors,
+                   "Number of vectors in the output mixvectors column");
+    app.add_option("-s,--vectorSize", vector_size,
+                   "size of vectors in the output mixvectors column");
+
+
+    CLI11_PARSE(app, argc, argv);
+
+
+
 
     vector<string> filenames;
     vector<kDataFrame*> frames;
@@ -45,7 +68,7 @@ int main(int argc, char *argv[])
     }
 
     kDataFrame* output= new kDataFrameMQF(kSize,q,integer_hasher);
-    kProcessor::indexPriorityQueue(frames,tmpFolder,output);
+    kProcessor::indexPriorityQueue(frames,tmpFolder,output,num_vectors,vector_size);
     cout<<"Indexing Finished"<<endl;
 
 //    // output->save(outPath);

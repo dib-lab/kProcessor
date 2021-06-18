@@ -119,7 +119,11 @@ namespace kProcessor {
     index(kDataFrame *frame, std::map<std::string, int> parse_params, string filename, int chunks,
           string names_fileName);
 
-    void indexPriorityQueue(vector<kDataFrame *> &input, string tmpFolder, kDataFrame *output);
+/*
+ * Create an index for the kDataframes in the vector<input>. the index is in the form of kDataframe and it has default column of type mix Vector
+ * mix vector split the colors into num_vectors vectors where each has maximum size vector_size.
+ */
+    void indexPriorityQueue(vector<kDataFrame *> &input, string tmpFolder, kDataFrame *output,uint32_t num_vectors=20,uint32_t vector_size=1000000);
 
     void mergeIndexes(vector<kDataFrame *> &input, string tmpFolder, kDataFrame *output);
 
