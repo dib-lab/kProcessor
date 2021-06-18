@@ -866,8 +866,8 @@ namespace kProcessor {
 
     }
 
-    void indexPriorityQueue(vector<kDataFrame *> &input, string tmpFolder, kDataFrame *output) {
-        auto *colors = new insertColorColumn(input.size(), tmpFolder);
+    void indexPriorityQueue(vector<kDataFrame *> &input, string tmpFolder, kDataFrame *output,uint32_t num_vectors,uint32_t vector_size) {
+        auto *colors = new insertColorColumn(input.size(), tmpFolder,num_vectors,vector_size);
         output->changeDefaultColumnType(colors);
         for (unsigned int i = 0; i < input.size(); i++) {
             vector<uint32_t> tmp = {i};

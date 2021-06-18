@@ -100,12 +100,12 @@ public:
 
 };
 
-#define NUM_VECTORS 20
-#define VECTOR_SIZE 1000000
+
 
 class insertColorColumn: public Column{
 public:
-
+    uint32_t NUM_VECTORS=20;
+    uint32_t VECTOR_SIZE=1000000;
     vector<sdsl::int_vector<> > colors;
     vector<uint32_t> colorsTop;
     vector<uint32_t> vecCount;
@@ -124,7 +124,9 @@ public:
         tmpFolder="";
         noColors=0;
     }
-    insertColorColumn(uint64_t noSamples,string tmp){
+    insertColorColumn(uint64_t noSamples,string tmp,uint32_t num_vectors=20,uint32_t vector_size=1000000){
+        NUM_VECTORS=num_vectors;
+        VECTOR_SIZE=vector_size;
         colorsTop=vector<uint32_t>(NUM_VECTORS);
         vecCount=vector<uint32_t>(NUM_VECTORS);
         this->noSamples=noSamples;

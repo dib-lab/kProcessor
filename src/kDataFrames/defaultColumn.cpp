@@ -357,7 +357,7 @@ mixVectors::mixVectors(insertColorColumn *col) {
     uint32_t colorId = 1;
     numColors = col->noColors;
     idsMap = sdsl::int_vector<>(numColors + 1);
-    for (int colorSize = 1; colorSize < NUM_VECTORS - 1; colorSize++) {
+    for (int colorSize = 1; colorSize < col->NUM_VECTORS - 1; colorSize++) {
         int chunkNum = 0;
         string colorsFileName = col->tmpFolder + "insertOnlyColumn." + to_string(colorSize) + "." +
                                 to_string(chunkNum++);
@@ -372,14 +372,14 @@ mixVectors::mixVectors(insertColorColumn *col) {
     }
 
     int chunkNum = 0;
-    string colorsFileName = col->tmpFolder + "insertOnlyColumn." + to_string(NUM_VECTORS - 1) + "." +
+    string colorsFileName = col->tmpFolder + "insertOnlyColumn." + to_string(col->NUM_VECTORS - 1) + "." +
                             to_string(chunkNum++);
     while (is_file_exist(colorsFileName.c_str())) {
         vectorOfVectors *f = new vectorOfVectors(colorId);
         f->loadFromInsertOnly(colorsFileName, idsMap);
         colorId += f->size();
         colors.push_back(f);
-        colorsFileName = col->tmpFolder + "insertOnlyColumn." + to_string(NUM_VECTORS - 1) + "." +
+        colorsFileName = col->tmpFolder + "insertOnlyColumn." + to_string(col->NUM_VECTORS - 1) + "." +
                          to_string(chunkNum++);
     }
 
