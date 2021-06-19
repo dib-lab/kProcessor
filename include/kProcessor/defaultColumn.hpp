@@ -464,7 +464,7 @@ class fixedSizeVectorIterator;
 
 class fixedSizeVector: public vectorBase{
 public:
-    typedef  sdsl::vlc_vector<> vectype;
+    typedef  sdsl::int_vector<> vectype;
     vectype vec;
     uint32_t colorsize;
     fixedSizeVector();

@@ -408,7 +408,7 @@ void fixedSizeVector::loadFromInsertOnly(string path, sdsl::int_vector<> &idsMap
     sdsl::int_vector<> curr;
     sdsl::load_from_file(curr, path);
     uint32_t noColors = curr.size() / (colorsize + 1);
-    sdsl::int_vector<> tmpVec(noColors * colorsize);
+    fixedSizeVector::vectype tmpVec(noColors * colorsize);
     uint32_t top = 0;
     uint32_t colorId = beginID;
     for (unsigned int i = 0; i < curr.size(); i += colorsize + 1) {
@@ -417,7 +417,7 @@ void fixedSizeVector::loadFromInsertOnly(string path, sdsl::int_vector<> &idsMap
             tmpVec[top++] = curr[i + 1 + j];
     }
     //    vec=sdsl::enc_vector<>(tmpVec);
-    vec = sdsl::int_vector<>(tmpVec);
+    vec = fixedSizeVector::vectype (tmpVec);
     ((fixedSizeVectorIterator *) (endIterator->iterator))->it = vec.end();
 
 }
@@ -631,7 +631,7 @@ void fixedSizeVector::sort(sdsl::int_vector<> &idsMap) {
         idsMap[aux[i].second] = beginID + i;
     }
 
-    vector<uint32_t> tmpVec(numColors * colorsize);
+    fixedSizeVector::vectype tmpVec(numColors * colorsize);
     for (unsigned int i = 0; i < numColors; i++) {
         for (unsigned int j = 0; j < colorsize; j++)
             tmpVec[i * colorsize + j] = aux[i].first[j];
