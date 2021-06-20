@@ -229,26 +229,33 @@ INSTANTIATE_TEST_SUITE_P(testntCard,
                          ::testing::ValuesIn(fastqFiles)
                                             );
 
-vector<vector<string> > setFunctionsTestInput={{"test.noN.fastq","test2.noN.fastq"}};
 
-vector<vector<kDataFrame*> > BuildTestFramesForSetFunctions()
+
+void setFunctionsTest::SetUp()
 {
-  vector<vector<kDataFrame*> > framesToBeTested(2);
-  int k=31;
-  for(auto file:setFunctionsTestInput[0])
-  {
-    framesToBeTested[0].push_back(new kDataFrameMQF(k));
-    kProcessor::countKmersFromFile(framesToBeTested[0].back(), {{"mode", 1}}, file, 1000); // Mode 1 : kmers, KmerSize will be cloned from the kFrame
-
-    framesToBeTested[1].push_back(new kDataFrameMQF(k)); // Temporary until resolving #17
-    kProcessor::countKmersFromFile(framesToBeTested[1].back(), {{"mode", 1}}, file, 1000); // Mode 1 : kmers, KmerSize will be cloned from the kFrame
-  }
-  return framesToBeTested;
+    tuple<string, int> specification=GetParam();
+    auto it=input_SET.find(specification);
+    if(it==input_SET.end())
+    {
+        string kFrameType=get<0>(specification);
+        uint32_t k=get<1>(specification);
+        vector<kDataFrame*> frames(setFunctionsTestInput[0].size());
+        for(int i=0;i<setFunctionsTestInput[0].size();i++)
+        {
+            frames[i]=(getFrame(specification));
+            // Mode 1 : kmers, KmerSize will be cloned from the kFrame
+            kProcessor::countKmersFromFile(frames[i], {{"mode", 1}}, setFunctionsTestInput[0][i], 1000);
+            kProcessor::createCountColumn(frames[i]);
+        }
+        input_SET[specification]=frames;
+        it=input_SET.find(specification);
+    }
+    input=it->second;
 }
-//INSTANTIATE_TEST_SUITE_P(testSetFunctions,
-//                         setFunctionsTest,
-//                        ::testing::ValuesIn(BuildTestFramesForSetFunctions())
-//                      );
+INSTANTIATE_TEST_SUITE_P(testSetFunctions,
+                         setFunctionsTest,
+                        ::testing::ValuesIn({make_tuple(string("MQF"),21),make_tuple(string("MQF"),31)})
+                      );
 
 
 
@@ -893,90 +900,111 @@ TEST_P(estimateTest,estimateTestTest)
   }
 }
 
-//TEST_P(setFunctionsTest,unioinTest)
-//{
-//  vector<kDataFrame*> input=GetParam();
-//    kDataFrame *unioinResult;
+TEST_P(setFunctionsTest,unioinTest)
+{
+
+
+
+  try {
+      result = kProcessor::kFrameUnion(input);
+  }
+  catch (const logic_error& expected)
+  {
+      SUCCEED();
+      //FAIL();
+  }
+  for(int i =0 ;i<input.size();i++)
+  {
+    kDataFrame* kframe=input[i];
+    auto it=kframe->begin();
+    while(it!=kframe->end())
+    {
+      uint32_t countGold;
+      it.getColumnValue<uint32_t,vectorColumn<uint32_t>>("count",countGold);
+      uint32_t count;
+      count = result->getKmerColumnValue<uint32_t,vectorColumn<uint32_t>>("count"+ to_string(i),it.getHashedKmer());
+      ASSERT_GE(count,countGold);
+      it++;
+    }
+  }
+
+
+}
+TEST_P(setFunctionsTest,intersectTest)
+{
+    try {
+        result=kProcessor::kFrameIntersect(input);
+    }
+    catch (const logic_error& expected)
+    {
+        SUCCEED();
+        //FAIL();
+    }
+
+  auto it=result->begin();
+  while(it!=result->end())
+  {
+    for(int i=0;i<input.size();i++)
+    {
+        auto kframe=input[i];
+        uint32_t countGold=kframe->getKmerColumnValue<uint32_t,vectorColumn<uint32_t>>("count",it.getHashedKmer());
+        uint32_t count;
+        it.getColumnValue<uint32_t,vectorColumn<uint32_t>>("count"+ to_string(i),count);
+        ASSERT_GE(count,countGold);
+    }
+    it++;
+  }
+
+
+
+}
 //
-//  try {
-//      unioinResult = kProcessor::kFrameUnion(input);
-//  }
-//  catch (const logic_error& expected)
-//  {
-//      SUCCEED();
-//      //FAIL();
-//  }
-//  for(auto kframe:input)
-//  {
-//    auto it=kframe->begin();
-//    while(it!=kframe->end())
-//    {
-//      int count=unioinResult->getCount((*it).getKmer());
-//      ASSERT_GE(count,((*it).getCount()));
-//      it++;
-//    }
-//  }
-//  delete unioinResult;
-//
-//
-//}
-//TEST_P(setFunctionsTest,intersectTest)
-//{
-//  vector<kDataFrame*> input=GetParam();
-//
-//  kDataFrame* intersectResult;
-//    try {
-//        intersectResult=kProcessor::kFrameIntersect(input);
-//    }
-//    catch (const logic_error& expected)
-//    {
-//        SUCCEED();
-//        //FAIL();
-//    }
-//
-//  auto it=intersectResult->begin();
-//  while(it!=intersectResult->end())
-//  {
-//    for(auto kframe:input)
-//    {
-//      int count=kframe->getCount((*it).getKmer());
-//      ASSERT_GE(count,((*it).getCount()));
-//    }
-//    it++;
-//  }
-//  delete intersectResult;
-//
-//
-//}
-//
-//TEST_P(setFunctionsTest,differenceTest)
-//{
-//  vector<kDataFrame*> input=GetParam();
-//
-//  kDataFrame* diffResult=kProcessor::kFrameDiff(input);
-//  try {
-//      kDataFrame* diffResult=kProcessor::kFrameDiff(input);
-//  }
-//  catch (const logic_error& expected)
-//  {
-//        SUCCEED();
-//
-//  }
-//  auto it=diffResult->begin();
-//  while(it!=diffResult->end())
-//  {
-//      int count=input[0]->getCount((*it).getKmer());
-//      ASSERT_EQ(count,((*it).getCount()));
-//      for(int i=1;i<input.size();i++)
-//      {
-//        int count=input[i]->getCount((*it).getKmer());
-//        ASSERT_EQ(count,0);
-//      }
-//      it++;
-//  }
-//  delete diffResult;
-//
-//}
+TEST_P(setFunctionsTest,differenceTest)
+{
+  try {
+      result=kProcessor::kFrameDiff(input);
+  }
+  catch (const logic_error& expected)
+  {
+        SUCCEED();
+
+  }
+  auto it=result->begin();
+  while(it!=result->end())
+  {
+
+      for(int i=1;i<input.size();i++)
+      {
+        int count=input[i]->getCount((*it).getKmer());
+        ASSERT_EQ(count,0);
+      }
+      it++;
+  }
+
+
+}
+TEST_P(setFunctionsTest,innerJoinTest)
+{
+    try {
+        result=kProcessor::innerJoin(input,{1});
+    }
+    catch (const logic_error& expected)
+    {
+        SUCCEED();
+
+    }
+    auto it=result->begin();
+    while(it!=result->end())
+    {
+        int count=input[1]->getCount((*it).getKmer());
+        ASSERT_GE(count,1);
+        it++;
+    }
+
+
+}
+
+
 
 //vector<colorTableInv*> BuildColorTableInv()
 //{

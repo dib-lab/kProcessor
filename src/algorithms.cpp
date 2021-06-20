@@ -168,17 +168,11 @@ namespace kProcessor {
         }
         res->reserve((uint64_t) ((double) numKmers * 0.75));
         merge(input, res, [&](vector<kDataFrameIterator*> &input) -> kmerRow {
-            kmerRow res;
-            bool exists=true;
+            bool exists=false;
             for (auto i : kmersToKeep ) {
-                if (input[i] == nullptr) {
-                    exists = false;
-                    break;
+                if (input[i] != nullptr) {
+                    return kmerRow("",input[i]->getHashedKmer(),1,0,nullptr);
                 }
-            }
-            if(exists) {
-                uint32_t i=kmersToKeep[0];
-                return kmerRow(input[i]->getKmer(),input[i]->getHashedKmer(),input[i]->getCount(),input[i]->getOrder(),nullptr);
             }
             return kmerRow();
         });
@@ -475,71 +469,50 @@ namespace kProcessor {
     }
 
     kDataFrame *kFrameUnion(const vector<kDataFrame *> &input) {
-        kDataFrame *res = input[0]->getTwin();
-        uint64_t numKmers = 0;
-        for (auto kframe:input) {
-            numKmers += kframe->size();
-        }
-        res->reserve((uint64_t) ((double) numKmers * 0.75));
-        merge(input, res, [](vector<kDataFrameIterator*> &input) -> kmerRow {
-            kmerRow res;
-            for (auto & i : input) {
-                if (i != nullptr && i->getCount() != 0) {
-                    res.kmer = i->getKmer();
-                    res.hashedKmer = i->getHashedKmer();
-                }
-                res.count += i->getCount();
-            }
-            return res;
-        });
-        return res;
+        vector<uint32_t> indexes(input.size());
+        for(int i=0;i<input.size();i++)
+            indexes[i]=i;
+        return innerJoin(input,indexes);
     }
 
     kDataFrame *kFrameIntersect(const vector<kDataFrame *> &input) {
         kDataFrame *res = input[0]->getTwin();
-        uint64_t numKmers = numeric_limits<uint64_t>::max();
-        for (auto kframe:input) {
-            numKmers = min(numKmers, (uint64_t) kframe->size());
-        }
-        res->reserve((uint64_t) ((double) numKmers * 1.2));
-        merge(input, res, [](vector<kDataFrameIterator*> &input) -> kmerRow {
-            uint32_t i=0;
-            while(input[i] == nullptr)
-                i++;
-            kmerRow res = input[i]->getKmerRow();
-            for ( i = 1; i < input.size(); i++) {
-                //cout<<input[i].kmer<<endl;
-                if(input[i]!= nullptr)
-                    res.count = min(res.count, input[i]->getCount());
+
+        merge(input, res, [&](vector<kDataFrameIterator*> &input) -> kmerRow {
+            bool existInAll=true;
+            for(int i=0;i<input.size();i++) {
+                if (input[i] == nullptr) {
+                    existInAll = false;
+                    break;
+                }
             }
-            if (res.count == 0)
-                return kmerRow();
-            //cout<<res.count<<endl;
-            return res;
+            if(existInAll)
+                return kmerRow("",input[0]->getHashedKmer(),1,0,nullptr);
+            return kmerRow();
         });
-        //cout<<"Size "<<res->size()<<endl;
         return res;
+
     }
 
     kDataFrame *kFrameDiff(const vector<kDataFrame *> &input) {
         kDataFrame *res = input[0]->getTwin();
-        merge(input, res, [](vector<kDataFrameIterator*> &input) -> kmerRow {
-            uint32_t i=0;
-            while(input[i] == nullptr)
-                i++;
-            kmerRow res = input[i]->getKmerRow();
-            bool found = false;
-            for (i = 1; i < input.size(); i++) {
-                if (input[i] != nullptr && input[i]->getCount() > 0) {
-                    found = true;
-                    break;
+
+        merge(input, res, [&](vector<kDataFrameIterator*> &input) -> kmerRow {
+            if(input[0] != nullptr){
+                bool exist=false;
+                for(int i=1;i<input.size();i++) {
+                    if(input[i]!= nullptr) {
+                        exist=true;
+                        break;
+                    }
                 }
+                if(!exist)
+                    return kmerRow("",input[0]->getHashedKmer(),1,0,nullptr);
             }
-            if (found)
-                return kmerRow();
-            return res;
+            return kmerRow();
         });
         return res;
+
     }
 
 

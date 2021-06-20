@@ -42,7 +42,7 @@ bool kDataFrame::empty() {
 }
 
 bool kDataFrame::insert(kmerRow k) {
-    return this->setCount(k.kmer, k.count);
+    return this->setCount(k.hashedKmer, k.count);
 }
 kDataFrame::iterator kDataFrame::insert(kDataFrame::iterator& it,kmerRow k){
     insert(k);

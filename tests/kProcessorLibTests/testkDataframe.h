@@ -154,14 +154,32 @@ class queryColumnTest : public ::testing::TestWithParam<tuple<string, uint64_t,u
 //  virtual void SetUp();
 // // virtual void TearDown();
 //};
+static vector<vector<string> > setFunctionsTestInput={{"test.noN.fastq","test2.noN.fastq"}};
+static map<tuple<string,int> ,vector<kDataFrame*>> input_SET;
 
-//class setFunctionsTest : public ::testing::TestWithParam<vector<kDataFrame*>  >{
-//
-//    virtual void TearDown()
-//    {
-//        cout<<"here"<<endl;
-//    }
-//};
+class setFunctionsTest : public ::testing::TestWithParam<tuple<string, int>>{
+
+public:
+    kDataFrame* result;
+    vector<kDataFrame*> input;
+    virtual void SetUp();
+
+    virtual void TearDown()
+    {
+
+        if(result!= nullptr) {
+            delete result;
+        }
+    }
+    static void TearDownTestSuite()
+    {
+        for(auto it:input_SET)
+        {
+            for(auto frame:it.second)
+                delete frame;
+        }
+    }
+};
 
 class indexingTest : public ::testing::TestWithParam<string>{
 
