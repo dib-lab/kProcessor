@@ -695,7 +695,7 @@ private:
     unordered_map<uint64_t ,vector<uint32_t > > nodesCache;
     deque<sdsl::int_vector<>*>  unCompressedEdges;
 public:
-    typedef  sdsl::vlc_vector<> vectype;
+    typedef  sdsl::enc_vector<> vectype;
     deque<vectype*>  edges;
     deque<sdsl::bit_vector*> tree;
     deque<sdsl::bp_support_sada<>*> bp_tree;
