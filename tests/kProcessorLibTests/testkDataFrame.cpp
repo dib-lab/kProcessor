@@ -32,13 +32,25 @@ map< pair<uint64_t,uint64_t>, insertColorColumn*> insertColumns;
 
 
 
+
+
+vector<tuple<string,uint64_t,uint64_t> > createQueryInputs() {
+    vector<tuple<string, uint64_t, uint64_t> > queryInputs;
+    vector<string> queryClasses = {"mixVectors", "prefixTrie"};
+    for (auto classType:queryClasses)
+        for (auto numColors: {10, 100, 1000})
+            for (auto numSamples:{10, 20, 100}) {
+                if (numColors == 1000 && (numSamples == 20 || numSamples == 100))
+                    continue;
+                queryInputs.push_back(make_tuple(classType, numSamples,numColors));
+            }
+    //queryInputs.push_back(make_tuple("prefixTrie", 10,5000));
+    return queryInputs;
+}
 INSTANTIATE_TEST_SUITE_P(testcolorsTable,
                          queryColumnTest,
-                        ::testing::Combine(
-                        ::testing::Values("mixVectors","prefixTrie"),
-                        ::testing::Values(10,20,100),
-                        ::testing::Values(10,100)
-                      ));
+                        ::testing::ValuesIn(createQueryInputs())
+                      );
 
 void queryColumnTest::SetUp(){
   uint64_t numSamples=get<1>(GetParam());

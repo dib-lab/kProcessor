@@ -810,6 +810,7 @@ prefixTrie::prefixTrie(mixVectors *col) {
 void prefixTrie::loadFromQueryColorColumn(mixVectors  *col) {
     noSamples = col->noSamples;
     numColors = col->numColors;
+    col->explainSize();
     col->sortColors();
     cerr << "Colors Sorted" << endl;
     idsMap = sdsl::int_vector<64>(col->idsMap.size());
@@ -871,8 +872,8 @@ void prefixTrie::loadFromQueryColorColumn(mixVectors  *col) {
     for(int i=0;i<noSamples;i++)
     {
         tree[i]=new sdsl::bit_vector(2);
-        (*tree[i])[0]=1;
-        (*tree[i])[1]=0;
+        (*tree[i])[0]=true;
+        (*tree[i])[1]=false;
         bp_tree[i]=new sdsl::bp_support_sada<>(tree[i]);
         unCompressedEdges[i]= new sdsl::int_vector<>(1);
         (*unCompressedEdges[i])[0]=noSamples-i-1;
@@ -1103,6 +1104,8 @@ void prefixTrie::loadFromQueryColorColumn(mixVectors  *col) {
         edgesSum += (a.first - 1) * (a.second);
     }
     cout << "Possible saving " << edgesSum << endl;
+
+    explainSize();
 
 }
 
