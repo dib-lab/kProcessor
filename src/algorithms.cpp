@@ -21,7 +21,6 @@ using std::cout;
 
 using phmap::flat_hash_map;
 
-#define QBITS_LOCAL_QF 16
 
 namespace kProcessor {
 
@@ -918,22 +917,33 @@ namespace kProcessor {
         cout << noColors << " colors created" << endl;
 
 
-        auto *qcolors = new mixVectors(colors);
+
+
+        auto colorColumn= new deduplicatedColumn<vector<uint32_t>, mixVectors>();
+        colorColumn->values=new mixVectors(colors);
+        output->addColumn("color",colorColumn);
+        colorColumn->values->explainSize();
+        colorColumn->index=vector<uint32_t>(output->size());
+        for(auto k:(*output))
+        {
+            colorColumn->index[k.getOrder()]=k.getCount();
+        }
+        output->changeDefaultColumnType(nullptr);
         delete colors;
-        qcolors->explainSize();
-        output->changeDefaultColumnType(qcolors);
+
     }
 
     void mergeIndexes(vector<kDataFrame *> &input, string tmpFolder, kDataFrame *output) {
 
+        typedef deduplicatedColumn<vector<uint32_t>, mixVectors> colorColumnType;
         vector<uint32_t> idsOffset(input.size());
         idsOffset[0] = 0;
         uint32_t noSamples=0;
         for (unsigned int i = 1; i < input.size(); i++) {
             idsOffset[i] = idsOffset[i - 1];
-            idsOffset[i] += ((mixVectors *) input[i - 1]->getDefaultColumn())->noSamples;
+            idsOffset[i] += ((colorColumnType *) input[i - 1]->columns["color"])->values->noSamples;
         }
-        noSamples+=((mixVectors *) input[input.size() - 1]->getDefaultColumn())->noSamples;
+        noSamples+=((colorColumnType *) input[input.size() - 1]->columns["color"])->values->noSamples;
 
         auto *colors = new insertColorColumn(noSamples,tmpFolder);
         output->changeDefaultColumnType(colors);
@@ -966,8 +976,7 @@ namespace kProcessor {
                 nextKmer.pop();
 
                 uint32_t i = get<1>(colorTuple);
-                auto tmp = input[i]->getKmerDefaultColumnValue<vector<uint32_t>, mixVectors>(
-                        get<0>(colorTuple));
+                auto tmp = input[i]->getKmerColumnValue<vector<uint32_t >, deduplicatedColumn<vector<uint32_t>, mixVectors> >("color",get<0>(colorTuple));
                 for (auto c:tmp)
                     colorVec.push_back(c + idsOffset[i]);
 
@@ -989,10 +998,17 @@ namespace kProcessor {
         cout << noColors << " colors created!" << endl;
 
 
-        auto *qcolors = new mixVectors(colors);
+        auto colorColumn= new deduplicatedColumn<vector<uint32_t>, mixVectors>();
+        colorColumn->values=new mixVectors(colors);
+        output->addColumn("color",colorColumn);
+        colorColumn->values->explainSize();
+        colorColumn->index=vector<uint32_t>(output->size());
+        for(auto k:(*output))
+        {
+            colorColumn->index[k.getOrder()]=k.getCount();
+        }
+        output->changeDefaultColumnType(nullptr);
         delete colors;
-        qcolors->explainSize();
-        output->changeDefaultColumnType(qcolors);
 
     }
 

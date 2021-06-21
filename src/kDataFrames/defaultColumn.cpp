@@ -29,6 +29,11 @@ class vectorColumn<uint32_t>;
 template
 class deduplicatedColumn<vector<uint32_t>, StringColorColumn>;
 
+
+template
+class deduplicatedColumn<vector<uint32_t>, mixVectors>;
+
+
 bool is_file_exist(const char *fileName) {
     std::ifstream infile(fileName);
     return infile.good();
@@ -49,7 +54,9 @@ Column *Column::getContainerByName(std::size_t hash) {
         return new mixVectors();
     } else if (hash == typeid(prefixTrie).hash_code()) {
         return new prefixTrie();
-    } else {
+    } else if (hash == typeid(deduplicatedColumn<vector<uint32_t>, mixVectors>).hash_code()) {
+        return new deduplicatedColumn<vector<uint32_t>, mixVectors>();
+    }else {
         throw logic_error("Failed to load Unknown Column " + hash);
     }
 }
@@ -477,7 +484,7 @@ void mixVectors::serialize(string filename) {
 
 }
 vector<uint32_t > mixVectors::get(uint32_t index) {
-    throw std::logic_error("get is not implemented use getWithIndex instead");
+    return getWithIndex(index);
 
 }
 void mixVectors::deserialize(string filename) {
