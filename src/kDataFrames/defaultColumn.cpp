@@ -1134,21 +1134,18 @@ vector<uint32_t> prefixTrie::getWithIndex(uint32_t index) {
     Q.push(idsMap[index]);
     // cout<<idsMap[index]<<" -> ";
     while (!Q.empty()) {
-        uint64_t bigIndex = Q.front();
-        Q.pop();
-        auto it = lower_bound(starts.begin(), starts.end(), bigIndex + 1);
-        it--;
-        uint32_t tIndex = it - starts.begin();
-        bigIndex -= *it;
-        while (bigIndex != bp_tree[tIndex]->size()) {
-            uint64_t edgeIndex = bp_tree[tIndex]->rank(bigIndex) - 1;
-            uint64_t node = (*edges[tIndex])[edgeIndex];
-            //        cout<<node<<" ";
-            if (node < noSamples)
-                tmp.push_back(node);
+        prefixTrieIterator it(this,Q.front());
+        while(!it.finished)
+        {
+            if(it.isPortal())
+            {
+                Q.push(*it - noSamples);
+            }
             else
-                Q.push(node - noSamples);
-            bigIndex = bp_tree[tIndex]->enclose(bigIndex);
+            {
+                tmp.push_back(*it);
+            }
+            it--;
         }
     }
     //cout<<endl;
@@ -1275,24 +1272,24 @@ void prefixTrie::shorten(deque<uint32_t> &input, deque<uint32_t> &output) {
         cerr << "Wrong tree " << (*unCompressedEdges[treeIndex])[0] << endl;
         return;
     }
-    auto i = input.begin();
+    auto inputIterator = input.begin();
     uint64_t treePos = 0;
     uint64_t result = tree.size();
-    while (i != input.end() && treePos < tree[treeIndex]->size() && (*tree[treeIndex])[treePos] == 1) {
+    while (inputIterator != input.end() && treePos < tree[treeIndex]->size() && (*tree[treeIndex])[treePos] == 1) {
         uint64_t edgeIndex = bp_tree[treeIndex]->rank(treePos) - 1;
         uint32_t currNode = (*unCompressedEdges[treeIndex])[edgeIndex];
-        auto it = lower_bound(i, input.end(), currNode);
+        auto it = lower_bound(inputIterator, input.end(), currNode);
         if(it == input.end() || *it!=currNode)
         {
             treePos = bp_tree[treeIndex]->find_close(treePos) + 1;
         } else{
-            for (; i < it; i++) {
-                remaining.push_back(*i);
+            for (; inputIterator < it; inputIterator++) {
+                remaining.push_back(*inputIterator);
             }
             chosen.push_back(currNode);
             result = treePos;
             treePos++;
-            i++;
+            inputIterator++;
         }
     }
     if (result == 0) {
@@ -1304,8 +1301,8 @@ void prefixTrie::shorten(deque<uint32_t> &input, deque<uint32_t> &output) {
         nodesCache[ptr] = chosen;
     }
 
-    for (; i < input.end(); i++) {
-        remaining.push_back(*i);
+    for (; inputIterator < input.end(); inputIterator++) {
+        remaining.push_back(*inputIterator);
     }
     if (!remaining.empty()) {
         shorten(remaining, output);

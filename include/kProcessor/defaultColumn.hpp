@@ -688,8 +688,7 @@ public:
 
 
 };
-
-
+class prefixTrieIterator;
 class prefixTrie: public queryColorColumn{
 private:
     unordered_map<uint64_t ,vector<uint32_t > > nodesCache;
@@ -771,6 +770,78 @@ public:
     }
 
 };
+class prefixTrieIterator{
+public:
+    uint32_t node;
+    uint32_t currPos;
+    uint32_t startPos;
+    uint32_t treeIndex;
+    uint32_t edgeIndex;
+    bool finished;
+    prefixTrie* origin;
+    prefixTrieIterator(){
+        node=0;
+        currPos=0;
+        startPos=0;
+        origin=nullptr;
+        finished=true;
+    }
+    prefixTrieIterator(prefixTrie* origin, uint32_t pos){
+        this->origin=origin;
+        finished=false;
+        teleport(pos);
+    }
+    prefixTrieIterator& operator= (const prefixTrieIterator& other){
+        origin=other.origin;
+        node=other.node;
+        treeIndex=other.treeIndex;
+        edgeIndex=other.edgeIndex;
+        finished=other.finished;
+        startPos=other.startPos;
+        currPos=other.currPos;
+        return *this;
+    }
+    void teleport(uint32_t pos)
+    {
+        auto it = lower_bound(origin->starts.begin(), origin->starts.end(), pos + 1);
+        it--;
+        treeIndex=it - origin->starts.begin();
+        currPos=pos-*it;
+        startPos=currPos;
+        edgeIndex = origin->bp_tree[treeIndex]->rank(currPos) - 1;
+        node = (*origin->edges[treeIndex])[edgeIndex];
+
+    }
+    uint32_t operator * (){
+        return node;
+    }
+
+    inline bool isPortal()
+    {
+        return node>=origin->noSamples;
+    }
+    /// go down the tree
+//    bool  (int){
+//        return *this;
+//    }
+    /// climb the tree upward
+    prefixTrieIterator& operator -- (int)
+    {
+        currPos = origin->bp_tree[treeIndex]->enclose(currPos);
+        if(currPos== origin->bp_tree[treeIndex]->size())
+            finished=true;
+        else
+        {
+            edgeIndex = origin->bp_tree[treeIndex]->rank(currPos) - 1;
+            node = (*origin->edges[treeIndex])[edgeIndex];
+            startPos=min(startPos,currPos);
+        }
+        return *this;
+    }
+
+
+};
+
 
 template<typename  T, typename ColumnType>
 class deduplicatedColumn: public Column{
