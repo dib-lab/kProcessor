@@ -1128,14 +1128,14 @@ vector<uint32_t > prefixTrie::get(uint32_t index) {
 
 }
 
-vector<uint32_t> prefixTrie::getWithIndex(uint32_t index) {
+inline vector<uint32_t> prefixTrie::decodeColor(uint64_t treeIndex){
     deque<uint32_t> tmp;
     queue<uint64_t> Q;
-    Q.push(idsMap[index]);
+    Q.push(treeIndex);
     // cout<<idsMap[index]<<" -> ";
     while (!Q.empty()) {
         prefixTrieIterator it(this,Q.front());
-        while(!it.finished)
+        do
         {
             if(it.isPortal())
             {
@@ -1145,8 +1145,8 @@ vector<uint32_t> prefixTrie::getWithIndex(uint32_t index) {
             {
                 tmp.push_back(*it);
             }
-            it--;
-        }
+
+        } while (it.go_parent());
     }
     //cout<<endl;
     sort(tmp.begin(),tmp.end());
@@ -1154,6 +1154,10 @@ vector<uint32_t> prefixTrie::getWithIndex(uint32_t index) {
     for (unsigned int i = 0; i < res.size(); i++)
         res[i] = tmp[i];
     return res;
+}
+
+vector<uint32_t> prefixTrie::getWithIndex(uint32_t index) {
+    decodeColor(idsMap[index]);
 }
 
 void prefixTrie::insert(vector<uint32_t> &item, uint32_t index) {
@@ -1272,24 +1276,53 @@ void prefixTrie::shorten(deque<uint32_t> &input, deque<uint32_t> &output) {
         cerr << "Wrong tree " << (*unCompressedEdges[treeIndex])[0] << endl;
         return;
     }
-    auto inputIterator = input.begin();
+
     uint64_t treePos = 0;
     uint64_t result = tree.size();
-    while (inputIterator != input.end() && treePos < tree[treeIndex]->size() && (*tree[treeIndex])[treePos] == 1) {
+    while (!input.empty() && treePos < tree[treeIndex]->size() && (*tree[treeIndex])[treePos] == 1) {
         uint64_t edgeIndex = bp_tree[treeIndex]->rank(treePos) - 1;
         uint32_t currNode = (*unCompressedEdges[treeIndex])[edgeIndex];
-        auto it = lower_bound(inputIterator, input.end(), currNode);
-        if(it == input.end() || *it!=currNode)
+        vector<uint32_t> decodedNodes;
+        if(currNode<noSamples)
+            decodedNodes.push_back(currNode);
+        else{
+            decodedNodes= decodeColor(currNode);
+        }
+        deque<uint32_t> new_input;
+        auto inputIterator = input.begin();
+        auto currColorsIterator= decodedNodes.begin();
+        bool match=true;
+        //check if the decoded colors are all in the Input
+        do{
+            if(*inputIterator < *currColorsIterator)
+            {
+                new_input.push_back(*inputIterator);
+                inputIterator++;
+            }
+            else if(*inputIterator == *currColorsIterator)
+            {
+                inputIterator++;
+                currColorsIterator++;
+            }
+            else{
+                //
+                match=false;
+            }
+        }while(inputIterator!=input.end() && currColorsIterator!=decodedNodes.end());
+
+        if(currColorsIterator!=decodedNodes.end())
+            match=false;
+
+        if(!match)
         {
+            //go to sibiling
             treePos = bp_tree[treeIndex]->find_close(treePos) + 1;
         } else{
-            for (; inputIterator < it; inputIterator++) {
-                remaining.push_back(*inputIterator);
-            }
-            chosen.push_back(currNode);
+            chosen.insert(chosen.end(), decodedNodes.begin(),decodedNodes.end());
             result = treePos;
+            // go to child
             treePos++;
-            inputIterator++;
+            input=new_input;
         }
     }
     if (result == 0) {
@@ -1301,11 +1334,8 @@ void prefixTrie::shorten(deque<uint32_t> &input, deque<uint32_t> &output) {
         nodesCache[ptr] = chosen;
     }
 
-    for (; inputIterator < input.end(); inputIterator++) {
-        remaining.push_back(*inputIterator);
-    }
-    if (!remaining.empty()) {
-        shorten(remaining, output);
+    if (!input.empty()) {
+        shorten(input, output);
     }
 
 }

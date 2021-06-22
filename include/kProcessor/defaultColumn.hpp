@@ -736,6 +736,7 @@ public:
     {
         return numColors;
     }
+    inline vector<uint32_t> decodeColor(uint64_t);
 
 };
 
@@ -824,19 +825,54 @@ public:
 //    bool  (int){
 //        return *this;
 //    }
-    /// climb the tree upward
-    prefixTrieIterator& operator -- (int)
+    /// climb the tree upward. return true if moved
+    bool  go_parent()
     {
-        currPos = origin->bp_tree[treeIndex]->enclose(currPos);
-        if(currPos== origin->bp_tree[treeIndex]->size())
-            finished=true;
+        uint32_t tmp_currPos = origin->bp_tree[treeIndex]->enclose(currPos);
+        if(tmp_currPos== origin->tree[treeIndex]->size())
+            return false;
         else
         {
+            currPos=tmp_currPos;
             edgeIndex = origin->bp_tree[treeIndex]->rank(currPos) - 1;
             node = (*origin->edges[treeIndex])[edgeIndex];
             startPos=min(startPos,currPos);
+            return true;
         }
-        return *this;
+
+    }
+    bool go_sibling(){
+        uint32_t tmp_currPos= origin->bp_tree[treeIndex]->find_close(currPos) + 1;
+        if(tmp_currPos>= origin->tree[treeIndex]->size()
+        ||
+                (*origin->tree[treeIndex])[tmp_currPos] == 0
+        )
+        {
+            return false;
+        }
+        else{
+            currPos=tmp_currPos;
+            edgeIndex = origin->bp_tree[treeIndex]->rank(currPos) - 1;
+            node = (*origin->edges[treeIndex])[edgeIndex];
+            return true;
+        }
+    }
+    bool go_child()
+    {
+        uint32_t tmp_currPos=currPos+1;
+        if(tmp_currPos>= origin->tree[treeIndex]->size()
+           ||
+                (*origin->tree[treeIndex])[tmp_currPos] == false
+           )
+        {
+            return false;
+        }
+        else{
+            currPos=tmp_currPos;
+            edgeIndex = origin->bp_tree[treeIndex]->rank(currPos) - 1;
+            node = (*origin->edges[treeIndex])[edgeIndex];
+            return true;
+        }
     }
 
 
