@@ -737,6 +737,13 @@ public:
         return numColors;
     }
     inline vector<uint32_t> decodeColor(uint64_t);
+    inline uint32_t getNode(uint32_t treeIndex, uint32_t edgeIndex)
+    {
+        if(unCompressedEdges.empty())
+            return (*edges[treeIndex])[edgeIndex];
+        else
+            return (*unCompressedEdges[treeIndex])[edgeIndex];
+    }
 
 };
 
@@ -810,7 +817,7 @@ public:
         currPos=pos-*it;
         startPos=currPos;
         edgeIndex = origin->bp_tree[treeIndex]->rank(currPos) - 1;
-        node = (*origin->edges[treeIndex])[edgeIndex];
+        node = origin->getNode(treeIndex,edgeIndex);;
 
     }
     uint32_t operator * (){
@@ -828,14 +835,16 @@ public:
     /// climb the tree upward. return true if moved
     bool  go_parent()
     {
+        if(currPos==0)
+            return false;
         uint32_t tmp_currPos = origin->bp_tree[treeIndex]->enclose(currPos);
-        if(tmp_currPos== origin->tree[treeIndex]->size())
+        if(tmp_currPos>= origin->tree[treeIndex]->size())
             return false;
         else
         {
             currPos=tmp_currPos;
             edgeIndex = origin->bp_tree[treeIndex]->rank(currPos) - 1;
-            node = (*origin->edges[treeIndex])[edgeIndex];
+            node = origin->getNode(treeIndex,edgeIndex);;
             startPos=min(startPos,currPos);
             return true;
         }
@@ -853,7 +862,7 @@ public:
         else{
             currPos=tmp_currPos;
             edgeIndex = origin->bp_tree[treeIndex]->rank(currPos) - 1;
-            node = (*origin->edges[treeIndex])[edgeIndex];
+            node = origin->getNode(treeIndex,edgeIndex);
             return true;
         }
     }
@@ -870,7 +879,7 @@ public:
         else{
             currPos=tmp_currPos;
             edgeIndex = origin->bp_tree[treeIndex]->rank(currPos) - 1;
-            node = (*origin->edges[treeIndex])[edgeIndex];
+            node = origin->getNode(treeIndex,edgeIndex);
             return true;
         }
     }

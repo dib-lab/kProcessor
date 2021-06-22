@@ -884,8 +884,9 @@ void prefixTrie::loadFromQueryColorColumn(mixVectors  *col) {
         bp_tree[i]=new sdsl::bp_support_sada<>(tree[i]);
         unCompressedEdges[i]= new sdsl::int_vector<>(1);
         (*unCompressedEdges[i])[0]=noSamples-i-1;
-        starts[i]=0;
+        starts[i]=UINT32_MAX;
     }
+    starts[0]=0;
 
     sdsl::int_vector<> tmp_edges(tmpSize);
     deque<uint32_t> currPrefix;
@@ -1007,6 +1008,8 @@ void prefixTrie::loadFromQueryColorColumn(mixVectors  *col) {
         uint32_t inputSize = toBAdded.size();
         deque<uint32_t> shortened;
         shortened.clear();
+        if(toBAdded.size()==0)
+            cout<<"here"<<endl;
         shorten(toBAdded, shortened);
         uint32_t outputSize=0;
         for(auto s:shortened)
@@ -1135,6 +1138,7 @@ inline vector<uint32_t> prefixTrie::decodeColor(uint64_t treeIndex){
     // cout<<idsMap[index]<<" -> ";
     while (!Q.empty()) {
         prefixTrieIterator it(this,Q.front());
+        Q.pop();
         do
         {
             if(it.isPortal())
@@ -1286,7 +1290,7 @@ void prefixTrie::shorten(deque<uint32_t> &input, deque<uint32_t> &output) {
         if(currNode<noSamples)
             decodedNodes.push_back(currNode);
         else{
-            decodedNodes= decodeColor(currNode);
+            decodedNodes= decodeColor(currNode-noSamples);
         }
         deque<uint32_t> new_input;
         auto inputIterator = input.begin();
@@ -1308,10 +1312,12 @@ void prefixTrie::shorten(deque<uint32_t> &input, deque<uint32_t> &output) {
                 //
                 match=false;
             }
-        }while(inputIterator!=input.end() && currColorsIterator!=decodedNodes.end());
+        }while(inputIterator!=input.end() && currColorsIterator!=decodedNodes.end() && match);
 
         if(currColorsIterator!=decodedNodes.end())
             match=false;
+
+        new_input.insert(new_input.end(),inputIterator,input.end());
 
         if(!match)
         {
@@ -1324,6 +1330,7 @@ void prefixTrie::shorten(deque<uint32_t> &input, deque<uint32_t> &output) {
             treePos++;
             input=new_input;
         }
+
     }
     if (result == 0) {
         output.push_back(input[0]);
