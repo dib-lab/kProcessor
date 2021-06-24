@@ -20,4 +20,5 @@ file(COPY ../testData/test.noN.fastq.21.kmc_pre DESTINATION ${CMAKE_CURRENT_BINA
 file(COPY ../testData/test.noN.fastq.21.kmc_suf DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 file(COPY ../testData/test.noN.fastq.31.kmc_pre DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 file(COPY ../testData/test.noN.fastq.31.kmc_suf DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+file(COPY ../testData/colorColumn.mixVector DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 file(COPY ../testData/.stxxl DESTINATION ${CMAKE_CURRENT_BINARY_DIR})

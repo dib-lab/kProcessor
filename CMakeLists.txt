@@ -40,7 +40,7 @@ include_directories("ThirdParty/ntCard/include")
 include_directories("ThirdParty/mum-hash")
 include_directories("ThirdParty/Blight")
 include_directories("ThirdParty/KMC/kmc_api")
-
+include_directories("ThirdParty/caches/include")
 
 add_subdirectory(ThirdParty/MQF/)
 add_subdirectory(ThirdParty/sdsl-lite/)

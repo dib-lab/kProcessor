@@ -806,17 +806,23 @@ void RLEfixedSizeVector::deserialize(ifstream &iif) {}
 
 prefixTrie::prefixTrie(insertColorColumn *col)
 {
+    queryCache=nullptr;
     mixVectors* qq= new mixVectors(col);
     loadFromQueryColorColumn(qq);
     delete qq;
 }
 prefixTrie::prefixTrie(mixVectors *col) {
+    queryCache=nullptr;
     loadFromQueryColorColumn(col);
 
 }
 void prefixTrie::loadFromQueryColorColumn(mixVectors  *col) {
+
     noSamples = col->noSamples;
     numColors = col->numColors;
+    if(queryCache!=NULL)
+        delete queryCache;
+    queryCache=new lru_cache_t<uint64_t, vector<uint32_t>>(numColors/10);
     col->explainSize();
     col->sortColors();
     cerr << "Colors Sorted" << endl;
@@ -1008,8 +1014,6 @@ void prefixTrie::loadFromQueryColorColumn(mixVectors  *col) {
         uint32_t inputSize = toBAdded.size();
         deque<uint32_t> shortened;
         shortened.clear();
-        if(toBAdded.size()==0)
-            cout<<"here"<<endl;
         shorten(toBAdded, shortened);
         uint32_t outputSize=0;
         for(auto s:shortened)
@@ -1132,6 +1136,10 @@ vector<uint32_t > prefixTrie::get(uint32_t index) {
 }
 
 inline vector<uint32_t> prefixTrie::decodeColor(uint64_t treeIndex){
+    if(queryCache->Cached(treeIndex)) {
+        cacheUsed++;
+        return queryCache->Get(treeIndex);
+    }
     deque<uint32_t> tmp;
     queue<uint64_t> Q;
     Q.push(treeIndex);
@@ -1143,7 +1151,17 @@ inline vector<uint32_t> prefixTrie::decodeColor(uint64_t treeIndex){
         {
             if(it.isPortal())
             {
-                Q.push(*it - noSamples);
+                uint32_t newPointer=*it - noSamples;
+                auto t= decodeColor(newPointer);
+                tmp.insert(tmp.end(),t.begin(),t.end());
+//                if(queryCache->Cached(newPointer))
+//                {
+//                    vector<uint32_t> cached=queryCache->Get(newPointer);
+//                    tmp.insert(tmp.end(),cached.begin(),cached.end());
+//                }
+//                else {
+//                    Q.push(newPointer);
+//                }
             }
             else
             {
@@ -1157,11 +1175,13 @@ inline vector<uint32_t> prefixTrie::decodeColor(uint64_t treeIndex){
     vector<uint32_t> res(tmp.size());
     for (unsigned int i = 0; i < res.size(); i++)
         res[i] = tmp[i];
+    if(!queryCache->Cached(treeIndex) )
+        queryCache->Put(treeIndex,res);
     return res;
 }
 
 vector<uint32_t> prefixTrie::getWithIndex(uint32_t index) {
-    decodeColor(idsMap[index]);
+    return decodeColor(idsMap[index]);
 }
 
 void prefixTrie::insert(vector<uint32_t> &item, uint32_t index) {
@@ -1266,7 +1286,8 @@ void prefixTrie::shorten(deque<uint32_t> &input, deque<uint32_t> &output) {
         return;
     }
     uint32_t treeIndex = noSamples - input[0] - 1;
-    if (starts[treeIndex] == 0) {
+    if (starts[treeIndex]==UINT32_MAX||(*tree[treeIndex]).size() == 2)//empty tree or current tree
+     {
         output.push_back(input[0]);
         nodesCache[input[0]] = {input[0]};
         input.erase(input.begin());
@@ -1283,41 +1304,52 @@ void prefixTrie::shorten(deque<uint32_t> &input, deque<uint32_t> &output) {
 
     uint64_t treePos = 0;
     uint64_t result = tree.size();
+    uint64_t firstNode=input[0];
     while (!input.empty() && treePos < tree[treeIndex]->size() && (*tree[treeIndex])[treePos] == 1) {
         uint64_t edgeIndex = bp_tree[treeIndex]->rank(treePos) - 1;
         uint32_t currNode = (*unCompressedEdges[treeIndex])[edgeIndex];
         vector<uint32_t> decodedNodes;
-        if(currNode<noSamples)
-            decodedNodes.push_back(currNode);
-        else{
-            decodedNodes= decodeColor(currNode-noSamples);
-        }
-        deque<uint32_t> new_input;
-        auto inputIterator = input.begin();
-        auto currColorsIterator= decodedNodes.begin();
         bool match=true;
-        //check if the decoded colors are all in the Input
-        do{
-            if(*inputIterator < *currColorsIterator)
+        if(currNode<noSamples) {
+            auto it = lower_bound(input.begin(), input.end(), currNode);
+            if(it == input.end() || *it!=currNode)
             {
-                new_input.push_back(*inputIterator);
-                inputIterator++;
-            }
-            else if(*inputIterator == *currColorsIterator)
-            {
-                inputIterator++;
-                currColorsIterator++;
-            }
-            else{
-                //
                 match=false;
             }
-        }while(inputIterator!=input.end() && currColorsIterator!=decodedNodes.end() && match);
+            else{
+                match=true;
+                input.erase(it);
+                decodedNodes.push_back(currNode);
+            }
+        }
+        else{
+            decodedNodes= decodeColor(currNode-noSamples);
+            deque<uint32_t> tmp_input=input;
+            auto currColorsIterator= decodedNodes.begin();
+            auto inputIterator = lower_bound(input.begin(),input.end(),*currColorsIterator);
+          //  new_input.insert(new_input.end(),input.begin(),inputIterator);
+            //check if the decoded colors are all in the Input
+            do{
+                if(*inputIterator == *currColorsIterator)
+                {
+                    input.erase(inputIterator);
+                    currColorsIterator++;
+                }
+                else{
+                    //
+                    match=false;
+                }
+            }while(inputIterator!=input.end() && currColorsIterator!=decodedNodes.end() && match);
 
-        if(currColorsIterator!=decodedNodes.end())
-            match=false;
+            if(currColorsIterator!=decodedNodes.end())
+                match=false;
 
-        new_input.insert(new_input.end(),inputIterator,input.end());
+            if(!match)
+            {
+                input=tmp_input;
+            }
+
+        }
 
         if(!match)
         {
@@ -1328,13 +1360,13 @@ void prefixTrie::shorten(deque<uint32_t> &input, deque<uint32_t> &output) {
             result = treePos;
             // go to child
             treePos++;
-            input=new_input;
+
         }
 
     }
     if (result == 0) {
-        output.push_back(input[0]);
-        nodesCache[input[0]] = {input[0]};
+        output.push_back(firstNode);
+        nodesCache[firstNode] = {(uint32_t)firstNode};
     } else {
         uint64_t ptr = result + starts[treeIndex] + noSamples;
         output.push_back(ptr);

@@ -185,4 +185,8 @@ class indexingTest : public ::testing::TestWithParam<string>{
 
 };
 
+class prefixColumnTest : public ::testing::TestWithParam<string>{
+
+};
+
 #endif

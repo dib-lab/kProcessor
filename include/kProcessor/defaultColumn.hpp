@@ -9,6 +9,10 @@
 #include "sdsl/bp_support.hpp"
 #include <stack>
 #include <unordered_set>
+#include "cache.hpp"
+#include "lru_cache_policy.hpp"
+#include "fifo_cache_policy.hpp"
+#include "lfu_cache_policy.hpp"
 
 using phmap::flat_hash_map;
 using namespace std;
@@ -689,19 +693,24 @@ public:
 
 };
 class prefixTrieIterator;
+template <typename Key, typename Value>
+using lru_cache_t = typename caches::fixed_sized_cache<Key, Value, caches::LRUCachePolicy<Key>>;
+
 class prefixTrie: public queryColorColumn{
 private:
+    lru_cache_t<uint64_t, vector<uint32_t>>* queryCache;
     unordered_map<uint64_t ,vector<uint32_t > > nodesCache;
     deque<sdsl::int_vector<>*>  unCompressedEdges;
 public:
     typedef  sdsl::enc_vector<> vectype;
+    uint32_t cacheUsed=0;
     deque<vectype*>  edges;
     deque<sdsl::bit_vector*> tree;
     deque<sdsl::bp_support_sada<>*> bp_tree;
     sdsl::int_vector<64> starts;
     sdsl::int_vector<64> idsMap;
     prefixTrie(){
-
+        queryCache= new lru_cache_t<uint64_t, vector<uint32_t>>(1);
     }
     prefixTrie(insertColorColumn* col);
     prefixTrie(mixVectors* col);
@@ -714,7 +723,8 @@ public:
             delete b;
         for(auto e:edges)
             delete e;
-
+        delete queryCache;
+        cout<<"Used caches "<<cacheUsed<<endl;
     }
     uint32_t  insertAndGetIndex(vector<uint32_t >& item);
     vector<uint32_t > getWithIndex(uint32_t index);

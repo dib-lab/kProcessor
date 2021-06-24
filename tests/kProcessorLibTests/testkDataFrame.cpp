@@ -1639,3 +1639,35 @@ TEST_P(algorithmsTest,parsingTest2)
     delete kframe;
     kframe=nullptr;
 }
+
+INSTANTIATE_TEST_SUITE_P(testprefixColumn,
+        prefixColumnTest,
+        ::testing::Values("colorColumn.mixVector"));
+
+TEST_P(prefixColumnTest,optimizeAndCheck)
+{
+    string filename=GetParam();
+    mixVectors *qColumn= new mixVectors();
+    qColumn->deserialize(filename);
+    prefixTrie *pColumn = new prefixTrie(qColumn);
+
+    for(uint32_t i=1; i<qColumn->numColors; i++)
+    {
+        auto correctColor=qColumn->getWithIndex(i);
+        auto queryColor=pColumn->getWithIndex(i);
+        if(correctColor != queryColor)
+        {
+            cout<<"Not Matching Colors "<<endl;
+            cout<<i<<endl;
+        }
+        EXPECT_EQ(correctColor,queryColor);
+        EXPECT_EQ(correctColor.size(),queryColor.size());
+
+
+    }
+
+    delete pColumn;
+    delete qColumn;
+
+
+}
