@@ -12,23 +12,62 @@ using namespace std;
 
 int main(int argc, char *argv[]){
 
-    const uint64_t n=10;
-    uint64_t sums[n+1];
-    sums[0]=0;
-    sums[1]=1;
-    for(uint64_t i=2;i<n;i++)
-    {
-        sums[i]=1;
-        for(uint64_t j=0;j<i;j++)
-            sums[i]+=sums[j];
-    }
-    uint64_t totalSum=0;
-    for(uint64_t i=0;i<n;i++)
-    {
-        totalSum+=sums[i];
-        cout<<i<<" -> "<<sums[i]<<"- >"<<totalSum<<endl;
-    }
-//    CLI::App app;
+    string inputColumn=argv[1];
+    prefixTrie *pColumn = new prefixTrie();
+    pColumn->deserialize(inputColumn);
+    pColumn->explainSize();
+    unordered_map<uint32_t,uint32_t> itemCount;
+    for(auto vec:pColumn->edges)
+      {
+	for(auto i :*vec)
+        itemCount[i]++;
+      }
+    deque<pair<uint32_t,uint32_t> > itemCountVec;
+    for(auto i:itemCount)
+      itemCountVec.push_back(make_pair(i.second,i.first));
+    sort(itemCountVec.begin(),itemCountVec.end());
+
+    sdsl::int_vector<> translate(itemCountVec.size()+1);
+    unordered_map<uint32_t,uint32_t> reverse(itemCountVec.size()+1);
+    cout<<"Unique Items = "<<itemCountVec.size()<<endl;
+    uint32_t ii=0;
+    for(;ii<pColumn->noSamples;ii++)
+      {
+	translate[ii]=ii;
+	reverse[ii]=ii;
+      }
+    
+    for(auto i:itemCountVec)
+      {
+	if(i.second < pColumn->noSamples)
+	  continue;
+	translate[ii]=i.second;
+	reverse[i.second]=ii;
+	ii++;
+      }
+    double eSize=0.0;
+    for(auto vec:pColumn->edges)
+      {
+	sdsl::int_vector<> tmp(vec->size());
+	for(uint32_t i=0;i<vec->size();i++)
+	  {
+	    tmp[i]=reverse[(*vec)[i]];
+	  }
+	//sdsl::enc_vector<> tmpCompressed(tmp);
+	sdsl::util::bit_compress(tmp);
+	//sdsl::enc_vector<> tmpCompressed(tmp);
+	eSize += sdsl::size_in_mega_bytes(tmp);
+	
+	  
+        
+      }
+    cout<<"new size = "<<eSize<<"MB"<<endl;
+    
+    delete pColumn;
+    return 0;
+
+    
+  //    CLI::App app;
 //    string input_file;
 //
 //
