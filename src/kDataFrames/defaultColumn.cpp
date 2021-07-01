@@ -1085,7 +1085,7 @@ void prefixTrie::loadFromQueryColorColumn(mixVectors  *col) {
     unordered_map<uint32_t,uint32_t> nodesCount;
     for(auto e:unCompressedEdges)
     {
-        for(i: *e)
+        for(auto i: *e)
             nodesCount[i]++;
     }
     translateEdges=sdsl::int_vector<>(nodesCount.size());
@@ -1093,8 +1093,8 @@ void prefixTrie::loadFromQueryColorColumn(mixVectors  *col) {
     unordered_map<uint32_t,uint32_t> reverse;
     for(auto n:nodesCount)
     {
-        translateEdges[uniqueNodeID]=n;
-        reverse[n]=uniqueNodeID;
+        translateEdges[uniqueNodeID]=n.first;
+        reverse[n.first]=uniqueNodeID;
     }
 
     double unCompressedSize=0.0;
