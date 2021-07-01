@@ -1082,13 +1082,31 @@ void prefixTrie::loadFromQueryColorColumn(mixVectors  *col) {
     unCompressedEdges[currTree]=new sdsl::int_vector<>(tmpEdgesTop);
     std::copy(tmp_edges.begin(),tmp_edges.begin()+tmpEdgesTop,unCompressedEdges[currTree]->begin());
     sdsl::util::bit_compress(*unCompressedEdges[currTree]);
-
+    unordered_map<uint32_t,uint32_t> nodesCount;
+    for(auto e:unCompressedEdges)
+    {
+        for(i: *e)
+            nodesCount[i]++;
+    }
+    translateEdges=sdsl::int_vector<>(nodesCount.size());
+    uint32_t uniqueNodeID=0;
+    unordered_map<uint32_t,uint32_t> reverse;
+    for(auto n:nodesCount)
+    {
+        translateEdges[uniqueNodeID]=n;
+        reverse[n]=uniqueNodeID;
+    }
 
     double unCompressedSize=0.0;
     for(auto e:unCompressedEdges)
     {
         unCompressedSize+=sdsl::size_in_mega_bytes(*e);
-        edges.push_back(new vectype(*e));
+        //edges.push_back(new vectype(*e));
+        edges.push_back(new vectype(e->size()));
+        auto uint32_t index=0;
+        for(auto n:*e)
+            (*edges.back())[index++]=reverse[n];
+        sdsl::util::bit_compress(edges.back());
         delete e;
     }
     unCompressedEdges.clear();

@@ -702,13 +702,14 @@ private:
     unordered_map<uint64_t ,vector<uint32_t > > nodesCache;
     deque<sdsl::int_vector<>*>  unCompressedEdges;
 public:
-    typedef  sdsl::enc_vector<> vectype;
+    typedef  sdsl::int_vector<> vectype;
     uint32_t cacheUsed=0;
     deque<vectype*>  edges;
     deque<sdsl::bit_vector*> tree;
     deque<sdsl::bp_support_sada<>*> bp_tree;
     sdsl::int_vector<64> starts;
     sdsl::int_vector<64> idsMap;
+    sdsl::int_vector<> translateEdges;
     prefixTrie(){
         queryCache= new lru_cache_t<uint64_t, vector<uint32_t>>(1);
     }
@@ -750,7 +751,7 @@ public:
     inline uint32_t getNode(uint32_t treeIndex, uint32_t edgeIndex)
     {
         if(unCompressedEdges.empty())
-            return (*edges[treeIndex])[edgeIndex];
+            return translateEdges[(*edges[treeIndex])[edgeIndex]];
         else
             return (*unCompressedEdges[treeIndex])[edgeIndex];
     }
