@@ -1103,10 +1103,10 @@ void prefixTrie::loadFromQueryColorColumn(mixVectors  *col) {
         unCompressedSize+=sdsl::size_in_mega_bytes(*e);
         //edges.push_back(new vectype(*e));
         edges.push_back(new vectype(e->size()));
-        auto uint32_t index=0;
+        uint32_t index=0;
         for(auto n:*e)
             (*edges.back())[index++]=reverse[n];
-        sdsl::util::bit_compress(edges.back());
+        sdsl::util::bit_compress(*edges.back());
         delete e;
     }
     unCompressedEdges.clear();
