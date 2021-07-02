@@ -217,9 +217,8 @@ public:
     return iterator->getCount();
   }
   /// sets the count of the current kmer
-  bool setCount(std::uint64_t count){
-    return origin->setCount(iterator->getHashedKmer(),count);
-  }
+  bool setCount(std::uint64_t count);
+  
   bool setOrder(std::uint64_t count){
     return iterator->setOrder(count);
   }

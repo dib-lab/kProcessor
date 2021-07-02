@@ -288,3 +288,8 @@ dbgIterator kDataFrame::getDBGIterator(const string &kmer)
         throw std::logic_error("Kmer not found in the frame");
     return dbgIterator(this,kmer);
 }
+
+
+bool kDataFrameIterator::setCount(std::uint64_t count){
+    return origin->setCount(iterator->getHashedKmer(),count);
+  }
