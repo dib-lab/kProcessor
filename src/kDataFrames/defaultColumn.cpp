@@ -1095,6 +1095,7 @@ void prefixTrie::loadFromQueryColorColumn(mixVectors  *col) {
     {
         translateEdges[uniqueNodeID]=n.first;
         reverse[n.first]=uniqueNodeID;
+	uniqueNodeID++;
     }
 
     double unCompressedSize=0.0;
