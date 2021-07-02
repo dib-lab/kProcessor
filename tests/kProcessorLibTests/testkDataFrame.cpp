@@ -293,7 +293,7 @@ TEST_P(kDataFrameTest,insertOneTime)
 
     for(auto k:*kmers)
     {
-        kframe->insert(k.first);
+        kframe->incrementCount(k.first);
         if(kframe->load_factor()>=kframe->max_load_factor()*0.8)
         {
           break;
@@ -323,7 +323,7 @@ TEST_P(kDataFrameTest,insertNTimes)
     int insertedKmers=0;
     for(auto k:*kmers)
     {
-        kframe->insert(k.first,k.second);
+        kframe->setCount(k.first,k.second);
         if(kframe->load_factor()>=kframe->max_load_factor()*0.8)
         {
           break;
@@ -401,7 +401,7 @@ TEST_P(kDataFrameTest,autoResize)
     int insertedKmers=0;
     for(auto k:*kmers)
     {
-        kframe->insert(k.first,k.second);
+        kframe->setCount(k.first,k.second);
         insertedKmers++;
     }
     int checkedKmers=0;
@@ -429,7 +429,7 @@ TEST_P(kDataFrameTest,iterateOverAllKmers)
     for(auto k:*kmers)
     {
         numInsertedKmers++;
-      kframe->insert(k.first,k.second);
+      kframe->setCount(k.first,k.second);
 
       if(kframe->load_factor()>=kframe->max_load_factor()){
         break;
@@ -458,7 +458,7 @@ TEST_P(kDataFrameTest,multiColumns)
     int insertedKmers=0;
     for(auto k:*kmers)
     {
-        kframe->insert(k.first,k.second);
+        kframe->setCount(k.first,k.second);
         if(kframe->load_factor()>=kframe->max_load_factor()*0.8)
         {
           break;
@@ -516,7 +516,7 @@ TEST_P(kDataFrameTest,saveAndLoadMultiColumns)
     int insertedKmers=0;
     for(auto k:*kmers)
     {
-        kframe->insert(k.first,k.second);
+        kframe->setCount(k.first,k.second);
         if(kframe->load_factor()>=kframe->max_load_factor()*0.8)
         {
             break;
@@ -574,100 +574,9 @@ TEST_P(kDataFrameTest,saveAndLoadMultiColumns)
 
 
 
-TEST_P(kDataFrameTest,changeDefaultColumn)
-{
-    EXPECT_EQ(kframe->empty(), true);
-
-    kframe->changeDefaultColumnType(new vectorColumn<double>());
-    map<string,tuple<int,double,bool> > simColumns;
-
-    int insertedKmers=0;
-    for(auto k:*kmers)
-    {
-
-        int randInt=rand()%1000000;
-        double randDouble=(double)(rand()%1000000);
-        bool randBool=rand()%2==0;
-
-        simColumns[k.first]=make_tuple(randInt,randDouble,randBool);
-
-        kframe->setKmerDefaultColumnValue<double, vectorColumn<double> >(k.first,randDouble);
-
-        if(kframe->load_factor()>=kframe->max_load_factor()*0.8)
-        {
-            break;
-        }
-        insertedKmers++;
-    }
-    int checkedKmers=0;
 
 
 
-    for(auto simRow:simColumns)
-    {
-        string kmer=simRow.first;
-        int randInt=get<0>(simRow.second);
-        double randDouble=get<1>(simRow.second);
-        bool randBool=get<2>(simRow.second);
-
-        //int retInt=kframe->getKmerColumnValue<int,vector<int> >("intColumn",kmer);
-        double retDouble=kframe->getKmerDefaultColumnValue<double, vectorColumn<double> >(kmer);
-        //bool retBool=kframe->getKmerColumnValue<bool,vector<bool> >("boolColumn",kmer);
-
-       // ASSERT_EQ(randInt,retInt);
-        ASSERT_EQ(randDouble,retDouble);
-       // ASSERT_EQ(randBool,retBool);
-
-    }
-    delete kframe;
-    kframe=nullptr;
-}
-
-
-TEST_P(kDataFrameTest,saveAndLoadChangeDefaultColumn)
-{
-
-    EXPECT_EQ(kframe->empty(), true);
-
-    kframe->changeDefaultColumnType(new vectorColumn<double>());
-    map<string,tuple<int,double,bool> > simColumns;
-
-    int insertedKmers=0;
-    for(auto k:*kmers)
-    {
-
-        int randInt=rand()%1000000;
-        double randDouble=(double)(rand()%1000000);
-        bool randBool=rand()%2==0;
-
-        simColumns[k.first]=make_tuple(randInt,randDouble,randBool);
-
-        kframe->setKmerDefaultColumnValue<double, vectorColumn<double> >(k.first,randDouble);
-
-        if(kframe->load_factor()>=kframe->max_load_factor()*0.8)
-        {
-            break;
-        }
-        insertedKmers++;
-    }
-    int checkedKmers=0;
-    string fileName="tmp.kdataframe."+gen_random(8);
-    kframe->save(fileName);
-    delete kframe;
-    kframe=nullptr;
-    kframeLoaded=kDataFrame::load(fileName);
-
-    for(auto simRow:simColumns)
-    {
-        string kmer=simRow.first;
-        double randDouble=get<1>(simRow.second);
-        double retDouble=kframeLoaded->getKmerDefaultColumnValue<double, vectorColumn<double> >(kmer);
-        ASSERT_EQ(randDouble,retDouble);
-    }
-    delete kframeLoaded;
-    kframeLoaded= nullptr;
-
-}
 
 
 
@@ -682,7 +591,7 @@ TEST_P(kDataFrameTest,saveAndIterateOverAllKmers)
     for(auto k:*kmers)
     {
       numInsertedKmers++;
-      kframe->insert(k.first,k.second);
+      kframe->setCount(k.first,k.second);
       if(kframe->load_factor()>=kframe->max_load_factor()*0.8){
         break;
       }
@@ -720,7 +629,7 @@ TEST_P(kDataFrameTest,transformPlus10)
     for(auto k:*kmers)
     {
       numInsertedkmers++;
-      kframe->insert(k.first,k.second);
+      kframe->setCount(k.first,k.second);
       if(kframe->load_factor()>=kframe->max_load_factor()*0.8){
         break;
       }
@@ -753,7 +662,7 @@ TEST_P(kDataFrameTest,transformFilterLessThan5)
 
     for(auto k:*kmers)
     {
-      kframe->insert(k.first,k.second);
+      kframe->setCount(k.first,k.second);
       if(kframe->load_factor()>=kframe->max_load_factor()*0.8){
         break;
       }
@@ -785,13 +694,12 @@ TEST_P(kDataFrameTest,transformFilterLessThan5MultipleColumns)
 
     for(auto k:*kmers)
     {
-        kframe->insert(k.first,(k.second%9)+1);
+        kframe->setCount(k.first,(k.second%9)+1);
         if(kframe->load_factor()>=kframe->max_load_factor()*0.8){
             break;
         }
     }
     int checkedKmers=0;
-    kProcessor::createCountColumn(kframe);
     kframe2=kProcessor::filter(kframe,[](kDataFrameIterator& k) -> bool
     {
         uint32_t count=0;
@@ -822,7 +730,7 @@ TEST_P(kDataFrameTest,aggregateSum)
     uint64_t goldSum=0;
     for(auto k:*kmers)
     {
-      kframe->insert(k.first,k.second);
+      kframe->setCount(k.first,k.second);
       goldSum+=k.second;
       if(kframe->load_factor()>=kframe->max_load_factor()*0.8){
         break;
@@ -1109,7 +1017,7 @@ TEST_P(indexingTest,index)
                 string readName = seq.first;
                 string groupName=namesMap[readName];
                 for (const auto &kmer : seq.second) {
-                    vector<string> colors=KF->getKmerDefaultColumnValue<vector<string> ,StringColorColumn>(kmer.hash);
+                    vector<string> colors=KF->getKmerColumnValue<vector<string> ,StringColorColumn>("color",kmer.hash);
                     ASSERT_NE(colors.size(),0);
                     auto colorIt=colors.end();
                     colorIt=find(colors.begin(),colors.end(),groupName);
@@ -1327,7 +1235,7 @@ TEST_P(indexingTest,saveAndLoad)
             string readName = seq.first;
             string groupName=namesMap[readName];
             for (const auto &kmer : seq.second) {
-                vector<string> colors=kframeLoaded->getKmerDefaultColumnValue<vector<string> ,StringColorColumn>(kmer.hash);
+                vector<string> colors=kframeLoaded->getKmerColumnValue<vector<string> ,StringColorColumn>("color",kmer.hash);
                 ASSERT_NE(colors.size(),0);
                 auto colorIt=colors.end();
                 colorIt=find(colors.begin(),colors.end(),groupName);
@@ -1353,7 +1261,7 @@ TEST_P(kDataFrameBufferedTest,iterateOverAllKmers)
     for(auto k:*kmers)
     {
         numInsertedKmers++;
-        kframe->insert(k.first,k.second);
+        kframe->setCount(k.first,k.second);
       //  insertedKmers[k.first]+=k.second;
         if(kframe->load_factor()>=kframe->max_load_factor()*0.8){
             break;
@@ -1389,7 +1297,7 @@ TEST_P(kDataFrameBufferedTest,autoResize)
     for(auto k:*kmers)
     {
         numInsertedKmers++;
-        kframe->insert(k.first,k.second);
+        kframe->setCount(k.first,k.second);
         if(kframe->load_factor()>=kframe->max_load_factor()*0.8){
             break;
         }
@@ -1423,7 +1331,7 @@ TEST_P(kDataFrameBufferedTest,saveAndIterateOverAllKmers)
     for(auto k:*kmers)
     {
         numInsertedKmers++;
-        kframe->insert(k.first,k.second);
+        kframe->setCount(k.first,k.second);
         if(kframe->load_factor()>=kframe->max_load_factor()*0.8){
             break;
         }
@@ -1459,7 +1367,7 @@ TEST_P(kDataFrameBufferedTest,saveAndIterateOverAllKmersNoMemory)
     for(auto k:*kmers)
     {
         numInsertedKmers++;
-        kframe->insert(k.first,k.second);
+        kframe->setCount(k.first,k.second);
         if(kframe->load_factor()>=kframe->max_load_factor()*0.8){
             break;
         }
@@ -1496,7 +1404,7 @@ TEST_P(kDataFrameBufferedTest,transformPlus10)
     unordered_map<string,int> insertedKmers;
     for(auto k:*kmers)
     {
-        kframe->insert(k.first,k.second);
+        kframe->setCount(k.first,k.second);
         insertedKmers[k.first]+=k.second;
         if(kframe->load_factor()>=kframe->max_load_factor()*0.3){
             break;

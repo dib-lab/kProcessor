@@ -18,20 +18,17 @@ kDataFrame::kDataFrame() {
     kSize = 31;
     isStatic=false;
     isKmersOrderComputed=false;
-    defaultColumn=NULL;
 }
 
 kDataFrame::kDataFrame(uint8_t k_size) {
     kSize = k_size;
     isStatic=false;
     isKmersOrderComputed=false;
-    defaultColumn=NULL;
+    lastKmerOrder=1;
 }
 
 kDataFrame::~kDataFrame(){
     delete KD;
-    if(defaultColumn!=NULL)
-        delete defaultColumn;
     for(auto c:columns)
         delete c.second;
     delete endIterator;
@@ -65,17 +62,8 @@ void kDataFrame::save(string filePath)
         }
 
     }
-    if(defaultColumn!=NULL)
-    {
-        string suffix=".defaultColumn";
-        string filename=filePath+suffix;
-        size_t columnType=typeid(*(defaultColumn)).hash_code();
-        out<<"default\t"<<columnType<<"\t"<<suffix<<endl;
-        defaultColumn->serialize(filename);
-    }
-    else{
-        out<<"default\t"<<0<<"\tNULL"<<endl;
-    }
+    out<<"default\t"<<0<<"\tNULL"<<endl;
+    
     out.close();
     this->serialize(filePath);
 }
@@ -110,7 +98,6 @@ kDataFrame * kDataFrame::load(string filePath) {
                 c->deserialize(filePath+path);
                 res->columns[name] = c;
             }
-            res->preprocessKmerOrder();
         }
         inp >> name >> type >> path;
         if (type != 0) {
@@ -124,63 +111,7 @@ kDataFrame * kDataFrame::load(string filePath) {
 
 }
 
-void kDataFrame::preprocessKmerOrder()
-{
-  int checkpointsDistance=64;
-  uint32_t index=0;
-  kDataFrameIterator it=this->begin();
-//  while(it!=this->end())
- // uint32_t index=0;
 
-  for(auto kmer:*this)
-  {
-    if(index%checkpointsDistance==0)
-    {
-      auto kmer=it.getHashedKmer();
-      orderCheckpoints[kmer]=index;
-    }
-    index++;
-    it++;
-  }
-  lastCheckpoint=index;
-  //orderCheckpoints["THEEND"]=index;
-  isKmersOrderComputed=true;
-}
-uint64_t kDataFrame::getkmerOrder(uint64_t kmer)
-{
-  kDataFrameIterator it=this->find(kmer);
-  uint32_t offset=0;
-  while(it!=this->end() &&
-          (orderCheckpoints.find(it.getHashedKmer()) == orderCheckpoints.end()))
-  {
-    offset++;
-    it++;
-  }
-
-  if(it==this->end())
-  {
-    return lastCheckpoint-offset;
-  }
-  return orderCheckpoints[it.getHashedKmer()]-offset;
-}
-
-uint64_t kDataFrame::getkmerOrder(const string &kmer)
-{
-    kDataFrameIterator it=this->find(KD->hash_kmer(kmer));
-    uint32_t offset=0;
-    while(it!=this->end() &&
-          (orderCheckpoints.find(it.getHashedKmer()) == orderCheckpoints.end()))
-    {
-        offset++;
-        it++;
-    }
-
-    if(it==this->end())
-    {
-        return lastCheckpoint-offset;
-    }
-    return orderCheckpoints[it.getHashedKmer()]-offset;
-}
 void kDataFrameIterator::setKmerColumnValueFromOtherColumn(kDataFrame* input, string inputColName, string outputColName)
 {
     std::uint64_t inputKmerOrder=input->getkmerOrder(getHashedKmer());
@@ -215,68 +146,78 @@ void kDataFrame::setKmerColumnValueFromOtherColumn(kDataFrame* input, string inp
 
 void kDataFrame::addColumn(string columnName,Column* ptr)
 {
-  if(!isKmersOrderComputed)
-  {
-    this->preprocessKmerOrder();
-    isStatic=true;
-  }
   columns[columnName]=ptr;
-
 }
 
-
-
-
-//template double kDataFrame::getKmerDefaultColumnValue<double, vectorColumn<double>  >(string kmer);
-//template void kDataFrame::setKmerDefaultColumnValue<double, vectorColumn<double>>(string kmer, double value);
-//
-//
-//
-//template vector<uint32_t > kDataFrame::getKmerDefaultColumnValue<vector<uint32_t >, insertColorColumn>(string kmer);
-//template void kDataFrame::setKmerDefaultColumnValue<vector<uint32_t >, insertColorColumn>(string kmer, vector<uint32_t > value);
-//
-//template double kDataFrame::getKmerDefaultColumnValue<double, vectorColumn<double>  >(uint64_t kmer);
-//template void kDataFrame::setKmerDefaultColumnValue<double, vectorColumn<double>>(uint64_t kmer, double value);
-//
-//template vector<uint32_t > kDataFrame::getKmerDefaultColumnValue<vector<uint32_t >, insertColorColumn>(uint64_t kmer);
-//template void kDataFrame::setKmerDefaultColumnValue<vector<uint32_t >, insertColorColumn>(uint64_t kmer, vector<uint32_t > value);
-//
-//
-//template vector<string> kDataFrame::getKmerDefaultColumnValue<vector<string>, StringColorColumn>(string kmer);
-//template vector<string> kDataFrame::getKmerDefaultColumnValue<vector<string>, StringColorColumn>(uint64_t kmer);
-
-
-void kDataFrame::changeDefaultColumnType(Column* ptr)
+void kDataFrame::addCountColumn()
 {
-    defaultColumn=ptr;
+  if(columns.find("count")!=columns.end())  
+    addColumn("count",new vectorColumn<uint32_t>(size()+1));
+  countColumn=columns["count"];    
+}
+bool kDataFrame::setCount(const string &kmer, std::uint64_t N)
+{
+    uint32_t order=getkmerOrder(kmer);
+    if(order==0)
+    {
+        insert(kmer);
+        order=getkmetOrder(kmer);
+    }
+    countColumn->insert<uint32_t>(N,order);
+}
+bool kDataFrame::setCount(std::uint64_t kmer,std::uint64_t N)
+{
+    uint32_t order=getkmerOrder(kmer);
+    if(order==0)
+    {
+        insert(kmer);
+        order=getkmetOrder(kmer);
+    }
+    countColumn->insert<uint32_t>(N,order);
+}
+std::uint64_t kDataFrame::getCount(const string &kmer)
+{
+    uint32_t o=getkmerOrder(kmer);
+    if(o==0)
+        return 0;
+    return countColumn->get<uint32_t>(o);
+}
+std::uint64_t kDataFrame::getCount(std::uint64_t kmer)
+{
+    uint32_t o=getkmerOrder(kmer);
+    if(o==0)
+        return 0;
+    return countColumn->get<uint32_t>(o);
+}
+void kDataFrame::incrementCount(std::uint64_t kmer)
+{
+    uint32_t order=getkmerOrder(kmer);
+    uint32_t count=0;
+    if(order==0)
+    {
+        insert(kmer);
+        order=getkmetOrder(kmer);
+    }
+    else{
+        count=countColumn->get<uint32_t>(order);
+    }
+    countColumn->insert<uint32_t>(count+1,order);
+}
+void kDataFrame::incrementCount(const string kmer)
+{
+    uint32_t order=getkmerOrder(kmer);
+    uint32_t count=0;
+    if(order==0)
+    {
+        insert(kmer);
+        order=getkmetOrder(kmer);
+    }
+    else{
+        count=countColumn->get<uint32_t>(order);
+    }
+    countColumn->insert<uint32_t>(count+1,order);
 }
 
-//template<typename T,typename Container>
-//T kDataFrame::getKmerDefaultColumnValue(string kmer)
-//{
-//    return ((Container*)defaultColumn)->getWithIndex(getCount(kmer));
-//}
-//
-//template<typename T,typename Container>
-//void kDataFrame::setKmerDefaultColumnValue(string kmer, T value)
-//{
-//    uint32_t i=((Container*)defaultColumn)->insertAndGetIndex(value);
-//    setCount(kmer,i);
-//}
-//
-//template<typename T,typename Container>
-//T kDataFrame::getKmerDefaultColumnValue(uint64_t kmer)
-//{
-//    return ((Container*)defaultColumn)->getWithIndex(getCount(kmer));
-//}
-//
-//template<typename T,typename Container>
-//void kDataFrame::setKmerDefaultColumnValue(uint64_t kmer, T value)
-//{
-//    uint32_t i=((Container*)defaultColumn)->insertAndGetIndex(value);
-//    setCount(kmer,i);
-//}
-//
 
 kDataFrameIterator kDataFrame::end(){
 //    kDataFrameBMQFIterator* it=new kDataFrameBMQFIterator(bufferedmqf,kSize,KD);

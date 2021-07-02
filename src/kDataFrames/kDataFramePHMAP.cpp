@@ -30,7 +30,6 @@ _kDataFrameIterator *kDataFramePHMAPIterator::clone() {
 }
 
 kDataFramePHMAPIterator &kDataFramePHMAPIterator::operator++(int) {
-    order++;
     iterator++;
     return *this;
 }
@@ -49,8 +48,12 @@ string kDataFramePHMAPIterator::getKmer() {
 uint64_t kDataFramePHMAPIterator::getCount() {
     return iterator->second;
 }
+uint64_t kDataFramePHMAPIterator::getOrder() {
+    return iterator->second;
+}
 
-bool kDataFramePHMAPIterator::setCount(uint64_t count) {
+
+bool kDataFramePHMAPIterator::setOrder(uint64_t count) {
     iterator->second = count;
 }
 
@@ -152,39 +155,38 @@ bool kDataFramePHMAP::kmerExist(uint64_t kmer) {
 }
 
 
-bool kDataFramePHMAP::insert(const string &kmerS, uint64_t count) {
-    this->MAP[KD->hash_kmer(kmerS)] += count;
-    return true;
-}
+
 
 bool kDataFramePHMAP::insert(const string &kmerS) {
-    this->MAP[KD->hash_kmer(kmerS)] += 1;
+    auto it=this->MAP.find(KD->hash_kmer(kmerS));
+    if(it==this->MAP.end())
+        return false;
+    this->MAP[KD->hash_kmer(kmerS)] = lastKmerOrder++;
     return true;
 }
 
 
-bool kDataFramePHMAP::insert(uint64_t kmer, uint64_t count) {
-    this->MAP[kmer] += count;
-    return true;
-}
 
 bool kDataFramePHMAP::insert(uint64_t kmer) {
-    this->MAP[kmer] += 1;
+    auto it=this->MAP.find(kmer);
+    if(it==this->MAP.end())
+        return false;
+    this->MAP[kmer] = lastKmerOrder++;
     return true;
 }
 
 
-bool kDataFramePHMAP::setCount(const string &kmerS, uint64_t tag) {
+bool kDataFramePHMAP::setOrder(const string &kmerS, uint64_t tag) {
     this->MAP[KD->hash_kmer(kmerS)] = tag;
     return true;
 }
 
-bool kDataFramePHMAP::setCount(uint64_t kmerS, uint64_t tag) {
+bool kDataFramePHMAP::setOrder(uint64_t kmerS, uint64_t tag) {
     this->MAP[kmerS] = tag;
     return true;
 }
 
-uint64_t kDataFramePHMAP::getCount(const string &kmerS) {
+uint64_t kDataFramePHMAP::getkmerOrder(const string &kmerS) {
     phmap::flat_hash_map<uint64_t,uint64_t>::const_iterator got = this->MAP.find(KD->hash_kmer(kmerS));
     if ( got == this->MAP.end() )
         return 0;
@@ -192,7 +194,7 @@ uint64_t kDataFramePHMAP::getCount(const string &kmerS) {
         return got->second;
 }
 
-uint64_t kDataFramePHMAP::getCount(uint64_t kmerS) {
+uint64_t kDataFramePHMAP::getkmerOrder(uint64_t kmerS) {
     phmap::flat_hash_map<uint64_t,uint64_t>::const_iterator got = this->MAP.find(kmerS);
     if ( got == this->MAP.end() )
         return 0;

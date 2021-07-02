@@ -26,7 +26,6 @@ _kDataFrameIterator *kDataFrameBlightIterator::clone() {
 }
 
 kDataFrameBlightIterator &kDataFrameBlightIterator::operator++(int) {
-    order++;
     iterator.next();
     if(iterator.kmer_id > iterator.index_ptr->number_kmer+1)
         iterator.kmer_id = iterator.index_ptr->number_kmer+1;
@@ -45,10 +44,14 @@ string kDataFrameBlightIterator::getKmer() {
 }
 
 uint64_t kDataFrameBlightIterator::getCount() {
-    return origin->getCount(iterator.get_kmer_str());
+    return origin->getkmerOrder(iterator.get_kmer_str());
 }
 
-bool kDataFrameBlightIterator::setCount(uint64_t count) {
+uint64_t kDataFrameBlightIterator::getOrder() {
+    return origin->getkmerOrder(iterator.get_kmer_str());
+}
+
+bool kDataFrameBlightIterator::setOrder(uint64_t count) {
     throw logic_error("kmerBlight is static");
 }
 
@@ -105,10 +108,6 @@ bool kDataFrameBlight::kmerExist(uint64_t kmerS) {
 }
 
 
-bool kDataFrameBlight::insert(const string &kmerS, uint64_t count) {
-    throw logic_error("kDataFrameBlight is static. Insertion is not allowed");
-    return true;
-}
 
 bool kDataFrameBlight::insert(const string &kmerS) {
     throw logic_error("kDataFrameBlight is static. Insertion is not allowed");
@@ -116,10 +115,6 @@ bool kDataFrameBlight::insert(const string &kmerS) {
 }
 
 
-bool kDataFrameBlight::insert(uint64_t kmer, uint64_t count) {
-    throw logic_error("kDataFrameBlight is static. Insertion is not allowed");
-    return true;
-}
 
 bool kDataFrameBlight::insert(uint64_t kmer) {
     throw logic_error("kDataFrameBlight is static. Insertion is not allowed");
@@ -137,11 +132,11 @@ bool kDataFrameBlight::setCount(uint64_t kmerS, uint64_t tag) {
     return true;
 }
 
-uint64_t kDataFrameBlight::getCount(const string &kmerS) {
+uint64_t kDataFrameBlight::getkmerOrder(const string &kmerS) {
     return blight_index->get_hashes_query(kmerS)[0];
 }
 
-uint64_t kDataFrameBlight::getCount(uint64_t kmerS) {
+uint64_t kDataFrameBlight::getkmerOrder(uint64_t kmerS) {
     return kmerS;
 }
 
@@ -252,13 +247,13 @@ kDataFrameIterator kDataFrameBlight::find(uint64_t kmer) {
     throw logic_error("not implemented yet");
 }
 
-void kDataFrameBlight::preprocessKmerOrder(){}
+
 uint64_t kDataFrameBlight::getkmerOrder(const string &kmer)
 {
-    return getCount(kmer);
+    return getkmerOrder(kmer);
 }
 
 uint64_t kDataFrameBlight::getkmerOrder(uint64_t kmer)
 {
-    return getCount(kmer);
+    return getkmerOrder(kmer);
 }

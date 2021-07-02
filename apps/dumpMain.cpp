@@ -23,7 +23,7 @@ int main(int argc, char *argv[]){
   auto it=KF->begin();
   while(it!=KF->end())
   {
-    cout<<it.getKmer()<<"\t"<<it.getCount()<<"\n";
+    cout<<it.getKmer()<<"\t"<<it.getkmerOrder()<<"\n";
     it++;
   }
   return 0;
