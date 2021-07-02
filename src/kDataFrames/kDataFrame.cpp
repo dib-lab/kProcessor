@@ -100,11 +100,7 @@ kDataFrame * kDataFrame::load(string filePath) {
             }
         }
         inp >> name >> type >> path;
-        if (type != 0) {
-            Column *c = Column::getContainerByName(type);
-            c->deserialize(filePath+path);
-            res->defaultColumn = c;
-        }
+       
     }
 
     return res;
@@ -153,7 +149,7 @@ void kDataFrame::addCountColumn()
 {
   if(columns.find("count")!=columns.end())  
     addColumn("count",new vectorColumn<uint32_t>(size()+1));
-  countColumn=columns["count"];    
+  countColumn=(vectorColumn<uint32_t>*)columns["count"];    
 }
 bool kDataFrame::setCount(const string &kmer, std::uint64_t N)
 {
@@ -161,9 +157,9 @@ bool kDataFrame::setCount(const string &kmer, std::uint64_t N)
     if(order==0)
     {
         this->insert(kmer);
-        order=this->getkmetOrder(kmer);
+        order=this->getkmerOrder(kmer);
     }
-    countColumn->insert<uint32_t>(N,order);
+    countColumn->insert(N,order);
 }
 bool kDataFrame::setCount(std::uint64_t kmer,std::uint64_t N)
 {
@@ -171,23 +167,23 @@ bool kDataFrame::setCount(std::uint64_t kmer,std::uint64_t N)
     if(order==0)
     {
         this->insert(kmer);
-        order=this->getkmetOrder(kmer);
+        order=this->getkmerOrder(kmer);
     }
-    countColumn->insert<uint32_t>(N,order);
+    countColumn->insert(N,order);
 }
 std::uint64_t kDataFrame::getCount(const string &kmer)
 {
     uint32_t o=this->getkmerOrder(kmer);
     if(o==0)
         return 0;
-    return countColumn->get<uint32_t>(o);
+    return countColumn->get(o);
 }
 std::uint64_t kDataFrame::getCount(std::uint64_t kmer)
 {
     uint32_t o=this->getkmerOrder(kmer);
     if(o==0)
         return 0;
-    return countColumn->get<uint32_t>(o);
+    return countColumn->get(o);
 }
 void kDataFrame::incrementCount(std::uint64_t kmer)
 {
@@ -196,12 +192,12 @@ void kDataFrame::incrementCount(std::uint64_t kmer)
     if(order==0)
     {
         this->insert(kmer);
-        order=this->getkmetOrder(kmer);
+        order=this->getkmerOrder(kmer);
     }
     else{
-        count=countColumn->get<uint32_t>(order);
+        count=countColumn->get(order);
     }
-    countColumn->insert<uint32_t>(count+1,order);
+    countColumn->insert(count+1,order);
 }
 void kDataFrame::incrementCount(const string kmer)
 {
@@ -210,12 +206,12 @@ void kDataFrame::incrementCount(const string kmer)
     if(order==0)
     {
         this->insert(kmer);
-        order=this->getkmetOrder(kmer);
+        order=this->getkmerOrder(kmer);
     }
     else{
-        count=countColumn->get<uint32_t>(order);
+        count=countColumn->get(order);
     }
-    countColumn->insert<uint32_t>(count+1,order);
+    countColumn->insert(count+1,order);
 }
 
 

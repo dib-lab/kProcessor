@@ -108,8 +108,8 @@ void vectorColumn<T>::deserialize(string filename) {
 
 template<typename T>
 void vectorColumn<T>::insert(T item, uint32_t index) {
-    while(index>=data.size())
-        dataV.resize(data.size()*2);
+    while(index>=dataV.size())
+        dataV.resize(dataV.size()*2);
     dataV[index] = item;
 }
 
@@ -1087,7 +1087,7 @@ void prefixTrie::loadFromQueryColorColumn(mixVectors  *col) {
     unordered_map<uint32_t,uint32_t> nodesCount;
     for(auto e:unCompressedEdges)
     {
-        for(i: *e)
+        for(auto i: *e)
             nodesCount[i]++;
     }
     translateEdges=sdsl::int_vector<>(nodesCount.size());
@@ -1108,7 +1108,7 @@ void prefixTrie::loadFromQueryColorColumn(mixVectors  *col) {
         unCompressedSize+=sdsl::size_in_mega_bytes(*e);
         //edges.push_back(new vectype(*e));
         edges.push_back(new vectype(e->size()));
-        auto uint32_t index=0;
+        uint32_t index=0;
         for(auto n:*e)
             (*edges.back())[index++]=reverse[n];
         

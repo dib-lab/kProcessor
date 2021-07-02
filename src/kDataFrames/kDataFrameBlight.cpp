@@ -122,15 +122,6 @@ bool kDataFrameBlight::insert(uint64_t kmer) {
 }
 
 
-bool kDataFrameBlight::setCount(const string &kmerS, uint64_t tag) {
-    throw logic_error("Use setKmerColumn value instead");
-    return true;
-}
-
-bool kDataFrameBlight::setCount(uint64_t kmerS, uint64_t tag) {
-    throw logic_error("Use setKmerColumn value instead");
-    return true;
-}
 
 uint64_t kDataFrameBlight::getkmerOrder(const string &kmerS) {
     return blight_index->get_hashes_query(kmerS)[0];
@@ -246,3 +237,4 @@ kDataFrameIterator kDataFrameBlight::find(const string &kmer) {
 kDataFrameIterator kDataFrameBlight::find(uint64_t kmer) {
     throw logic_error("not implemented yet");
 }
+

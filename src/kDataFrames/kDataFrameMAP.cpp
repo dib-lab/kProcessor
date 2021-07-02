@@ -153,10 +153,6 @@ bool kDataFrameMAP::insert(uint64_t kmer) {
 }
 
 
-bool kDataFrameMAP::setCount(const string &kmerS, uint64_t tag) {
-    this->MAP[KD->hash_kmer(kmerS)] = tag;
-    return true;
-}
 
 bool kDataFrameMAP::setOrder(uint64_t kmerS, uint64_t tag) {
     this->MAP[kmerS] = tag;
