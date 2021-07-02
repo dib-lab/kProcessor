@@ -157,46 +157,46 @@ void kDataFrame::addCountColumn()
 }
 bool kDataFrame::setCount(const string &kmer, std::uint64_t N)
 {
-    uint32_t order=getkmerOrder(kmer);
+    uint32_t order=this->getkmerOrder(kmer);
     if(order==0)
     {
-        insert(kmer);
-        order=getkmetOrder(kmer);
+        this->insert(kmer);
+        order=this->getkmetOrder(kmer);
     }
     countColumn->insert<uint32_t>(N,order);
 }
 bool kDataFrame::setCount(std::uint64_t kmer,std::uint64_t N)
 {
-    uint32_t order=getkmerOrder(kmer);
+    uint32_t order=this->getkmerOrder(kmer);
     if(order==0)
     {
-        insert(kmer);
-        order=getkmetOrder(kmer);
+        this->insert(kmer);
+        order=this->getkmetOrder(kmer);
     }
     countColumn->insert<uint32_t>(N,order);
 }
 std::uint64_t kDataFrame::getCount(const string &kmer)
 {
-    uint32_t o=getkmerOrder(kmer);
+    uint32_t o=this->getkmerOrder(kmer);
     if(o==0)
         return 0;
     return countColumn->get<uint32_t>(o);
 }
 std::uint64_t kDataFrame::getCount(std::uint64_t kmer)
 {
-    uint32_t o=getkmerOrder(kmer);
+    uint32_t o=this->getkmerOrder(kmer);
     if(o==0)
         return 0;
     return countColumn->get<uint32_t>(o);
 }
 void kDataFrame::incrementCount(std::uint64_t kmer)
 {
-    uint32_t order=getkmerOrder(kmer);
+    uint32_t order=this->getkmerOrder(kmer);
     uint32_t count=0;
     if(order==0)
     {
-        insert(kmer);
-        order=getkmetOrder(kmer);
+        this->insert(kmer);
+        order=this->getkmetOrder(kmer);
     }
     else{
         count=countColumn->get<uint32_t>(order);
@@ -205,12 +205,12 @@ void kDataFrame::incrementCount(std::uint64_t kmer)
 }
 void kDataFrame::incrementCount(const string kmer)
 {
-    uint32_t order=getkmerOrder(kmer);
+    uint32_t order=this->getkmerOrder(kmer);
     uint32_t count=0;
     if(order==0)
     {
-        insert(kmer);
-        order=getkmetOrder(kmer);
+        this->insert(kmer);
+        order=this->getkmetOrder(kmer);
     }
     else{
         count=countColumn->get<uint32_t>(order);

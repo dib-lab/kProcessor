@@ -887,9 +887,7 @@ public:
 class kDataFrameBlight : public kDataFrame {
 private:
     kmer_Set_Light* blight_index;
-protected:
-    uint64_t getkmerOrder(const string &kmer);
-    uint64_t getkmerOrder(uint64_t kmer);
+
 public:
     kDataFrameBlight();
 

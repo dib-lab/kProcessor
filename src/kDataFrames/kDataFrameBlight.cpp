@@ -246,14 +246,3 @@ kDataFrameIterator kDataFrameBlight::find(const string &kmer) {
 kDataFrameIterator kDataFrameBlight::find(uint64_t kmer) {
     throw logic_error("not implemented yet");
 }
-
-
-uint64_t kDataFrameBlight::getkmerOrder(const string &kmer)
-{
-    return getkmerOrder(kmer);
-}
-
-uint64_t kDataFrameBlight::getkmerOrder(uint64_t kmer)
-{
-    return getkmerOrder(kmer);
-}
