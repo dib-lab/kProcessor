@@ -131,8 +131,6 @@ namespace kProcessor {
     //colored_kDataFrame * indexPriorityQueue(kmerDecoder *KD, string names_fileName, kDataFrame *frame);
     //colored_kDataFrame * indexPriorityQueue2(kmerDecoder *KD, string names_fileName, kDataFrame *frame);
 
-    void createCountColumn(kDataFrame* frame);
-    void createColorColumn(kDataFrame* frame);
-
+    
 }
 #endif

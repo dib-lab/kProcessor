@@ -30,7 +30,6 @@ _kDataFrameIterator *kDataFrameMAPIterator::clone() {
 }
 
 kDataFrameMAPIterator &kDataFrameMAPIterator::operator++(int) {
-    order++;
     iterator++;
     return *this;
 }
@@ -49,8 +48,11 @@ string kDataFrameMAPIterator::getKmer() {
 uint64_t kDataFrameMAPIterator::getCount() {
     return iterator->second;
 }
+uint64_t kDataFrameMAPIterator::getOrder() {
+    return iterator->second;
+}
 
-bool kDataFrameMAPIterator::setCount(uint64_t count) {
+bool kDataFrameMAPIterator::setOrder(uint64_t count) {
     iterator->second = count;
 }
 
@@ -131,23 +133,22 @@ bool kDataFrameMAP::kmerExist(uint64_t kmer) {
 }
 
 
-bool kDataFrameMAP::insert(const string &kmerS, uint64_t count) {
-    this->MAP[KD->hash_kmer(kmerS)] += count;
-    return true;
-}
 
 bool kDataFrameMAP::insert(const string &kmerS) {
-    this->MAP[KD->hash_kmer(kmerS)] += 1;
+    auto it=this->MAP.find(KD->hash_kmer(kmerS));
+    if(it==this->MAP.end())
+        return false;
+    this->MAP[KD->hash_kmer(kmerS)] = lastKmerOrder++;
     return true;
 }
 
-bool kDataFrameMAP::insert(uint64_t kmer, uint64_t count) {
-    this->MAP[kmer] += count;
-    return true;
-}
+
 
 bool kDataFrameMAP::insert(uint64_t kmer) {
-    this->MAP[kmer] += 1;
+    auto it=this->MAP.find(kmer);
+    if(it==this->MAP.end())
+        return false;
+    this->MAP[kmer] = lastKmerOrder++;
     return true;
 }
 
@@ -157,12 +158,12 @@ bool kDataFrameMAP::setCount(const string &kmerS, uint64_t tag) {
     return true;
 }
 
-bool kDataFrameMAP::setCount(uint64_t kmerS, uint64_t tag) {
+bool kDataFrameMAP::setOrder(uint64_t kmerS, uint64_t tag) {
     this->MAP[kmerS] = tag;
     return true;
 }
 
-uint64_t kDataFrameMAP::getCount(const string &kmerS) {
+uint64_t kDataFrameMAP::getkmerOrder(const string &kmerS) {
     auto it= this->MAP.find(KD->hash_kmer(kmerS));
     if(it==this->MAP.end())
         return 0;
@@ -170,7 +171,7 @@ uint64_t kDataFrameMAP::getCount(const string &kmerS) {
     return it->second;
 }
 
-uint64_t kDataFrameMAP::getCount(uint64_t kmerS) {
+uint64_t kDataFrameMAP::getkmerOrder(uint64_t kmerS) {
     auto it= this->MAP.find(kmerS);
     if(it==this->MAP.end())
         return 0;

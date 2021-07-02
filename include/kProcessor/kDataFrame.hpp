@@ -91,17 +91,16 @@ public:
 class _kDataFrameIterator{
 protected:
     std::uint64_t kSize;
-    std::uint64_t order;
 public:
   _kDataFrameIterator()= default;
-  explicit _kDataFrameIterator(std::uint64_t k):kSize(k),order(0){}
-  [[nodiscard]] uint64_t getOrder() const{return order;}
+  explicit _kDataFrameIterator(std::uint64_t k):kSize(k){}
+  virtual uint64_t getOrder()=0;
   virtual _kDataFrameIterator& operator ++ (int)=0;
   virtual _kDataFrameIterator* clone()=0;
   virtual std::uint64_t getHashedKmer()=0;
   virtual string getKmer()=0;
   virtual std::uint64_t getCount()=0;
-  virtual bool setCount(std::uint64_t count)=0;
+  virtual bool setOrder(std::uint64_t count)=0;
   virtual bool operator ==(const _kDataFrameIterator& other)=0;
   virtual bool operator !=(const _kDataFrameIterator& other)=0;
   virtual ~_kDataFrameIterator()= default;
@@ -219,7 +218,10 @@ public:
   }
   /// sets the count of the current kmer
   bool setCount(std::uint64_t count){
-    return iterator->setCount(count);
+    return origin->setCount(iterator->getHashedKmer(),count);
+  }
+  bool setOrder(std::uint64_t count){
+    return iterator->setOrder(count);
   }
   kmerRow getKmerRow(){
     return kmerRow(iterator->getKmer(),
@@ -255,8 +257,9 @@ public:
   _kDataFrameIterator* clone();
   std::uint64_t getHashedKmer();
   string getKmer();
+  uint64_t getOrder();
   std::uint64_t getCount();
-  bool setCount(std::uint64_t count);
+  bool setOrder(std::uint64_t count);
   void endIterator();
   bool operator ==(const _kDataFrameIterator& other);
   bool operator !=(const _kDataFrameIterator& other);
@@ -289,13 +292,11 @@ protected:
   string class_name; // Default = MQF, change if MAP. Temporary until resolving #17
   bool isStatic;
 
-
+  uint64_t lastKmerOrder;
 
   unordered_map<uint64_t,uint32_t> orderCheckpoints;
   uint32_t lastCheckpoint;
-  Column* defaultColumn;
-  virtual void preprocessKmerOrder();
-
+  vectorColumn<uint32_t>* countColumn;
   kDataFrameIterator* endIterator;
 public:
     bool isKmersOrderComputed;
@@ -319,15 +320,9 @@ public:
 /// insert the kmer one time in the kDataFrame, or increment the kmer count if it is already exists.
 /*! Returns bool value indicating whether the kmer is inserted or not*/
   virtual bool insert(const string &kmer)=0;
-/// insert the kmer N time in the kDataFrame, or increment the kmer count with N if it is already exists.
-/*! Returns bool value indicating whether the kmer is inserted or not*/
-  virtual bool insert(const string &kmer, std::uint64_t N)=0;
 /// insert the hashed kmer one time in the kDataFrame, or increment the kmer count if it is already exists.
 /*! Returns bool value indicating whether the kmer is inserted or not*/
-    virtual bool insert(std::uint64_t kmer)=0;
-/// insert the hashed kmer N time in the kDataFrame, or increment the kmer count with N if it is already exists.
-/*! Returns bool value indicating whether the hashed kmer is inserted or not*/
-    virtual bool insert(std::uint64_t kmer,std::uint64_t N)=0;
+  virtual bool insert(std::uint64_t kmer)=0;
   /// insert the kmer in the kmer row time in the kDataFrame, or increment the kmer count with the count in the row if it is already exists.
   /*! Returns bool value indicating whether the kmer is inserted or not*/
   bool insert(kmerRow k);
@@ -335,11 +330,18 @@ public:
 /// set the kmer's count to N time in the kDataFrame
 /*! Returns bool value indicating whether the kmer is inserted or not.
 The difference between setCount and insert is that setCount set the count to N no matter the previous kmer count was*/
-  virtual bool setCount(const string &kmer, std::uint64_t N)=0;
-  virtual bool setCount(std::uint64_t kmer,std::uint64_t N)=0;
+  void addCountColumn();
+  bool setCount(const string &kmer, std::uint64_t N);
+  bool setCount(std::uint64_t kmer,std::uint64_t N);
+  std::uint64_t getCount(const string &kmer);
+  std::uint64_t getCount(std::uint64_t kmer);
+  void incrementCount(std::uint64_t kmer);
+  void incrementCount(const string kmer);
 /// returns the count of the kmer in the kDataFrame, i.e. the number of times the kmer is inserted in the kdataFrame.
-  virtual std::uint64_t getCount(const string &kmer)=0;
-  virtual std::uint64_t getCount(std::uint64_t kmer)=0;
+  virtual std::uint64_t getkmerOrder(const string &kmer)=0;
+  virtual std::uint64_t getkmerOrder(std::uint64_t kmer)=0;
+  bool setOrder(const string &kmer, std::uint64_t N);
+  bool setOrder(std::uint64_t kmer,std::uint64_t N);
 // Removes  a kmer from the kDataFrame
 /*! Returns bool value indicating whether the kmer is erased or not*/
   virtual bool erase(const string &kmer)=0;
@@ -393,9 +395,6 @@ The difference between setCount and insert is that setCount set the count to N n
   }
 
 
-  virtual std::uint64_t getkmerOrder(uint64_t kmer);
-  virtual std::uint64_t getkmerOrder(const string &kmer);
-
   void addColumn(string columnName, Column*);
 
   template<typename T,typename Container>
@@ -419,22 +418,7 @@ The difference between setCount and insert is that setCount set the count to N n
   void setKmerColumnValueByOrder(const string& columnName,uint64_t kmerOrder, T value);
 
 
-    void changeDefaultColumnType(Column*);
-  Column* getDefaultColumn(){
-      return defaultColumn;
-  }
 
-  template<typename T,typename Container>
-  T getKmerDefaultColumnValue(const string& kmer);
-
-  template<typename T,typename Container>
-  T getKmerDefaultColumnValue(std::uint64_t kmer);
-
-  template<typename T,typename Container>
-  void setKmerDefaultColumnValue(const string& kmer, T value);
-
-  template<typename T,typename Container>
-  void setKmerDefaultColumnValue(std::uint64_t kmer, T value);
 
   virtual bool kmerExist(string kmer)=0;
   virtual bool kmerExist(uint64_t kmer)=0;
@@ -483,32 +467,6 @@ void kDataFrame::setKmerColumnValueByOrder(const string& columnName,uint64_t kme
 }
 
 
-template<typename T,typename Container>
-T kDataFrame::getKmerDefaultColumnValue(const string& kmer)
-{
-    return ((Container*)defaultColumn)->getWithIndex(getCount(kmer));
-}
-
-template<typename T,typename Container>
-void kDataFrame::setKmerDefaultColumnValue(const string& kmer, T value)
-{
-    uint32_t i=((Container*)defaultColumn)->insertAndGetIndex(value);
-    setCount(kmer,i);
-}
-
-template<typename T,typename Container>
-T kDataFrame::getKmerDefaultColumnValue(std::uint64_t kmer)
-{
-    return ((Container*)defaultColumn)->getWithIndex(getCount(kmer));
-}
-
-template<typename T,typename Container>
-void kDataFrame::setKmerDefaultColumnValue(std::uint64_t kmer, T value)
-{
-    uint32_t i=((Container*)defaultColumn)->insertAndGetIndex(value);
-    setCount(kmer,i);
-}
-
 
 template<typename T,typename Container>
 void kmerRow::getColumnValue(const string& colName, T& res)
@@ -546,9 +504,7 @@ private:
   static bool isEnough(vector<std::uint64_t> histogram,std::uint64_t noSlots,std::uint64_t fixedSizeCounter,std::uint64_t slotSize);
   friend class kDataframeMQF;
 protected:
-  void preprocessKmerOrder() override;
-  uint64_t getkmerOrder(const string &kmer);
-  uint64_t getkmerOrder(uint64_t kmer);
+  
 public:
   kDataFrameMQF();
   explicit kDataFrameMQF(std::uint64_t kSize);
@@ -582,14 +538,13 @@ public:
   std::uint64_t *res_noSlots,std::uint64_t *res_fixedSizeCounter, std::uint64_t *res_memory);
 
 
-  bool setCount(const string &kmer, std::uint64_t count);
-  bool setCount(std::uint64_t kmer, std::uint64_t count);
-  bool insert(const string &kmer, std::uint64_t count);
+  bool setOrder(const string &kmer, std::uint64_t count);
+  bool setOrder(std::uint64_t kmer, std::uint64_t count);
+  
   bool insert(const string &kmer);
-  bool insert(std::uint64_t kmer, std::uint64_t count);
   bool insert(std::uint64_t kmer);
-  std::uint64_t getCount(const string &kmer);
-  std::uint64_t getCount(std::uint64_t kmer);
+  std::uint64_t getkmerOrder(const string &kmer);
+  std::uint64_t getkmerOrder(std::uint64_t kmer);
 
 
   bool erase(const string &kmer);
@@ -634,8 +589,9 @@ public:
     _kDataFrameIterator* clone();
     std::uint64_t getHashedKmer();
     string getKmer();
+    uint64_t getOrder();
     std::uint64_t getCount();
-    bool setCount(std::uint64_t count);
+    bool setOrder(std::uint64_t count);
     void endIterator();
     bool operator ==(const _kDataFrameIterator& other);
     bool operator !=(const _kDataFrameIterator& other);
@@ -681,19 +637,17 @@ public:
 
 
 
-  bool insert(const string &kmer, std::uint64_t count);
   bool insert(const string &kmer);
-  bool insert(std::uint64_t kmer,std::uint64_t count);
   bool insert(std::uint64_t kmer);
-  bool setCount(const string &kmer, std::uint64_t count);
-  bool setCount(std::uint64_t kmer, std::uint64_t count);
+  bool setOrder(const string &kmer, std::uint64_t count);
+  bool setorder(std::uint64_t kmer, std::uint64_t count);
 
 
 
 
 
-  std::uint64_t getCount(const string &kmer);
-  std::uint64_t getCount(std::uint64_t kmer);
+  std::uint64_t getkmerOrder(const string &kmer);
+  std::uint64_t getkmerOrder(std::uint64_t kmer);
 
 
   bool erase(const string &kmer);
@@ -743,14 +697,12 @@ public:
   bool kmerExist(string kmer);
   bool kmerExist(uint64_t kmer);
 
-  bool setCount(const string &kmer, std::uint64_t count);
-  bool setCount(std::uint64_t kmer, std::uint64_t count);
+  bool setOrder(const string &kmer, std::uint64_t count);
+  bool setOrder(std::uint64_t kmer, std::uint64_t count);
   bool insert(const string &kmer);
-  bool insert(const string &kmer, std::uint64_t count);
-  bool insert(std::uint64_t kmer, std::uint64_t count);
   bool insert(std::uint64_t kmer);
-  std::uint64_t getCount(const string &kmer);
-  std::uint64_t getCount(std::uint64_t kmerS);
+  std::uint64_t getkmerOrder(const string &kmer);
+  std::uint64_t getkmerOrder(std::uint64_t kmerS);
   bool erase(const string &kmer);
   bool erase(std::uint64_t kmer);
 
@@ -791,10 +743,10 @@ public:
     std::uint64_t getHashedKmer();
 
     string getKmer();
-
+    uint64_t getOrder();
     std::uint64_t getCount();
 
-    bool setCount(std::uint64_t count);
+    bool setOrder(std::uint64_t count);
 
     void endIterator();
 
@@ -834,19 +786,14 @@ public:
     bool kmerExist(string kmer);
     bool kmerExist(uint64_t kmer);
 
-    bool setCount(const string &kmer, std::uint64_t count);
-    bool setCount(std::uint64_t kmer, std::uint64_t count);
+    bool setOrder(const string &kmer, std::uint64_t count);
+    bool setOrder(std::uint64_t kmer, std::uint64_t count);
 
     bool insert(const string &kmer);
-
-    bool insert(const string &kmer, std::uint64_t count);
-
-    bool insert(std::uint64_t kmer, std::uint64_t count);
-
     bool insert(std::uint64_t kmer);
 
-    std::uint64_t getCount(const string &kmer);
-    std::uint64_t getCount(std::uint64_t kmer);
+    std::uint64_t getkmerOrder(const string &kmer);
+    std::uint64_t getkmerOrder(std::uint64_t kmer);
 
     bool erase(const string &kmer);
     bool erase(std::uint64_t kmer);
@@ -890,8 +837,9 @@ public:
     std::uint64_t getHashedKmer();
     string getKmer();
     kDataFrame *getTwin();
+    uint64_t getOrder();
     std::uint64_t getCount();
-    bool setCount(std::uint64_t count);
+    bool setOrder(std::uint64_t count);
     void endIterator();
     bool operator ==(const _kDataFrameIterator& other);
     bool operator !=(const _kDataFrameIterator& other);
@@ -919,9 +867,10 @@ public:
 
     string getKmer();
 
+    uint64_t getOrder();
     uint64_t getCount();
 
-    bool setCount(uint64_t count);
+    bool setOrder(uint64_t count);
 
     void endIterator();
 
@@ -939,7 +888,6 @@ class kDataFrameBlight : public kDataFrame {
 private:
     kmer_Set_Light* blight_index;
 protected:
-    void preprocessKmerOrder();
     uint64_t getkmerOrder(const string &kmer);
     uint64_t getkmerOrder(uint64_t kmer);
 public:
@@ -960,19 +908,14 @@ public:
     bool kmerExist(string kmer);
     bool kmerExist(uint64_t kmer);
 
-    bool setCount(const string &kmer, std::uint64_t count);
-    bool setCount(std::uint64_t kmer, std::uint64_t count);
+    bool setOrder(const string &kmer, std::uint64_t count);
+    bool setOrder(std::uint64_t kmer, std::uint64_t count);
 
     bool insert(const string &kmer);
-
-    bool insert(const string &kmer, std::uint64_t count);
-
-    bool insert(std::uint64_t kmer, std::uint64_t count);
-
     bool insert(std::uint64_t kmer);
 
-    std::uint64_t getCount(const string &kmer);
-    std::uint64_t getCount(std::uint64_t kmer);
+    std::uint64_t getkmerOrder(const string &kmer);
+    std::uint64_t getkmerOrder(std::uint64_t kmer);
 
     bool erase(const string &kmer);
     bool erase(std::uint64_t kmer);
@@ -1007,22 +950,7 @@ public:
 
 
 
-    void changeDefaultColumnType(Column*);
-    Column* getDefaultColumn(){
-      return defaultColumn;
-    }
 
-    template<typename T,typename Container>
-    T getKmerDefaultColumnValue(const string& kmer);
-
-    template<typename T,typename Container>
-    T getKmerDefaultColumnValue(std::uint64_t kmer);
-
-    template<typename T,typename Container>
-    void setKmerDefaultColumnValue(const string& kmer, T value);
-
-    template<typename T,typename Container>
-    void setKmerDefaultColumnValue(std::uint64_t kmer, T value);
 
 
 };
@@ -1037,33 +965,6 @@ void kDataFrameBlight::setKmerColumnValue(const string& columnName,string kmer,T
 {
   std::uint64_t kmerOrder=getkmerOrder(kmer);
   ((Container*)columns[columnName])->insert(value,kmerOrder);
-}
-
-
-template<typename T,typename Container>
-T kDataFrameBlight::getKmerDefaultColumnValue(const string& kmer)
-{
-  std::uint64_t kmerOrder=getkmerOrder(kmer);
-  return ((Container*)defaultColumn)->getWithIndex(kmerOrder);
-}
-
-template<typename T,typename Container>
-void kDataFrameBlight::setKmerDefaultColumnValue(const string& kmer, T value)
-{
-  std::uint64_t kmerOrder=getkmerOrder(kmer);
-  ((Container*)defaultColumn)->insert(value,kmerOrder);
-}
-
-template<typename T,typename Container>
-T kDataFrameBlight::getKmerDefaultColumnValue(std::uint64_t kmer)
-{
-  return ((Container*)defaultColumn)->getWithIndex(getCount(kmer));
-}
-
-template<typename T,typename Container>
-void kDataFrameBlight::setKmerDefaultColumnValue(std::uint64_t kmer, T value)
-{
-  ((Container*)defaultColumn)->insert(value,kmer);
 }
 
 

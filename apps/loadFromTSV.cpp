@@ -25,7 +25,7 @@ int main(int argc, char *argv[])
     uint64_t nKmers=0;
     while (cin>>kmer>>count)
     {
-        frame.insert(kmer,count);
+        frame.setCount(kmer,count);
 	nKmers++;
 	if(nKmers%10000==0)
 	 cout<<nKmers<<endl;

@@ -47,7 +47,7 @@ int main(int argc, char *argv[])
         while(inp>>kmer)
         {
             testedKmers++;
-            vector<uint32_t> colors=indexFrame->getKmerDefaultColumnValue<vector<uint32_t >, mixVectors>(kmer);
+            vector<uint32_t> colors=indexFrame->getKmerColumnValue<vector<uint32_t >, mixVectors>("color",kmer);
 
 	    if(colors.size()==0)
 	      {
@@ -59,7 +59,7 @@ int main(int argc, char *argv[])
             if(colorIt==colors.end())
             {
 	            cerr<<"Error detected in sample #"<<i <<" "<<
-		filenames[i]<<" at kmer "<<kmer<<" Combination "<<indexFrame->getCount(kmer)<<" got "<<endl;
+		filenames[i]<<" at kmer "<<kmer<<" Combination "<<indexFrame->getkmerOrder(kmer)<<" got "<<endl;
 								     for(auto c: colors)
 								       cerr<<c <<" ";
 										 cerr<<endl;

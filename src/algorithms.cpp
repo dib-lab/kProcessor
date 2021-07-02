@@ -128,7 +128,7 @@ namespace kProcessor {
         kDataFrameIterator it = input->begin();
         while (it != input->end()) {
             kmerRow newkmer = fn(it.getKmerRow());
-            res->insert(newkmer);
+            res->insert(newkmer.hashedKmer);
             it++;
         }
         for(auto col: input->columns)
@@ -184,7 +184,7 @@ namespace kProcessor {
         while (it != input->end()) {
             kmerRow k=it.getKmerRow();
             if (fn(k))
-                res->insert(k);
+                res->insert(k.hashedKmer);
             it++;
         }
         for(auto col: input->columns)
@@ -211,7 +211,7 @@ namespace kProcessor {
             kDataFrameIterator it = input->begin();
             while (it != input->end()) {
                 if (fn(it))
-                    res->insert(it.getHashedKmer(), it.getCount());
+                    res->insert(it.getHashedKmer());
                 it++;
             }
             return res;
@@ -227,7 +227,7 @@ namespace kProcessor {
             int index=0;
             while (it != input->end()) {
                 if (fn(it)) {
-                    res->insert(it.getHashedKmer(), it.getCount());
+                    res->insert(it.getHashedKmer());
                     for(auto col: input->columns)
                     {
                         columns[col.first]->setValueFromColumn(col.second,it.getOrder(),index);
@@ -265,6 +265,7 @@ namespace kProcessor {
     }
 
     void parseSequences(kmerDecoder *KD, kDataFrame *output) {
+        output->addCountColumn();
         if (KD->get_kSize() != (int) output->getkSize()) {
             std::cerr << "kmerDecoder kSize must be equal to kDataFrame kSize" << std::endl;
             exit(1);
@@ -274,7 +275,7 @@ namespace kProcessor {
             KD->next_chunk();
             for (const auto &seq : *KD->getKmers()) {
                 for (const auto &kmer : seq.second) {
-                    output->insert(kmer.hash);
+                    output->incrementCount(kmer.hash);
                 }
             }
         }
@@ -289,6 +290,7 @@ namespace kProcessor {
         // Initialize kmerDecoder
         //  vector<uint64_t> countHistogram= estimateKmersHistogram(filename, kframe->getkSize() ,1);
         kframe->reserve(100000);
+        kframe->addCountColumn();
         std::string mode = "kmers";
         bool check_mode = (parse_params.find("mode") != parse_params.end());
         if (check_mode) {
@@ -307,7 +309,7 @@ namespace kProcessor {
             KD->next_chunk();
             for (const auto &seq : *KD->getKmers()) {
                 for (const auto &kmer : seq.second) {
-                    kframe->insert(kmer.hash);
+                    kframe->incrementCount(kmer.hash);                    
                 }
             }
         }
@@ -321,12 +323,12 @@ namespace kProcessor {
             std::cerr << "kmerDecoder kSize must be equal to kDataFrame kSize" << std::endl;
             exit(1);
         }
-
+        output->addCountColumn();
         std::vector<kmer_row> kmers;
         KD->seq_to_kmers(sequence, kmers);
 
         for (const auto &kmer : kmers) {
-            output->insert(kmer.hash);
+                output->incrementCount(kmer.hash);
         }
 
     }
@@ -357,12 +359,13 @@ namespace kProcessor {
             std::cerr << "kmerDecoder kSize must be equal to kDataFrame kSize" << std::endl;
             exit(1);
         }
+        frame->addCountColumn();
 
         std::vector<kmer_row> kmers;
         KD->seq_to_kmers(sequence, kmers);
 
         for (const auto &kmer : kmers) {
-            frame->insert(kmer.hash);
+                frame->incrementCount(kmer.hash);
         }
 
     }
@@ -429,7 +432,7 @@ namespace kProcessor {
             kmerRow newRow = fn(current);
 
             if(newRow.count > 0) {
-                res->insert(newRow);
+                res->insert(newRow.hashedKmer);
                 for(uint32_t i=0;i<current.size();i++)
                 {
                     if(current[i]!= nullptr)
@@ -706,7 +709,7 @@ namespace kProcessor {
                 convertMap.insert(make_pair(readTag, readTag));
                 //    cout<<readName<<"   "<<seq.size()<<endl;
                 for (const auto &kmer : seq.second) {
-                    uint64_t currentTag = frame->getCount(kmer.hash);
+                    uint64_t currentTag = frame->getkmerOrder(kmer.hash);
                     auto itc = convertMap.find(currentTag);
                     if (itc == convertMap.end()) {
                         vector<uint32_t> colors = legend->find(currentTag)->second;
@@ -771,10 +774,10 @@ namespace kProcessor {
                     }
 
                     frame->setCount(kmer.hash, itc->second);
-                    if (frame->getCount(kmer.hash) != itc->second) {
+                    if (frame->getkmerOrder(kmer.hash) != itc->second) {
                         //frame->setC(kmer,itc->second);
                         cout << "Error Founded " << kmer.str << " from sequence " << readName << " expected "
-                             << itc->second << " found " << frame->getCount(kmer.hash) << endl;
+                             << itc->second << " found " << frame->getkmerOrder(kmer.hash) << endl;
                         return;
                     }
                 }
@@ -789,7 +792,7 @@ namespace kProcessor {
             }
         }
         auto *col = new StringColorColumn();
-        frame->changeDefaultColumnType((Column *) col);
+        frame->addColumn("color",(Column *) col);
         col->colors = vector<vector<uint32_t> >(legend->size());
         col->colors.push_back(vector<uint32_t>());
         for (auto it : *legend) {
@@ -840,7 +843,7 @@ namespace kProcessor {
 
     void indexPriorityQueue(vector<kDataFrame *> &input, string tmpFolder, kDataFrame *output,uint32_t num_vectors,uint32_t vector_size) {
         auto *colors = new insertColorColumn(input.size(), tmpFolder,num_vectors,vector_size);
-        output->changeDefaultColumnType(colors);
+        output->addColumn("i",colors);
         for (unsigned int i = 0; i < input.size(); i++) {
             vector<uint32_t> tmp = {i};
             colors->insertAndGetIndex(tmp);
@@ -885,17 +888,13 @@ namespace kProcessor {
                 }
             }
 
-            uint64_t prevColor = output->getCount(currHash);
+            uint64_t prevColor = output->getkmerOrder(currHash);
             if (prevColor != 0) {
-                auto res = output->getKmerDefaultColumnValue<vector<uint32_t>, insertColorColumn>(currHash);
                 cout << "Error in Indexing detected at kmer " << currHash << endl;
-                cout << "should be empty vector and found  ";
-                for (auto a:res)
-                    cout << a << " ";
-                cout << endl << endl;
+                cout << "should be empty vector and found  " << endl;
             }
 
-            output->setKmerDefaultColumnValue<vector<uint32_t> &, insertColorColumn>(currHash, colorVec);
+            output->setKmerColumnValue<vector<uint32_t> &, insertColorColumn>("i",currHash, colorVec);
 
             // auto res=output->getKmerDefaultColumnValue<vector<uint32_t >, insertColorColumn>(currHash);
             // //	cout<<res.size()<<endl;
@@ -928,7 +927,7 @@ namespace kProcessor {
         {
             colorColumn->index[k.getOrder()]=k.getCount();
         }
-        output->changeDefaultColumnType(nullptr);
+        
         delete colors;
 
     }
@@ -946,7 +945,7 @@ namespace kProcessor {
         noSamples+=((colorColumnType *) input[input.size() - 1]->columns["color"])->values->noSamples;
 
         auto *colors = new insertColorColumn(noSamples,tmpFolder);
-        output->changeDefaultColumnType(colors);
+        output->addColumn("i",colors);
 
 
         auto compare = [](tuple<uint64_t, uint64_t, kDataFrameIterator *, kDataFrameIterator *> lhs,
@@ -990,7 +989,7 @@ namespace kProcessor {
                     delete get<3>(colorTuple);
                 }
             }
-            output->setKmerDefaultColumnValue<vector<uint32_t>, insertColorColumn>(currHash, colorVec);
+            output->setKmerColumnValue<vector<uint32_t>, insertColorColumn>("i",currHash, colorVec);
 
         }
         colors->populateColors();
@@ -1007,7 +1006,7 @@ namespace kProcessor {
         {
             colorColumn->index[k.getOrder()]=k.getCount();
         }
-        output->changeDefaultColumnType(nullptr);
+        
         delete colors;
 
     }
@@ -1052,32 +1051,15 @@ namespace kProcessor {
 
         kframe->setkSize(_kmer_length);
         kframe->reserve(_total_kmers);
+        kframe->addCountColumn();
         while (kmer_data_base.ReadNextKmer(kmer_object, counter)) {
             kmer_object.to_string(str);
-            kframe->insert(str, counter);
+            kframe->insert(str);
+            kframe->setCount(counter);
         }
 
     }
 
-    void createCountColumn(kDataFrame* frame){
-        const string columnName="count";
-        frame->addColumn(columnName,new vectorColumn<uint32_t>(frame->size()));
-        kDataFrameIterator it = frame->begin();
-        while (it != frame->end()) {
-            frame->setKmerColumnValueByOrder<uint32_t,vectorColumn<uint32_t> >(columnName,it.getOrder(),it.getCount());
-            it++;
-        }
-    }
-    void createColorColumn(kDataFrame* frame){
-        auto* newColumn=new deduplicatedColumn<vector<uint32_t>,StringColorColumn>(frame->size());
-        newColumn->values=(StringColorColumn*)frame->getDefaultColumn();
-        uint32_t i=0;
-        for(auto k:*frame)
-        {
-            newColumn->index[i++]=k.getCount();
-        }
-        frame->addColumn("color",newColumn);
-
-    }
+    
 
 } // End of namespace kProcessor
