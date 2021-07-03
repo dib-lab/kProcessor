@@ -54,6 +54,7 @@ public:
     virtual void SetUp()
     {
         kframe=getFrame(GetParam());
+	kframe->addCountColumn();
         kframeLoaded=nullptr;
         kframe2=nullptr;
         kmers=kmersGen->getKmers((int)kframe->getkSize());
@@ -88,7 +89,8 @@ public:
     virtual void SetUp()
     {
         kframe=(kDataFrameBMQF*)getFrame(make_tuple("BMQF",GetParam()));
-        kframeLoaded=nullptr;
+	kframe->addCountColumn();
+	kframeLoaded=nullptr;
     }
     static void SetUpTestSuite()
     {

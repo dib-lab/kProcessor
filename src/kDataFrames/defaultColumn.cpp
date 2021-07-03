@@ -27,7 +27,7 @@ template
 class vectorColumn<uint32_t>;
 
 template
-class deduplicatedColumn<vector<uint32_t>, StringColorColumn>;
+class deduplicatedColumn<vector<string>, StringColorColumn>;
 
 
 template

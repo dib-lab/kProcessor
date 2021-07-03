@@ -257,7 +257,6 @@ void setFunctionsTest::SetUp()
             frames[i]=(getFrame(specification));
             // Mode 1 : kmers, KmerSize will be cloned from the kFrame
             kProcessor::countKmersFromFile(frames[i], {{"mode", 1}}, setFunctionsTestInput[0][i], 1000);
-            kProcessor::createCountColumn(frames[i]);
         }
         input_SET[specification]=frames;
         it=input_SET.find(specification);
