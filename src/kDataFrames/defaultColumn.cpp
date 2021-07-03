@@ -234,8 +234,11 @@ vector<string> StringColorColumn::getWithIndex(uint32_t index) {
 
 }
 
-vector<uint32_t> StringColorColumn::get(uint32_t index) {
-    return colors[index];
+vector<string> StringColorColumn::get(uint32_t index) {
+    vector<string> res(colors[index].size());
+    for (unsigned int i = 0; i < colors[index].size(); i++)
+        res[i] = namesMap[colors[index][i]];
+    return res;
 }
 
 void StringColorColumn::serialize(string filename) {
