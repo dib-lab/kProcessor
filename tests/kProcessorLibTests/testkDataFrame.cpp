@@ -350,7 +350,7 @@ TEST_P(kDataFrameTest,eraseKmers)
     int insertedKmers=0;
     for(auto k:*kmers)
     {
-        kframe->insert(k.first);
+        kframe->incrementCount(k.first);
         if(kframe->load_factor()>=kframe->max_load_factor()*0.8)
         {
           break;

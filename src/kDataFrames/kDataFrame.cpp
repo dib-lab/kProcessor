@@ -18,6 +18,7 @@ kDataFrame::kDataFrame() {
     kSize = 31;
     isStatic=false;
     isKmersOrderComputed=false;
+    lastKmerOrder=1;
 }
 
 kDataFrame::kDataFrame(uint8_t k_size) {
@@ -153,7 +154,7 @@ void kDataFrame::removeColumn(string columnName)
 
 void kDataFrame::addCountColumn()
 {
-  if(columns.find("count")!=columns.end())  
+  if(columns.find("count")==columns.end())  
     addColumn("count",new vectorColumn<uint32_t>(size()+1));
   countColumn=(vectorColumn<uint32_t>*)columns["count"];    
 }
@@ -295,3 +296,8 @@ dbgIterator kDataFrame::getDBGIterator(const string &kmer)
 bool kDataFrameIterator::setCount(std::uint64_t count){
     return origin->setCount(iterator->getHashedKmer(),count);
   }
+std::uint64_t kDataFrameIterator::getCount(){
+    
+    uint32_t o = iterator->getOrder();
+    return origin->countColumn->get(o);
+}

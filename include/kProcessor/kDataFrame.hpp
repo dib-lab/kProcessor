@@ -213,9 +213,7 @@ public:
     return iterator->getKmer();
   }
   /// Returns the count of the current kmer
-  std::uint64_t getCount(){
-    return iterator->getCount();
-  }
+  std::uint64_t getCount();
   /// sets the count of the current kmer
   bool setCount(std::uint64_t count);
   
@@ -297,6 +295,7 @@ protected:
   uint32_t lastCheckpoint;
   vectorColumn<uint32_t>* countColumn;
   kDataFrameIterator* endIterator;
+  friend class kDataFrameIterator;
 public:
     bool isKmersOrderComputed;
     unordered_map<string, Column*> columns;
