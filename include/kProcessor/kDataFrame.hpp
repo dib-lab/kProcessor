@@ -287,7 +287,6 @@ class kDataFrame{
 protected:
   std::uint64_t kSize;
   string class_name; // Default = MQF, change if MAP. Temporary until resolving #17
-  bool isStatic;
 
   uint64_t lastKmerOrder;
 

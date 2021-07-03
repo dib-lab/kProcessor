@@ -16,14 +16,12 @@ inline bool fileExists(const std::string &name) {
 
 kDataFrame::kDataFrame() {
     kSize = 31;
-    isStatic=false;
     isKmersOrderComputed=false;
     lastKmerOrder=1;
 }
 
 kDataFrame::kDataFrame(uint8_t k_size) {
     kSize = k_size;
-    isStatic=false;
     isKmersOrderComputed=false;
     lastKmerOrder=1;
 }
@@ -49,20 +47,18 @@ kDataFrame::iterator kDataFrame::insert(kDataFrame::iterator& it,kmerRow k){
 void kDataFrame::save(string filePath)
 {
     ofstream out(filePath+".multiColumn");
-    out<<"isStatic=\t"<<isStatic<<endl;
-    if(isStatic)
+    out<<"isStatic=\t"<<true<<endl;
+    out<<"numColumns=\t"<<columns.size()<<endl;
+    for(auto c:columns)
     {
-        out<<"numColumns=\t"<<columns.size()<<endl;
-        for(auto c:columns)
-        {
 	    string suffix=".multiColumn."+c.first;
-            string filename=filePath+ suffix;
-            size_t columnType=typeid(*(c.second)).hash_code();
-            out<<c.first<<"\t"<<columnType<<"\t"<<suffix<<endl;
-            c.second->serialize(filename);
-        }
-
+        string filename=filePath+ suffix;
+        size_t columnType=typeid(*(c.second)).hash_code();
+        out<<c.first<<"\t"<<columnType<<"\t"<<suffix<<endl;
+        c.second->serialize(filename);
     }
+
+    
     out<<"default\t"<<0<<"\tNULL"<<endl;
     
     out.close();
@@ -89,16 +85,15 @@ kDataFrame * kDataFrame::load(string filePath) {
         string tmp;
         string name, path;
         uint64_t type;
-        inp >> tmp >> res->isStatic;
-        if (res->isStatic) {
-            uint32_t numColumns;
-            inp >> tmp >> numColumns;
-            for (uint32_t i = 0; i < numColumns; i++) {
-                inp >> name >> type >> path;
-                Column *c = Column::getContainerByName(type);
-                c->deserialize(filePath+path);
-                res->columns[name] = c;
-            }
+        bool tmpB;
+        inp >> tmp >> tmpB;
+        uint32_t numColumns;
+        inp >> tmp >> numColumns;
+        for (uint32_t i = 0; i < numColumns; i++) {
+            inp >> name >> type >> path;
+            Column *c = Column::getContainerByName(type);
+            c->deserialize(filePath+path);
+            res->columns[name] = c;
         }
         inp >> name >> type >> path;
        
