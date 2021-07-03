@@ -1017,7 +1017,7 @@ TEST_P(indexingTest,index)
                 string readName = seq.first;
                 string groupName=namesMap[readName];
                 for (const auto &kmer : seq.second) {
-                    vector<string> colors=KF->getKmerColumnValue<vector<string> ,StringColorColumn>("color",kmer.hash);
+                    vector<uint32_t> colors=KF->getKmerColumnValue<vector<uint32_t> ,StringColorColumn>("color",kmer.hash);
                     ASSERT_NE(colors.size(),0);
                     auto colorIt=colors.end();
                     colorIt=find(colors.begin(),colors.end(),groupName);
