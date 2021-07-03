@@ -94,6 +94,8 @@ kDataFrame * kDataFrame::load(string filePath) {
             Column *c = Column::getContainerByName(type);
             c->deserialize(filePath+path);
             res->columns[name] = c;
+	    if(name== "count")
+	      res->countColumn=(vectorColumn<unsigned int>*)c;
         }
         inp >> name >> type >> path;
        
@@ -139,6 +141,8 @@ void kDataFrame::setKmerColumnValueFromOtherColumn(kDataFrame* input, string inp
 void kDataFrame::addColumn(string columnName,Column* ptr)
 {
   columns[columnName]=ptr;
+  if(columnName== "count")
+    this->countColumn=(vectorColumn<unsigned int>*)ptr;
 }
 void kDataFrame::removeColumn(string columnName)
 {

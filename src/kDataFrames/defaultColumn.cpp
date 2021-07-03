@@ -48,6 +48,8 @@ Column *Column::getContainerByName(std::size_t hash) {
         return new vectorColumn<double>();
     } else if (hash == typeid(vectorColumn<bool>).hash_code()) {
         return new vectorColumn<bool>();
+    } else if (hash == typeid(vectorColumn<uint32_t>).hash_code()) {
+        return new vectorColumn<uint32_t>();
     } else if (hash == typeid(insertColorColumn).hash_code()) {
         return new insertColorColumn();
     } else if (hash == typeid(StringColorColumn).hash_code()) {
