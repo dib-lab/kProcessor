@@ -772,8 +772,8 @@ public:
     }
 
     vector<string > getWithIndex(uint32_t index);
-    //uint32_t  insertAndGetIndex(vector<uint32_t > item);
-//    void insert(vector<uint32_t > item,uint32_t index);
+    uint32_t  insertAndGetIndex(vector<string > item);
+    void insert(vector<string > item,uint32_t index);
     vector<string > get(uint32_t index);
 
     void serialize(string filename);

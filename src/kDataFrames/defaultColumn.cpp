@@ -178,7 +178,7 @@ uint32_t insertColorColumn::insertAndGetIndex(vector<uint32_t> &item) {
 
 /*
  * * */
-vector<uint32_t> insertColorColumn::getWithIndex(uint32_t index) {
+vector<uint32_t>& insertColorColumn::get(uint32_t index) {
     throw logic_error("it is insert only color column");
 //    return colors[index];
 }
@@ -228,6 +228,15 @@ void insertColorColumn::resize(uint32_t size) {
 
 }
 
+
+void StringColorColumn::insert(vector<string> item, uint32_t index) {
+    throw std::logic_error("insertAndGetIndex is not supported in mixVectors");
+
+}
+uint32_t StringColorColumn::insertAndGetIndex(vector<string> item) {
+    throw std::logic_error("insertAndGetIndex is not supported in mixVectors");
+
+}
 vector<string> StringColorColumn::getWithIndex(uint32_t index) {
     vector<string> res(colors[index].size());
     for (unsigned int i = 0; i < colors[index].size(); i++)
@@ -317,6 +326,11 @@ void mixVectors::insert(vector<uint32_t> &item, uint32_t index) {
 
 }
 
+uint32_t mixVectors::insertAndGetIndex(vector<uint32_t> &item) {
+    throw std::logic_error("insertAndGetIndex is not supported in mixVectors");
+    return 0;
+
+}
 uint32_t queryColorColumn::insertAndGetIndex(vector<uint32_t> &item) {
     throw std::logic_error("insertAndGetIndex is not supported in mixVectors");
     return 0;
@@ -1526,5 +1540,5 @@ template<typename T, typename ColumnType>
 void deduplicatedColumn<T, ColumnType>::insert(T item, uint32_t i) {
     while(i>=index.size())
         index.resize(index.size()*2);
-    index[i] = values->insertAndGetIndex();
+    index[i] = values->insertAndGetIndex(item);
 }

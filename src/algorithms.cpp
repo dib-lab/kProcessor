@@ -897,7 +897,7 @@ namespace kProcessor {
             }
             
             output->insert(currHash);
-            output->setKmerColumnValue<vector<uint32_t> &, deduplicatedColumn<vector<uint32_t>, insertColorColumn>("i",currHash, colorVec);
+            output->setKmerColumnValue<vector<uint32_t> , deduplicatedColumn<vector<uint32_t>, insertColorColumn>>("i",currHash, colorVec);
 
             // auto res=output->getKmerDefaultColumnValue<vector<uint32_t >, insertColorColumn>(currHash);
             // //	cout<<res.size()<<endl;
@@ -914,15 +914,15 @@ namespace kProcessor {
             //   }
 
         }
-        colors->populateColors();
-        uint64_t noColors = colors->noColors;
+        colors->values->populateColors();
+        uint64_t noColors = colors->values->noColors;
         cout << noColors << " colors created" << endl;
 
 
 
 
         auto colorColumn= new deduplicatedColumn<vector<uint32_t>, mixVectors>();
-        colorColumn->values=new mixVectors(colors);
+        colorColumn->values=new mixVectors(colors->values);
         colorColumn->values->explainSize();
         colorColumn->index=colors->index;
         output->removeColumn("color");

@@ -147,7 +147,7 @@ void kDataFrame::addColumn(string columnName,Column* ptr)
 void kDataFrame::removeColumn(string columnName)
 {
   auto it=columns.find(columnName);
-  delete it.second;
+  delete it->second;
   columns.erase(it);
 }
 
