@@ -395,7 +395,7 @@ The difference between setCount and insert is that setCount set the count to N n
 
 
   void addColumn(string columnName, Column*);
-
+  void removeColumn(string columnName);
   template<typename T,typename Container>
   T getKmerColumnValue(const string& columnName,string kmer);
 

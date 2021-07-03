@@ -842,11 +842,13 @@ namespace kProcessor {
     }
 
     void indexPriorityQueue(vector<kDataFrame *> &input, string tmpFolder, kDataFrame *output,uint32_t num_vectors,uint32_t vector_size) {
-        auto *colors = new insertColorColumn(input.size(), tmpFolder,num_vectors,vector_size);
+        auto *colors =new deduplicatedColumn<vector<uint32_t>, insertColorColumn>(); 
+        colors->values= new insertColorColumn(input.size(), tmpFolder,num_vectors,vector_size);
+        
         output->addColumn("i",colors);
         for (unsigned int i = 0; i < input.size(); i++) {
             vector<uint32_t> tmp = {i};
-            colors->insertAndGetIndex(tmp);
+            colors->values->insertAndGetIndex(tmp);
         }
 
 
@@ -893,8 +895,9 @@ namespace kProcessor {
                 cout << "Error in Indexing detected at kmer " << currHash << endl;
                 cout << "should be empty vector and found  " << endl;
             }
-
-            output->setKmerColumnValue<vector<uint32_t> &, insertColorColumn>("i",currHash, colorVec);
+            
+            output->insert(currHash);
+            output->setKmerColumnValue<vector<uint32_t> &, deduplicatedColumn<vector<uint32_t>, insertColorColumn>("i",currHash, colorVec);
 
             // auto res=output->getKmerDefaultColumnValue<vector<uint32_t >, insertColorColumn>(currHash);
             // //	cout<<res.size()<<endl;
@@ -920,94 +923,88 @@ namespace kProcessor {
 
         auto colorColumn= new deduplicatedColumn<vector<uint32_t>, mixVectors>();
         colorColumn->values=new mixVectors(colors);
-        output->addColumn("color",colorColumn);
         colorColumn->values->explainSize();
-        colorColumn->index=vector<uint32_t>(output->size());
-        for(auto k:(*output))
-        {
-            colorColumn->index[k.getOrder()]=k.getCount();
-        }
-        
-        delete colors;
-
+        colorColumn->index=colors->index;
+        output->removeColumn("color");
+        output->addColumn("color",colorColumn);
     }
 
     void mergeIndexes(vector<kDataFrame *> &input, string tmpFolder, kDataFrame *output) {
 
-        typedef deduplicatedColumn<vector<uint32_t>, mixVectors> colorColumnType;
-        vector<uint32_t> idsOffset(input.size());
-        idsOffset[0] = 0;
-        uint32_t noSamples=0;
-        for (unsigned int i = 1; i < input.size(); i++) {
-            idsOffset[i] = idsOffset[i - 1];
-            idsOffset[i] += ((colorColumnType *) input[i - 1]->columns["color"])->values->noSamples;
-        }
-        noSamples+=((colorColumnType *) input[input.size() - 1]->columns["color"])->values->noSamples;
+        // typedef deduplicatedColumn<vector<uint32_t>, mixVectors> colorColumnType;
+        // vector<uint32_t> idsOffset(input.size());
+        // idsOffset[0] = 0;
+        // uint32_t noSamples=0;
+        // for (unsigned int i = 1; i < input.size(); i++) {
+        //     idsOffset[i] = idsOffset[i - 1];
+        //     idsOffset[i] += ((colorColumnType *) input[i - 1]->columns["color"])->values->noSamples;
+        // }
+        // noSamples+=((colorColumnType *) input[input.size() - 1]->columns["color"])->values->noSamples;
 
-        auto *colors = new insertColorColumn(noSamples,tmpFolder);
-        output->addColumn("i",colors);
-
-
-        auto compare = [](tuple<uint64_t, uint64_t, kDataFrameIterator *, kDataFrameIterator *> lhs,
-                          tuple<uint64_t, uint64_t, kDataFrameIterator *, kDataFrameIterator *> rhs) {
-            if (get<0>(lhs) == get<0>(rhs))
-                return get<1>(lhs) > get<1>(rhs);
-            return get<0>(lhs) > get<0>(rhs);
-        };
-
-        priority_queue<tuple<uint64_t, uint64_t, kDataFrameIterator *, kDataFrameIterator *>, vector<tuple<uint64_t, uint64_t, kDataFrameIterator *, kDataFrameIterator *> >, decltype(compare)> nextKmer(
-                compare);
-
-        for (unsigned int i = 0; i < input.size(); i++) {
-            auto *it = new kDataFrameIterator(input[i]->begin());
-            auto *itend = new kDataFrameIterator(input[i]->end());
-            nextKmer.push(make_tuple(it->getHashedKmer(), i, it, itend));
-        }
-
-        uint64_t processedKmers = 0;
-        while (!nextKmer.empty()) {
-            vector<uint32_t> colorVec;
-            colorVec.clear();
-            uint64_t currHash = get<0>(nextKmer.top());
-            processedKmers++;
-            while (!nextKmer.empty() && get<0>(nextKmer.top()) == currHash) {
-                auto colorTuple = nextKmer.top();
-                nextKmer.pop();
-
-                uint32_t i = get<1>(colorTuple);
-                auto tmp = input[i]->getKmerColumnValue<vector<uint32_t >, deduplicatedColumn<vector<uint32_t>, mixVectors> >("color",get<0>(colorTuple));
-                for (auto c:tmp)
-                    colorVec.push_back(c + idsOffset[i]);
-
-                sort(colorVec.begin(), colorVec.end());
-                get<2>(colorTuple)->next();
-                if (*get<2>(colorTuple) != *get<3>(colorTuple)) {
-                    get<0>(colorTuple) = get<2>(colorTuple)->getHashedKmer();
-                    nextKmer.push(colorTuple);
-                } else {
-                    delete get<2>(colorTuple);
-                    delete get<3>(colorTuple);
-                }
-            }
-            output->setKmerColumnValue<vector<uint32_t>, insertColorColumn>("i",currHash, colorVec);
-
-        }
-        colors->populateColors();
-        uint64_t noColors = colors->noColors;
-        cout << noColors << " colors created!" << endl;
+        // auto *colors = new insertColorColumn(noSamples,tmpFolder);
+        // output->addColumn("i",colors);
 
 
-        auto colorColumn= new deduplicatedColumn<vector<uint32_t>, mixVectors>();
-        colorColumn->values=new mixVectors(colors);
-        output->addColumn("color",colorColumn);
-        colorColumn->values->explainSize();
-        colorColumn->index=vector<uint32_t>(output->size());
-        for(auto k:(*output))
-        {
-            colorColumn->index[k.getOrder()]=k.getCount();
-        }
+        // auto compare = [](tuple<uint64_t, uint64_t, kDataFrameIterator *, kDataFrameIterator *> lhs,
+        //                   tuple<uint64_t, uint64_t, kDataFrameIterator *, kDataFrameIterator *> rhs) {
+        //     if (get<0>(lhs) == get<0>(rhs))
+        //         return get<1>(lhs) > get<1>(rhs);
+        //     return get<0>(lhs) > get<0>(rhs);
+        // };
+
+        // priority_queue<tuple<uint64_t, uint64_t, kDataFrameIterator *, kDataFrameIterator *>, vector<tuple<uint64_t, uint64_t, kDataFrameIterator *, kDataFrameIterator *> >, decltype(compare)> nextKmer(
+        //         compare);
+
+        // for (unsigned int i = 0; i < input.size(); i++) {
+        //     auto *it = new kDataFrameIterator(input[i]->begin());
+        //     auto *itend = new kDataFrameIterator(input[i]->end());
+        //     nextKmer.push(make_tuple(it->getHashedKmer(), i, it, itend));
+        // }
+
+        // uint64_t processedKmers = 0;
+        // while (!nextKmer.empty()) {
+        //     vector<uint32_t> colorVec;
+        //     colorVec.clear();
+        //     uint64_t currHash = get<0>(nextKmer.top());
+        //     processedKmers++;
+        //     while (!nextKmer.empty() && get<0>(nextKmer.top()) == currHash) {
+        //         auto colorTuple = nextKmer.top();
+        //         nextKmer.pop();
+
+        //         uint32_t i = get<1>(colorTuple);
+        //         auto tmp = input[i]->getKmerColumnValue<vector<uint32_t >, deduplicatedColumn<vector<uint32_t>, mixVectors> >("color",get<0>(colorTuple));
+        //         for (auto c:tmp)
+        //             colorVec.push_back(c + idsOffset[i]);
+
+        //         sort(colorVec.begin(), colorVec.end());
+        //         get<2>(colorTuple)->next();
+        //         if (*get<2>(colorTuple) != *get<3>(colorTuple)) {
+        //             get<0>(colorTuple) = get<2>(colorTuple)->getHashedKmer();
+        //             nextKmer.push(colorTuple);
+        //         } else {
+        //             delete get<2>(colorTuple);
+        //             delete get<3>(colorTuple);
+        //         }
+        //     }
+        //     output->setKmerColumnValue<vector<uint32_t>, insertColorColumn>("i",currHash, colorVec);
+
+        // }
+        // colors->populateColors();
+        // uint64_t noColors = colors->noColors;
+        // cout << noColors << " colors created!" << endl;
+
+
+        // auto colorColumn= new deduplicatedColumn<vector<uint32_t>, mixVectors>();
+        // colorColumn->values=new mixVectors(colors);
+        // output->addColumn("color",colorColumn);
+        // colorColumn->values->explainSize();
+        // colorColumn->index=vector<uint32_t>(output->size());
+        // for(auto k:(*output))
+        // {
+        //     colorColumn->index[k.getOrder()]=k.getCount();
+        // }
         
-        delete colors;
+        // delete colors;
 
     }
 

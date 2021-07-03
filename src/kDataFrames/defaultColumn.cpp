@@ -33,6 +33,8 @@ class deduplicatedColumn<vector<string>, StringColorColumn>;
 template
 class deduplicatedColumn<vector<uint32_t>, mixVectors>;
 
+template
+class deduplicatedColumn<vector<uint32_t>, insertColorColumn>;
 
 bool is_file_exist(const char *fileName) {
     std::ifstream infile(fileName);
@@ -1518,4 +1520,11 @@ deduplicatedColumn<T, ColumnType>::setValueFromColumn(Column *Container, uint32_
     values = other->values;
     index[outputOrder] = other->index[inputOrder];
 
+}
+
+template<typename T, typename ColumnType>
+void deduplicatedColumn<T, ColumnType>::insert(T item, uint32_t i) {
+    while(i>=index.size())
+        index.resize(index.size()*2);
+    index[i] = values->insertAndGetIndex();
 }

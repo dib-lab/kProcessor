@@ -918,6 +918,7 @@ public:
     {
         return index.size();
     }
+    void insert(T item,uint32_t index);
     T get(uint32_t index);
 
     void serialize(string filename);
