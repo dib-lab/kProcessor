@@ -16,13 +16,11 @@ inline bool fileExists(const std::string &name) {
 
 kDataFrame::kDataFrame() {
     kSize = 31;
-    isKmersOrderComputed=false;
     lastKmerOrder=1;
 }
 
 kDataFrame::kDataFrame(uint8_t k_size) {
     kSize = k_size;
-    isKmersOrderComputed=false;
     lastKmerOrder=1;
 }
 

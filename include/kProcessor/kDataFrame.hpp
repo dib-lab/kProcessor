@@ -296,7 +296,6 @@ protected:
   kDataFrameIterator* endIterator;
   friend class kDataFrameIterator;
 public:
-    bool isKmersOrderComputed;
     unordered_map<string, Column*> columns;
     typedef kDataFrameIterator iterator;
     typedef kmerRow value_type;

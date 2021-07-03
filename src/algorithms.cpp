@@ -207,42 +207,33 @@ namespace kProcessor {
     }
     kDataFrame *filter(kDataFrame *input, function<bool (kDataFrameIterator& i)> fn) {
         kDataFrame *res = input->getTwin();
-        if(!input->isKmersOrderComputed) {
-            kDataFrameIterator it = input->begin();
-            while (it != input->end()) {
-                if (fn(it))
-                    res->insert(it.getHashedKmer());
-                it++;
-            }
-            return res;
+        unordered_map<string,Column*> columns;
+        for(auto col: input->columns)
+        {
+            columns[col.first]=col.second->getTwin();
+            columns[col.first]->resize(input->size());
         }
-        else{
-            unordered_map<string,Column*> columns;
-            for(auto col: input->columns)
-            {
-                columns[col.first]=col.second->getTwin();
-                columns[col.first]->resize(input->size());
-            }
-            kDataFrameIterator it = input->begin();
-            int index=0;
-            while (it != input->end()) {
-                if (fn(it)) {
-                    res->insert(it.getHashedKmer());
-                    for(auto col: input->columns)
-                    {
-                        columns[col.first]->setValueFromColumn(col.second,it.getOrder(),index);
-                    }
-                    index++;
+        kDataFrameIterator it = input->begin();
+        int index=0;
+        while (it != input->end()) {
+            if (fn(it)) {
+                uint64_t hash=it.getHashedKmer();
+                res->insert(it.getHashedKmer());
+                for(auto col: input->columns)
+                {
+                    columns[col.first]->setValueFromColumn(col.second,it.getOrder(),res->getkmerOrder(hash));
                 }
-                it++;
+                index++;
             }
-            for(auto col: columns)
-            {
-                col.second->resize(res->size());
-                res->addColumn(col.first,col.second);
-            }
-            return res;
+            it++;
         }
+        for(auto col: columns)
+        {
+            col.second->resize(res->size());
+            res->addColumn(col.first,col.second);
+        }
+        return res;
+        
 
 
     }
