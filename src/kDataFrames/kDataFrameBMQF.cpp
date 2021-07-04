@@ -252,24 +252,18 @@ bool kDataFrameBMQF::isEnough(vector<uint64_t> histogram,uint64_t noSlots,uint64
 }
 
 bool kDataFrameBMQF::setOrder(const string &kmer, uint64_t count){
-    uint64_t hash=KD->hash_kmer(kmer)% bufferedmqf->memoryBuffer->metadata->range;
-    uint64_t currentCount=bufferedMQF_count_key(bufferedmqf,hash);
-    if(currentCount>count){
-        bufferedMQF_remove(bufferedmqf,hash,currentCount-count,false,false);
-    }
-    else{
-        try{
-            bufferedMQF_insert(bufferedmqf,hash,count-currentCount,false,false);
-        }
-        catch(overflow_error & e)
-        {
-            reserve(bufferedmqf->disk->metadata->nslots);
-            return setOrder(kmer,count);
-        }
-    }
     if(load_factor()>0.85){
         // ERROR FLAG: reserve(bufferedmqf->memoryBuffer->metadata->nslots)
         reserve(bufferedmqf->disk->metadata->nslots);
+    }
+    uint64_t hash= KD->hash_kmer(kmer) % bufferedmqf->disk->metadata->range;
+    try{
+        bufferedMQF_insert(bufferedmqf,hash,count,false,false);
+    }
+    catch(overflow_error & e)
+    {
+        reserve(bufferedmqf->disk->metadata->nslots);
+        return insert(kmer);
     }
     return true;
 }
@@ -308,19 +302,17 @@ bool kDataFrameBMQF::erase(const string &kmer){
 }
 
 bool kDataFrameBMQF::setOrder(uint64_t  hash,uint64_t count){
-    uint64_t currentCount=bufferedMQF_count_key(bufferedmqf,hash);
-    if(currentCount>count){
-        bufferedMQF_remove(bufferedmqf,hash,currentCount-count,false,false);
+    if(load_factor()>0.9){
+        // ERROR FLAG: reserve(bufferedmqf->memoryBuffer->metadata->nslots)
+        reserve(bufferedmqf->disk->metadata->nslots);
     }
-    else{
-        try{
-            bufferedMQF_insert(bufferedmqf,hash,count-currentCount,false,false);
-        }
-        catch(overflow_error & e)
-        {
-            reserve(bufferedmqf->disk->metadata->nslots);
-            return setOrder(hash,count);
-        }
+    try{
+        bufferedMQF_insert(bufferedmqf,hash,count,false,false);
+    }
+    catch(overflow_error & e)
+    {
+        reserve(bufferedmqf->disk->metadata->nslots);
+        return insert(hash);
     }
     if(load_factor()>0.85){
         // ERROR FLAG: reserve(bufferedmqf->memoryBuffer->metadata->nslots)
@@ -354,6 +346,17 @@ uint64_t kDataFrameBMQF::getkmerOrder(uint64_t hash){
     return bufferedMQF_count_key(bufferedmqf,hash);
 }
 
+
+bool kDataFrameBMQF::setCount(const string &kmer, std::uint64_t N){
+    uint32_t order=lastKmerOrder;
+    insert(kmer);
+    countColumn->insert(N,order);
+}
+bool kDataFrameBMQF::setCount(std::uint64_t kmer,std::uint64_t N){
+    uint32_t order=lastKmerOrder;
+    insert(kmer);
+    countColumn->insert(N,order);
+}
 
 
 bool kDataFrameBMQF::erase(uint64_t hash){
@@ -522,6 +525,8 @@ bool kDataFrameBMQFIterator::setOrder(uint64_t count) {
     }
     return true;
 }
+
+  
 
 void kDataFrameBMQFIterator::endIterator() {
     qfi->bufferIt->current = qfi->bufferIt->qf->metadata->xnslots;

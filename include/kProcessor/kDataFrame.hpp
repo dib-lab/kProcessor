@@ -327,8 +327,8 @@ public:
 /*! Returns bool value indicating whether the kmer is inserted or not.
 The difference between setCount and insert is that setCount set the count to N no matter the previous kmer count was*/
   void addCountColumn();
-  bool setCount(const string &kmer, std::uint64_t N);
-  bool setCount(std::uint64_t kmer,std::uint64_t N);
+  virtual bool setCount(const string &kmer, std::uint64_t N);
+  virtual bool setCount(std::uint64_t kmer,std::uint64_t N);
   std::uint64_t getCount(const string &kmer);
   std::uint64_t getCount(std::uint64_t kmer);
   void incrementCount(std::uint64_t kmer);
@@ -639,6 +639,9 @@ public:
   bool setOrder(std::uint64_t kmer, std::uint64_t count);
 
 
+  bool setCount(const string &kmer, std::uint64_t N) override;
+  bool setCount(std::uint64_t kmer,std::uint64_t N) override;
+  
 
 
 
