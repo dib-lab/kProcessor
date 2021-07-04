@@ -223,7 +223,7 @@ public:
   kmerRow getKmerRow(){
     return kmerRow(iterator->getKmer(),
                    iterator->getHashedKmer(),
-                   iterator->getCount(),
+                   getCount(),
                    iterator->getOrder(),
                    origin
                   );
