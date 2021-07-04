@@ -125,6 +125,7 @@ namespace kProcessor {
 
     kDataFrame *transform(kDataFrame *input, function<kmerRow (kmerRow i)> fn) {
         kDataFrame *res = input->getTwin();
+        res->addCountColumn();
         kDataFrameIterator it = input->begin();
         while (it != input->end()) {
             kmerRow newkmer = fn(it.getKmerRow());
