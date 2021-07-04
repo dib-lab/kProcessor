@@ -1397,7 +1397,7 @@ TEST_P(kDataFrameBufferedTest,saveAndIterateOverAllKmersNoMemory)
 TEST_P(kDataFrameBufferedTest,transformPlus10)
 {
 
-    kDataFrame* kframe=(kDataFrameBMQF*)getFrame(make_tuple("BMQF",GetParam()));
+    kframe=(kDataFrameBMQF*)getFrame(make_tuple("BMQF",GetParam()));
     EXPECT_EQ(kframe->empty(), true);
     unordered_map<string,int>* kmers=kmersGen->getKmers((int)kframe->getkSize());
     unordered_map<string,int> insertedKmers;
@@ -1410,13 +1410,13 @@ TEST_P(kDataFrameBufferedTest,transformPlus10)
         }
     }
     int checkedKmers=0;
-    kDataFrame* kframe2=kProcessor::transform(kframe,[](kmerRow k)
+    kframeLoaded=kProcessor::transform(kframe,[](kmerRow k)
     {
         k.count+=10;
         return k;
     });
-    kDataFrameIterator it=kframe2->begin();
-    while(it!=kframe2->end())
+    kDataFrameIterator it=kframeLoaded->begin();
+    while(it!=kframeLoaded->end())
     {
         string kmer=it.getKmer();
         uint64_t count=it.getCount();
