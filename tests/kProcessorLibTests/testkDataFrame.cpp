@@ -737,10 +737,10 @@ TEST_P(kDataFrameTest,aggregateSum)
     }
     int checkedKmers=0;
     any initial=(uint64_t)0;
-    any sum=kProcessor::aggregate(kframe,initial,[](kmerRow k,any v)
+    any sum=kProcessor::aggregate(kframe,initial,[](kDataFrameIterator& k,any v)
     {
       uint64_t tmp=any_cast<uint64_t>(v);
-      any result=tmp+k.count;
+      any result=tmp+k.getCount();
       return result;
     });
     ASSERT_EQ(any_cast<uint64_t>(sum),goldSum);
