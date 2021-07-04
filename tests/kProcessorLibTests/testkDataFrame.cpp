@@ -667,9 +667,9 @@ TEST_P(kDataFrameTest,transformFilterLessThan5)
       }
     }
     int checkedKmers=0;
-    kframe2=kProcessor::filter(kframe,[](kmerRow k)
+    kframe2=kProcessor::filter(kframe,[](kDataFrameIterator& k)
     {
-      return k.count>=5;
+      return k.getCount()>=5;
     });
     kDataFrameIterator it=kframe2->begin();
     while(it!=kframe2->end())

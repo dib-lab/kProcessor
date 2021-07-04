@@ -128,7 +128,6 @@ namespace kProcessor {
         kDataFrameIterator it = input->begin();
         while (it != input->end()) {
             kmerRow newkmer = fn(it.getKmerRow());
-            res->insert(newkmer.hashedKmer);
             it++;
         }
         for(auto col: input->columns)
