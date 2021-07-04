@@ -132,20 +132,20 @@ namespace kProcessor {
             res->insert(newkmer);
             it++;
         }
-        for(auto col: input->columns)
-        {
-            string newColName= col.first;
-            Column* column=col.second->getTwin();
-            column->resize(res->size());
-            res->addColumn(newColName, column);
-        }
-        for(auto kmer:(*res))
-        {
-            for (auto col: input->columns) {
-                string newColName = col.first;
-                res->setKmerColumnValueFromOtherColumn(input,col.first, newColName,kmer.getKmer());
-            }
-        }
+        // for(auto col: input->columns)
+        // {
+        //     string newColName= col.first;
+        //     Column* column=col.second->getTwin();
+        //     column->resize(res->size());
+        //     res->addColumn(newColName, column);
+        // }
+        // for(auto kmer:(*res))
+        // {
+        //     for (auto col: input->columns) {
+        //         string newColName = col.first;
+        //         res->setKmerColumnValueFromOtherColumn(input,col.first, newColName,kmer.getKmer());
+        //     }
+        // }
         return res;
 
     }
