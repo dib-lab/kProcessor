@@ -1397,7 +1397,6 @@ TEST_P(kDataFrameBufferedTest,saveAndIterateOverAllKmersNoMemory)
 TEST_P(kDataFrameBufferedTest,transformPlus10)
 {
 
-    kframe=(kDataFrameBMQF*)getFrame(make_tuple("BMQF",GetParam()));
     EXPECT_EQ(kframe->empty(), true);
     unordered_map<string,int>* kmers=kmersGen->getKmers((int)kframe->getkSize());
     unordered_map<string,int> insertedKmers;
@@ -1410,7 +1409,7 @@ TEST_P(kDataFrameBufferedTest,transformPlus10)
         }
     }
     int checkedKmers=0;
-    kframeLoaded=kProcessor::transform(kframe,[](kmerRow k)
+    kframeLoaded=(kDataFrameBMQF*)kProcessor::transform(kframe,[](kmerRow k)
     {
         k.count+=10;
         return k;
