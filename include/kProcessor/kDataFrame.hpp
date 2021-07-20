@@ -14,6 +14,8 @@
 #include "defaultColumn.hpp"
 #include <cstdint>
 
+#include "restriction_tags.hpp"
+
 using phmap::flat_hash_map;
 using namespace std;
 
@@ -295,7 +297,7 @@ protected:
   uint32_t lastCheckpoint;
   Column* defaultColumn;
   virtual void preprocessKmerOrder();
-
+  tag * kDataFrame_tags;
   kDataFrameIterator* endIterator;
 public:
     bool isKmersOrderComputed;

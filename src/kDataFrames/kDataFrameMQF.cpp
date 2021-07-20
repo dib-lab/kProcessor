@@ -5,6 +5,7 @@
 #include <math.h>
 #include <limits>
 #include <sstream>
+#include "restriction_tags.hpp"
 
 
 /*
@@ -145,6 +146,10 @@ kDataFrameIterator kDataFrameMQF::find(uint64_t kmer) {
 
 kDataFrameMQF::kDataFrameMQF() : kDataFrame() {
     this->class_name = "MQF"; // Temporary until resolving #17
+    kDataFrame_tags = new tag({{"min_kSize", 17}}); // Add all restrictions at once
+    kDataFrame_tags->add_restriction("max_kSize", 31); // Add a new restriction
+    kDataFrame_tags->add_restriction("sorted", true);
+
     mqf = new QF();
     qf_init(mqf, (1ULL << 16), 2 * kSize, 0, 2, 32, true, "", 2038074761);
     KD = (new Kmers(kSize));
