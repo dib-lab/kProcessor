@@ -505,6 +505,7 @@ public:
   kDataFrameMQF();
   explicit kDataFrameMQF(std::uint64_t kSize);
   kDataFrameMQF(std::uint64_t kSize, hashingModes hash_mode);
+  kDataFrameMQF(QF *mqf, readingModes RM, hashingModes HM, map<string, int> params);
   kDataFrameMQF(std::uint64_t ksize,uint8_t q,uint8_t fixedCounterSize,uint8_t tagSize
     ,double falsePositiveRate);
 
@@ -612,6 +613,7 @@ public:
   kDataFrameBMQF(std::uint64_t kSize,uint64_t nKmers,string path);
   kDataFrameBMQF(std::uint64_t ksize,uint8_t q,uint8_t fixedCounterSize,uint8_t tagSize,double falsePositiveRate,string path);
   kDataFrameBMQF(bufferedMQF* bufferedmqf,std::uint64_t ksize,double falsePositiveRate);
+  kDataFrameBMQF(bufferedMQF* bufferedmqf, readingModes RM, hashingModes HM, map<string, int> params);
   //count histogram is array where count of kmers repeated n times is found at index n. index 0 holds number of distinct kmers.
   kDataFrameBMQF(std::uint64_t ksize,vector<std::uint64_t> countHistogram,uint8_t tagSize
     ,double falsePositiveRate);
@@ -689,6 +691,7 @@ public:
   kDataFrameMAP(std::uint64_t ksize);
   kDataFrameMAP(std::uint64_t kSize,vector<std::uint64_t> kmersHistogram);
   kDataFrameMAP(std::uint64_t kSize,uint64_t nKmers);
+  kDataFrameMAP(readingModes RM, hashingModes HM, map<string, int> params);
   kDataFrame* getTwin();
   void reserve (std::uint64_t n);
   void reserve (vector<std::uint64_t> countHistogram);
