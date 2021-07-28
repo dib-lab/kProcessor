@@ -265,7 +265,7 @@ void setFunctionsTest::SetUp()
 }
 INSTANTIATE_TEST_SUITE_P(testSetFunctions,
                          setFunctionsTest,
-                        ::testing::ValuesIn({make_tuple(string("MQF"),21),make_tuple(string("MQF"),31)})
+                        ::testing::ValuesIn({make_tuple(string("MAP"),21),make_tuple(string("MAP"),31),make_tuple(string("MQF"),21)})
                       );
 
 

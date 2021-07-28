@@ -378,7 +378,7 @@ namespace kProcessor {
     }
 
     void merge(const vector<kDataFrame *> &input, kDataFrame *res,function<kmerRow (vector<kDataFrameIterator*> &i)> fn) {
-        terminate_if_kDataFrameMAP(input);
+      //  terminate_if_kDataFrameMAP(input);
         unordered_map<string,Column*> columns;
         priority_queue<pair<kDataFrameIterator*, int>, vector<pair<kDataFrameIterator*, int> >, CustomKmerRow> Q;
         vector<kDataFrameIterator> iterators(input.size());
@@ -436,7 +436,7 @@ namespace kProcessor {
                             {
                                 columns[newColumnName]->resize(res->size());
                             }
-                            columns[newColumnName]->setValueFromColumn( col.second,iterators[i].getOrder(),index);
+                            columns[newColumnName]->setValueFromColumn( col.second,iterators[i].getOrder(),res->getkmerOrder(newRow.hashedKmer));
                         }
                     }
                 }
