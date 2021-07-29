@@ -8,7 +8,8 @@
 using namespace std;
 const uint64_t NKmersTEST=100000;
 kDataFrame* getFrame(tuple<string,int> input);
-
+string gen_random(const int len);
+void deleteFiles(string prefix);
 class kmersGenerator{
 private:
     unordered_map<int,unordered_map<string,int>* > db;
@@ -51,6 +52,7 @@ public:
     kDataFrame* kframeLoaded;
     kDataFrame* kframe2;
     unordered_map<string,int>* kmers;
+    string fileName;
     virtual void SetUp()
     {
         kframe=getFrame(GetParam());
@@ -58,7 +60,9 @@ public:
         kframeLoaded=nullptr;
         kframe2=nullptr;
         kmers=kmersGen->getKmers((int)kframe->getkSize());
+        fileName="tmp.kdataframe."+gen_random(8);
     }
+
     static void SetUpTestSuite()
     {
         kmersGen=new kmersGenerator();
@@ -72,7 +76,7 @@ public:
             delete kframe2;
         if(kframeLoaded!= nullptr)
             delete kframeLoaded;
-
+        deleteFiles(fileName);
     }
     static void TearDownTestSuite()
     {
@@ -96,20 +100,7 @@ public:
     {
         kmersGen=new kmersGenerator();
     }
-    void deleteFiles(string prefix)
-    {
-        string tmp=prefix+".bmqf";
-        unlink(tmp.c_str());
-        tmp=prefix+".bmqf.bufferedMem.metadata";
-        unlink(tmp.c_str());
-        tmp=prefix+".extra";
-        unlink(tmp.c_str());
-        tmp=prefix+".bmqf.ondisk.metadata";
-        unlink(tmp.c_str());
-        tmp=prefix+".multiColumn";
-        unlink(tmp.c_str());
 
-    }
     virtual void TearDown()
     {
 
@@ -140,6 +131,8 @@ class queryColumnTest : public ::testing::TestWithParam<tuple<string, uint64_t,u
     unordered_map<uint64_t,vector<uint32_t> > simColors;
     queryColorColumn* testColumn;
     queryColorColumn* testColumnLoaded;
+    string tmpFolder;
+    string fileName;
 
 
     static void TearDownTestSuite();

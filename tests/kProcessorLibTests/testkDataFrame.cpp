@@ -28,6 +28,13 @@ string gen_random(const int len) {
 
     return s;
 }
+void deleteFiles(string prefix)
+{
+    if(prefix=="")
+        return;
+    string command ="rm -f "+prefix+"*";
+    system(command.c_str());
+}
 map< pair<uint64_t,uint64_t>, insertColorColumn*> insertColumns;
 
 
@@ -58,8 +65,9 @@ void queryColumnTest::SetUp(){
   auto searchPair=make_pair(numSamples,numColors);
   auto it=insertColumns.find(searchPair);
   insertColorColumn* insertColumn;
+  fileName="colorTable.test."+ gen_random(8);
   if(it == insertColumns.end()){
-      string tmpFolder = "tmp.colorColumn."+gen_random(8);
+      tmpFolder = "tmp.colorColumn."+gen_random(8);
       insertColumn =new insertColorColumn(numSamples,tmpFolder);
       while(simColors.size() < numColors)
       {
@@ -100,6 +108,8 @@ void queryColumnTest::TearDown(){
         delete testColumn;
     if(testColumnLoaded!=nullptr)
         delete testColumnLoaded;
+
+    deleteFiles(fileName);
 }
 queryColorColumn* createIndexingColumn(string name, insertColorColumn* col)
 {
@@ -140,7 +150,7 @@ TEST_P(queryColumnTest, saveAndLoad)
   EXPECT_EQ(numColors,testColumn->numColors);
 
 
-  string fileName="colorTable.test."+ gen_random(8);
+
   testColumn->serialize(fileName);
   testColumnLoaded=(queryColorColumn*)Column::getContainerByName(typeid(*(testColumn)).hash_code());
   delete testColumn;
@@ -193,7 +203,7 @@ kDataFrame* getFrame(tuple<string,int> input)
     }
     else if(type=="BMQF")
     {
-        string fileName="tmp.kdataframeMQF."+gen_random(8);
+        string fileName="tmp.kdataframeBMQF."+gen_random(8);
         return new kDataFrameBMQF((uint64_t)kSize,NKmersTEST,fileName);
     }
     else{
@@ -265,7 +275,7 @@ void setFunctionsTest::SetUp()
 }
 INSTANTIATE_TEST_SUITE_P(testSetFunctions,
                          setFunctionsTest,
-                        ::testing::ValuesIn({make_tuple(string("MAP"),21),make_tuple(string("MAP"),31),make_tuple(string("MQF"),21)})
+                        ::testing::ValuesIn({make_tuple(string("MAP"),21),make_tuple(string("MAP"),31)})
                       );
 
 
@@ -545,7 +555,7 @@ TEST_P(kDataFrameTest,saveAndLoadMultiColumns)
         kframe->setKmerColumnValue<bool, vectorColumn<bool> >("boolColumn",kmer,randBool);
         it++;
     }
-    string fileName="tmp.kdataframe."+gen_random(8);
+
     kframe->save(fileName);
     delete kframe;
     kframe=nullptr;
@@ -595,7 +605,7 @@ TEST_P(kDataFrameTest,saveAndIterateOverAllKmers)
         break;
       }
     }
-    string fileName="tmp.kdataframe."+gen_random(8);
+
     kframe->save(fileName);
     delete kframe;
     kframe=nullptr;
