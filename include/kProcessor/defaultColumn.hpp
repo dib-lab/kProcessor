@@ -905,7 +905,7 @@ public:
     vector<uint32_t> index;
     ColumnType* values;
     deduplicatedColumn(){
-
+        index.resize(1);
     }
     deduplicatedColumn(uint32_t size){
         index=vector<uint32_t>(size);

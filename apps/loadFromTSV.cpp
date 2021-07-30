@@ -19,7 +19,7 @@ int main(int argc, char *argv[])
     cout<<"S = "<<s<<endl;
     kDataFrameBMQF frame(k,s,2,0,0,outPath);
     //kDataFrameMQF frame(k);
-    cout<<"reserve completed"<<endl;
+    cout<<"_reserve completed"<<endl;
     string kmer;
     uint64_t  count;
     uint64_t nKmers=0;

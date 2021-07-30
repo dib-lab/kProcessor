@@ -177,7 +177,26 @@ public:
 };
 
 class indexingTest : public ::testing::TestWithParam<string>{
+public:
+    kDataFrame* KF;
+    kDataFrame* kframeLoaded;
+    string fileName;
+    virtual void SetUp()
+    {
+        KF= nullptr;
+        kframeLoaded=nullptr;
+        fileName="tmp.kdataframe."+gen_random(8);
+    }
 
+    virtual void TearDown()
+    {
+
+        if(KF!= nullptr)
+            delete KF;
+        if(kframeLoaded!= nullptr)
+            delete kframeLoaded;
+        deleteFiles(fileName);
+    }
 };
 
 class prefixColumnTest : public ::testing::TestWithParam<string>{

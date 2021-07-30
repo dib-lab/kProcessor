@@ -299,7 +299,7 @@ kDataFrame *kDataFrameMQF::getTwin() {
                                              mqf->metadata->label_bits, falsePositiveRate));
 }
 
-void kDataFrameMQF::reserve(uint64_t n) {
+void kDataFrameMQF::_reserve(uint64_t n) {
     QF *old = mqf;
     mqf = new QF();
     uint64_t q = (uint64_t) ceil(log2((double) n * 1.4));
@@ -316,7 +316,7 @@ void kDataFrameMQF::reserve(uint64_t n) {
     it->endIterator();
     endIterator=new  kDataFrameIterator(it,(kDataFrame*)this);
 }
-void kDataFrameMQF::reserve(vector<uint64_t> countHistogram) {
+void kDataFrameMQF::_reserve(vector<uint64_t> countHistogram) {
     QF *old = mqf;
     mqf = new QF();
     uint64_t nSlots;

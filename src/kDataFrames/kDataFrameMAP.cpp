@@ -254,11 +254,11 @@ kDataFrame *kDataFrameMAP::getTwin() {
     return ((kDataFrame *) new kDataFrameMAP(kSize));
 }
 
-void kDataFrameMAP::reserve(uint64_t n) {
-//    this->MAP.reserve(n);
+void kDataFrameMAP::_reserve(uint64_t n) {
+//    this->MAP._reserve(n);
 }
-void kDataFrameMAP::reserve(vector<uint64_t> countHistogram) {
-//    this->MAP.reserve(n);
+void kDataFrameMAP::_reserve(vector<uint64_t> countHistogram) {
+//    this->MAP._reserve(n);
 }
 
 kDataFrameIterator kDataFrameMAP::begin() {

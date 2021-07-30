@@ -309,10 +309,13 @@ public:
 /// creates a new kDataframe using the same parameters as the current kDataFrame.
 /*! It is like clone but without copying the data */
   virtual kDataFrame* getTwin()=0;
+
+  /// request a capacity change so that the kDataFrame can approximately hold at least n kmers
+  void reserve (std::uint64_t n );
 /// request a capacity change so that the kDataFrame can approximately hold at least n kmers
-  virtual void reserve (std::uint64_t n )=0;
+  virtual void _reserve (std::uint64_t n )=0;
 /// request a capacity change so that the kDataFrame can approximately hold kmers with countHistogram distribution
-  virtual void reserve (vector<std::uint64_t> countHistogram)=0;
+  virtual void _reserve (vector<std::uint64_t> countHistogram)=0;
 /// insert the kmer one time in the kDataFrame, or increment the kmer count if it is already exists.
 /*! Returns bool value indicating whether the kmer is inserted or not*/
   virtual bool insert(const string &kmer)=0;
@@ -521,8 +524,8 @@ public:
     qf_destroy(mqf);
     delete mqf;
   }
-  void reserve (std::uint64_t n);
-  void reserve (vector<std::uint64_t> countHistogram);
+  void _reserve (std::uint64_t n);
+  void _reserve (vector<std::uint64_t> countHistogram);
   kDataFrame* getTwin();
 
   static std::uint64_t estimateMemory(std::uint64_t nslots,std::uint64_t slotSize,
@@ -618,8 +621,8 @@ public:
   ~kDataFrameBMQF(){
     delete bufferedmqf;
   }
-  void reserve (std::uint64_t n);
-  void reserve (vector<std::uint64_t> countHistogram);
+  void _reserve (std::uint64_t n);
+  void _reserve (vector<std::uint64_t> countHistogram);
 
   kDataFrame* getTwin();
 
@@ -690,8 +693,8 @@ public:
   kDataFrameMAP(std::uint64_t kSize,vector<std::uint64_t> kmersHistogram);
   kDataFrameMAP(std::uint64_t kSize,uint64_t nKmers);
   kDataFrame* getTwin();
-  void reserve (std::uint64_t n);
-  void reserve (vector<std::uint64_t> countHistogram);
+  void _reserve (std::uint64_t n);
+  void _reserve (vector<std::uint64_t> countHistogram);
 
   bool kmerExist(string kmer);
   bool kmerExist(uint64_t kmer);
@@ -779,8 +782,8 @@ public:
 
     kDataFrame *getTwin();
 
-    void reserve(std::uint64_t n);
-    void reserve (vector<std::uint64_t> countHistogram);
+    void _reserve(std::uint64_t n);
+    void _reserve (vector<std::uint64_t> countHistogram);
 
     bool kmerExist(string kmer);
     bool kmerExist(uint64_t kmer);
@@ -899,8 +902,8 @@ public:
     kDataFrameBlight(std::uint64_t ksize,string input_fasta_file);
     kDataFrame *getTwin();
 
-    void reserve(std::uint64_t n);
-    void reserve (vector<std::uint64_t> countHistogram);
+    void _reserve(std::uint64_t n);
+    void _reserve (vector<std::uint64_t> countHistogram);
 
     bool kmerExist(string kmer);
     bool kmerExist(uint64_t kmer);

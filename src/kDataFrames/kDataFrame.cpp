@@ -134,7 +134,12 @@ void kDataFrame::setKmerColumnValueFromOtherColumn(kDataFrame* input, string inp
 //
 //
 
-
+void kDataFrame::reserve (std::uint64_t n )
+{
+    this->_reserve(n);
+    for(auto c : columns)
+        c.second->resize(n);
+}
 
 void kDataFrame::addColumn(string columnName,Column* ptr)
 {
