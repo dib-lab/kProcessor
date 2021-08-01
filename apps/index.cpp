@@ -24,8 +24,8 @@ int main(int argc, char *argv[])
 
     app.add_option("-i,--input", inputPath,
                    "File containig a list of kDataframe paths")->required();
-    app.add_option("-q", q,
-                   "Q size of the result MQF frame")->required();
+//    app.add_option("-q", q,
+//                   "Q size of the result MQF frame")->required();
     app.add_option("-t,--tempFolder", tmpFolder,
                    "Path for Temporary Folder");
     app.add_option("-o,--output", outPath,
@@ -67,7 +67,7 @@ int main(int argc, char *argv[])
         }
     }
 
-    kDataFrame* output= new kDataFrameMQF(kSize,q,integer_hasher);
+    kDataFrame* output= new kDataFramePHMAP(kSize,integer_hasher);
     kProcessor::indexPriorityQueue(frames,tmpFolder,output,num_vectors,vector_size);
     cout<<"Indexing Finished"<<endl;
 
