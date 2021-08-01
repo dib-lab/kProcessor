@@ -418,7 +418,10 @@ bool kDataFrameMQF::setOrder(const string &kmer, uint64_t count) {
     if (currentCount > count) {
         qf_remove(mqf, hash, currentCount - count, false, false);
     } else {
+      
         try {
+	  if (load_factor() > 0.8)
+	    reserve(mqf->metadata->nslots);
             qf_insert(mqf, hash, count - currentCount, false, false);
         }
         catch (overflow_error &e) {
@@ -436,6 +439,8 @@ bool kDataFrameMQF::setOrder(uint64_t kmer, uint64_t count) {
         qf_remove(mqf, hash, currentCount - count, false, false);
     } else {
         try {
+	  if (load_factor() > 0.8)
+	    reserve(mqf->metadata->nslots);
             qf_insert(mqf, hash, count - currentCount, false, false);
         }
         catch (overflow_error &e) {
@@ -451,7 +456,7 @@ bool kDataFrameMQF::setOrder(uint64_t kmer, uint64_t count) {
 bool kDataFrameMQF::insert(const string &kmer) {
     if(kmerExist(kmer))
         return false;    
-    if (load_factor() > 0.9)
+    if (load_factor() > 0.8)
         reserve(mqf->metadata->nslots);
     uint64_t hash = KD->hash_kmer(kmer) % mqf->metadata->range;
     // cout << "Inserting kmer: " << kmer << ", Hash: " << hash << endl;
@@ -471,7 +476,7 @@ bool kDataFrameMQF::insert(const string &kmer) {
 bool kDataFrameMQF::insert(uint64_t kmer) {
     if(kmerExist(kmer))
         return false;
-    if (load_factor() > 0.9)
+    if (load_factor() > 0.8)
         reserve(mqf->metadata->nslots);
     uint64_t hash = kmer % mqf->metadata->range;
     // cout << "Inserting kmer: " << kmer << ", Hash: " << hash << endl;
