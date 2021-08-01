@@ -210,12 +210,12 @@ kDataFrame *kDataFrameBlight::getTwin() {
     return ((kDataFrame *) new kDataFrameBlight(kSize));
 }
 
-void kDataFrameBlight::reserve(uint64_t n) {
-    throw logic_error("kDataFrameBlight is static. reserve is not allowed");
+void kDataFrameBlight::_reserve(uint64_t n) {
+    throw logic_error("kDataFrameBlight is static. _reserve is not allowed");
 
 }
-void kDataFrameBlight::reserve(vector<uint64_t> countHistogram) {
-    throw logic_error("kDataFrameBlight is static. reserve is not allowed");
+void kDataFrameBlight::_reserve(vector<uint64_t> countHistogram) {
+    throw logic_error("kDataFrameBlight is static. _reserve is not allowed");
 
 
 }

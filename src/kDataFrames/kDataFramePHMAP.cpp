@@ -277,7 +277,7 @@ kDataFrame *kDataFramePHMAP::getTwin() {
     return ((kDataFrame *) new kDataFramePHMAP(kSize, this->KD->hash_mode));
 }
 
-void kDataFramePHMAP::reserve(uint64_t n) {
+void kDataFramePHMAP::_reserve(uint64_t n) {
     this->MAP.reserve(n);
     if(endIterator != nullptr)
         delete endIterator;
@@ -286,7 +286,7 @@ void kDataFramePHMAP::reserve(uint64_t n) {
             (kDataFrame *) this);
 
 }
-void kDataFramePHMAP::reserve(vector<uint64_t> countHistogram) {
+void kDataFramePHMAP::_reserve(vector<uint64_t> countHistogram) {
     uint64_t countSum=0;
     for(auto h:countHistogram)
       countSum+=h;

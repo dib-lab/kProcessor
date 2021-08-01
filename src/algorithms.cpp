@@ -378,7 +378,7 @@ namespace kProcessor {
     }
 
     void merge(const vector<kDataFrame *> &input, kDataFrame *res,function<kmerRow (vector<kDataFrameIterator*> &i)> fn) {
-        terminate_if_kDataFrameMAP(input);
+      //  terminate_if_kDataFrameMAP(input);
         unordered_map<string,Column*> columns;
         priority_queue<pair<kDataFrameIterator*, int>, vector<pair<kDataFrameIterator*, int> >, CustomKmerRow> Q;
         vector<kDataFrameIterator> iterators(input.size());
@@ -436,7 +436,7 @@ namespace kProcessor {
                             {
                                 columns[newColumnName]->resize(res->size());
                             }
-                            columns[newColumnName]->setValueFromColumn( col.second,iterators[i].getOrder(),index);
+                            columns[newColumnName]->setValueFromColumn( col.second,iterators[i].getOrder(),res->getkmerOrder(newRow.hashedKmer));
                         }
                     }
                 }
@@ -619,13 +619,14 @@ namespace kProcessor {
     }
 
     void index(kmerDecoder *KD, string names_fileName, kDataFrame *frame) {
-
         if (KD->get_kSize() != (int) frame->ksize()) {
             std::cerr << "kmerDecoder kSize must be equal to kDataFrame kSize" << std::endl;
             exit(1);
         }
 
 
+        auto *colors =new deduplicatedColumn<vector<string>, StringColorColumn>();
+        frame->addColumn("color",(Column *) colors);
         flat_hash_map<string, string> namesMap;
         flat_hash_map<string, uint64_t> tagsMap;
         flat_hash_map<string, uint64_t> groupNameMap;
@@ -701,7 +702,11 @@ namespace kProcessor {
                 convertMap.insert(make_pair(readTag, readTag));
                 //    cout<<readName<<"   "<<seq.size()<<endl;
                 for (const auto &kmer : seq.second) {
-                    uint64_t currentTag = frame->getkmerOrder(kmer.hash);
+                    frame->insert(kmer.hash);
+                    uint64_t kmerOrder =frame->getkmerOrder(kmer.hash);
+                    if(colors->size()<frame->size()+1)
+                        colors->resize(frame->size()+1);
+                    uint64_t currentTag = colors->index[kmerOrder];
                     auto itc = convertMap.find(currentTag);
                     if (itc == convertMap.end()) {
                         vector<uint32_t> colors = legend->find(currentTag)->second;
@@ -765,13 +770,8 @@ namespace kProcessor {
                         colorsCount[itc->second]++;
                     }
 
-                    frame->setCount(kmer.hash, itc->second);
-                    if (frame->getkmerOrder(kmer.hash) != itc->second) {
-                        //frame->setC(kmer,itc->second);
-                        cout << "Error Founded " << kmer.str << " from sequence " << readName << " expected "
-                             << itc->second << " found " << frame->getkmerOrder(kmer.hash) << endl;
-                        return;
-                    }
+                    colors->index[kmerOrder]=itc->second;
+
                 }
                 readID += 1;
                 groupCounter[groupName]--;
@@ -783,18 +783,18 @@ namespace kProcessor {
                 }
             }
         }
-        auto *col = new StringColorColumn();
-        frame->addColumn("color",(Column *) col);
-        col->colors = vector<vector<uint32_t> >(legend->size());
-        col->colors.push_back(vector<uint32_t>());
+        colors->values = new StringColorColumn();
+
+        colors->values->colors = vector<vector<uint32_t> >(legend->size());
+        colors->values->colors.push_back(vector<uint32_t>());
         for (auto it : *legend) {
-            col->colors[it.first] = it.second;
+            colors->values->colors[it.first] = it.second;
         }
         delete legend;
 
         for (auto & iit : namesMap) {
             uint32_t sampleID = groupNameMap[iit.second];
-            col->namesMap[sampleID] = iit.second;
+            colors->values->namesMap[sampleID] = iit.second;
         }
 
     }
@@ -911,13 +911,11 @@ namespace kProcessor {
         cout << noColors << " colors created" << endl;
 
 
-
-
         auto colorColumn= new deduplicatedColumn<vector<uint32_t>, mixVectors>();
         colorColumn->values=new mixVectors(colors->values);
         colorColumn->values->explainSize();
         colorColumn->index=colors->index;
-        output->removeColumn("color");
+        output->removeColumn("i");
         output->addColumn("color",colorColumn);
     }
 
