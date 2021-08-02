@@ -12,14 +12,14 @@
 using namespace std;
 
 int main(int argc, char *argv[]) {
-    string inputColumn=argv[1];
-    string outputColumn=argv[2];
-    mixVectors *qColumn= new mixVectors();
-    qColumn->deserialize(inputColumn);
-    prefixTrie *pColumn = new prefixTrie(qColumn);
-    pColumn->serialize(outputColumn);
-    delete pColumn;
-    delete qColumn;
+    string inputIndex=argv[1];
+    kDataFrame* KF=kDataFrame::load(inputIndex);
+    auto prevColor=(deduplicatedColumn<vector<uint32_t>, mixVectors>*)KF->columns["color"];
+    auto newColor=new deduplicatedColumn<vector<uint32_t>, prefixTrie>();
+    newColor->index=prevColor->index;
+    newColor->values=new prefixTrie(prevColor->values);
+    KF->columns["color"]=newColor;
+    KF->save(inputIndex);
     return 0;
 //    string inputList = argv[1];
 //    string framePath = argv[2];

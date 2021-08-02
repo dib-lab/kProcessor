@@ -113,6 +113,7 @@ namespace kProcessor {
 
 /// Perform indexing to a sequences file with predefined kmers decoding mode, returns a colored kDataframe.
     void index(kmerDecoder *KD, string names_fileName, kDataFrame *frame);
+    void indexMega(string fastaFileName, string tmpFolder, kDataFrame *frame);
 
 /// Index function without needing the kmerDecoder
     void

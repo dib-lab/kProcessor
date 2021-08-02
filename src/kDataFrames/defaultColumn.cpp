@@ -33,6 +33,10 @@ class deduplicatedColumn<vector<string>, StringColorColumn>;
 template
 class deduplicatedColumn<vector<uint32_t>, mixVectors>;
 
+
+template
+class deduplicatedColumn<vector<uint32_t>, prefixTrie>;
+
 template
 class deduplicatedColumn<vector<uint32_t>, insertColorColumn>;
 
@@ -62,7 +66,9 @@ Column *Column::getContainerByName(std::size_t hash) {
         return new deduplicatedColumn<vector<uint32_t>, mixVectors>();
     } else if (hash == typeid(deduplicatedColumn<vector<string>, StringColorColumn>).hash_code()) {
         return new deduplicatedColumn<vector<string>, StringColorColumn>();
-    }else {
+    }else if (hash == typeid(deduplicatedColumn<vector<uint32_t>, prefixTrie>).hash_code()) {
+        return new deduplicatedColumn<vector<uint32_t>, prefixTrie>();
+    } else {
         throw logic_error("Failed to load Unknown Column " + hash);
     }
 }
@@ -1132,6 +1138,7 @@ void prefixTrie::loadFromQueryColorColumn(mixVectors  *col) {
         uint32_t index=0;
         for(auto n:*e)
             (*edges.back())[index++]=reverse[n];
+        sdsl::util::bit_compress(*edges.back());
         
         delete e;
     }
