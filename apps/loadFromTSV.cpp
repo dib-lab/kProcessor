@@ -15,7 +15,7 @@ int main(int argc, char *argv[])
     string outPath=argv[3];
     //    numSlots=(double)numSlots*1.4;
     cout<<"Expected number of slots "<<numSlots<<endl;
-    uint64_t s=log2(numSlots);
+    uint64_t s=(numSlots);
     cout<<"S = "<<s<<endl;
     kDataFrameBMQF frame(k,s,2,0,0,outPath);
     //kDataFrameMQF frame(k);
