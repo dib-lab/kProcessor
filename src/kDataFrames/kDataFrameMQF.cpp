@@ -71,6 +71,7 @@ uint64_t kDataFrameMQFIterator::getOrder() {
 }
 
 bool kDataFrameMQFIterator::setOrder(uint64_t count) {
+    throw logic_error("kDataFrameBMQF is static. you cant insert kmers");
     uint64_t key, value, currentCount;
     qfi_get(qfi, &key, &value, &currentCount);
     if (currentCount > count) {
@@ -277,6 +278,23 @@ kDataFrameMQF::kDataFrameMQF(uint64_t ksize, vector<uint64_t> countHistogram, ui
                                       &nSlots, &fixedCounterSize, &memory);
     qf_init(mqf, nSlots, 2 * ksize, tagSize, fixedCounterSize, 32, true, "", 2038074761);
 }
+
+
+kDataFrameMQF::kDataFrameMQF(kDataFrame* frame) :
+kDataFrame(frame->ksize()){
+    this->class_name = "MQF"; // Temporary until resolving #17
+    this->falsePositiveRate = 0.0;
+
+    KD = new Kmers(kSize, frame->KD->hash_mode);
+    range = (1ULL << hashbits);
+    mqf = NULL;
+    endIterator=NULL;
+    reserve(frame->size());
+    for(auto k:*frame)
+    {
+        insert(k.getHashedKmer());
+    }
+}
 kDataFrameMQF::kDataFrameMQF(uint64_t ksize, vector<uint64_t> countHistogram)
         :
         kDataFrameMQF(ksize,countHistogram,0,0.0) {
@@ -302,7 +320,7 @@ kDataFrame *kDataFrameMQF::getTwin() {
 void kDataFrameMQF::_reserve(uint64_t n) {
     QF *old = mqf;
     mqf = new QF();
-    uint64_t q = (uint64_t) ceil(log2((double) n * 1.4));
+    uint64_t q = (uint64_t) ceil(log2((double) n ));
     std::cerr << "[DEBUG] Q: " << q << std::endl;
     qf_init(mqf, (1ULL << q), hashbits, 0, 2, 32, true, "", 2038074761);
     if (old != NULL) {
@@ -413,6 +431,7 @@ kDataFrameMQF::isEnough(vector<uint64_t> histogram, uint64_t noSlots, uint64_t f
 
 
 bool kDataFrameMQF::setOrder(const string &kmer, uint64_t count) {
+    throw logic_error("You cant set order in kDataFrameBMQF. Order is determined from the ");
     uint64_t hash = KD->hash_kmer(kmer) % mqf->metadata->range;
     uint64_t currentCount = qf_count_key(mqf, hash);
     if (currentCount > count) {
@@ -433,6 +452,7 @@ bool kDataFrameMQF::setOrder(const string &kmer, uint64_t count) {
 }
 
 bool kDataFrameMQF::setOrder(uint64_t kmer, uint64_t count) {
+    throw logic_error("You cant set order in kDataFrameBMQF. Order is determined from the ");
     uint64_t hash = kmer % mqf->metadata->range;
     uint64_t currentCount = qf_count_key(mqf, hash);
     if (currentCount > count) {
@@ -454,6 +474,7 @@ bool kDataFrameMQF::setOrder(uint64_t kmer, uint64_t count) {
 
 
 bool kDataFrameMQF::insert(const string &kmer) {
+    throw logic_error("kDataFrameMQF is static. You cant add new kmers ");
     if(kmerExist(kmer))
         return false;    
     if (load_factor() > 0.8)
@@ -474,6 +495,7 @@ bool kDataFrameMQF::insert(const string &kmer) {
 
 
 bool kDataFrameMQF::insert(uint64_t kmer) {
+    throw logic_error("kDataFrameMQF is static. You cant add new kmers ");
     if(kmerExist(kmer))
         return false;
     if (load_factor() > 0.8)

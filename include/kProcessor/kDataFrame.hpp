@@ -519,7 +519,7 @@ public:
     ,double falsePositiveRate);
   kDataFrameMQF(std::uint64_t kSize,vector<std::uint64_t> kmersHistogram);
   kDataFrameMQF(std::uint64_t kSize,uint64_t nKmers);
-
+  kDataFrameMQF(kDataFrame* frame);
   ~kDataFrameMQF(){
     qf_destroy(mqf);
     delete mqf;

@@ -168,6 +168,33 @@ TEST_P(queryColumnTest, saveAndLoad)
 
 }
 
+TEST_P(queryColumnTest, clone)
+{
+    string colorTableName=get<0>(GetParam());
+    uint64_t numSamples=get<1>(GetParam());
+    uint64_t numColors=get<2>(GetParam());
+    auto inputPair= make_pair(numSamples,numColors);
+    testColumn= createIndexingColumn(colorTableName,insertColumns[inputPair]);
+    EXPECT_EQ(numSamples,testColumn->noSamples);
+    EXPECT_EQ(numColors,testColumn->numColors);
+
+
+
+
+    testColumnLoaded=(queryColorColumn*)testColumn->clone();
+    delete testColumn;
+    testColumn=nullptr;
+
+    EXPECT_EQ(numSamples,testColumnLoaded->noSamples);
+    EXPECT_EQ(numColors,testColumnLoaded->numColors);
+
+    for(auto it:simColors)
+    {
+        vector<uint32_t> res=testColumnLoaded->getWithIndex(it.first);
+        EXPECT_EQ(res,it.second);
+    }
+
+}
 
 vector<kDataFrame*> BuildTestFrames()
 {

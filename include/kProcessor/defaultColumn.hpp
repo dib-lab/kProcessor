@@ -30,6 +30,7 @@ public:
 
     virtual void serialize(string filename)=0;
     virtual void deserialize(string filename)=0;
+    virtual Column* clone()=0;
 
     virtual void setValueFromColumn(Column* Container, uint32_t inputOrder,uint32_t outputOrder){
 
@@ -56,6 +57,7 @@ public:
     ~vectorColumn(){
 
     }
+
     uint32_t  insertAndGetIndex(T item);
     T getWithIndex(uint32_t index);
     uint32_t size(){
@@ -73,7 +75,7 @@ public:
     Column* getTwin();
     void setValueFromColumn(Column* Container, uint32_t inputOrder,uint32_t outputOrder);
 
-
+    Column* clone() override;
 
 };
 
@@ -168,6 +170,7 @@ public:
         return colors.size();
     }
     void cleanFiles();
+    Column* clone() override;
 
 
 };
@@ -176,6 +179,8 @@ public:
 class _vectorBaseIterator{
     public:
     _vectorBaseIterator(){}
+
+
 
     virtual _vectorBaseIterator& operator ++ (int)=0;
     virtual _vectorBaseIterator* clone()=0;
@@ -290,6 +295,7 @@ class vectorBase{
     virtual vectorBaseIterator end(){
         return *endIterator;
     }
+    virtual vectorBase* clone()=0;
 
 };
 
@@ -351,7 +357,7 @@ public:
     void sort(sdsl::int_vector<>& idsMap);
     vectorBaseIterator begin() override ;
     vectorBaseIterator end();
-
+    vectorBase* clone() override;
 
 
 };
@@ -458,6 +464,10 @@ public:
         return 0.0;
     }
 
+    vectorBase *clone() override {
+        return new constantVector(noColors);
+    }
+
 
 };
 
@@ -520,6 +530,8 @@ public:
     vectorBaseIterator begin();
     vectorBaseIterator end();
 
+    vectorBase *clone() override;
+
 };
 
 class fixedSizeVectorIterator: public _vectorBaseIterator{
@@ -565,55 +577,6 @@ public:
 };
 
 
-class RLEfixedSizeVector: public vectorBase{
-public:
-    typedef  sdsl::enc_vector<> vectype;
-    vectype vec;
-    vectype starts;
-    uint32_t colorsize;
-    uint32_t numColors;
-    RLEfixedSizeVector()
-    {
-
-    }
-    RLEfixedSizeVector(fixedSizeVector* fv,sdsl::int_vector<>& idsMap);
-    void loadFromInsertOnly(string path,sdsl::int_vector<>& idsMap);
-    vector<uint32_t> get(uint32_t index);
-    void set(uint32_t index,vector<uint32_t>& v)
-    {
-        throw logic_error("set is not supported");
-    }
-
-    uint32_t size()override {
-        return numColors;
-    }
-    void serialize(ofstream& of);
-    void deserialize(ifstream& iif);
-    uint64_t sizeInBytes(){
-
-        return sdsl::size_in_bytes(vec)+sdsl::size_in_bytes(starts)+8;
-    }
-    void sort(sdsl::int_vector<>& idsMap)
-    {
-
-    }
-    void explainSize(){
-        cout<<"RLE fixed size("<<colorsize<<") of "<<size()<<" colors in "<< sizeInBytes()/(1024.0*1024.0)<<"MB"<<endl;
-    }
-    uint64_t numIntegers(){
-        return numColors*colorsize;
-    }
-    vectorBaseIterator begin(){
-        return vectorBaseIterator();
-    }
-    vectorBaseIterator end(){
-        return vectorBaseIterator();
-    }
-    double sizeInMB(){
-        return sdsl::size_in_mega_bytes(vec)+sdsl::size_in_mega_bytes(starts);
-    }
-
-};
 class queryColorColumn : public Column{
 public:
     uint64_t  noSamples;
@@ -665,7 +628,6 @@ public:
     void serialize(string filename);
     void deserialize(string filename);
     void sortColors();
-    void optimizeRLE();
 
 //    void optimize2();
 //    void optimize3(insertColorColumn* col);
@@ -689,6 +651,8 @@ public:
     Column* getTwin();
 
     void resize(uint32_t size);
+
+    Column *clone() override;
 
 
 };
@@ -756,6 +720,7 @@ public:
             return (*unCompressedEdges[treeIndex])[edgeIndex];
     }
 
+    Column *clone() override;
 };
 
 class StringColorColumn: public Column{
@@ -787,6 +752,8 @@ public:
     uint32_t size(){
         return colors.size();
     }
+
+    Column *clone() override;
 
 };
 class prefixTrieIterator{
@@ -927,6 +894,7 @@ public:
     void resize(uint32_t size);
     void setValueFromColumn(Column* Container, uint32_t inputOrder,uint32_t outputOrder);
 
+    Column *clone() override;
 
 
 };

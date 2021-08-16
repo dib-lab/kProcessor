@@ -142,7 +142,13 @@ void vectorColumn<T>::setValueFromColumn(Column *Container, uint32_t inputOrder,
     T val = ((vectorColumn<T> *) Container)->get(inputOrder);
     insert(val, outputOrder);
 }
-
+template<typename T>
+Column* vectorColumn<T>::clone()
+{
+    vectorColumn<T>* res=(vectorColumn<T>*)getTwin();
+    res->dataV=dataV;
+    return res;
+}
 
 uint32_t insertColorColumn::insertAndGetIndex(vector<uint32_t> &item) {
     //return colorInv.getColorID(item);
@@ -214,6 +220,21 @@ void insertColorColumn::cleanFiles() {
 
     }
 //    colorInv.populateColors(colors);
+}
+Column* insertColorColumn::clone(){
+    insertColorColumn* res=new insertColorColumn();
+    res->tmpFolder=tmpFolder;
+    res->noColors=noColors;
+    res->noSamples=noSamples;
+    res->vecCount=vecCount;
+    res->colorsTop=colorsTop;
+    res->colors=colors;
+    res->NUM_VECTORS=NUM_VECTORS;
+    res->VECTOR_SIZE=VECTOR_SIZE;
+    res->colorInv.colors=colorInv.colors;
+    res->colorInv.lastColor=colorInv.lastColor;
+    res->colorInv.noSamples=colorInv.noSamples;
+    return res;
 }
 void insertColorColumn::populateColors() {
     for (uint32_t colorSize = 1; colorSize < NUM_VECTORS; colorSize++) {
@@ -303,6 +324,13 @@ Column *StringColorColumn::getTwin() {
 
 void StringColorColumn::resize(uint32_t size) {
 
+}
+
+Column *StringColorColumn::clone() {
+    StringColorColumn* res=new StringColorColumn();
+    res->colors=colors;
+    res->namesMap=namesMap;
+    return res;
 }
 
 bool inExactColorIndex::hasColorID(vector<uint32_t> &v) {
@@ -574,27 +602,18 @@ void mixVectors::explainSize() {
     // cout<<"Ids Size = "<<sdsl::size_in_bytes(idsMap)/(1024.0*1024.0)<<"MB"<<endl;
 }
 
+Column *mixVectors::clone() {
 
-void mixVectors::optimizeRLE() {
-    explainSize();
-    for (unsigned int i = 0; i < colors.size(); i++) {
-        if (dynamic_cast<fixedSizeVector *>(colors[i])) {
-            fixedSizeVector *tmp = (fixedSizeVector *) colors[i];
-
-            RLEfixedSizeVector *tmp2 = new RLEfixedSizeVector(tmp, idsMap);
-            colors[i] = tmp2;
-//            if(tmp2->sizeInBytes() < tmp->sizeInBytes()) {
-//                colors[i]=tmp2;
-//                delete tmp;
-//            }
-//            else{
-//                delete tmp2;
-//            }
-        }
-    }
-    explainSize();
-
+    mixVectors* res= new mixVectors();
+    res->colors=deque<vectorBase*>(colors.size());
+    res->numColors=numColors;
+    res->noSamples=noSamples;
+    for(unsigned  i=0; i<colors.size() ; i++)
+        res->colors[i]=colors[i]->clone();
+    res->idsMap=idsMap;
+    return res;
 }
+
 
 fixedSizeVector::fixedSizeVector() {
     auto it = new fixedSizeVectorIterator(this);
@@ -678,6 +697,13 @@ void fixedSizeVector::sort(sdsl::int_vector<> &idsMap) {
     vec = vectype(tmpVec);
 }
 
+vectorBase *fixedSizeVector::clone() {
+    fixedSizeVector* res=new fixedSizeVector(beginID,colorsize);
+    res->vec= vec;
+    res->colorsize=colorsize;
+    return res;
+}
+
 
 vectorOfVectors::vectorOfVectors() {
     endIterator = new vectorBaseIterator(new vectorOfVectorsIterator(this));
@@ -694,6 +720,12 @@ vectorOfVectors::vectorOfVectors(uint32_t beginId, uint32_t noColors)
     starts = vectype(sdsl::int_vector<>(noColors));
 }
 
+vectorBase* vectorOfVectors::clone(){
+    vectorOfVectors* res=new vectorOfVectors(beginID);
+    this->vecs=vecs;
+    this->starts=starts;
+    return res;
+}
 vectorBaseIterator vectorOfVectors::begin() {
     return vectorBaseIterator(new vectorOfVectorsIterator(this));
 }
@@ -772,68 +804,6 @@ void vectorOfVectors::sort(sdsl::int_vector<> &idsMap) {
     starts = vectype(tmpStarts);
 }
 
-RLEfixedSizeVector::RLEfixedSizeVector(fixedSizeVector *fv, sdsl::int_vector<> &idsMap)
-        : vectorBase(fv->beginID) {
-    colorsize = fv->colorsize;
-    numColors = fv->size();
-    unordered_map<uint32_t, uint32_t> idsINV;
-    for (unsigned int i = 0; i < idsMap.size(); i++) {
-        if (idsMap[i] >= beginID && idsMap[i] < beginID + numColors) {
-            idsINV[idsMap[i]] = i;
-        }
-    }
-    vector<pair<vector<uint32_t>, uint32_t> > aux(numColors);
-    auto it = fv->vec.begin();
-    for (unsigned int i = 0; i < numColors; i++) {
-        aux[i] = make_pair(vector<uint32_t>(colorsize), idsINV[beginID + i]);
-        for (unsigned int j = 0; j < colorsize; j++) {
-            aux[i].first[j] = *it;
-            it++;
-        }
-    }
-    std::sort(aux.begin(), aux.end(), []
-            (const pair<vector<uint32_t>, uint32_t> &lhs, pair<vector<uint32_t>, uint32_t> &rhs) -> bool {
-        for (unsigned int i = 0; i < lhs.first.size() && i < rhs.first.size(); i++)
-            if (lhs.first[i] < rhs.first[i])
-                return true;
-            else if (lhs.first[i] > rhs.first[i])
-                return false;
-        return false;
-    });
-    for (unsigned int i = 0; i < numColors; i++) {
-        idsMap[aux[i].second] = beginID + i;
-    }
-
-    deque<uint32_t> tmpVec;
-    deque<uint32_t> tmpStart;
-    uint32_t last = -1;
-    for (unsigned int j = 0; j < colorsize; j++) {
-        for (unsigned int i = 0; i < numColors; i++)
-            if (aux[i].first[j] != last) {
-                last = aux[i].first[j];
-                tmpVec.push_back(last);
-                tmpStart.push_back(i + j * numColors);
-            }
-    }
-    vec = vectype(tmpVec);
-    starts = vectype(tmpStart);
-}
-
-vector<uint32_t> RLEfixedSizeVector::get(uint32_t index) {
-    vector<uint32_t> result(colorsize);
-    for (unsigned int i = 0; i < colorsize; i++) {
-        uint32_t tindex = i * numColors + index;
-        auto it = lower_bound(starts.begin(), starts.end(), tindex + 1);
-        it--;
-        result[i] = vec[it - starts.begin()];
-    }
-    return result;
-}
-
-
-void RLEfixedSizeVector::serialize(ofstream &of) {}
-
-void RLEfixedSizeVector::deserialize(ifstream &iif) {}
 
 prefixTrie::prefixTrie(insertColorColumn *col)
 {
@@ -1495,6 +1465,30 @@ void prefixTrie::resize(uint32_t size) {
 
 }
 
+Column *prefixTrie::clone() {
+    prefixTrie* res=new prefixTrie();
+    res->noSamples = noSamples;
+    res->numColors = numColors;
+    if(res->queryCache!=NULL)
+        delete res->queryCache;
+    res->queryCache=new lru_cache_t<uint64_t, vector<uint32_t>>(numColors/10);
+    res->edges= deque<vectype *>(edges.size());
+    res->tree=deque<sdsl::bit_vector*>(tree.size());
+    res->bp_tree=deque<sdsl::bp_support_sada<>*>(bp_tree.size());
+
+    for(unsigned  i = 0 ; i < tree.size() ; i++){
+        res->tree[i]=new sdsl::bit_vector(*tree[i]);
+        res->edges[i]=new vectype(*edges[i]);
+        res->bp_tree[i]=new sdsl::bp_support_sada<>(*bp_tree[i]);
+    }
+
+    res->starts=starts;
+    res->idsMap=idsMap;
+    translateEdges=translateEdges;
+
+    return res;
+}
+
 
 template<typename T, typename ColumnType>
 void deduplicatedColumn<T, ColumnType>::serialize(string filename) {
@@ -1528,7 +1522,9 @@ T deduplicatedColumn<T, ColumnType>::get(uint32_t order) {
 
 template<typename T, typename ColumnType>
 Column *deduplicatedColumn<T, ColumnType>::getTwin() {
-    return new deduplicatedColumn<T, ColumnType>();
+    deduplicatedColumn<T, ColumnType>* col=new deduplicatedColumn<T, ColumnType>();
+    col->values=(ColumnType*)values->clone();
+    return col;
 }
 
 
@@ -1552,4 +1548,12 @@ void deduplicatedColumn<T, ColumnType>::insert(T item, uint32_t i) {
     while(i>=index.size())
         index.resize(index.size()*2);
     index[i] = values->insertAndGetIndex(item);
+}
+
+template<typename T, typename ColumnType>
+Column *deduplicatedColumn<T, ColumnType>::clone() {
+    deduplicatedColumn<T, ColumnType>* res=new deduplicatedColumn<T, ColumnType>();
+    res->index=index;
+    res->values=(ColumnType*)values->clone();
+    return res;
 }
