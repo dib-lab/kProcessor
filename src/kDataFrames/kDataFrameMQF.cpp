@@ -19,11 +19,14 @@ kDataFrameMQFIterator::kDataFrameMQFIterator(QF *mqf, uint64_t kSize, kmerDecode
     qfi = new QFi();
     qf_iterator(mqf, qfi, 0);
     this->KD = KD;
+    order=0;
 }
 kDataFrameMQFIterator::kDataFrameMQFIterator(QFi *mqfIt, uint64_t kSize, kmerDecoder *KD)
         : _kDataFrameIterator(kSize) {
     qfi = mqfIt;
     this->KD = KD;
+    order=0;
+
 }
 kDataFrameMQFIterator::kDataFrameMQFIterator(const kDataFrameMQFIterator &other) :
         _kDataFrameIterator(other.kSize) {
@@ -36,6 +39,7 @@ kDataFrameMQFIterator::kDataFrameMQFIterator(const kDataFrameMQFIterator &other)
     qfi->num_clusters = other.qfi->num_clusters;
     qfi->c_info = other.qfi->c_info;
     KD = other.KD;
+    order=other.order;
 }
 
 _kDataFrameIterator *kDataFrameMQFIterator::clone() {
@@ -44,6 +48,7 @@ _kDataFrameIterator *kDataFrameMQFIterator::clone() {
 
 kDataFrameMQFIterator &kDataFrameMQFIterator::operator++(int) {
     qfi_next(qfi);
+    order++;
     return *this;
 }
 
@@ -65,9 +70,7 @@ uint64_t kDataFrameMQFIterator::getCount() {
 }
 
 uint64_t kDataFrameMQFIterator::getOrder() {
-    uint64_t key, value, count;
-    qfi_get(qfi, &key, &value, &count);
-    return count;
+    return order;
 }
 
 bool kDataFrameMQFIterator::setOrder(uint64_t count) {
@@ -284,17 +287,34 @@ kDataFrameMQF::kDataFrameMQF(kDataFrame* frame) :
 kDataFrame(frame->ksize()){
     this->class_name = "MQF"; // Temporary until resolving #17
     this->falsePositiveRate = 0.0;
-
+    lastKmerOrder=1;
     KD = new Kmers(kSize, frame->KD->hash_mode);
+    hashbits = 2 * kSize;
     range = (1ULL << hashbits);
     mqf = NULL;
     endIterator=NULL;
-    reserve(frame->size());
+    reserve(frame->size()
+
+        );
+
     for(auto k:*frame)
     {
-        insert(k.getHashedKmer());
+        _insert(k.getHashedKmer());
+    }
+    qf_ComputeItemsOrder(mqf);
+    for(auto c:frame->columns)
+    {
+        addColumn(c.first,c.second->getTwin());
+    }
+    for(auto k:*this)
+    {
+        uint32_t order= frame->getkmerOrder(k.getHashedKmer());
+        for (auto c:columns) {
+            c.second->setValueFromColumn(frame->columns[c.first],order,k.getOrder());
+        }
     }
 }
+
 kDataFrameMQF::kDataFrameMQF(uint64_t ksize, vector<uint64_t> countHistogram)
         :
         kDataFrameMQF(ksize,countHistogram,0,0.0) {
@@ -320,9 +340,9 @@ kDataFrame *kDataFrameMQF::getTwin() {
 void kDataFrameMQF::_reserve(uint64_t n) {
     QF *old = mqf;
     mqf = new QF();
-    uint64_t q = (uint64_t) ceil(log2((double) n ));
+    uint64_t q = (uint64_t) ceil(log2((double) n));
     std::cerr << "[DEBUG] Q: " << q << std::endl;
-    qf_init(mqf, (1ULL << q), hashbits, 0, 2, 32, true, "", 2038074761);
+    qf_init(mqf, (1ULL << q), hashbits, 0, 1, 32, true, "", 2038074761);
     if (old != NULL) {
         qf_migrate(old, mqf);
         qf_destroy(old);
@@ -512,14 +532,29 @@ bool kDataFrameMQF::insert(uint64_t kmer) {
     return true;
 }
 
+bool kDataFrameMQF::_insert(uint64_t kmer) {
+    if (load_factor() > 0.8)
+        reserve(mqf->metadata->nslots);
+    uint64_t hash = kmer % mqf->metadata->range;
+    // cout << "Inserting kmer: " << kmer << ", Hash: " << hash << endl;
+    try {
+        qf_insert(mqf, hash, 1, false, false);
+    }
+    catch (overflow_error &e) {
+        reserve(mqf->metadata->nslots);
+        return _insert(kmer);
+    }
+    return true;
+}
+
 uint64_t kDataFrameMQF::getkmerOrder(const string &kmer) {
     uint64_t hash = KD->hash_kmer(kmer) % mqf->metadata->range;
-    return qf_count_key(mqf, hash);
+    return itemOrder(mqf, hash);
 }
 
 uint64_t kDataFrameMQF::getkmerOrder(uint64_t kmer) {
     uint64_t hash = kmer % mqf->metadata->range;
-    return qf_count_key(mqf, hash);
+    return itemOrder(mqf, hash);
 }
 
 

@@ -246,6 +246,7 @@ class kDataFrameMQFIterator:public _kDataFrameIterator{
 private:
   QFi* qfi;
   kmerDecoder * KD;
+  uint64_t order;
 public:
   kDataFrameMQFIterator(QF*,std::uint64_t kSize,kmerDecoder* KD);
   kDataFrameMQFIterator(QFi*,std::uint64_t kSize,kmerDecoder* KD);
@@ -527,6 +528,9 @@ public:
   void _reserve (std::uint64_t n);
   void _reserve (vector<std::uint64_t> countHistogram);
   kDataFrame* getTwin();
+
+  bool _insert(std::uint64_t kmer);
+
 
   static std::uint64_t estimateMemory(std::uint64_t nslots,std::uint64_t slotSize,
     std::uint64_t fcounter, std::uint64_t tagSize);

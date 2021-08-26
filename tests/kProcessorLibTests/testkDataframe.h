@@ -51,6 +51,7 @@ public:
     kDataFrame* kframe;
     kDataFrame* kframeLoaded;
     kDataFrame* kframe2;
+    kDataFrameMQF* kframeMQF;
     unordered_map<string,int>* kmers;
     string fileName;
     virtual void SetUp()
@@ -59,6 +60,7 @@ public:
 	kframe->addCountColumn();
         kframeLoaded=nullptr;
         kframe2=nullptr;
+        kframeMQF=nullptr;
         kmers=kmersGen->getKmers((int)kframe->getkSize());
         fileName="tmp.kdataframe."+gen_random(8);
     }
@@ -77,6 +79,9 @@ public:
         if(kframeLoaded!= nullptr)
             delete kframeLoaded;
         deleteFiles(fileName);
+
+        if(kframeMQF!=nullptr)
+            delete kframeMQF;
     }
     static void TearDownTestSuite()
     {

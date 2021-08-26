@@ -1524,6 +1524,7 @@ template<typename T, typename ColumnType>
 Column *deduplicatedColumn<T, ColumnType>::getTwin() {
     deduplicatedColumn<T, ColumnType>* col=new deduplicatedColumn<T, ColumnType>();
     col->values=(ColumnType*)values->clone();
+    col->index=vector<uint32_t>(index.size());
     return col;
 }
 
@@ -1538,9 +1539,8 @@ template<typename T, typename ColumnType>
 void
 deduplicatedColumn<T, ColumnType>::setValueFromColumn(Column *Container, uint32_t inputOrder, uint32_t outputOrder) {
     deduplicatedColumn<T, ColumnType> *other = ((deduplicatedColumn<T, ColumnType> *) Container);
-    values = other->values;
     index[outputOrder] = other->index[inputOrder];
-
+    // values should be clones
 }
 
 template<typename T, typename ColumnType>
