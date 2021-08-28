@@ -42,8 +42,8 @@ namespace kProcessor {
 
     vector<uint64_t> estimateKmersHistogram(string fileName, int kSize, int threads);
 
-/// Load the kmers in the input file into the output kDataframe. Input File can be of formats: fastq,fasta, sam, and bam.
-    void parseSequences(string seqFileName, int nThreads, kDataFrame *output);
+// Load the kmers in the input file into the output kDataframe. Input File can be of formats: fastq,fasta, sam, and bam.
+// void parseSequences(string seqFileName, int nThreads, kDataFrame *output);
 
 /// Load the kmers in the input file into the output kDataframe. Input File can be of formats: fastq,fasta.
     void parseSequences(kmerDecoder *KD, kDataFrame *output);

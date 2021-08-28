@@ -30,9 +30,7 @@ typedef unsigned long int 	uint64_t;
 %template(MAPis) unordered_map<std::string, int>;
 */
 
-%template(batchQuery_sources) std::unordered_map<std::string, std::vector<std::vector<uint32_t>>>;
 %template(colorsList) vector<uint32_t>;
-%template(batchQuery_counts) std::unordered_map<std::string, std::vector<uint32_t>>;
 %template(kmerDecoderParams) map<string, int>;
 %include "swig_interfaces/modules/custom_typemaps.i"
 
@@ -43,59 +41,33 @@ typedef unsigned long int 	uint64_t;
 /******** kDataFrame Interface ************/
 %include "swig_interfaces/kDataFrame/kDataFrameIterator.i"
 %include "swig_interfaces/kDataFrame/kmerRow.i"
-%include "swig_interfaces/kDataFrame/defaultColumn.i"
 %include "swig_interfaces/kDataFrame/kDataFrame.i"
 %include "swig_interfaces/kDataFrame/kDataFrameMQF.i"
 %include "swig_interfaces/kDataFrame/kDataFrameMAP.i"
 %include "swig_interfaces/kDataFrame/kDataFramePHMAP.i"
 %include "swig_interfaces/kDataFrame/kDataFrameBlight.i"
- %include "swig_interfaces/kDataFrame/kDataFrameBMQF.i"
+%include "swig_interfaces/kDataFrame/kDataFrameBMQF.i"
+%include "swig_interfaces/kDataFrame/dbgIterator.i"
+%include "swig_interfaces/kDataFrame/defaultColumn.i"
+
 /******** kDataFrame Interface ************/
 
 
-/******** colored_kDataFrame Interface ************/
-
-%{
-#include "colored_kDataFrame.hpp"
-%}
-
-%include "swig_interfaces/colored_kDataFrame.i"
-
-
-/******** colored_kDataFrame Interface ************/
-
-/******** colorTable Interface ************/
-
-%{
-#include "colorTable.hpp"
-%}
-%include "swig_interfaces/colorTable.i"
-
-/******** batchQuery Interface ************/
-
-%{
-#include "batchQuery.hpp"
-%}
-
-%include "swig_interfaces/batchQuery.i"
-
-/******** batchQuery  Interface ************/
-
-%{
-#include "algorithms.hpp" // including algorithms
-%}
+// %{
+// #include "algorithms.hpp" // including algorithms
+// %}
 
 %template(kFramesVector) vector<kDataFrame*>; /*vector to tuple conversion*/
 
-%include "swig_interfaces/algorithms/algorithms.i"
+// %include "swig_interfaces/algorithms/algorithms.i"
 
 // extend_algorithms
 
-%{
-#include "extend_algorithms.hpp" // including algorithms
-%}
+// %{
+// #include "extend_algorithms.hpp" // including algorithms
+// %}
 
-%include "swig_interfaces/algorithms/extend_algorithms.i"
+// %include "swig_interfaces/algorithms/extend_algorithms.i"
 
 /******** HashUtils Interface ************/
 

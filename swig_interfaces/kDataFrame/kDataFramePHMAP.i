@@ -1,56 +1,54 @@
+
 class kDataFramePHMAP : public kDataFrame {
-    public:
-        kDataFramePHMAP();
 
-        kDataFramePHMAP(std::uint64_t ksize);
-        kDataFramePHMAP(std::uint64_t ksize, int mode);
-        kDataFramePHMAP(std::uint64_t kSize,vector<std::uint64_t> kmersHistogram);
+public:
+    kDataFramePHMAP();
 
-        kDataFrame *getTwin();
+    explicit kDataFramePHMAP(uint64_t ksize);
+    kDataFramePHMAP(std::uint64_t kSize, uint64_t nKmers);
+    kDataFramePHMAP(readingModes RM, hashingModes hash_mode, map<string, int> params);
+    kDataFramePHMAP(uint64_t ksize, hashingModes hash_mode);
+    kDataFramePHMAP(uint64_t kSize, vector<uint64_t> kmersHistogram);
 
-        void reserve(std::uint64_t n);
-        void reserve (vector<std::uint64_t> countHistogram);
 
-        bool kmerExist(string kmer);
+    kDataFrame* getTwin();
 
-        bool setCount(string kmer, std::uint64_t count);
-        bool setCount(std::uint64_t kmer, std::uint64_t count);
+    void _reserve(std::uint64_t n);
+    void _reserve(vector<std::uint64_t> countHistogram);
 
-        bool insert(string kmer);
+    bool kmerExist(string kmer);
+    bool kmerExist(uint64_t kmer);
 
-        bool insert(string kmer, std::uint64_t count);
+    bool setOrder(string& kmer, std::uint64_t count);
+    bool setOrder(std::uint64_t kmer, std::uint64_t count);
 
-        bool insert(std::uint64_t kmer, std::uint64_t count);
+    bool insert(const string& kmer);
+    bool insert(std::uint64_t kmer);
 
-        bool insert(std::uint64_t kmer);
+    std::uint64_t getkmerOrder(const string& kmer);
+    std::uint64_t getkmerOrder(std::uint64_t kmer);
 
-        std::uint64_t getCount(string kmer);
-        std::uint64_t getCount(std::uint64_t kmer);
+    bool erase(const string& kmer);
+    bool erase(std::uint64_t kmer);
 
-        bool erase(string kmer);
-        bool erase(std::uint64_t kmer);
+    std::uint64_t size();
 
-        std::uint64_t size();
+    std::uint64_t max_size();
 
-        std::uint64_t max_size();
+    float load_factor();
 
-        float load_factor();
+    float max_load_factor();
 
-        float max_load_factor();
+    kDataFrameIterator begin();
 
-        kDataFrameIterator begin();
+    kDataFrameIterator end();
+    kDataFrameIterator find(const string& kmer);
+    kDataFrameIterator find(uint64_t kmer);
 
-        // kDataFrameIterator end();
-        kDataFrameIterator find(string kmer);
-        kDataFrameIterator find(uint64_t kmer);
+    std::uint64_t bucket(string kmer);
 
-        std::uint64_t bucket(string kmer);
+    void serialize(string filePath);
 
-        void serialize(string filePath);
+    static kDataFrame* load(string filePath);
 
-        static kDataFrame *load(string filePath);
-
-        ~kDataFramePHMAP() {
-            this->MAP.clear();
-        }
 };

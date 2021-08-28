@@ -75,6 +75,7 @@ INCLUDES = [
     'ThirdParty/Blight',
     'ThirdParty/mum-hash',
     'ThirdParty/KMC/kmc_api',
+    'ThirdParty/caches/include',
 ]
 
 check_exist(INCLUDES)
@@ -147,7 +148,7 @@ kProcessor_module = Extension('_kProcessor',
                               libraries=LIBRARIES,
                               sources=SOURCES,
                               include_dirs=INCLUDES,
-                              # includes=BLIGHT_HEADERS,
+                            #   includes=BLIGHT_HEADERS,
                               extra_link_args=LINK_ARGS,
                               extra_compile_args=["-O3", "-Ofast", "-std=c++17", "-fPIC"],
                               swig_opts=SWIG_OPTS,

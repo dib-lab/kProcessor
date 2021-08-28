@@ -912,8 +912,6 @@ public:
     bool kmerExist(string kmer);
     bool kmerExist(uint64_t kmer);
 
-    bool setOrder(const string &kmer, std::uint64_t count);
-    bool setOrder(std::uint64_t kmer, std::uint64_t count);
 
     bool insert(const string &kmer);
     bool insert(std::uint64_t kmer);
