@@ -2,7 +2,7 @@
 
 namespace kProcessor {
 
-    uint64_t aggregate_count(kDataFrame *kf, const string &column_name) {
+    uint64_t aggregate_count(kDataFrame *kf, string &column_name) {
 
         any totalCountAny = kProcessor::aggregate(kf, (uint64_t) 0, [column_name](kmerRow it, any v) -> any {
             uint32_t count0;

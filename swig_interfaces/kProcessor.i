@@ -53,13 +53,13 @@ typedef unsigned long int 	uint64_t;
 /******** kDataFrame Interface ************/
 
 
-// %{
-// #include "algorithms.hpp" // including algorithms
-// %}
+%{
+#include "algorithms.hpp" // including algorithms
+%}
 
 %template(kFramesVector) vector<kDataFrame*>; /*vector to tuple conversion*/
 
-// %include "swig_interfaces/algorithms/algorithms.i"
+%include "swig_interfaces/algorithms/algorithms.i"
 
 // extend_algorithms
 

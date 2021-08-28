@@ -61,6 +61,11 @@ public:
 
 };
 
+%template(vectorColumn_int) vectorColumn<int>;
+%template(vectorColumn_bool) vectorColumn<bool>;
+%template(vectorColumn_double) vectorColumn<double>;
+%template(vectorColumn_uint32) vectorColumn<uint32_t>;
+
 
 
 
@@ -881,3 +886,7 @@ public:
 
 
 };
+
+%template(deduplicatedColumn_mixVectors) deduplicatedColumn<vector<uint32_t>, mixVectors>;
+%template(deduplicatedColumn_prefixTrie) deduplicatedColumn<vector<uint32_t>, prefixTrie>;
+%template(deduplicatedColumn_insertColorColumn) deduplicatedColumn<vector<uint32_t>, insertColorColumn>;
