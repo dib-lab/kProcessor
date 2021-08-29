@@ -530,6 +530,7 @@ public:
   kDataFrame* getTwin();
 
   bool _insert(std::uint64_t kmer);
+  bool _insert(string kmer);
 
 
   static std::uint64_t estimateMemory(std::uint64_t nslots,std::uint64_t slotSize,

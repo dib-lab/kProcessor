@@ -295,6 +295,9 @@ void setFunctionsTest::SetUp()
             // Mode 1 : kmers, KmerSize will be cloned from the kFrame
             kProcessor::countKmersFromFile(frames[i], {{"mode", 1}}, setFunctionsTestInput[0][i], 1000);
         }
+        kDataFrameMAP* indexRes=new kDataFrameMAP(k);
+        kProcessor::indexPriorityQueue(frames,"",indexRes);
+        frames.push_back(indexRes);
         input_SET[specification]=frames;
         it=input_SET.find(specification);
     }
@@ -930,7 +933,7 @@ TEST_P(setFunctionsTest,unioinTest)
       SUCCEED();
       //FAIL();
   }
-  for(int i =0 ;i<input.size();i++)
+  for(int i =0 ;i<input.size()-1;i++)
   {
     kDataFrame* kframe=input[i];
     auto it=kframe->begin();
@@ -961,7 +964,7 @@ TEST_P(setFunctionsTest,intersectTest)
   auto it=result->begin();
   while(it!=result->end())
   {
-    for(int i=0;i<input.size();i++)
+    for(int i=0;i<input.size()-1;i++)
     {
         auto kframe=input[i];
         uint32_t countGold=kframe->getKmerColumnValue<uint32_t,vectorColumn<uint32_t>>("count",it.getHashedKmer());
@@ -990,7 +993,7 @@ TEST_P(setFunctionsTest,differenceTest)
   while(it!=result->end())
   {
 
-      for(int i=1;i<input.size();i++)
+      for(int i=1;i<input.size()-1;i++)
       {
         int count=input[i]->getCount((*it).getKmer());
         ASSERT_EQ(count,0);
@@ -1016,6 +1019,87 @@ TEST_P(setFunctionsTest,innerJoinTest)
         int count=input[1]->getCount((*it).getKmer());
         ASSERT_GE(count,1);
         it++;
+    }
+
+
+}
+
+TEST_P(setFunctionsTest,innerJoinTest2)
+{
+    try {
+        result=kProcessor::innerJoin(input,{0,1,2});
+    }
+    catch (const logic_error& expected)
+    {
+        SUCCEED();
+
+    }
+    auto it=result->begin();
+    while(it!=result->end())
+    {
+        for(unsigned i=0 ; i<2; i++){
+            uint32_t countRes;
+            it.getColumnValue<uint32_t,vectorColumn<uint32_t> >("count"+to_string(i),countRes);
+            uint32_t countGold=input[i]->getCount(it.getHashedKmer());
+            ASSERT_EQ(countRes,countGold);
+        }
+        vector<uint32_t> colorsCorrect=input[2]->getKmerColumnValue<vector<uint32_t >, deduplicatedColumn<vector<uint32_t>, mixVectors> >("color",it.getHashedKmer());
+        vector<uint32_t> colors;
+        it.getColumnValue<vector<uint32_t >, deduplicatedColumn<vector<uint32_t>, mixVectors> >("color2",colors);
+        ASSERT_EQ(colors,colorsCorrect);
+        it++;
+
+    }
+
+
+}
+
+
+TEST_P(setFunctionsTest,parallelinnerJoinTest)
+{
+    try {
+        vector<string> inputFileNames(input.size());
+        for(unsigned i=0;i<input.size();i++)
+        {
+            inputFileNames[i]="tmp.parrallelinerJoin."+to_string(i)+".";
+            input[i]->save(inputFileNames[i]);
+        }
+        result=kProcessor::parallelJoin(inputFileNames,{0,1,2});
+    }
+    catch (const logic_error& expected)
+    {
+        SUCCEED();
+
+    }
+    auto it=result->begin();
+    while(it!=result->end())
+    {
+        for(unsigned i=0 ; i<2; i++){
+            uint32_t countRes;
+            it.getColumnValue<uint32_t,vectorColumn<uint32_t> >("count"+to_string(i),countRes);
+            uint32_t countGold=input[i]->getCount(it.getHashedKmer());
+            if(countRes!=countGold)
+            {
+                cout<<it.getHashedKmer()<<endl;
+                for(int k=0;k<2;k++)
+                {
+                    cout<<k<< "->";
+                    cout<<input[k]->kmerExist(it.getHashedKmer())<<" ";
+                    cout<<input[k]->getCount(it.getHashedKmer())<<endl;
+                }
+
+                cout<<"order in output is "<<result->getkmerOrder(it.getHashedKmer())<<endl;
+                for(auto c: result->columns)
+                    cout<<c.second->size()<<endl;
+            }
+            ASSERT_EQ(countRes,countGold);
+        }
+        vector<uint32_t> colorsCorrect=input[2]->getKmerColumnValue<vector<uint32_t >, deduplicatedColumn<vector<uint32_t>, mixVectors> >("color",it.getHashedKmer());
+        vector<uint32_t> colors;
+        it.getColumnValue<vector<uint32_t >, deduplicatedColumn<vector<uint32_t>, mixVectors> >("color2",colors);
+        ASSERT_EQ(colors,colorsCorrect);
+        it++;
+
     }
 
 
