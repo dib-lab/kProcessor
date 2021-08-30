@@ -131,7 +131,7 @@ namespace kProcessor {
     kDataFrame* innerJoin(vector<kDataFrame *> input, vector<uint32_t> kmersToKeep);
     //colored_kDataFrame * indexPriorityQueue(kmerDecoder *KD, string names_fileName, kDataFrame *frame);
     //colored_kDataFrame * indexPriorityQueue2(kmerDecoder *KD, string names_fileName, kDataFrame *frame);
-
+    kDataFrame* parallelJoin(vector<string>& kdataframeFileNames, vector<uint32_t> kmersToKeep,uint64_t numThreads=1);
     
 }
 #endif

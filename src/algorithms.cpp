@@ -617,7 +617,53 @@ namespace kProcessor {
     kmerDecoder* initialize_kmerDecoder(int kSize, hashingModes HM = integer_hasher){
         return new Kmers(kSize, HM);
     }
+    kDataFrame* parallelJoin(vector<string>& kdataframeFileNames, vector<uint32_t> kmersToKeep,uint64_t numThreads)
+    {
+        kDataFrame* kf=kDataFrame::load(kdataframeFileNames[0]);
+        uint64_t kSize=kf->ksize();
+        delete kf;
+        kDataFramePHMAP* output=new kDataFramePHMAP(kSize);
+        for(unsigned i =0; i<kdataframeFileNames.size(); i++)
+        {
+            auto fileName=kdataframeFileNames[i];
+            kDataFrame* kf=kDataFrame::load(fileName);
+            cout<<"Loaded "<<fileName<<endl;
+            vector<pair<Column*,Column*> > columns(kf->columns.size());
+            unsigned t=0;
+            for(auto c: kf->columns)
+            {
 
+                output->addColumn(c.first+to_string(i),c.second->getTwin());
+                columns[t]= make_pair(c.second,output->columns[c.first+to_string(i)]);
+                t++;
+            }
+            cout<<"Columns created"<<endl;
+            uint64_t kmersInserted=0;
+            for(auto k:*kf)
+            {
+                if(kmersInserted++ % 10000001 ==0 )
+                    cout<<kmersInserted<< " kmers are processed "<<endl;
+                output->insert(k.getHashedKmer());
+                for(auto c:columns)
+                {
+                  //  output->setKmerColumnValueFromOtherColumn(kf,c.first,c.second,k.getHashedKmer());
+                    uint32_t order=output->getkmerOrder(k.getHashedKmer());
+                    if(order>= c.second->size())
+                    {
+                        c.second->resize(c.second->size()*2);
+                    }
+                    c.second->setValueFromColumn( c.first,k.getOrder(),order);
+                }
+            }
+            cout<<"Finished "<<fileName<<endl;
+            delete kf;
+        }
+        for(auto c:output->columns)
+        {
+            c.second->resize(output->size()+1);
+        }
+        return output;
+    }
     void indexMega(string filename,string tmpFolder, kDataFrame *frame) {
 
         uint32_t chunkSize=1000;

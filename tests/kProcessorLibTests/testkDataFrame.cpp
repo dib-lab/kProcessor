@@ -567,11 +567,11 @@ TEST_P(kDataFrameTest,convertTOMQF)
     kframe->addColumn("doubleColumn",new vectorColumn<double>(kframe->size()));
 
 
-    unordered_map<uint64_t,tuple<int,double,bool> > simColumns;
+    unordered_map<string,tuple<int,double,bool> > simColumns;
     kDataFrameIterator it=kframe->begin();
     while(it!=kframe->end())
     {
-        uint64_t kmer=it.getHashedKmer();
+        string kmer=it.getKmer();
 
         int randInt=rand()%1000000;
         double randDouble=(double)(rand()%1000000);
@@ -591,7 +591,7 @@ TEST_P(kDataFrameTest,convertTOMQF)
 
     for(auto simRow:simColumns)
     {
-        uint64_t kmer=simRow.first;
+        string kmer=simRow.first;
         int randInt=get<0>(simRow.second);
         double randDouble=get<1>(simRow.second);
         bool randBool=get<2>(simRow.second);
@@ -605,6 +605,74 @@ TEST_P(kDataFrameTest,convertTOMQF)
         EXPECT_EQ(randBool,retBool);
 
     }
+}
+TEST_P(kDataFrameTest,convertTOBMQF)
+{
+    EXPECT_EQ(kframe->empty(), true);
+
+    int insertedKmers=0;
+    for(auto k:*kmers)
+    {
+        kframe->setCount(k.first,k.second);
+        if(kframe->load_factor()>=kframe->max_load_factor()*0.8)
+        {
+            break;
+        }
+        insertedKmers++;
+    }
+   // int checkedKmers=0;
+    kframe->addColumn("boolColumn",new vectorColumn<bool>(kframe->size()));
+    kframe->addColumn("intColumn",new vectorColumn<int>(kframe->size()));
+    kframe->addColumn("doubleColumn",new vectorColumn<double>(kframe->size()));
+
+
+    unordered_map<string,tuple<int,double,bool> > simColumns;
+    kDataFrameIterator it=kframe->begin();
+    while(it!=kframe->end())
+    {
+        string kmer=it.getKmer();
+
+        int randInt=rand()%1000000;
+        double randDouble=(double)(rand()%1000000);
+        bool randBool=rand()%2==0;
+
+        simColumns[kmer]=make_tuple(randInt,randDouble,randBool);
+
+        kframe->setKmerColumnValue<int, vectorColumn<int> >("intColumn",kmer,randInt);
+        kframe->setKmerColumnValue<double, vectorColumn<double> >("doubleColumn",kmer,randDouble);
+        kframe->setKmerColumnValue<bool, vectorColumn<bool> >("boolColumn",kmer,randBool);
+        it++;
+    }
+
+    kDataFrameBMQF* kframeMQF=new kDataFrameBMQF(kframe,"tmp.bmqf."+ gen_random(10));
+    delete kframe;
+    kframe= nullptr;
+    unsigned checkedKmers=0;
+    for(auto k:*kframeMQF)
+    {
+        bool kmerExists=simColumns.find(k.getKmer()) != simColumns.end();
+        ASSERT_EQ(kmerExists, true);
+        checkedKmers++;
+    }
+    ASSERT_EQ(checkedKmers,simColumns.size());
+//    for(auto simRow:simColumns)
+//    {
+//        string kmer=simRow.first;
+//        int randInt=get<0>(simRow.second);
+//        double randDouble=get<1>(simRow.second);
+//        bool randBool=get<2>(simRow.second);
+//
+//        bool kmerExists=kframeMQF->kmerExist(kmer);
+//        ASSERT_EQ(kmerExists, true);
+////        int retInt=kframeMQF->getKmerColumnValue<int, vectorColumn<int> >("intColumn",kmer);
+////        double retDouble=kframeMQF->getKmerColumnValue<double, vectorColumn<double> >("doubleColumn",kmer);
+////        bool retBool=kframeMQF->getKmerColumnValue<bool, vectorColumn<bool> >("boolColumn",kmer);
+////
+////        ASSERT_EQ(randInt,retInt);
+////        ASSERT_EQ(randDouble,retDouble);
+////        EXPECT_EQ(randBool,retBool);
+//
+//    }
 }
 
 
