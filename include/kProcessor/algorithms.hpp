@@ -139,6 +139,8 @@ namespace kProcessor {
     kDataFrame* filter_zeroCounts(kDataFrame* res, uint32_t allDatasets);
     void transform_foldchange(kDataFrame* res, uint32_t nSamples, uint32_t nControl, uint32_t allDatasets, const string& foldChangeColName);
     void aggregate_foldChangeByGene(kDataFrame* res, unordered_map<string, vector<double>>* foldChangeByGene, const string& foldChangeColName, string& colorColumnName);
+
+    kDataFrame* parallelJoin(vector<string>& kdataframeFileNames, vector<uint32_t> kmersToKeep,uint64_t numThreads=1);
     
 }
 #endif

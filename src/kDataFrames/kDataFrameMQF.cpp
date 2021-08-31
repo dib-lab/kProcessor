@@ -288,7 +288,7 @@ kDataFrame(frame->ksize()){
     this->class_name = "MQF"; // Temporary until resolving #17
     this->falsePositiveRate = 0.0;
     lastKmerOrder=1;
-    KD = new Kmers(kSize, frame->KD->hash_mode);
+    KD = new Kmers(kSize, integer_hasher);
     hashbits = 2 * kSize;
     range = (1ULL << hashbits);
     mqf = NULL;
@@ -299,7 +299,7 @@ kDataFrame(frame->ksize()){
 
     for(auto k:*frame)
     {
-        _insert(k.getHashedKmer());
+        _insert(k.getKmer());
     }
     qf_ComputeItemsOrder(mqf);
     for(auto c:frame->columns)
@@ -308,7 +308,7 @@ kDataFrame(frame->ksize()){
     }
     for(auto k:*this)
     {
-        uint32_t order= frame->getkmerOrder(k.getHashedKmer());
+        uint32_t order= frame->getkmerOrder(k.getKmer());
         for (auto c:columns) {
             c.second->setValueFromColumn(frame->columns[c.first],order,k.getOrder());
         }
@@ -546,7 +546,20 @@ bool kDataFrameMQF::_insert(uint64_t kmer) {
     }
     return true;
 }
-
+bool kDataFrameMQF::_insert(string kmer) {
+    if (load_factor() > 0.8)
+        reserve(mqf->metadata->nslots);
+    uint64_t hash = KD->hash_kmer(kmer) % mqf->metadata->range;
+    // cout << "Inserting kmer: " << kmer << ", Hash: " << hash << endl;
+    try {
+        qf_insert(mqf, hash, 1, false, false);
+    }
+    catch (overflow_error &e) {
+        reserve(mqf->metadata->nslots);
+        return _insert(hash);
+    }
+    return true;
+}
 uint64_t kDataFrameMQF::getkmerOrder(const string &kmer) {
     uint64_t hash = KD->hash_kmer(kmer) % mqf->metadata->range;
     return itemOrder(mqf, hash);

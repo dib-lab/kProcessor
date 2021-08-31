@@ -53,6 +53,7 @@ void kDataFrameBMQF::deleteMemoryBuffer()
 
 kDataFrameBMQF::kDataFrameBMQF(uint64_t ksize,string path):
         kDataFrame(ksize){
+    this->class_name = "BMQF";
     this->falsePositiveRate=0.0;
     KD = (new Kmers(kSize));
     hashbits=2*kSize;
@@ -64,6 +65,7 @@ kDataFrameBMQF::kDataFrameBMQF(uint64_t ksize,string path):
 }
 kDataFrameBMQF::kDataFrameBMQF(uint64_t ksize,uint64_t nKmers,string path):
         kDataFrame(ksize){
+    this->class_name = "BMQF";
     this->falsePositiveRate=0.0;
     KD = (new Kmers(kSize));
     hashbits=2*kSize;
@@ -76,6 +78,7 @@ kDataFrameBMQF::kDataFrameBMQF(uint64_t ksize,uint64_t nKmers,string path):
 kDataFrameBMQF::kDataFrameBMQF(bufferedMQF* bufferedmqf,uint64_t ksize,double falsePositiveRate):
         kDataFrame(ksize)
 {
+    this->class_name = "BMQF";
     fileName=bufferedmqf->filename.substr(0,bufferedmqf->filename.size()-5);
     this->bufferedmqf=bufferedmqf;
     this->falsePositiveRate=falsePositiveRate;
@@ -93,6 +96,41 @@ kDataFrameBMQF::kDataFrameBMQF(bufferedMQF* bufferedmqf,uint64_t ksize,double fa
     endIterator=new  kDataFrameIterator(it,(kDataFrame*)this);
 
 }
+
+kDataFrameBMQF::kDataFrameBMQF(kDataFrame* frame,string filename) :
+kDataFrame(frame->ksize()){
+    fileName=filename;
+    this->class_name = "BMQF"; // Temporary until resolving #17
+    this->falsePositiveRate = 0.0;
+    lastKmerOrder=1;
+    KD = new Kmers(kSize, integer_hasher);
+    hashbits = 2 * kSize;
+    range = (1ULL << hashbits);
+    bufferedmqf = NULL;
+
+    endIterator=NULL;
+    reserve(frame->size()
+
+    );
+
+    for(auto k:*frame)
+    {
+        _insert(k.getKmer());
+    }
+    //qf_ComputeItemsOrder(bufferedmqf);
+//    for(auto c:frame->columns)
+//    {
+//        addColumn(c.first,c.second->getTwin());
+//    }
+//    for(auto k:*this)
+//    {
+//        uint32_t order= frame->getkmerOrder(k.getKmer());
+//        for (auto c:columns) {
+//            c.second->setValueFromColumn(frame->columns[c.first],order,k.getOrder());
+//        }
+//    }
+}
+
 
 kDataFrame* kDataFrameBMQF::getTwin(){
     uint64_t q=log2(bufferedmqf->disk->metadata->nslots);
@@ -270,6 +308,7 @@ bool kDataFrameBMQF::setOrder(const string &kmer, uint64_t count){
 
 
 bool kDataFrameBMQF::insert(const string &kmer){
+    throw logic_error("kDataFrameBMQF is static. You cant add new kmers ");
     if(load_factor()>0.85){
         // ERROR FLAG: _reserve(bufferedmqf->memoryBuffer->metadata->nslots)
         reserve(bufferedmqf->disk->metadata->nslots);
@@ -282,6 +321,23 @@ bool kDataFrameBMQF::insert(const string &kmer){
     {
         reserve(bufferedmqf->disk->metadata->nslots);
         return insert(kmer);
+    }
+    return true;
+}
+
+bool kDataFrameBMQF::_insert(const string &kmer){
+    if(load_factor()>0.85){
+        // ERROR FLAG: _reserve(bufferedmqf->memoryBuffer->metadata->nslots)
+        reserve(bufferedmqf->disk->metadata->nslots);
+    }
+    uint64_t hash= KD->hash_kmer(kmer) % bufferedmqf->disk->metadata->range;
+    try{
+        bufferedMQF_insert(bufferedmqf,hash,lastKmerOrder++,false,false);
+    }
+    catch(overflow_error & e)
+    {
+        reserve(bufferedmqf->disk->metadata->nslots);
+        return _insert(kmer);
     }
     return true;
 }
@@ -323,7 +379,28 @@ bool kDataFrameBMQF::setOrder(uint64_t  hash,uint64_t count){
 
 
 bool kDataFrameBMQF::insert(uint64_t hash){
+    throw logic_error("kDataFrameBMQF is static. You cant add new kmers ");
     if(load_factor()>0.9){
+        // ERROR FLAG: _reserve(bufferedmqf->memoryBuffer->metadata->nslots)
+        reserve(bufferedmqf->disk->metadata->nslots);
+    }
+    try{
+        bufferedMQF_insert(bufferedmqf,hash,lastKmerOrder++,false,false);
+    }
+    catch(overflow_error & e)
+    {
+        reserve(bufferedmqf->disk->metadata->nslots);
+        return insert(hash);
+    }
+    if(load_factor()>0.85){
+        // ERROR FLAG: _reserve(bufferedmqf->memoryBuffer->metadata->nslots)
+        _reserve(bufferedmqf->disk->metadata->nslots);
+    }
+    return true;
+}
+
+bool kDataFrameBMQF::_insert(uint64_t hash){
+    if(load_factor()>0.85){
         // ERROR FLAG: _reserve(bufferedmqf->memoryBuffer->metadata->nslots)
         reserve(bufferedmqf->disk->metadata->nslots);
     }
