@@ -1,4 +1,4 @@
-#include "extend_algorithms.hpp"
+#include "algorithms.hpp"
 
 namespace kProcessor {
 
@@ -73,22 +73,22 @@ namespace kProcessor {
     }
 
 
-    unordered_map<uint32_t, vector<double>> aggregate_foldChangeByGene(kDataFrame *res, const string &colorColumn) {
+    // unordered_map<uint32_t, vector<double>> aggregate_foldChangeByGene(kDataFrame *res, const string &colorColumn) {
 
-        auto foldChangeByGene = new unordered_map<uint32_t, vector<double> >();
-        any genesGatherAny = kProcessor::aggregate(res, foldChangeByGene, [=](kmerRow it, any v) -> any {
-            auto dict = any_cast<unordered_map<uint32_t, vector<double>> *>(v);
-            double foldChange;
-            it.getColumnValue<double, vectorColumn<double> >("foldChange", foldChange);
-            vector<uint32_t> color;
-            it.getColumnValue<vector<uint32_t>, deduplicatedColumn<vector<uint32_t>, StringColorColumn> >(colorColumn,
-                                                                                                          color);
-            for (auto c: color) {
-                (*dict)[c].push_back(foldChange);
-            }
-            return (any) (dict);
-        });
+    //     auto foldChangeByGene = new unordered_map<uint32_t, vector<double> >();
+    //     any genesGatherAny = kProcessor::aggregate(res, foldChangeByGene, [=](kmerRow it, any v) -> any {
+    //         auto dict = any_cast<unordered_map<uint32_t, vector<double>> *>(v);
+    //         double foldChange;
+    //         it.getColumnValue<double, vectorColumn<double> >("foldChange", foldChange);
+    //         vector<uint32_t> color;
+    //         it.getColumnValue<vector<uint32_t>, deduplicatedColumn<vector<uint32_t>, StringColorColumn> >(colorColumn,
+    //                                                                                                       color);
+    //         for (auto c: color) {
+    //             (*dict)[c].push_back(foldChange);
+    //         }
+    //         return (any) (dict);
+    //     });
 
-        return any_cast<unordered_map<uint32_t, vector<double>>>(foldChangeByGene);
-    }
+    //     return any_cast<unordered_map<uint32_t, vector<double>>>(foldChangeByGene);
+    // }
 }
