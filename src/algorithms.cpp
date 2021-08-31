@@ -622,7 +622,8 @@ namespace kProcessor {
         kDataFrame* kf=kDataFrame::load(kdataframeFileNames[0]);
         uint64_t kSize=kf->ksize();
         delete kf;
-        kDataFramePHMAP* output=new kDataFramePHMAP(kSize);
+       // kDataFramePHMAP* output=new kDataFramePHMAP(kSize);
+        kDataFrameMAP* output=new kDataFrameMAP(kSize);
         for(unsigned i =0; i<kdataframeFileNames.size(); i++)
         {
             auto fileName=kdataframeFileNames[i];
@@ -641,7 +642,7 @@ namespace kProcessor {
             uint64_t kmersInserted=0;
             for(auto k:*kf)
             {
-                if(kmersInserted++ % 10000001 ==0 )
+                if(kmersInserted++ % 100001 ==0 )
                     cout<<kmersInserted<< " kmers are processed "<<endl;
                 output->insert(k.getHashedKmer());
                 for(auto c:columns)
