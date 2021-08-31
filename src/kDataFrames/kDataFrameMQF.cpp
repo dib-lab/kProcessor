@@ -341,7 +341,7 @@ void kDataFrameMQF::_reserve(uint64_t n) {
     QF *old = mqf;
     mqf = new QF();
     uint64_t q = (uint64_t) ceil(log2((double) n));
-    std::cerr << "[DEBUG] Q: " << q << std::endl;
+    // std::cerr << "[DEBUG] Q: " << q << std::endl;
     qf_init(mqf, (1ULL << q), hashbits, 0, 1, 32, true, "", 2038074761);
     if (old != NULL) {
         qf_migrate(old, mqf);
