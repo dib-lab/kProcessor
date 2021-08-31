@@ -94,7 +94,11 @@ namespace kProcessor {
 
 
     // Extended functions
-    uint64_t aggregate_count(kDataFrame *kf, string &column_name);
+    uint64_t aggregate_count(kDataFrame* kf, const string& countColName);
+    void transform_normalize(kDataFrame* kf, const string& countColName, uint64_t totalCount);
+    kDataFrame* filter_zeroCounts(kDataFrame* res, uint32_t allDatasets);
+    void transform_foldchange(kDataFrame* res, uint32_t nSamples, uint32_t nControl, uint32_t allDatasets, const string& foldChangeColName);
+    void aggregate_foldChangeByGene(kDataFrame* res, unordered_map<string, vector<double>>* foldChangeByGene, const string& foldChangeColName, string& colorColumnName);
     
 
 }
