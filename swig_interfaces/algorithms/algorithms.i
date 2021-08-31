@@ -92,4 +92,9 @@ namespace kProcessor {
 
     kDataFrame* innerJoin(vector<kDataFrame*> input, vector<uint32_t> kmersToKeep);
 
+
+    // Extended functions
+    uint64_t aggregate_count(kDataFrame *kf, string &column_name);
+    
+
 }

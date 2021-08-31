@@ -887,6 +887,7 @@ public:
 
 };
 
+%template(deduplicatedColumn_stringColorColumn) deduplicatedColumn<vector<string>, StringColorColumn>;
 %template(deduplicatedColumn_mixVectors) deduplicatedColumn<vector<uint32_t>, mixVectors>;
 %template(deduplicatedColumn_prefixTrie) deduplicatedColumn<vector<uint32_t>, prefixTrie>;
 %template(deduplicatedColumn_insertColorColumn) deduplicatedColumn<vector<uint32_t>, insertColorColumn>;
