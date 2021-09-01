@@ -856,13 +856,15 @@ TEST_P(kDataFrameTest,transformFilterLessThan5)
 
 }
 
-TEST_P(kDataFrameTest,transformFilterLessThan5MultipleColumns)
+TEST_P(kDataFrameTest,FilterLessThan5MultipleColumns)
 {
     EXPECT_EQ(kframe->empty(), true);
-
+    kframe->addColumn("boolColumn",new vectorColumn<bool>());
     for(auto k:*kmers)
     {
-        kframe->setCount(k.first,(k.second%9)+1);
+        uint32_t count=(k.second%9)+1;
+        kframe->setCount(k.first,count);
+        kframe->setKmerColumnValue<bool, vectorColumn<bool> >("boolColumn",k.first,count%5==0);
         if(kframe->load_factor()>=kframe->max_load_factor()*0.8){
             break;
         }
@@ -880,8 +882,12 @@ TEST_P(kDataFrameTest,transformFilterLessThan5MultipleColumns)
         string kmer=it.getKmer();
         uint32_t count;
         it.getColumnValue<uint32_t, vectorColumn<uint32_t> >("count",count);
+        bool boolvalue;
+        it.getColumnValue<bool, vectorColumn<bool> >("boolColumn",boolvalue);
+
         //ASSERT_EQ(count,((*kmers)[kmer]%9)+1);
         ASSERT_GE(count,5);
+        ASSERT_EQ(count%5==0,boolvalue);
         it++;
     }
     delete kframe2;
