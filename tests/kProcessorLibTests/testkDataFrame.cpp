@@ -260,9 +260,9 @@ INSTANTIATE_TEST_SUITE_P(testFrames,
 );
 
 
-INSTANTIATE_TEST_SUITE_P(testFrames,
-                         kDataFrameBufferedTest,
-                         ::testing::Values(31));
+//INSTANTIATE_TEST_SUITE_P(testFrames,
+//                         kDataFrameBufferedTest,
+//                         ::testing::Values(31));
 
 vector<string> fastqFiles={"test.noN.fastq"};
 INSTANTIATE_TEST_SUITE_P(testcounting,
@@ -295,6 +295,9 @@ void setFunctionsTest::SetUp()
             // Mode 1 : kmers, KmerSize will be cloned from the kFrame
             kProcessor::countKmersFromFile(frames[i], {{"mode", 1}}, setFunctionsTestInput[0][i], 1000);
         }
+        kDataFrameMAP* indexRes=new kDataFrameMAP(k);
+        kProcessor::indexPriorityQueue(frames,"",indexRes);
+        frames.push_back(indexRes);
         input_SET[specification]=frames;
         it=input_SET.find(specification);
     }
@@ -564,11 +567,11 @@ TEST_P(kDataFrameTest,convertTOMQF)
     kframe->addColumn("doubleColumn",new vectorColumn<double>(kframe->size()));
 
 
-    unordered_map<uint64_t,tuple<int,double,bool> > simColumns;
+    unordered_map<string,tuple<int,double,bool> > simColumns;
     kDataFrameIterator it=kframe->begin();
     while(it!=kframe->end())
     {
-        uint64_t kmer=it.getHashedKmer();
+        string kmer=it.getKmer();
 
         int randInt=rand()%1000000;
         double randDouble=(double)(rand()%1000000);
@@ -588,7 +591,7 @@ TEST_P(kDataFrameTest,convertTOMQF)
 
     for(auto simRow:simColumns)
     {
-        uint64_t kmer=simRow.first;
+        string kmer=simRow.first;
         int randInt=get<0>(simRow.second);
         double randDouble=get<1>(simRow.second);
         bool randBool=get<2>(simRow.second);
@@ -602,6 +605,74 @@ TEST_P(kDataFrameTest,convertTOMQF)
         EXPECT_EQ(randBool,retBool);
 
     }
+}
+TEST_P(kDataFrameTest,convertTOBMQF)
+{
+    EXPECT_EQ(kframe->empty(), true);
+
+    int insertedKmers=0;
+    for(auto k:*kmers)
+    {
+        kframe->setCount(k.first,k.second);
+        if(kframe->load_factor()>=kframe->max_load_factor()*0.8)
+        {
+            break;
+        }
+        insertedKmers++;
+    }
+   // int checkedKmers=0;
+    kframe->addColumn("boolColumn",new vectorColumn<bool>(kframe->size()));
+    kframe->addColumn("intColumn",new vectorColumn<int>(kframe->size()));
+    kframe->addColumn("doubleColumn",new vectorColumn<double>(kframe->size()));
+
+
+    unordered_map<string,tuple<int,double,bool> > simColumns;
+    kDataFrameIterator it=kframe->begin();
+    while(it!=kframe->end())
+    {
+        string kmer=it.getKmer();
+
+        int randInt=rand()%1000000;
+        double randDouble=(double)(rand()%1000000);
+        bool randBool=rand()%2==0;
+
+        simColumns[kmer]=make_tuple(randInt,randDouble,randBool);
+
+        kframe->setKmerColumnValue<int, vectorColumn<int> >("intColumn",kmer,randInt);
+        kframe->setKmerColumnValue<double, vectorColumn<double> >("doubleColumn",kmer,randDouble);
+        kframe->setKmerColumnValue<bool, vectorColumn<bool> >("boolColumn",kmer,randBool);
+        it++;
+    }
+
+    kDataFrameBMQF* kframeMQF=new kDataFrameBMQF(kframe,"tmp.bmqf."+ gen_random(10));
+    delete kframe;
+    kframe= nullptr;
+    unsigned checkedKmers=0;
+    for(auto k:*kframeMQF)
+    {
+        bool kmerExists=simColumns.find(k.getKmer()) != simColumns.end();
+        ASSERT_EQ(kmerExists, true);
+        checkedKmers++;
+    }
+    ASSERT_EQ(checkedKmers,simColumns.size());
+//    for(auto simRow:simColumns)
+//    {
+//        string kmer=simRow.first;
+//        int randInt=get<0>(simRow.second);
+//        double randDouble=get<1>(simRow.second);
+//        bool randBool=get<2>(simRow.second);
+//
+//        bool kmerExists=kframeMQF->kmerExist(kmer);
+//        ASSERT_EQ(kmerExists, true);
+////        int retInt=kframeMQF->getKmerColumnValue<int, vectorColumn<int> >("intColumn",kmer);
+////        double retDouble=kframeMQF->getKmerColumnValue<double, vectorColumn<double> >("doubleColumn",kmer);
+////        bool retBool=kframeMQF->getKmerColumnValue<bool, vectorColumn<bool> >("boolColumn",kmer);
+////
+////        ASSERT_EQ(randInt,retInt);
+////        ASSERT_EQ(randDouble,retDouble);
+////        EXPECT_EQ(randBool,retBool);
+//
+//    }
 }
 
 
@@ -930,7 +1001,7 @@ TEST_P(setFunctionsTest,unioinTest)
       SUCCEED();
       //FAIL();
   }
-  for(int i =0 ;i<input.size();i++)
+  for(int i =0 ;i<input.size()-1;i++)
   {
     kDataFrame* kframe=input[i];
     auto it=kframe->begin();
@@ -961,7 +1032,7 @@ TEST_P(setFunctionsTest,intersectTest)
   auto it=result->begin();
   while(it!=result->end())
   {
-    for(int i=0;i<input.size();i++)
+    for(int i=0;i<input.size()-1;i++)
     {
         auto kframe=input[i];
         uint32_t countGold=kframe->getKmerColumnValue<uint32_t,vectorColumn<uint32_t>>("count",it.getHashedKmer());
@@ -990,7 +1061,7 @@ TEST_P(setFunctionsTest,differenceTest)
   while(it!=result->end())
   {
 
-      for(int i=1;i<input.size();i++)
+      for(int i=1;i<input.size()-1;i++)
       {
         int count=input[i]->getCount((*it).getKmer());
         ASSERT_EQ(count,0);
@@ -1016,6 +1087,87 @@ TEST_P(setFunctionsTest,innerJoinTest)
         int count=input[1]->getCount((*it).getKmer());
         ASSERT_GE(count,1);
         it++;
+    }
+
+
+}
+
+TEST_P(setFunctionsTest,innerJoinTest2)
+{
+    try {
+        result=kProcessor::innerJoin(input,{0,1,2});
+    }
+    catch (const logic_error& expected)
+    {
+        SUCCEED();
+
+    }
+    auto it=result->begin();
+    while(it!=result->end())
+    {
+        for(unsigned i=0 ; i<2; i++){
+            uint32_t countRes;
+            it.getColumnValue<uint32_t,vectorColumn<uint32_t> >("count"+to_string(i),countRes);
+            uint32_t countGold=input[i]->getCount(it.getHashedKmer());
+            ASSERT_EQ(countRes,countGold);
+        }
+        vector<uint32_t> colorsCorrect=input[2]->getKmerColumnValue<vector<uint32_t >, deduplicatedColumn<vector<uint32_t>, mixVectors> >("color",it.getHashedKmer());
+        vector<uint32_t> colors;
+        it.getColumnValue<vector<uint32_t >, deduplicatedColumn<vector<uint32_t>, mixVectors> >("color2",colors);
+        ASSERT_EQ(colors,colorsCorrect);
+        it++;
+
+    }
+
+
+}
+
+
+TEST_P(setFunctionsTest,parallelinnerJoinTest)
+{
+    try {
+        vector<string> inputFileNames(input.size());
+        for(unsigned i=0;i<input.size();i++)
+        {
+            inputFileNames[i]="tmp.parrallelinerJoin."+to_string(i)+".";
+            input[i]->save(inputFileNames[i]);
+        }
+        result=kProcessor::parallelJoin(inputFileNames,{0,1,2});
+    }
+    catch (const logic_error& expected)
+    {
+        SUCCEED();
+
+    }
+    auto it=result->begin();
+    while(it!=result->end())
+    {
+        for(unsigned i=0 ; i<2; i++){
+            uint32_t countRes;
+            it.getColumnValue<uint32_t,vectorColumn<uint32_t> >("count"+to_string(i),countRes);
+            uint32_t countGold=input[i]->getCount(it.getHashedKmer());
+            if(countRes!=countGold)
+            {
+                cout<<it.getHashedKmer()<<endl;
+                for(int k=0;k<2;k++)
+                {
+                    cout<<k<< "->";
+                    cout<<input[k]->kmerExist(it.getHashedKmer())<<" ";
+                    cout<<input[k]->getCount(it.getHashedKmer())<<endl;
+                }
+
+                cout<<"order in output is "<<result->getkmerOrder(it.getHashedKmer())<<endl;
+                for(auto c: result->columns)
+                    cout<<c.second->size()<<endl;
+            }
+            ASSERT_EQ(countRes,countGold);
+        }
+        vector<uint32_t> colorsCorrect=input[2]->getKmerColumnValue<vector<uint32_t >, deduplicatedColumn<vector<uint32_t>, mixVectors> >("color",it.getHashedKmer());
+        vector<uint32_t> colors;
+        it.getColumnValue<vector<uint32_t >, deduplicatedColumn<vector<uint32_t>, mixVectors> >("color2",colors);
+        ASSERT_EQ(colors,colorsCorrect);
+        it++;
+
     }
 
 
@@ -1351,183 +1503,183 @@ TEST_P(indexingTest,saveAndLoad)
 }
 
 
-TEST_P(kDataFrameBufferedTest,iterateOverAllKmers)
-{
-    EXPECT_EQ(kframe->empty(), true);
-    unordered_map<string,int>* kmers=kmersGen->getKmers((int)kframe->getkSize());
-    int numInsertedKmers=0;
-   // unordered_map<string,int> insertedKmers;
-    //insertedKmers.clear();
-
-    for(auto k:*kmers)
-    {
-        numInsertedKmers++;
-        kframe->setCount(k.first,k.second);
-      //  insertedKmers[k.first]+=k.second;
-        if(kframe->load_factor()>=kframe->max_load_factor()*0.8){
-            break;
-        }
-    }
-
-
-    int testKmers=0;
-    for(auto it:*kframe)
-    {
-        string kmer=it.getKmer();
-        uint64_t count=it.getCount();
-        ASSERT_EQ(count,(*kmers)[kmer]);
-        //kmers->erase(kmer);
-        testKmers++;
-        //if(testKmers%1000==0)
-          //  cout<<testKmers<<endl;
-    }
-    EXPECT_EQ(numInsertedKmers,testKmers);
+//TEST_P(kDataFrameBufferedTest,iterateOverAllKmers)
+//{
+//    EXPECT_EQ(kframe->empty(), true);
+//    unordered_map<string,int>* kmers=kmersGen->getKmers((int)kframe->getkSize());
+//    int numInsertedKmers=0;
+//   // unordered_map<string,int> insertedKmers;
+//    //insertedKmers.clear();
+//
+//    for(auto k:*kmers)
+//    {
+//        numInsertedKmers++;
+//        kframe->setCount(k.first,k.second);
+//      //  insertedKmers[k.first]+=k.second;
+//        if(kframe->load_factor()>=kframe->max_load_factor()*0.8){
+//            break;
+//        }
+//    }
+//
+//
+//    int testKmers=0;
+//    for(auto it:*kframe)
+//    {
+//        string kmer=it.getKmer();
+//        uint64_t count=it.getCount();
+//        ASSERT_EQ(count,(*kmers)[kmer]);
+//        //kmers->erase(kmer);
+//        testKmers++;
+//        //if(testKmers%1000==0)
+//          //  cout<<testKmers<<endl;
+//    }
+//    EXPECT_EQ(numInsertedKmers,testKmers);
+////    delete kframe;
+////    kframe=nullptr;
+//
+//}
+//
+//TEST_P(kDataFrameBufferedTest,autoResize)
+//{
+//
+//    EXPECT_EQ(kframe->empty(), true);
+//    unordered_map<string,int>* kmers=kmersGen->getKmers((int)kframe->getkSize());
+//    //unordered_map<string,int> insertedKmers;
+//
+//    int numInsertedKmers=0;
+//    for(auto k:*kmers)
+//    {
+//        numInsertedKmers++;
+//        kframe->setCount(k.first,k.second);
+//        if(kframe->load_factor()>=kframe->max_load_factor()*0.8){
+//            break;
+//        }
+//      //  insertedKmers[k.first]+=k.second;
+//
+//
+//    }
+//
+//    kDataFrameIterator it=kframe->begin();
+//    int testedKmers=0;
+//    while(it!=kframe->end())
+//    {
+//        string kmer=it.getKmer();
+//        uint64_t count=it.getCount();
+//        ASSERT_EQ(count,(*kmers)[kmer]);
+//        //insertedKmers.erase(kmer);
+//        it++;
+//        testedKmers++;
+//    }
+//    EXPECT_EQ(numInsertedKmers,testedKmers);
+////    delete kframe;
+////    kframe=nullptr;
+//}
+//TEST_P(kDataFrameBufferedTest,saveAndIterateOverAllKmers)
+//{
+//    string filename=kframe->getFilename();;
+//    EXPECT_EQ(kframe->empty(), true);
+//    unordered_map<string,int>* kmers=kmersGen->getKmers((int)kframe->getkSize());
+//    int numInsertedKmers=0;
+//    //  unordered_map<string,int> insertedKmers;
+//    for(auto k:*kmers)
+//    {
+//        numInsertedKmers++;
+//        kframe->setCount(k.first,k.second);
+//        if(kframe->load_factor()>=kframe->max_load_factor()*0.8){
+//            break;
+//        }
+//    }
+//
+//    kframe->save(filename);
 //    delete kframe;
 //    kframe=nullptr;
-
-}
-
-TEST_P(kDataFrameBufferedTest,autoResize)
-{
-
-    EXPECT_EQ(kframe->empty(), true);
-    unordered_map<string,int>* kmers=kmersGen->getKmers((int)kframe->getkSize());
-    //unordered_map<string,int> insertedKmers;
-
-    int numInsertedKmers=0;
-    for(auto k:*kmers)
-    {
-        numInsertedKmers++;
-        kframe->setCount(k.first,k.second);
-        if(kframe->load_factor()>=kframe->max_load_factor()*0.8){
-            break;
-        }
-      //  insertedKmers[k.first]+=k.second;
-
-
-    }
-
-    kDataFrameIterator it=kframe->begin();
-    int testedKmers=0;
-    while(it!=kframe->end())
-    {
-        string kmer=it.getKmer();
-        uint64_t count=it.getCount();
-        ASSERT_EQ(count,(*kmers)[kmer]);
-        //insertedKmers.erase(kmer);
-        it++;
-        testedKmers++;
-    }
-    EXPECT_EQ(numInsertedKmers,testedKmers);
+//    kDataFrame* kframeLoaded=kDataFrame::load(filename);
+//    int checkedKmers=0;
+//    kDataFrameIterator it=kframeLoaded->begin();
+//    while(it!=kframeLoaded->end())
+//    {
+//        string kmer=it.getKmer();
+//        uint64_t count=it.getCount();
+//        ASSERT_EQ(count,(*kmers)[kmer]);
+//        checkedKmers++;
+//        it++;
+//    }
+//    EXPECT_EQ(checkedKmers,numInsertedKmers);
+////    delete kframeLoaded;
+////    delete kframe;
+////    kframe=nullptr;
+//}
+//
+//TEST_P(kDataFrameBufferedTest,saveAndIterateOverAllKmersNoMemory)
+//{
+//    string filename=kframe->getFilename();
+//    EXPECT_EQ(kframe->empty(), true);
+//    unordered_map<string,int>* kmers=kmersGen->getKmers((int)kframe->getkSize());
+//    int numInsertedKmers=0;
+//    //  unordered_map<string,int> insertedKmers;
+//    for(auto k:*kmers)
+//    {
+//        numInsertedKmers++;
+//        kframe->setCount(k.first,k.second);
+//        if(kframe->load_factor()>=kframe->max_load_factor()*0.8){
+//            break;
+//        }
+//    }
+//
+//    kframe->save(filename);
 //    delete kframe;
 //    kframe=nullptr;
-}
-TEST_P(kDataFrameBufferedTest,saveAndIterateOverAllKmers)
-{
-    string filename=kframe->getFilename();;
-    EXPECT_EQ(kframe->empty(), true);
-    unordered_map<string,int>* kmers=kmersGen->getKmers((int)kframe->getkSize());
-    int numInsertedKmers=0;
-    //  unordered_map<string,int> insertedKmers;
-    for(auto k:*kmers)
-    {
-        numInsertedKmers++;
-        kframe->setCount(k.first,k.second);
-        if(kframe->load_factor()>=kframe->max_load_factor()*0.8){
-            break;
-        }
-    }
-
-    kframe->save(filename);
-    delete kframe;
-    kframe=nullptr;
-    kDataFrame* kframeLoaded=kDataFrame::load(filename);
-    int checkedKmers=0;
-    kDataFrameIterator it=kframeLoaded->begin();
-    while(it!=kframeLoaded->end())
-    {
-        string kmer=it.getKmer();
-        uint64_t count=it.getCount();
-        ASSERT_EQ(count,(*kmers)[kmer]);
-        checkedKmers++;
-        it++;
-    }
-    EXPECT_EQ(checkedKmers,numInsertedKmers);
-//    delete kframeLoaded;
-//    delete kframe;
-//    kframe=nullptr;
-}
-
-TEST_P(kDataFrameBufferedTest,saveAndIterateOverAllKmersNoMemory)
-{
-    string filename=kframe->getFilename();
-    EXPECT_EQ(kframe->empty(), true);
-    unordered_map<string,int>* kmers=kmersGen->getKmers((int)kframe->getkSize());
-    int numInsertedKmers=0;
-    //  unordered_map<string,int> insertedKmers;
-    for(auto k:*kmers)
-    {
-        numInsertedKmers++;
-        kframe->setCount(k.first,k.second);
-        if(kframe->load_factor()>=kframe->max_load_factor()*0.8){
-            break;
-        }
-    }
-
-    kframe->save(filename);
-    delete kframe;
-    kframe=nullptr;
-    kframeLoaded=(kDataFrameBMQF*)kDataFrame::load(filename);
-    kframeLoaded->deleteMemoryBuffer();
-    int checkedKmers=0;
-    kDataFrameIterator it=kframeLoaded->begin();
-    while(it!=kframeLoaded->end())
-    {
-        string kmer=it.getKmer();
-        uint64_t count=it.getCount();
-        ASSERT_EQ(count,(*kmers)[kmer]);
-        checkedKmers++;
-        it++;
-    }
-    EXPECT_EQ(checkedKmers,numInsertedKmers);
-//    delete kframeLoaded;
-//    delete kframe;
-//    kframe=nullptr;
-//    kframeLoaded= nullptr;
-}
-
-TEST_P(kDataFrameBufferedTest,transformPlus10)
-{
-
-    EXPECT_EQ(kframe->empty(), true);
-    unordered_map<string,int>* kmers=kmersGen->getKmers((int)kframe->getkSize());
-    unordered_map<string,int> insertedKmers;
-    for(auto k:*kmers)
-    {
-        kframe->setCount(k.first,k.second);
-        insertedKmers[k.first]+=k.second;
-        if(kframe->load_factor()>=kframe->max_load_factor()*0.3){
-            break;
-        }
-    }
-    int checkedKmers=0;
-    kframeLoaded=(kDataFrameBMQF*)kProcessor::transform(kframe,[](kmerRow k)
-    {
-        k.count+=10;
-        return k;
-    });
-    kDataFrameIterator it=kframeLoaded->begin();
-    while(it!=kframeLoaded->end())
-    {
-        string kmer=it.getKmer();
-        uint64_t count=it.getCount();
-        ASSERT_EQ(count,insertedKmers[kmer]+10);
-        insertedKmers.erase(kmer);
-        it++;
-    }
-    EXPECT_EQ(insertedKmers.size(),0);
-
-}
+//    kframeLoaded=(kDataFrameBMQF*)kDataFrame::load(filename);
+//    kframeLoaded->deleteMemoryBuffer();
+//    int checkedKmers=0;
+//    kDataFrameIterator it=kframeLoaded->begin();
+//    while(it!=kframeLoaded->end())
+//    {
+//        string kmer=it.getKmer();
+//        uint64_t count=it.getCount();
+//        ASSERT_EQ(count,(*kmers)[kmer]);
+//        checkedKmers++;
+//        it++;
+//    }
+//    EXPECT_EQ(checkedKmers,numInsertedKmers);
+////    delete kframeLoaded;
+////    delete kframe;
+////    kframe=nullptr;
+////    kframeLoaded= nullptr;
+//}
+//
+//TEST_P(kDataFrameBufferedTest,transformPlus10)
+//{
+//
+//    EXPECT_EQ(kframe->empty(), true);
+//    unordered_map<string,int>* kmers=kmersGen->getKmers((int)kframe->getkSize());
+//    unordered_map<string,int> insertedKmers;
+//    for(auto k:*kmers)
+//    {
+//        kframe->setCount(k.first,k.second);
+//        insertedKmers[k.first]+=k.second;
+//        if(kframe->load_factor()>=kframe->max_load_factor()*0.3){
+//            break;
+//        }
+//    }
+//    int checkedKmers=0;
+//    kframeLoaded=(kDataFrameBMQF*)kProcessor::transform(kframe,[](kmerRow k)
+//    {
+//        k.count+=10;
+//        return k;
+//    });
+//    kDataFrameIterator it=kframeLoaded->begin();
+//    while(it!=kframeLoaded->end())
+//    {
+//        string kmer=it.getKmer();
+//        uint64_t count=it.getCount();
+//        ASSERT_EQ(count,insertedKmers[kmer]+10);
+//        insertedKmers.erase(kmer);
+//        it++;
+//    }
+//    EXPECT_EQ(insertedKmers.size(),0);
+//
+//}
 
 //TEST_P(kDataFrameBufferedTest,parsingTest)
 //{

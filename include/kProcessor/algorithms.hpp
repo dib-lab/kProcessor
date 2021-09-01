@@ -140,6 +140,7 @@ namespace kProcessor {
     kDataFrame *transform_foldchange(kDataFrame *res, const string &output_col_name, const string &counts_col_prefix, uint32_t nTestSamples, uint32_t nAllSamples);
     unordered_map<uint32_t, vector<double>> aggregate_foldChangeByGene(kDataFrame *res, const string &colorColumn);
 
+    kDataFrame* parallelJoin(vector<string>& kdataframeFileNames, vector<uint32_t> kmersToKeep,uint64_t numThreads=1);
     
 }
 #endif

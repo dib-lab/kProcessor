@@ -162,6 +162,7 @@ class setFunctionsTest : public ::testing::TestWithParam<tuple<string, int>>{
 public:
     kDataFrame* result;
     vector<kDataFrame*> input;
+
     virtual void SetUp();
 
     virtual void TearDown()

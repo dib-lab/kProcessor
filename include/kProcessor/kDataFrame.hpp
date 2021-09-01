@@ -530,6 +530,7 @@ public:
   kDataFrame* getTwin();
 
   bool _insert(std::uint64_t kmer);
+  bool _insert(string kmer);
 
 
   static std::uint64_t estimateMemory(std::uint64_t nslots,std::uint64_t slotSize,
@@ -622,6 +623,9 @@ public:
   //count histogram is array where count of kmers repeated n times is found at index n. index 0 holds number of distinct kmers.
   kDataFrameBMQF(std::uint64_t ksize,vector<std::uint64_t> countHistogram,uint8_t tagSize
     ,double falsePositiveRate);
+
+  kDataFrameBMQF(kDataFrame* frame,string filename);
+
   ~kDataFrameBMQF(){
     delete bufferedmqf;
   }
@@ -638,6 +642,8 @@ public:
     std::uint64_t numHashBits,std::uint64_t tagSize,
   std::uint64_t *res_noSlots,std::uint64_t *res_fixedSizeCounter, std::uint64_t *res_memory);
 
+  bool _insert(std::uint64_t kmer);
+  bool _insert(const string& kmer);
 
 
   bool insert(const string &kmer);

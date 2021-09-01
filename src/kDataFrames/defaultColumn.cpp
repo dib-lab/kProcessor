@@ -1539,6 +1539,8 @@ template<typename T, typename ColumnType>
 void
 deduplicatedColumn<T, ColumnType>::setValueFromColumn(Column *Container, uint32_t inputOrder, uint32_t outputOrder) {
     deduplicatedColumn<T, ColumnType> *other = ((deduplicatedColumn<T, ColumnType> *) Container);
+    while(outputOrder>=index.size())
+        index.resize(index.size()*2);
     index[outputOrder] = other->index[inputOrder];
     // values should be clones
 }
