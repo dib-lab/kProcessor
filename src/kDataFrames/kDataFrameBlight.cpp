@@ -109,14 +109,14 @@ bool kDataFrameBlight::kmerExist(uint64_t kmerS) {
 
 
 
-bool kDataFrameBlight::insert(const string &kmerS) {
+uint32_t kDataFrameBlight::insert(const string &kmerS) {
     throw logic_error("kDataFrameBlight is static. Insertion is not allowed");
     return true;
 }
 
 
 
-bool kDataFrameBlight::insert(uint64_t kmer) {
+uint32_t kDataFrameBlight::insert(uint64_t kmer) {
     throw logic_error("kDataFrameBlight is static. Insertion is not allowed");
     return true;
 }

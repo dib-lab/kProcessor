@@ -644,16 +644,15 @@ namespace kProcessor {
             {
                 if(kmersInserted++ % 100001 ==0 )
                     cout<<kmersInserted<< " kmers are processed "<<endl;
-                output->insert(k.getHashedKmer());
+                uint32_t order=output->insert(k.getHashedKmer());
+                uint32_t inputOrder=k.getOrder();
                 for(auto c:columns)
                 {
-                  //  output->setKmerColumnValueFromOtherColumn(kf,c.first,c.second,k.getHashedKmer());
-                    uint32_t order=output->getkmerOrder(k.getHashedKmer());
                     if(order>= c.second->size())
                     {
                         c.second->resize(c.second->size()*2);
                     }
-                    c.second->setValueFromColumn( c.first,k.getOrder(),order);
+                    c.second->setValueFromColumn( c.first,inputOrder,order);
                 }
             }
             cout<<"Finished "<<fileName<<endl;

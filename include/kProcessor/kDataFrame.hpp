@@ -319,13 +319,13 @@ public:
   virtual void _reserve (vector<std::uint64_t> countHistogram)=0;
 /// insert the kmer one time in the kDataFrame, or increment the kmer count if it is already exists.
 /*! Returns bool value indicating whether the kmer is inserted or not*/
-  virtual bool insert(const string &kmer)=0;
+  virtual uint32_t insert(const string &kmer)=0;
 /// insert the hashed kmer one time in the kDataFrame, or increment the kmer count if it is already exists.
 /*! Returns bool value indicating whether the kmer is inserted or not*/
-  virtual bool insert(std::uint64_t kmer)=0;
+  virtual uint32_t insert(std::uint64_t kmer)=0;
   /// insert the kmer in the kmer row time in the kDataFrame, or increment the kmer count with the count in the row if it is already exists.
   /*! Returns bool value indicating whether the kmer is inserted or not*/
-  bool insert(kmerRow k);
+  uint32_t insert(kmerRow k);
   kDataFrame::iterator insert(kDataFrame::iterator& it,kmerRow k);
 /// set the kmer's count to N time in the kDataFrame
 /*! Returns bool value indicating whether the kmer is inserted or not.
@@ -545,8 +545,8 @@ public:
   bool setOrder(const string &kmer, std::uint64_t count);
   bool setOrder(std::uint64_t kmer, std::uint64_t count);
   
-  bool insert(const string &kmer);
-  bool insert(std::uint64_t kmer);
+  uint32_t insert(const string &kmer);
+  uint32_t insert(std::uint64_t kmer) override;
   std::uint64_t getkmerOrder(const string &kmer);
   std::uint64_t getkmerOrder(std::uint64_t kmer);
 
@@ -646,8 +646,8 @@ public:
   bool _insert(const string& kmer);
 
 
-  bool insert(const string &kmer);
-  bool insert(std::uint64_t kmer);
+  uint32_t insert(const string &kmer) override;
+  uint32_t insert(std::uint64_t kmer) override;
   bool setOrder(const string &kmer, std::uint64_t count);
   bool setOrder(std::uint64_t kmer, std::uint64_t count);
 
@@ -711,10 +711,10 @@ public:
 
   bool setOrder(const string &kmer, std::uint64_t count);
   bool setOrder(std::uint64_t kmer, std::uint64_t count);
-  bool insert(const string &kmer);
-  bool insert(std::uint64_t kmer);
-  std::uint64_t getkmerOrder(const string &kmer);
-  std::uint64_t getkmerOrder(std::uint64_t kmerS);
+  uint32_t insert(const string &kmer) override;
+  uint32_t insert(std::uint64_t kmer) override;
+  std::uint64_t getkmerOrder(const string &kmer) override;
+  std::uint64_t getkmerOrder(std::uint64_t kmerS) override;
   bool erase(const string &kmer);
   bool erase(std::uint64_t kmer);
 
@@ -801,8 +801,8 @@ public:
     bool setOrder(const string &kmer, std::uint64_t count);
     bool setOrder(std::uint64_t kmer, std::uint64_t count);
 
-    bool insert(const string &kmer);
-    bool insert(std::uint64_t kmer);
+    uint32_t insert(const string &kmer) override;
+    uint32_t insert(std::uint64_t kmer) override;
 
     std::uint64_t getkmerOrder(const string &kmer);
     std::uint64_t getkmerOrder(std::uint64_t kmer);
@@ -921,8 +921,8 @@ public:
     bool setOrder(const string &kmer, std::uint64_t count);
     bool setOrder(std::uint64_t kmer, std::uint64_t count);
 
-    bool insert(const string &kmer);
-    bool insert(std::uint64_t kmer);
+    uint32_t insert(const string &kmer) override;
+    uint32_t insert(std::uint64_t kmer) override;
 
     std::uint64_t getkmerOrder(const string &kmer);
     std::uint64_t getkmerOrder(std::uint64_t kmer);

@@ -152,27 +152,29 @@ bool kDataFramePHMAP::kmerExist(string kmerS) {
 }
 bool kDataFramePHMAP::kmerExist(uint64_t kmer) {
     return (this->MAP.find(kmer) == this->MAP.end()) ? 0 : 1;
+
 }
 
 
 
 
-bool kDataFramePHMAP::insert(const string &kmerS) {
+uint32_t kDataFramePHMAP::insert(const string &kmerS) {
     auto it=this->MAP.find(KD->hash_kmer(kmerS));
     if(it!=this->MAP.end())
-        return false;
+        return it->second;
     this->MAP[KD->hash_kmer(kmerS)] = lastKmerOrder++;
-    return true;
+    return lastKmerOrder-1;
 }
 
 
 
-bool kDataFramePHMAP::insert(uint64_t kmer) {
+uint32_t kDataFramePHMAP::insert(uint64_t kmer) {
     auto it=this->MAP.find(kmer);
     if(it!=this->MAP.end())
-        return false;
-    this->MAP[kmer] = lastKmerOrder++;
-    return true;
+        return it->second;
+    this->MAP.insert(make_pair(kmer,lastKmerOrder++));
+    //this->MAP[kmer] = lastKmerOrder++;
+    return lastKmerOrder-1;
 }
 
 
