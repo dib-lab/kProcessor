@@ -1414,12 +1414,17 @@ TEST_P(indexingTest,indexPriorityQAndOptimize)
     KF->columns["color"]=newColor;
     delete prevColor;
 
+    KF->save(fileName);
+    delete KF;
+    KF= nullptr;
+    kframeLoaded=kDataFrame::load(fileName);
+
     for(int i=0;i<inputFrames.size();i++)
     {
         kDataFrameIterator it=inputFrames[i]->begin();
         while(it!=inputFrames[i]->end())
         {
-            vector<uint32_t> colors=KF->getKmerColumnValue<vector<uint32_t >, deduplicatedColumn<vector<uint32_t>, prefixTrie> >("color",it.getHashedKmer());
+            vector<uint32_t> colors=kframeLoaded->getKmerColumnValue<vector<uint32_t >, deduplicatedColumn<vector<uint32_t>, prefixTrie> >("color",it.getHashedKmer());
             ASSERT_NE(colors.size(),0);
             auto colorIt=colors.end();
             colorIt=find(colors.begin(),colors.end(),i);
@@ -1429,9 +1434,6 @@ TEST_P(indexingTest,indexPriorityQAndOptimize)
         delete inputFrames[i];
     }
 
-    delete KF;
-    KF=nullptr;
-    delete KD_KMERS;
 
 }
 //
