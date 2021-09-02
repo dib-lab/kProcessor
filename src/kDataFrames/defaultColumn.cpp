@@ -1486,7 +1486,7 @@ Column *prefixTrie::clone() {
 
     res->starts=starts;
     res->idsMap=idsMap;
-    translateEdges=translateEdges;
+    res->translateEdges=translateEdges;
 
     return res;
 }
