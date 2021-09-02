@@ -380,7 +380,7 @@ The difference between setCount and insert is that setCount set the count to N n
   static kDataFrame* load(string filePath);
   void save(string filePath);
 
-
+  vector<string> getColumnNames();
   std::uint64_t getkSize() const{return kSize;}
 
   // duplicate for easier name in python, getkSize won't be wrapped

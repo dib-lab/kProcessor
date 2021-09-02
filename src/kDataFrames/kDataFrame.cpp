@@ -294,6 +294,15 @@ dbgIterator kDataFrame::getDBGIterator(const string &kmer)
     return dbgIterator(this,kmer);
 }
 
+vector<string> kDataFrame::getColumnNames()
+{
+    vector<string> res(columns.size());
+    unsigned i=0;
+    for(auto c :columns)
+        res[i++]=c.first;
+    return res;
+}
+
 
 bool kDataFrameIterator::setCount(std::uint64_t count){
     return origin->setCount(iterator->getHashedKmer(),count);

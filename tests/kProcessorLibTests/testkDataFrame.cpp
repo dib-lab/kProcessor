@@ -542,6 +542,12 @@ TEST_P(kDataFrameTest,multiColumns)
       ASSERT_EQ(randBool,retBool);
 
     }
+
+    vector<string> correctColumNames={"intColumn","doubleColumn","boolColumn","count"};
+    sort(correctColumNames.begin(),correctColumNames.end());
+    vector<string> columnNames=kframe->getColumnNames();
+    sort(columnNames.begin(),columnNames.end());
+    ASSERT_EQ(columnNames,correctColumNames);
     delete kframe;
     kframe= nullptr;
 
@@ -735,6 +741,13 @@ TEST_P(kDataFrameTest,saveAndLoadMultiColumns)
         EXPECT_EQ(randBool,retBool);
 
     }
+
+    vector<string> correctColumNames={"intColumn","doubleColumn","boolColumn","count"};
+    sort(correctColumNames.begin(),correctColumNames.end());
+    vector<string> columnNames=kframeLoaded->getColumnNames();
+    sort(columnNames.begin(),columnNames.end());
+    ASSERT_EQ(columnNames,correctColumNames);
+
     delete kframeLoaded;
     kframeLoaded=nullptr;
 
