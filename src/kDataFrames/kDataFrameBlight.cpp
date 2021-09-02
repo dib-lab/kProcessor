@@ -2,7 +2,7 @@
 #include <iostream>
 #include <fstream>
 #include "Utils/kmer.h"
-#include <filesystem>
+
 
 /*
  *****************************
@@ -91,29 +91,6 @@ kDataFrameBlight::kDataFrameBlight()
 {
 
 }
-std::filesystem::path create_temporary_directory(
-        unsigned long long max_tries = 1000) {
-    auto tmp_dir = std::filesystem::temp_directory_path();
-    unsigned long long i = 0;
-    std::random_device dev;
-    std::mt19937 prng(dev());
-    std::uniform_int_distribution<uint64_t> rand(0);
-    std::filesystem::path path;
-    while (true) {
-        std::stringstream ss;
-        ss << std::hex << rand(prng);
-        path = tmp_dir / ss.str();
-        // true if the directory was created.
-        if (std::filesystem::create_directory(path)) {
-            break;
-        }
-        if (i == max_tries) {
-            throw std::runtime_error("could not find non-existing directory");
-        }
-        i++;
-    }
-    return path;
-}
 
 kDataFrameBlight::kDataFrameBlight(uint64_t ksize,string input_fasta_file) {
     this->class_name = "Blight"; // Temporary until resolving #17
@@ -125,8 +102,7 @@ kDataFrameBlight::kDataFrameBlight(uint64_t ksize,string input_fasta_file) {
     int subsampling_bits(0);
 
     blight_index=  new kmer_Set_Light(ksize, core_number, minimizer_size, file_number_exponent, subsampling_bits);
-    string workingDirectory=create_temporary_directory();
-    workingDirectory+="/";
+    string workingDirectory="";
     blight_index->construct_index(input_fasta_file, workingDirectory);
 
     kmer_Set_Light_iterator it(blight_index);
