@@ -52,7 +52,7 @@ public:
       dataV=vector<T>(1000);
     }
     vectorColumn(uint32_t size){
-        dataV=vector<T>(size);
+        dataV=vector<T>(size+1);
     }
     ~vectorColumn(){
 
