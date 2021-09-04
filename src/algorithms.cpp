@@ -10,6 +10,7 @@
 #include <chrono>
 #include "defaultColumn.hpp"
 #include "kmc_file.h"
+#include <omp.h>
 
 using namespace std::chrono;
 
@@ -622,8 +623,11 @@ namespace kProcessor {
         kDataFrame* kf=kDataFrame::load(kdataframeFileNames[0]);
         uint64_t kSize=kf->ksize();
         delete kf;
-       // kDataFramePHMAP* output=new kDataFramePHMAP(kSize);
-        kDataFrameMAP* output=new kDataFrameMAP(kSize);
+        kDataFramePHMAP* output=new kDataFramePHMAP(kSize,10000000);//this value should be estimated
+        //kDataFrameMAP* output=new kDataFrameMAP(kSize);
+        omp_set_num_threads(numThreads);
+        cout<<omp_get_num_threads<<endl;
+#pragma omp parallel for
         for(unsigned i =0; i<kdataframeFileNames.size(); i++)
         {
             auto fileName=kdataframeFileNames[i];
@@ -631,6 +635,8 @@ namespace kProcessor {
             cout<<"Loaded "<<fileName<<endl;
             vector<pair<Column*,Column*> > columns(kf->columns.size());
             unsigned t=0;
+//#pragma omp critical
+            {
             for(auto c: kf->columns)
             {
 
@@ -639,6 +645,7 @@ namespace kProcessor {
                 t++;
             }
             cout<<"Columns created"<<endl;
+        }
             uint64_t kmersInserted=0;
             for(auto k:*kf)
             {

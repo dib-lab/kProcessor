@@ -19,6 +19,7 @@ int main(int argc, char *argv[])
     uint64_t  q;
     string tmpFolder="";
     string outPath;
+    bool checkIndex=false;
 
     app.add_option("-i,--input", inputPath,
                    "File containig a list of kDataframe indexes paths")->required();
@@ -28,10 +29,11 @@ int main(int argc, char *argv[])
                    "Path for Temporary Folder");
     app.add_option("-o,--output", outPath,
                    "Output Path")->required();
+    app.add_flag("-c,--checkResults", checkIndex,
+                 "Check if the index created successfully");
 
 
     CLI11_PARSE(app, argc, argv);
-
 
 
 
@@ -47,8 +49,60 @@ int main(int argc, char *argv[])
         filenames.push_back(sample);
         kmersToKeep.push_back(ii++);
     }
-    kProcessor::parallelJoin(filenames,kmersToKeep,1);
-    cout<<"Merging finished"<<endl;
+    for(auto sample:filenames)
+    {
+
+    }
+    kDataFrame* output=kProcessor::parallelJoin(filenames,kmersToKeep,1);
+    cout<<"Merging finished "<<endl;
+    cout<<"Final number of kmers "<<output->size()<<endl;
+
+    if(checkIndex)
+    {
+        ii=0;
+        int Errors=100;
+
+#pragma omp parallel for
+        for(unsigned i=0;i<filenames.size();i++)
+        {
+            string sample=filenames[i];
+            cout<<"Testing "<<sample<<endl;
+            kDataFrame* kf=kDataFrame::load(sample);
+            string colorColumnName="color"+to_string(i);
+            string sampleColor="color";
+            for(auto k:*kf)
+            {
+                vector<uint32_t> colorsCorrect;
+
+                k.getColumnValue<vector<uint32_t >, deduplicatedColumn<vector<uint32_t>, prefixTrie> >(sampleColor,colorsCorrect);
+
+                vector<uint32_t> colorsQuered=
+                        output->getKmerColumnValue<vector<uint32_t >, deduplicatedColumn<vector<uint32_t>, prefixTrie> >(colorColumnName,k.getHashedKmer());
+                if(colorsQuered!=colorsCorrect)
+                {
+                    cout<<"Error Found at sample "<<sample<< " at kmer "<<k.getKmer()<<endl;
+                    cout<<"Expected color is ";
+                    for(auto c:colorsCorrect)
+                    {
+                        cout<<c<<" ";
+                    }
+                    cout<<endl<<"Found Color ";
+                    for(auto c:colorsQuered)
+                    {
+                        cout<<c<<" ";
+                    }
+                    cout<<endl;
+                    Errors--;
+                    if(Errors<=0)
+                        break ;
+                }
+            }
+            cout<<"Finished "<<sample<<endl;
+            delete kf;
+        }
+    }
+    return 0;
+
 
     // output->save(outPath);
     //    cout<<"Saving Finished"<<endl;

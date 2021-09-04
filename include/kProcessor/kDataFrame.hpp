@@ -743,8 +743,15 @@ private:
     kDataFramePHMAP *origin;
     kmerDecoder * KD;
 public:
-    flat_hash_map<std::uint64_t, std::uint64_t>::iterator iterator;
-    kDataFramePHMAPIterator(flat_hash_map<std::uint64_t, std::uint64_t>::iterator, kDataFramePHMAP *origin, std::uint64_t kSize);
+    typedef typename phmap::parallel_flat_hash_map<std::uint64_t,
+    std::uint64_t,
+    std::hash<uint64_t>,
+    std::equal_to<uint64_t>,
+    std::allocator<std::pair<const uint64_t, uint64_t>>,
+    4,
+    std::mutex>::iterator itType;
+    itType iterator;
+    kDataFramePHMAPIterator(itType, kDataFramePHMAP *origin, std::uint64_t kSize);
 
     kDataFramePHMAPIterator(const kDataFramePHMAPIterator &);
 
@@ -773,8 +780,16 @@ public:
 // kDataFramePHMAP _____________________________
 
 class kDataFramePHMAP : public kDataFrame {
+public:
+    typedef  phmap::parallel_flat_hash_map<std::uint64_t,
+    std::uint64_t,
+    std::hash<uint64_t>,
+    std::equal_to<uint64_t>,
+    std::allocator<std::pair<const uint64_t, uint64_t>>,
+    4,
+    std::mutex> MapType;
 private:
-    flat_hash_map<std::uint64_t, std::uint64_t> MAP;
+     MapType MAP;
 public:
     kDataFramePHMAP();
 
