@@ -588,10 +588,6 @@ TEST_P(kDataFrameTest,multiColumnsDefaultValue)
         double randDouble=(double)(rand()%1000000);
         bool randBool=rand()%2==0;
 
-        if(kframe->getKmerColumnValue<int, vectorColumn<int> >("intColumn",kmer) !=0){
-            cout<<kframe->getKmerColumnValue<int, vectorColumn<int> >("intColumn",kmer)<<endl;
-            cout<<(simColumns.find(kmer)==simColumns.end())<<endl;
-        }
         simColumns[kmer]=make_tuple(randInt,randDouble,randBool);
 
         if(randInt%3==0){
@@ -629,6 +625,25 @@ TEST_P(kDataFrameTest,multiColumnsDefaultValue)
 
     }
 
+    delete kframe;
+    kframe= nullptr;
+
+}
+
+TEST_P(kDataFrameTest,multiColumnsMissingKmer)
+{
+    EXPECT_EQ(kframe->empty(), true);
+
+    int checkedKmers=0;
+    kframe->addColumn("intColumn",new vectorColumn<int>(kframe->size()));
+    string kmer=kmers->begin()->first;
+    try{
+        kframe->setKmerColumnValue<int, vectorColumn<int> >("intColumn",kmer,10);
+        FAIL();
+    }
+    catch(std::logic_error const & err) {
+        EXPECT_EQ(err.what(),std::string("kmer not found!"));
+    }
     delete kframe;
     kframe= nullptr;
 

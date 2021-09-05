@@ -432,12 +432,16 @@ template<typename T,typename Container>
 T kDataFrame::getKmerColumnValue(const string& columnName,string kmer)
 {
     std::uint64_t kmerOrder=getkmerOrder(kmer);
+    if(kmerOrder==0)
+        throw std::logic_error("kmer not found!");
     return ((Container*)columns[columnName])->get(kmerOrder);
 }
 template<typename T,typename Container>
 void kDataFrame::setKmerColumnValue(const string& columnName,string kmer,T value)
 {
     std::uint64_t kmerOrder=getkmerOrder(kmer);
+    if(kmerOrder==0)
+        throw std::logic_error("kmer not found!");
     ((Container*)columns[columnName])->insert(value,kmerOrder);
 }
 
@@ -446,12 +450,16 @@ template<typename T,typename Container>
 T kDataFrame::getKmerColumnValue(const string& columnName,uint64_t kmer)
 {
     std::uint64_t kmerOrder=getkmerOrder(kmer);
+    if(kmerOrder==0)
+        throw std::logic_error("kmer not found!");
     return ((Container*)columns[columnName])->get(kmerOrder);
 }
 template<typename T,typename Container>
 void kDataFrame::setKmerColumnValue(const string& columnName,uint64_t kmer,T value)
 {
     std::uint64_t kmerOrder=getkmerOrder(kmer);
+    if(kmerOrder==0)
+        throw std::logic_error("kmer not found!");
     ((Container*)columns[columnName])->insert(value,kmerOrder);
 }
 
