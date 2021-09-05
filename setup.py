@@ -7,6 +7,7 @@ import os
 import subprocess
 import errno
 from glob import glob
+from version import get_version
 
 KPROCESSOR = r"""
   _    _____                                        
@@ -39,10 +40,6 @@ if os.path.islink("KP_BUILD"):
 
 if os.path.exists("build/libkProcessor.a"):
     os.symlink("build", "KP_BUILD")
-
-
-def get_version():
-    return "2.0.2"
 
 def check_exist(dirs):
     ALL_EXIST = True
