@@ -12,6 +12,9 @@ using namespace std; // Extremly important
 %include std_map.i
 
 %template(IntVector) vector<int>; /*vector to tuple conversion*/
+%template(FloatVector) vector<float>; /*vector to tuple conversion*/
+
+
 
 //typedef long int 		    int64_t;
 typedef unsigned long int 	uint64_t;
@@ -25,14 +28,18 @@ typedef unsigned long int 	uint64_t;
 /*  ~~~~COMMENT TO DISABLE namesMap interface~~~~  */
 /*  ~~~~WORKS ONLY IN SWIG4.0 ~~~~  */
 %include std_unordered_map.i
+
 /*
 %template(MAPsi) unordered_map<int, std::string>;
 %template(MAPis) unordered_map<std::string, int>;
 */
 
+%include "swig_interfaces/modules/custom_typemaps.i"
+
 %template(colorsList) vector<uint32_t>;
 %template(kmerDecoderParams) map<string, int>;
-%include "swig_interfaces/modules/custom_typemaps.i"
+%template(DoubleVector) vector<double>; /*vector to tuple conversion*/
+%template(batchQuery_counts) std::unordered_map<std::string, std::vector<double>>;
 
 /*Just copy/paste the snippet I'm interested in to be wrapped!*/
 

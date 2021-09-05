@@ -45,8 +45,8 @@ public:
             origin
         );
     }
-    template<typename T, typename Container>
-    void getColumnValue(const string& colName, T& res);
+    // template<typename T, typename Container>
+    // void getColumnValue(const string& colName, T& res);
     template<typename T, typename Container>
     void setColumnValue(const string& colName, T value);
 
@@ -57,3 +57,8 @@ public:
         delete iterator;
     }
 };
+
+
+// %extend kDataFrameIterator {
+//     %template(getColumnValue_deduplicate) getColumnValue<vector<string>, deduplicatedColumn<vector<string>, StringColorColumn>>;
+// }
