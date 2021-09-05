@@ -30,26 +30,25 @@ def differntialExpression(genes_file, samplesInput, controlInput, outputFilename
     kSize = int()
     if len(kFrames):
         kSize = kFrames[-1].getkSize()
-        print(f"[DEBUG] kSize = {kSize}")
+        # print(f"[DEBUG] kSize = {kSize}")
 
     chunkSize = 1000
     genesFrame = kp.kDataFrameMAP(kSize)
     kp.index(genesFrame, {"kSize": kSize}, genes_file, chunkSize, f"{genes_file}.names")
-    # kp.createColorColumn(genesFrame)
     kFrames.append(genesFrame)
     requiredIndices.append(len(kFrames)-1)
     colorColumn = f"color{len(kFrames)-1}"
     print(f"Load {genes_file} kmers: {kFrames[-1].size()}")
     res = kp.innerJoin(kFrames, requiredIndices)
     print(f"Joined {res.size()} kmers...")
-    print("[DEBUG] filtering zeroCounts...")
+    # print("[DEBUG] filtering zeroCounts...")
     res = kp.filter_zeroCounts(res, allDatasets)
     foldChange_col_name = "foldChange"
     doubleVectorColumn = kp.vectorColumn_double(res.size())
     res.addColumn(foldChange_col_name, doubleVectorColumn)
-    print("[DEBUG] transforming foldChanges...")
+    # print("[DEBUG] transforming foldChanges...")
     kp.transform_foldchange(res, nSamples, nControl, allDatasets, foldChange_col_name)
-    print("[DEBUG] aggregating foldChangeByGene...")
+    # print("[DEBUG] aggregating foldChangeByGene...")
 
     foldChangeByGene = kp.aggregate_foldChangeByGene(res, foldChange_col_name, colorColumn)
 
