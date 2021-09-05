@@ -493,7 +493,7 @@ bool kDataFrameMQF::setOrder(uint64_t kmer, uint64_t count) {
 
 
 
-bool kDataFrameMQF::insert(const string &kmer) {
+uint32_t kDataFrameMQF::insert(const string &kmer) {
     throw logic_error("kDataFrameMQF is static. You cant add new kmers ");
     if(kmerExist(kmer))
         return false;    
@@ -514,7 +514,7 @@ bool kDataFrameMQF::insert(const string &kmer) {
 
 
 
-bool kDataFrameMQF::insert(uint64_t kmer) {
+uint32_t kDataFrameMQF::insert(uint64_t kmer) {
     throw logic_error("kDataFrameMQF is static. You cant add new kmers ");
     if(kmerExist(kmer))
         return false;

@@ -3,6 +3,7 @@
 #include <fstream>
 #include "Utils/kmer.h"
 
+
 /*
  *****************************
  *** kDataFrameBlightIterator ***
@@ -68,7 +69,19 @@ bool kDataFrameBlightIterator::operator!=(const _kDataFrameIterator &other) {
 kDataFrameBlightIterator::~kDataFrameBlightIterator() {
 
 }
+string gen_randomBlight(const int len) {
+    srand (time(NULL));
+    static const char alphanum[] =
+            "0123456789"
+            "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+            "abcdefghijklmnopqrstuvwxyz";
+    string s="blight.";
+    for (int i = 0; i < len; ++i) {
+        s+= alphanum[rand() % (sizeof(alphanum) - 1)];
+    }
 
+    return s;
+}
 /*
  **********************
  *** kDataFrameBlight ***
@@ -78,6 +91,7 @@ kDataFrameBlight::kDataFrameBlight()
 {
 
 }
+
 kDataFrameBlight::kDataFrameBlight(uint64_t ksize,string input_fasta_file) {
     this->class_name = "Blight"; // Temporary until resolving #17
     this->kSize = ksize;
@@ -88,7 +102,8 @@ kDataFrameBlight::kDataFrameBlight(uint64_t ksize,string input_fasta_file) {
     int subsampling_bits(0);
 
     blight_index=  new kmer_Set_Light(ksize, core_number, minimizer_size, file_number_exponent, subsampling_bits);
-    blight_index->construct_index(input_fasta_file, "");
+    string workingDirectory="./";
+    blight_index->construct_index(input_fasta_file, workingDirectory);
 
     kmer_Set_Light_iterator it(blight_index);
     it.kmer_id=it.index_ptr->number_kmer+1;
@@ -109,14 +124,14 @@ bool kDataFrameBlight::kmerExist(uint64_t kmerS) {
 
 
 
-bool kDataFrameBlight::insert(const string &kmerS) {
+uint32_t kDataFrameBlight::insert(const string &kmerS) {
     throw logic_error("kDataFrameBlight is static. Insertion is not allowed");
     return true;
 }
 
 
 
-bool kDataFrameBlight::insert(uint64_t kmer) {
+uint32_t kDataFrameBlight::insert(uint64_t kmer) {
     throw logic_error("kDataFrameBlight is static. Insertion is not allowed");
     return true;
 }

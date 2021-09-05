@@ -126,6 +126,8 @@ public:
 
 class algorithmsTest : public ::testing::TestWithParam<tuple<string,int,string> >{
 };
+class kDataFrameBlightTest : public ::testing::TestWithParam<tuple<int,string> >{
+};
 class estimateTest : public ::testing::TestWithParam<string >{
 };
 //string is the name of color table class

@@ -127,6 +127,8 @@ void vectorColumn<T>::insert(T item, uint32_t index) {
 
 template<typename T>
 T vectorColumn<T>::get(uint32_t index) {
+    if(index>=dataV.size())
+        return dataV[0];
     return dataV[index];
 }
 
@@ -1152,7 +1154,7 @@ uint32_t prefixTrie::insertAndGetIndex(vector<uint32_t> &item) {
 }
 
 vector<uint32_t > prefixTrie::get(uint32_t index) {
-    throw std::logic_error("get is not implemented use getWithIndex instead");
+    return getWithIndex(index);
 
 }
 
@@ -1202,6 +1204,8 @@ inline vector<uint32_t> prefixTrie::decodeColor(uint64_t treeIndex){
 }
 
 vector<uint32_t> prefixTrie::getWithIndex(uint32_t index) {
+    if (index == 0)
+        return vector<uint32_t>();
     return decodeColor(idsMap[index]);
 }
 
@@ -1219,6 +1223,7 @@ void prefixTrie::serialize(string filename) {
     out.write((char *) (&(numColors)), sizeof(uint64_t));
     idsMap.serialize(out);
     starts.serialize(out);
+    translateEdges.serialize(out);
     for (uint32_t i = 0; i < tree.size(); i++) {
         tree[i]->serialize(out);
         bp_tree[i]->serialize(out);
@@ -1234,6 +1239,7 @@ void prefixTrie::deserialize(string filename) {
     input.read((char *) (&(numColors)), sizeof(uint64_t));
     idsMap.load(input);
     starts.load(input);
+    translateEdges.load(input);
     for (uint32_t i = 0; i < starts.size(); i++) {
         tree.push_back(new sdsl::bit_vector());
         tree.back()->load(input);
@@ -1484,7 +1490,7 @@ Column *prefixTrie::clone() {
 
     res->starts=starts;
     res->idsMap=idsMap;
-    translateEdges=translateEdges;
+    res->translateEdges=translateEdges;
 
     return res;
 }
@@ -1517,6 +1523,8 @@ void deduplicatedColumn<T, ColumnType>::deserialize(string filename) {
 
 template<typename T, typename ColumnType>
 T deduplicatedColumn<T, ColumnType>::get(uint32_t order) {
+    if(order >= index.size())
+        return values->get(0);
     return values->get(index[order]);
 }
 

@@ -35,7 +35,7 @@ bool kDataFrame::empty() {
     return this->size() == 0;
 }
 
-bool kDataFrame::insert(kmerRow k) {
+uint32_t kDataFrame::insert(kmerRow k) {
     return this->setCount(k.hashedKmer, k.count);
 }
 kDataFrame::iterator kDataFrame::insert(kDataFrame::iterator& it,kmerRow k){
@@ -292,6 +292,15 @@ dbgIterator kDataFrame::getDBGIterator(const string &kmer)
     if(!this->kmerExist(kmer))
         throw std::logic_error("Kmer not found in the frame");
     return dbgIterator(this,kmer);
+}
+
+vector<string> kDataFrame::getColumnNames()
+{
+    vector<string> res(columns.size());
+    unsigned i=0;
+    for(auto c :columns)
+        res[i++]=c.first;
+    return res;
 }
 
 

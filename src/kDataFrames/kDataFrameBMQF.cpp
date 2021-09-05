@@ -307,7 +307,7 @@ bool kDataFrameBMQF::setOrder(const string &kmer, uint64_t count){
 }
 
 
-bool kDataFrameBMQF::insert(const string &kmer){
+uint32_t kDataFrameBMQF::insert(const string &kmer){
     throw logic_error("kDataFrameBMQF is static. You cant add new kmers ");
     if(load_factor()>0.85){
         // ERROR FLAG: _reserve(bufferedmqf->memoryBuffer->metadata->nslots)
@@ -378,7 +378,7 @@ bool kDataFrameBMQF::setOrder(uint64_t  hash,uint64_t count){
 }
 
 
-bool kDataFrameBMQF::insert(uint64_t hash){
+uint32_t kDataFrameBMQF::insert(uint64_t hash){
     throw logic_error("kDataFrameBMQF is static. You cant add new kmers ");
     if(load_factor()>0.9){
         // ERROR FLAG: _reserve(bufferedmqf->memoryBuffer->metadata->nslots)

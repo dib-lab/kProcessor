@@ -319,13 +319,13 @@ public:
   virtual void _reserve (vector<std::uint64_t> countHistogram)=0;
 /// insert the kmer one time in the kDataFrame, or increment the kmer count if it is already exists.
 /*! Returns bool value indicating whether the kmer is inserted or not*/
-  virtual bool insert(const string &kmer)=0;
+  virtual uint32_t insert(const string &kmer)=0;
 /// insert the hashed kmer one time in the kDataFrame, or increment the kmer count if it is already exists.
 /*! Returns bool value indicating whether the kmer is inserted or not*/
-  virtual bool insert(std::uint64_t kmer)=0;
+  virtual uint32_t insert(std::uint64_t kmer)=0;
   /// insert the kmer in the kmer row time in the kDataFrame, or increment the kmer count with the count in the row if it is already exists.
   /*! Returns bool value indicating whether the kmer is inserted or not*/
-  bool insert(kmerRow k);
+  uint32_t insert(kmerRow k);
   kDataFrame::iterator insert(kDataFrame::iterator& it,kmerRow k);
 /// set the kmer's count to N time in the kDataFrame
 /*! Returns bool value indicating whether the kmer is inserted or not.
@@ -380,7 +380,7 @@ The difference between setCount and insert is that setCount set the count to N n
   static kDataFrame* load(string filePath);
   void save(string filePath);
 
-
+  vector<string> getColumnNames();
   std::uint64_t getkSize() const{return kSize;}
 
   // duplicate for easier name in python, getkSize won't be wrapped
@@ -432,12 +432,16 @@ template<typename T,typename Container>
 T kDataFrame::getKmerColumnValue(const string& columnName,string kmer)
 {
     std::uint64_t kmerOrder=getkmerOrder(kmer);
+    if(kmerOrder==0)
+        throw std::logic_error("kmer not found!");
     return ((Container*)columns[columnName])->get(kmerOrder);
 }
 template<typename T,typename Container>
 void kDataFrame::setKmerColumnValue(const string& columnName,string kmer,T value)
 {
     std::uint64_t kmerOrder=getkmerOrder(kmer);
+    if(kmerOrder==0)
+        throw std::logic_error("kmer not found!");
     ((Container*)columns[columnName])->insert(value,kmerOrder);
 }
 
@@ -446,12 +450,16 @@ template<typename T,typename Container>
 T kDataFrame::getKmerColumnValue(const string& columnName,uint64_t kmer)
 {
     std::uint64_t kmerOrder=getkmerOrder(kmer);
+    if(kmerOrder==0)
+        throw std::logic_error("kmer not found!");
     return ((Container*)columns[columnName])->get(kmerOrder);
 }
 template<typename T,typename Container>
 void kDataFrame::setKmerColumnValue(const string& columnName,uint64_t kmer,T value)
 {
     std::uint64_t kmerOrder=getkmerOrder(kmer);
+    if(kmerOrder==0)
+        throw std::logic_error("kmer not found!");
     ((Container*)columns[columnName])->insert(value,kmerOrder);
 }
 
@@ -545,8 +553,8 @@ public:
   bool setOrder(const string &kmer, std::uint64_t count);
   bool setOrder(std::uint64_t kmer, std::uint64_t count);
   
-  bool insert(const string &kmer);
-  bool insert(std::uint64_t kmer);
+  uint32_t insert(const string &kmer);
+  uint32_t insert(std::uint64_t kmer) override;
   std::uint64_t getkmerOrder(const string &kmer);
   std::uint64_t getkmerOrder(std::uint64_t kmer);
 
@@ -646,8 +654,8 @@ public:
   bool _insert(const string& kmer);
 
 
-  bool insert(const string &kmer);
-  bool insert(std::uint64_t kmer);
+  uint32_t insert(const string &kmer) override;
+  uint32_t insert(std::uint64_t kmer) override;
   bool setOrder(const string &kmer, std::uint64_t count);
   bool setOrder(std::uint64_t kmer, std::uint64_t count);
 
@@ -711,10 +719,10 @@ public:
 
   bool setOrder(const string &kmer, std::uint64_t count);
   bool setOrder(std::uint64_t kmer, std::uint64_t count);
-  bool insert(const string &kmer);
-  bool insert(std::uint64_t kmer);
-  std::uint64_t getkmerOrder(const string &kmer);
-  std::uint64_t getkmerOrder(std::uint64_t kmerS);
+  uint32_t insert(const string &kmer) override;
+  uint32_t insert(std::uint64_t kmer) override;
+  std::uint64_t getkmerOrder(const string &kmer) override;
+  std::uint64_t getkmerOrder(std::uint64_t kmerS) override;
   bool erase(const string &kmer);
   bool erase(std::uint64_t kmer);
 
@@ -743,8 +751,15 @@ private:
     kDataFramePHMAP *origin;
     kmerDecoder * KD;
 public:
-    flat_hash_map<std::uint64_t, std::uint64_t>::iterator iterator;
-    kDataFramePHMAPIterator(flat_hash_map<std::uint64_t, std::uint64_t>::iterator, kDataFramePHMAP *origin, std::uint64_t kSize);
+    typedef typename phmap::parallel_flat_hash_map<std::uint64_t,
+    std::uint64_t,
+    std::hash<uint64_t>,
+    std::equal_to<uint64_t>,
+    std::allocator<std::pair<const uint64_t, uint64_t>>,
+    4,
+    std::mutex>::iterator itType;
+    itType iterator;
+    kDataFramePHMAPIterator(itType, kDataFramePHMAP *origin, std::uint64_t kSize);
 
     kDataFramePHMAPIterator(const kDataFramePHMAPIterator &);
 
@@ -773,8 +788,16 @@ public:
 // kDataFramePHMAP _____________________________
 
 class kDataFramePHMAP : public kDataFrame {
+public:
+    typedef  phmap::parallel_flat_hash_map<std::uint64_t,
+    std::uint64_t,
+    std::hash<uint64_t>,
+    std::equal_to<uint64_t>,
+    std::allocator<std::pair<const uint64_t, uint64_t>>,
+    4,
+    std::mutex> MapType;
 private:
-    flat_hash_map<std::uint64_t, std::uint64_t> MAP;
+     MapType MAP;
 public:
     kDataFramePHMAP();
 
@@ -801,8 +824,8 @@ public:
     bool setOrder(const string &kmer, std::uint64_t count);
     bool setOrder(std::uint64_t kmer, std::uint64_t count);
 
-    bool insert(const string &kmer);
-    bool insert(std::uint64_t kmer);
+    uint32_t insert(const string &kmer) override;
+    uint32_t insert(std::uint64_t kmer) override;
 
     std::uint64_t getkmerOrder(const string &kmer);
     std::uint64_t getkmerOrder(std::uint64_t kmer);
@@ -833,6 +856,9 @@ public:
     ~kDataFramePHMAP() {
         this->MAP.clear();
     }
+    MapType *getMap();
+
+
 };
 
 class kDataFrameBMQFIterator:public _kDataFrameIterator{
@@ -919,8 +945,8 @@ public:
     bool kmerExist(uint64_t kmer);
 
 
-    bool insert(const string &kmer);
-    bool insert(std::uint64_t kmer);
+    uint32_t insert(const string &kmer) override;
+    uint32_t insert(std::uint64_t kmer) override;
 
     std::uint64_t getkmerOrder(const string &kmer);
     std::uint64_t getkmerOrder(std::uint64_t kmer);
