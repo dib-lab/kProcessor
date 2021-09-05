@@ -626,48 +626,85 @@ namespace kProcessor {
         kDataFramePHMAP* output=new kDataFramePHMAP(kSize,10000000);//this value should be estimated
         //kDataFrameMAP* output=new kDataFrameMAP(kSize);
         omp_set_num_threads(numThreads);
-        cout<<omp_get_num_threads<<endl;
-#pragma omp parallel for
-        for(unsigned i =0; i<kdataframeFileNames.size(); i++)
+        cout<<"Number of threads = "<<omp_get_num_threads()<<endl;
+        unsigned i=0;
+        uint32_t maxID=0;
+#pragma omp parallel shared(i)
         {
-            auto fileName=kdataframeFileNames[i];
-            kDataFrame* kf=kDataFrame::load(fileName);
-            cout<<"Loaded "<<fileName<<endl;
-            vector<pair<Column*,Column*> > columns(kf->columns.size());
-            unsigned t=0;
-//#pragma omp critical
-            {
-            for(auto c: kf->columns)
-            {
 
-                output->addColumn(c.first+to_string(i),c.second->getTwin());
-                columns[t]= make_pair(c.second,output->columns[c.first+to_string(i)]);
-                t++;
-            }
-            cout<<"Columns created"<<endl;
-        }
-            uint64_t kmersInserted=0;
-            for(auto k:*kf)
+            int threadID=omp_get_thread_num();
+            uint32_t lastKmerID=threadID+1;
+            kDataFramePHMAP::MapType* map=output->getMap();
+            vector<pair<Column*,Column*> > columns;
+            kDataFrame* kf;
+            string fileName;
+            bool moreWork=true;
+            while(moreWork)
             {
-                if(kmersInserted++ % 100001 ==0 )
-                    cout<<kmersInserted<< " kmers are processed "<<endl;
-                uint32_t order=output->insert(k.getHashedKmer());
-                uint32_t inputOrder=k.getOrder();
-                for(auto c:columns)
+                kf=nullptr;
+
+#pragma omp critical
                 {
-                    if(order>= c.second->size())
-                    {
-                        c.second->resize(c.second->size()*2);
+                    if(i==kdataframeFileNames.size()){
+                        moreWork=false;
+                        maxID=max(lastKmerID,maxID);
                     }
-                    c.second->setValueFromColumn( c.first,inputOrder,order);
+                    else{
+                        fileName=kdataframeFileNames[i];
+                        kf=kDataFrame::load(fileName);
+                        cout<<"Loaded "<<fileName<<endl;
+                        columns.resize(kf->columns.size());
+                        unsigned t=0;
+                        for(auto c: kf->columns)
+                        {
+
+                            output->addColumn(c.first+to_string(i),c.second->getTwin());
+                            columns[t]= make_pair(c.second,output->columns[c.first+to_string(i)]);
+                            t++;
+                        }
+                        cout<<"Columns created"<<endl;
+                        i++;
+                    }
                 }
+                if(!moreWork)
+                    break;
+
+                uint64_t kmersInserted=0;
+                for(auto k:*kf)
+                {
+                    if(kmersInserted++ % 1000001 ==0 )
+                        cout<<kmersInserted<< " kmers are processed from "<<fileName<<endl;
+
+
+                    uint32_t order=lastKmerID;
+                    map->try_emplace_l(k.getHashedKmer(),
+                                       [&order](uint64_t& v) {
+                        order=v;
+                        }
+                        ,lastKmerID);
+
+                    if(order==lastKmerID)
+                    {
+                        lastKmerID+=numThreads;
+                    }
+
+                    uint32_t inputOrder=k.getOrder();
+                    for(auto c:columns)
+                    {
+                        if(order>= c.second->size())
+                        {
+                            c.second->resize(c.second->size()*2);
+                        }
+                        c.second->setValueFromColumn( c.first,inputOrder,order);
+                    }
+                }
+                cout<<"Finished "<<fileName<<endl;
+                delete kf;
             }
-            cout<<"Finished "<<fileName<<endl;
-            delete kf;
         }
         for(auto c:output->columns)
         {
-            c.second->resize(output->size()+1);
+            c.second->resize(maxID+1);
         }
         return output;
     }

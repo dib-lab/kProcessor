@@ -127,6 +127,8 @@ void vectorColumn<T>::insert(T item, uint32_t index) {
 
 template<typename T>
 T vectorColumn<T>::get(uint32_t index) {
+    if(index>=dataV.size())
+        return dataV[0];
     return dataV[index];
 }
 
@@ -1202,6 +1204,8 @@ inline vector<uint32_t> prefixTrie::decodeColor(uint64_t treeIndex){
 }
 
 vector<uint32_t> prefixTrie::getWithIndex(uint32_t index) {
+    if (index == 0)
+        return vector<uint32_t>();
     return decodeColor(idsMap[index]);
 }
 
@@ -1519,6 +1523,8 @@ void deduplicatedColumn<T, ColumnType>::deserialize(string filename) {
 
 template<typename T, typename ColumnType>
 T deduplicatedColumn<T, ColumnType>::get(uint32_t order) {
+    if(order >= index.size())
+        return values->get(0);
     return values->get(index[order]);
 }
 

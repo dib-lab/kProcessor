@@ -317,3 +317,7 @@ kDataFrameIterator kDataFramePHMAP::find(uint64_t kmer) {
             (_kDataFrameIterator *) new kDataFramePHMAPIterator(MAP.find((kmer)), this, kSize),
             (kDataFrame *) this));
 }
+
+kDataFramePHMAP::MapType *kDataFramePHMAP::getMap()  {
+    return &MAP;
+}

@@ -102,7 +102,7 @@ kDataFrameBlight::kDataFrameBlight(uint64_t ksize,string input_fasta_file) {
     int subsampling_bits(0);
 
     blight_index=  new kmer_Set_Light(ksize, core_number, minimizer_size, file_number_exponent, subsampling_bits);
-    string workingDirectory="";
+    string workingDirectory="./";
     blight_index->construct_index(input_fasta_file, workingDirectory);
 
     kmer_Set_Light_iterator it(blight_index);

@@ -848,6 +848,9 @@ public:
     ~kDataFramePHMAP() {
         this->MAP.clear();
     }
+    MapType *getMap();
+
+
 };
 
 class kDataFrameBMQFIterator:public _kDataFrameIterator{
