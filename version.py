@@ -22,9 +22,9 @@ def increment_patch_version(patch_version):
     return f"{patch_version[0]}.{patch_version[1]}.{int(patch_version[2]) + 1}.{patch_version[3]}"
 
 
-MAJOR = 1
-MINOR = 1
-PATCH = 1
+MAJOR = 2
+MINOR = 0
+PATCH = 0
 
 
 def get_version():
