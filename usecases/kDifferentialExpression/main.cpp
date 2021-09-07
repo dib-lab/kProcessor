@@ -106,6 +106,7 @@ void differntialExpression(string genes_file,
 
      });
 
+     // if we calculate average we dont need to save all the kmers
      auto foldChangeByGene=new unordered_map<string ,vector<double> >();
      any genesGatherAny=kProcessor::aggregate(res,foldChangeByGene,  [=](kDataFrameIterator& it, any v) -> any {
          auto dict=any_cast<unordered_map<string ,vector<double>>*>(v);
