@@ -24,7 +24,7 @@ def increment_patch_version(patch_version):
 
 MAJOR = 2
 MINOR = 0
-PATCH = 0
+PATCH = 2
 
 
 def get_version():
@@ -47,4 +47,5 @@ def get_version():
     else:
         version_tag = dev_version
 
+    print(f"[DEBUG VERSION] = {version_tag}")
     return version_tag
