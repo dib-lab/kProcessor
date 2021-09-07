@@ -68,6 +68,10 @@ git submodule update --init --recursive
 sudo apt-get install g++ swig cmake python3-dev zlib1g-dev libghc-bzlib-dev python3-distutils libboost-all-dev
 ```
 
+```bash
+conda install  -c anaconda zlib cmake
+```
+
 ### Build
 
 #### CMake options
