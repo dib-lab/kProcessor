@@ -262,6 +262,8 @@ void dbgIterator::generateNextKmers(){
     for(auto c:possibleNuc)
     {
         string candidate=suffix+c;
+        if(candidate==currentKmer)
+            continue;
         if(frame->kmerExist(candidate)  )
             nextFwdKmers.push_back(candidate);
     }

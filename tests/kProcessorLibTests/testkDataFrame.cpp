@@ -302,6 +302,11 @@ void setFunctionsTest::SetUp()
         }
         kDataFrameMAP* indexRes=new kDataFrameMAP(k);
         kProcessor::indexPriorityQueue(frames,"",indexRes);
+        indexRes->addColumn("double",new vectorColumn<double>(indexRes->size()));
+        for(auto k:*indexRes)
+        {
+            k.setColumnValue<double,vectorColumn<double> >("double",rand());
+        }
         frames.push_back(indexRes);
         input_SET[specification]=frames;
         it=input_SET.find(specification);
@@ -1060,6 +1065,52 @@ TEST_P(algorithmsTest,parsingTest)
     
 }
 
+TEST_P(algorithmsTest,dbgIteratorTest)
+{
+    string kframeType=get<0>(GetParam());
+    int kSize=5;
+    kDataFrame* kframe=getFrame(make_tuple(kframeType,kSize));
+    string fileName=get<2>(GetParam());
+    int chunkSize=1000;
+
+
+    string sequence="ACGTTTTTTTGACTTACGTCCCCC";
+    for(int i=0;i<sequence.size()-5;i++)
+        kframe->insert(sequence.substr(i,5));
+
+    kframe->addColumn("visited",new vectorColumn<bool>(kframe->size()));
+    string beginKmer="ACGTT";
+
+    dbgIterator dbg(kframe,beginKmer);
+    bool moreWork=true;
+    while(moreWork)
+    {
+        kframe->setKmerColumnValue<bool,vectorColumn<bool>>("visited",dbg.currentKmer,true);
+        unsigned i=0;
+        moreWork=false;
+        for(auto s:dbg.nextFwdKmers)
+        {
+            bool visited=kframe->getKmerColumnValue<bool,vectorColumn<bool>>("visited",s);
+            if(!visited){
+                dbg.nextFWD(i);
+                moreWork=true;
+            }
+            i++;
+        }
+    }
+    for(auto k:*kframe)
+    {
+        bool v;
+        k.getColumnValue<bool,vectorColumn<bool>>("visited",v);
+        ASSERT_EQ(v,true);
+    }
+
+    delete kframe;
+    kframe=nullptr;
+
+
+}
+
 TEST_P(algorithmsTest,loadingKMCTest)
 {
     string kframeType=get<0>(GetParam());
@@ -1231,6 +1282,10 @@ TEST_P(setFunctionsTest,innerJoinTest2)
         vector<uint32_t> colors;
         it.getColumnValue<vector<uint32_t >, deduplicatedColumn<vector<uint32_t>, mixVectors> >("color2",colors);
         ASSERT_EQ(colors,colorsCorrect);
+        double dV;
+        it.getColumnValue<double, vectorColumn<double> >("double2",dV);
+        double dv2=input[2]->getKmerColumnValue<double, vectorColumn<double> >("double",it.getHashedKmer());
+        ASSERT_EQ(dV,dv2);
         it++;
 
     }
@@ -1282,6 +1337,11 @@ TEST_P(setFunctionsTest,parallelinnerJoinTest)
         vector<uint32_t> colors;
         it.getColumnValue<vector<uint32_t >, deduplicatedColumn<vector<uint32_t>, mixVectors> >("color2",colors);
         ASSERT_EQ(colors,colorsCorrect);
+
+        double dV;
+        it.getColumnValue<double, vectorColumn<double> >("double2",dV);
+        double dv2=input[2]->getKmerColumnValue<double, vectorColumn<double> >("double",it.getHashedKmer());
+        ASSERT_EQ(dV,dv2);
         it++;
 
     }
