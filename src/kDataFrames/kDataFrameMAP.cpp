@@ -126,7 +126,7 @@ kDataFrameMAP::kDataFrameMAP() {
 }
 
 bool kDataFrameMAP::kmerExist(string kmerS) {
-    return (this->MAP.find(kmer::str_to_canonical_int(kmerS)) == this->MAP.end()) ? 0 : 1;
+    return (this->MAP.find(KD->hash_kmer(kmerS)) == this->MAP.end()) ? 0 : 1;
 }
 bool kDataFrameMAP::kmerExist(uint64_t kmer) {
     return (this->MAP.find(kmer) == this->MAP.end()) ? 0 : 1;
