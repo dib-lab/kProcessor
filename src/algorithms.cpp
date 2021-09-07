@@ -670,15 +670,16 @@ namespace kProcessor {
                     break;
 
                 uint64_t kmersInserted=0;
+                uint64_t chunkSize=kf->size()/10;
                 for(auto k:*kf)
                 {
-                    if(kmersInserted++ % 1000001 ==0 )
+                    if(kmersInserted++ % chunkSize ==0 )
                         cout<<kmersInserted<< " kmers are processed from "<<fileName<<endl;
 
 
                     uint32_t order=lastKmerID;
                     map->try_emplace_l(k.getHashedKmer(),
-                                       [&order](uint64_t& v) {
+                                       [&order](uint32_t& v) {
                         order=v;
                         }
                         ,lastKmerID);
