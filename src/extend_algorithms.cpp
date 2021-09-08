@@ -75,13 +75,13 @@ namespace kProcessor {
 
     unordered_map<uint32_t, vector<double>> aggregate_foldChangeByGene(kDataFrame *res, const string &colorColumn) {
 
-        auto foldChangeByGene = new unordered_map<uint32_t, vector<double> >();
+        auto foldChangeByGene = new unordered_map<string, vector<double> >();
         any genesGatherAny = kProcessor::aggregate(res, foldChangeByGene, [=](kmerRow it, any v) -> any {
-            auto dict = any_cast<unordered_map<uint32_t, vector<double>> *>(v);
+            auto dict = any_cast<unordered_map<string, vector<double>> *>(v);
             double foldChange;
             it.getColumnValue<double, vectorColumn<double> >("foldChange", foldChange);
-            vector<uint32_t> color;
-            it.getColumnValue<vector<uint32_t>, deduplicatedColumn<vector<uint32_t>, StringColorColumn> >(colorColumn,
+            vector<string> color;
+            it.getColumnValue<vector<string>, deduplicatedColumn<StringColorColumn> >(colorColumn,
                                                                                                           color);
             for (auto c: color) {
                 (*dict)[c].push_back(foldChange);

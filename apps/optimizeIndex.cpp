@@ -14,8 +14,8 @@ using namespace std;
 int main(int argc, char *argv[]) {
     string inputIndex=argv[1];
     kDataFrame* KF=kDataFrame::load(inputIndex);
-    auto prevColor=(deduplicatedColumn<vector<uint32_t>, mixVectors>*)KF->columns["color"];
-    auto newColor=new deduplicatedColumn<vector<uint32_t>, prefixTrie>();
+    auto prevColor=(deduplicatedColumn< mixVectors>*)KF->columns["color"];
+    auto newColor=new deduplicatedColumn<prefixTrie>();
     newColor->index=prevColor->index;
     newColor->values=new prefixTrie(prevColor->values);
     KF->columns["color"]=newColor;

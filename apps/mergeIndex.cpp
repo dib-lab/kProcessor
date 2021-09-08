@@ -21,11 +21,8 @@ int main(int argc, char *argv[])
     string outPath;
     bool checkIndex=false;
     int nThreads=1;
-
     app.add_option("-i,--input", inputPath,
                    "File containig a list of kDataframe indexes paths")->required();
-//    app.add_option("-q", q,
-//                   "Q size of the result MQF frame")->required();
     app.add_option("-t,--tempFolder", tmpFolder,
                    "Path for Temporary Folder");
     app.add_option("-n,--numThreads", nThreads,
@@ -77,18 +74,18 @@ int main(int argc, char *argv[])
             {
                 vector<uint32_t> colorsCorrect;
 
-                k.getColumnValue<vector<uint32_t >, deduplicatedColumn<vector<uint32_t>, prefixTrie> >(sampleColor,colorsCorrect);
+                k.getColumnValue<vector<uint32_t >, deduplicatedColumn<prefixTrie> >(sampleColor,colorsCorrect);
 
                 vector<uint32_t> colorsQuered=
-                        output->getKmerColumnValue<vector<uint32_t >, deduplicatedColumn<vector<uint32_t>, prefixTrie> >(colorColumnName,k.getHashedKmer());
+                        output->getKmerColumnValue<vector<uint32_t >, deduplicatedColumn<prefixTrie> >(colorColumnName,k.getHashedKmer());
                 if(colorsQuered!=colorsCorrect)
                 {
                     vector<uint32_t> colorsCorrect;
 
-                    k.getColumnValue<vector<uint32_t >, deduplicatedColumn<vector<uint32_t>, prefixTrie> >(sampleColor,colorsCorrect);
+                    k.getColumnValue<vector<uint32_t >, deduplicatedColumn< prefixTrie> >(sampleColor,colorsCorrect);
 
                     vector<uint32_t> colorsQuered=
-                            output->getKmerColumnValue<vector<uint32_t >, deduplicatedColumn<vector<uint32_t>, prefixTrie> >(colorColumnName,k.getHashedKmer());
+                            output->getKmerColumnValue<vector<uint32_t >, deduplicatedColumn< prefixTrie> >(colorColumnName,k.getHashedKmer());
                     cout<<"Error Found at sample "<<sample<< " at kmer "<<k.getKmer()<<endl;
                     cout<<"Expected color is ";
                     for(auto c:colorsCorrect)

@@ -728,7 +728,7 @@ namespace kProcessor {
             kProcessor::indexPriorityQueue(toIndex,"", KF);
             for(auto k:toIndex)
                 delete k;
-            deduplicatedColumn<vector<uint32_t>, mixVectors>* currCol=(deduplicatedColumn<vector<uint32_t>, mixVectors>*)KF->columns["color"];
+            deduplicatedColumn<mixVectors>* currCol=(deduplicatedColumn< mixVectors >*)KF->columns["color"];
             prefixTrie* newCol=new prefixTrie((mixVectors*) currCol->values);
             //delete currCol->values;
             //KF->columns["color"]=newCol;
@@ -753,7 +753,7 @@ namespace kProcessor {
         }
 
 
-        auto *colors =new deduplicatedColumn<vector<string>, StringColorColumn>();
+        auto *colors =new deduplicatedColumn< StringColorColumn>();
         frame->addColumn("color",(Column *) colors);
         flat_hash_map<string, string> namesMap;
         flat_hash_map<string, uint64_t> tagsMap;
@@ -962,7 +962,7 @@ namespace kProcessor {
     }
 
     void indexPriorityQueue(vector<kDataFrame *> &input, string tmpFolder, kDataFrame *output,uint32_t num_vectors,uint32_t vector_size) {
-        auto *colors =new deduplicatedColumn<vector<uint32_t>, insertColorColumn>(); 
+        auto *colors =new deduplicatedColumn<insertColorColumn>();
         colors->values= new insertColorColumn(input.size(), tmpFolder,num_vectors,vector_size);
         
         output->addColumn("i",colors);
@@ -1017,7 +1017,7 @@ namespace kProcessor {
             }
             
             output->insert(currHash);
-            output->setKmerColumnValue<vector<uint32_t> , deduplicatedColumn<vector<uint32_t>, insertColorColumn>>("i",currHash, colorVec);
+            output->setKmerColumnValue<vector<uint32_t> , deduplicatedColumn< insertColorColumn>>("i",currHash, colorVec);
 
             // auto res=output->getKmerDefaultColumnValue<vector<uint32_t >, insertColorColumn>(currHash);
             // //	cout<<res.size()<<endl;
@@ -1039,7 +1039,7 @@ namespace kProcessor {
         cout << noColors << " colors created" << endl;
 
 
-        auto colorColumn= new deduplicatedColumn<vector<uint32_t>, mixVectors>();
+        auto colorColumn= new deduplicatedColumn<mixVectors>();
         colorColumn->values=new mixVectors(colors->values);
         colorColumn->values->explainSize();
         colorColumn->index=colors->index;

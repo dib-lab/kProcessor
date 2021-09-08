@@ -47,6 +47,7 @@ public:
 template<typename  T>
 class vectorColumn: public Column{
 public:
+    typedef T dataType;
     vector<T> dataV;
     vectorColumn(){
       dataV=vector<T>(1000);
@@ -110,6 +111,7 @@ public:
 
 class insertColorColumn: public Column{
 public:
+    typedef vector<uint32_t> dataType;
     uint32_t NUM_VECTORS=20;
     uint32_t VECTOR_SIZE=1000000;
     vector<sdsl::int_vector<> > colors;
@@ -579,6 +581,7 @@ public:
 
 class queryColorColumn : public Column{
 public:
+    typedef vector<uint32_t> dataType;
     uint64_t  noSamples;
 
     uint64_t numColors;
@@ -604,6 +607,7 @@ public:
 };
 class mixVectors: public queryColorColumn{
 public:
+    typedef vector<uint32_t> dataType ;
     deque<vectorBase*> colors;
     sdsl::int_vector<> idsMap;
     mixVectors(){
@@ -666,6 +670,7 @@ private:
     unordered_map<uint64_t ,vector<uint32_t > > nodesCache;
     deque<sdsl::int_vector<>*>  unCompressedEdges;
 public:
+    typedef  vector<uint32_t> dataType;
     typedef  sdsl::int_vector<> vectype;
     uint32_t cacheUsed=0;
     deque<vectype*>  edges;
@@ -725,6 +730,7 @@ public:
 
 class StringColorColumn: public Column{
 public:
+    typedef vector<string> dataType;
     vector<vector<uint32_t > > colors;
     flat_hash_map<uint32_t,string> namesMap;
 
@@ -866,17 +872,15 @@ public:
 };
 
 
-template<typename  T, typename ColumnType>
+template<typename ColumnType,typename indexType = vector<uint32_t> >
 class deduplicatedColumn: public Column{
 public:
-    vector<uint32_t> index;
+    typedef typename ColumnType::dataType dataType;
+    indexType index;
     ColumnType* values;
     deduplicatedColumn(){
-        index.resize(1);
     }
-    deduplicatedColumn(uint32_t size){
-        index=vector<uint32_t>(size);
-    }
+    deduplicatedColumn(uint32_t size);
     ~deduplicatedColumn(){
         delete values;
     }
@@ -885,8 +889,8 @@ public:
     {
         return index.size();
     }
-    void insert(T item,uint32_t index);
-    T get(uint32_t index);
+    void insert(dataType item,uint32_t index);
+    dataType get(uint32_t index);
 
     void serialize(string filename);
     void deserialize(string filename);

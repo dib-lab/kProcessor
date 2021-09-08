@@ -113,7 +113,7 @@ void differntialExpression(string genes_file,
          double foldChange;
          it.getColumnValue<double,vectorColumn<double> >(foldChangeColName,foldChange);
          vector<string> color;
-         it.getColumnValue<vector<string> ,deduplicatedColumn<vector<string>, StringColorColumn>>(colorColumn,color);
+         it.getColumnValue<vector<string> ,deduplicatedColumn<StringColorColumn>>(colorColumn,color);
          for(auto c: color)
          {
              (*dict)[c].push_back(foldChange);

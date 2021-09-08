@@ -1412,9 +1412,9 @@ TEST_P(setFunctionsTest,innerJoinTest2)
             uint32_t countGold=input[i]->getCount(it.getHashedKmer());
             ASSERT_EQ(countRes,countGold);
         }
-        vector<uint32_t> colorsCorrect=input[2]->getKmerColumnValue<vector<uint32_t >, deduplicatedColumn<vector<uint32_t>, mixVectors> >("color",it.getHashedKmer());
+        vector<uint32_t> colorsCorrect=input[2]->getKmerColumnValue<vector<uint32_t >, deduplicatedColumn<mixVectors> >("color",it.getHashedKmer());
         vector<uint32_t> colors;
-        it.getColumnValue<vector<uint32_t >, deduplicatedColumn<vector<uint32_t>, mixVectors> >("color2",colors);
+        it.getColumnValue<vector<uint32_t >, deduplicatedColumn<mixVectors> >("color2",colors);
         ASSERT_EQ(colors,colorsCorrect);
         double dV;
         it.getColumnValue<double, vectorColumn<double> >("double2",dV);
@@ -1467,9 +1467,9 @@ TEST_P(setFunctionsTest,parallelinnerJoinTest)
             }
             ASSERT_EQ(countRes,countGold);
         }
-        vector<uint32_t> colorsCorrect=input[2]->getKmerColumnValue<vector<uint32_t >, deduplicatedColumn<vector<uint32_t>, mixVectors> >("color",it.getHashedKmer());
+        vector<uint32_t> colorsCorrect=input[2]->getKmerColumnValue<vector<uint32_t >, deduplicatedColumn<mixVectors> >("color",it.getHashedKmer());
         vector<uint32_t> colors;
-        it.getColumnValue<vector<uint32_t >, deduplicatedColumn<vector<uint32_t>, mixVectors> >("color2",colors);
+        it.getColumnValue<vector<uint32_t >, deduplicatedColumn<mixVectors> >("color2",colors);
         ASSERT_EQ(colors,colorsCorrect);
 
         double dV;
@@ -1577,7 +1577,7 @@ TEST_P(indexingTest,index)
                 string readName = seq.first;
                 string groupName=namesMap[readName];
                 for (const auto &kmer : seq.second) {
-                    vector<string> colors=KF->getKmerColumnValue<vector<string> ,deduplicatedColumn<vector<string>, StringColorColumn>>("color",kmer.hash);
+                    vector<string> colors=KF->getKmerColumnValue<vector<string> ,deduplicatedColumn<StringColorColumn>>("color",kmer.hash);
                     ASSERT_NE(colors.size(),0);
                     auto colorIt=find(colors.begin(),colors.end(),groupName);
                     ASSERT_NE(colorIt,colors.end());
@@ -1623,7 +1623,7 @@ TEST_P(indexingTest,indexPriorityQSaveAndLoad)
         kDataFrameIterator it=inputFrames[i]->begin();
         while(it!=inputFrames[i]->end())
         {
-            vector<uint32_t> colors=kframeLoaded->getKmerColumnValue<vector<uint32_t >, deduplicatedColumn<vector<uint32_t>, mixVectors> >("color",it.getHashedKmer());
+            vector<uint32_t> colors=kframeLoaded->getKmerColumnValue<vector<uint32_t >, deduplicatedColumn<mixVectors> >("color",it.getHashedKmer());
             ASSERT_NE(colors.size(),0);
             auto colorIt=colors.end();
             colorIt=find(colors.begin(),colors.end(),i);
@@ -1670,7 +1670,7 @@ TEST_P(indexingTest,indexPriorityQ)
         kDataFrameIterator it=inputFrames[i]->begin();
         while(it!=inputFrames[i]->end())
         {
-            vector<uint32_t> colors=KF->getKmerColumnValue<vector<uint32_t >, deduplicatedColumn<vector<uint32_t>, mixVectors> >("color",it.getHashedKmer());
+            vector<uint32_t> colors=KF->getKmerColumnValue<vector<uint32_t >, deduplicatedColumn<mixVectors> >("color",it.getHashedKmer());
             ASSERT_NE(colors.size(),0);
             auto colorIt=colors.end();
             colorIt=find(colors.begin(),colors.end(),i);
@@ -1711,8 +1711,8 @@ TEST_P(indexingTest,indexPriorityQAndOptimize)
 
     kProcessor::indexPriorityQueue(inputFrames,"", KF);
 
-    auto prevColor=(deduplicatedColumn<vector<uint32_t>, mixVectors>*)KF->columns["color"];
-    auto newColor=new deduplicatedColumn<vector<uint32_t>, prefixTrie>();
+    auto prevColor=(deduplicatedColumn<mixVectors>*)KF->columns["color"];
+    auto newColor=new deduplicatedColumn<prefixTrie>();
     newColor->index=prevColor->index;
     newColor->values=new prefixTrie(prevColor->values);
     KF->columns["color"]=newColor;
@@ -1728,7 +1728,7 @@ TEST_P(indexingTest,indexPriorityQAndOptimize)
         kDataFrameIterator it=inputFrames[i]->begin();
         while(it!=inputFrames[i]->end())
         {
-            vector<uint32_t> colors=kframeLoaded->getKmerColumnValue<vector<uint32_t >, deduplicatedColumn<vector<uint32_t>, prefixTrie> >("color",it.getHashedKmer());
+            vector<uint32_t> colors=kframeLoaded->getKmerColumnValue<vector<uint32_t >, deduplicatedColumn<prefixTrie> >("color",it.getHashedKmer());
             ASSERT_NE(colors.size(),0);
             auto colorIt=colors.end();
             colorIt=find(colors.begin(),colors.end(),i);
@@ -1795,7 +1795,7 @@ TEST_P(indexingTest,indexPriorityQAndOptimize)
 //        kDataFrameIterator it=inputFrames[i]->begin();
 //        while(it!=inputFrames[i]->end())
 //        {
-//            vector<uint32_t> colors=KF->getKmerColumnValue<vector<uint32_t >, deduplicatedColumn<vector<uint32_t>, mixVectors> >("color",it.getHashedKmer());
+//            vector<uint32_t> colors=KF->getKmerColumnValue<vector<uint32_t >, deduplicatedColumn<mixVectors> >("color",it.getHashedKmer());
 //            ASSERT_NE(colors.size(),0);
 //            auto colorIt=colors.end();
 //            colorIt=find(colors.begin(),colors.end(),i);
@@ -1853,7 +1853,7 @@ TEST_P(indexingTest,saveAndLoad)
             string readName = seq.first;
             string groupName=namesMap[readName];
             for (const auto &kmer : seq.second) {
-                vector<string> colors=kframeLoaded->getKmerColumnValue<vector<string> ,deduplicatedColumn<vector<string>, StringColorColumn>>("color",kmer.hash);
+                vector<string> colors=kframeLoaded->getKmerColumnValue<vector<string> ,deduplicatedColumn<StringColorColumn>>("color",kmer.hash);
                 ASSERT_NE(colors.size(),0);
                 auto colorIt=colors.end();
                 colorIt=find(colors.begin(),colors.end(),groupName);
@@ -2197,7 +2197,7 @@ TEST_P(prefixColumnTest,optimizeAndCheck)
 
 }
 
-TEST_P(kDataFrameBlightTest,parsingTest)
+TEST_P(kDataFrameBlightTest, DISABLED_parsingTest)
 {
     int kSize=get<0>(GetParam());
     string fileName=get<1>(GetParam());
