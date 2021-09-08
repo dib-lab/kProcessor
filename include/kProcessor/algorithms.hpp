@@ -129,9 +129,46 @@ namespace kProcessor {
 
     void mergeIndexes(vector<kDataFrame *> &input, string tmpFolder, kDataFrame *output);
 
+
+    /* Joins the input kdataframes into one kDataframe. All the columns in the input kdataframes will be copied to the output kdataframe and they will have new name in the format of "<inputColumnName><index in the input>".
+     * kmersToKeep range is from 0-input.size() and it should be unique. kmers from kDataframes whose index exists in kmersToKeep will be inserted in the output dataframe.
+     *  please note that the kdataframe are expected to be ordered. If you want to join unordered kdataframe then use parallelJoin
+     *  example:
+     *  kdataframe 0:                           kdataframe 1:               kdataframe 2:
+     *  +-------+-------+-------+------------+  +-------+-------+-------+  +-------+----------+----------+
+     *  |       | count | color | foldChange |  |       | count | color |  |       | isCoding | isRepeat |
+     *  +-------+-------+-------+------------+  +-------+-------+-------+  +-------+----------+----------+
+     *  | ACGAT | 10    | [1]   | 0.2        |  | ACGAT | 20    | [1]   |  | ACGAT | 0        | 1        |
+     *  +-------+-------+-------+------------+  +-------+-------+-------+  +-------+----------+----------+
+     *  | AGCAC | 15    | [1,3] | 0.1        |  | ATTTC | 117   | [2]   |  | ACCCC | 0        | 0        |
+     *  +-------+-------+-------+------------+  +-------+-------+-------+  +-------+----------+----------+
+     *  | ATCAC | 14    | [2]   | 0.5        |                             | AGCAC | 1        | 1        |
+     *  +-------+-------+-------+------------+                             +-------+----------+----------+
+     *                                                                     | ATTTC | 0        | 0        |
+     *                                                                     +-------+----------+----------+
+     *
+     *  kmersToKeep = [0,1]
+     *
+     *  Output KDataframe
+     * +-------+--------+--------+-------------+--------+--------+-----------+----------+
+     * |       | count0 | color0 | foldChange0 | count1 | color1 | isCoding2 | isRepeat |
+     * +-------+--------+--------+-------------+--------+--------+-----------+----------+
+     * | ACGAT | 10     | [1]    | 0.2         | 20     | [1]    | 0         | 1        |
+     * +-------+--------+--------+-------------+--------+--------+-----------+----------+
+     * | AGCAC | 15     | [1,3]  | 0.1         | 0      | []     | 1         | 1        |
+     * +-------+--------+--------+-------------+--------+--------+-----------+----------+
+     * | ATCAC | 14     | [2]    | 0.5         | 0      | []     | 0         | 0        |
+     * +-------+--------+--------+-------------+--------+--------+-----------+----------+
+     * | ATTTC | 0      | []     | 0.0         | 117    | [2]    | 0         | 0        |
+     * +-------+--------+--------+-------------+--------+--------+-----------+----------+
+    */
     kDataFrame* innerJoin(vector<kDataFrame *> input, vector<uint32_t> kmersToKeep);
     //colored_kDataFrame * indexPriorityQueue(kmerDecoder *KD, string names_fileName, kDataFrame *frame);
     //colored_kDataFrame * indexPriorityQueue2(kmerDecoder *KD, string names_fileName, kDataFrame *frame);
+
+    /*
+     * Exact same behavior as innerJoin with two modifications: input kDataframes are not required to be sorted, and multithreaded implementation is provided.
+     */
     kDataFrame* parallelJoin(vector<string>& kdataframeFileNames, vector<uint32_t> kmersToKeep,uint64_t numThreads=1);
     
 }
