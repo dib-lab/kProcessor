@@ -257,23 +257,6 @@ namespace kProcessor {
         return initial;
     }
 
-    void parseSequences(kmerDecoder *KD, kDataFrame *output) {
-        output->addCountColumn();
-        if (KD->get_kSize() != (int) output->getkSize()) {
-            std::cerr << "kmerDecoder kSize must be equal to kDataFrame kSize" << std::endl;
-            exit(1);
-        }
-
-        while (!KD->end()) {
-            KD->next_chunk();
-            for (const auto &seq : *KD->getKmers()) {
-                for (const auto &kmer : seq.second) {
-                    output->incrementCount(kmer.hash);
-                }
-            }
-        }
-    }
-
 
     void countKmersFromFile(kDataFrame *kframe, std::map<std::string, int> parse_params, string filename, int chunk_size) {
         // parse_params["mode"] = 1 > Default: Kmers
