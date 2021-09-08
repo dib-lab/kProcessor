@@ -12,6 +12,9 @@ using namespace std; // Extremly important
 %include std_map.i
 
 %template(IntVector) vector<int>; /*vector to tuple conversion*/
+%template(FloatVector) vector<float>; /*vector to tuple conversion*/
+
+
 
 //typedef long int 		    int64_t;
 typedef unsigned long int 	uint64_t;
@@ -25,16 +28,18 @@ typedef unsigned long int 	uint64_t;
 /*  ~~~~COMMENT TO DISABLE namesMap interface~~~~  */
 /*  ~~~~WORKS ONLY IN SWIG4.0 ~~~~  */
 %include std_unordered_map.i
+
 /*
 %template(MAPsi) unordered_map<int, std::string>;
 %template(MAPis) unordered_map<std::string, int>;
 */
 
-%template(batchQuery_sources) std::unordered_map<std::string, std::vector<std::vector<uint32_t>>>;
-%template(colorsList) vector<uint32_t>;
-%template(batchQuery_counts) std::unordered_map<std::string, std::vector<uint32_t>>;
-%template(kmerDecoderParams) map<string, int>;
 %include "swig_interfaces/modules/custom_typemaps.i"
+
+%template(colorsList) vector<uint32_t>;
+%template(kmerDecoderParams) map<string, int>;
+%template(DoubleVector) vector<double>; /*vector to tuple conversion*/
+%template(batchQuery_counts) std::unordered_map<std::string, std::vector<double>>;
 
 /*Just copy/paste the snippet I'm interested in to be wrapped!*/
 
@@ -43,43 +48,17 @@ typedef unsigned long int 	uint64_t;
 /******** kDataFrame Interface ************/
 %include "swig_interfaces/kDataFrame/kDataFrameIterator.i"
 %include "swig_interfaces/kDataFrame/kmerRow.i"
-%include "swig_interfaces/kDataFrame/defaultColumn.i"
 %include "swig_interfaces/kDataFrame/kDataFrame.i"
 %include "swig_interfaces/kDataFrame/kDataFrameMQF.i"
 %include "swig_interfaces/kDataFrame/kDataFrameMAP.i"
 %include "swig_interfaces/kDataFrame/kDataFramePHMAP.i"
 %include "swig_interfaces/kDataFrame/kDataFrameBlight.i"
- %include "swig_interfaces/kDataFrame/kDataFrameBMQF.i"
+%include "swig_interfaces/kDataFrame/kDataFrameBMQF.i"
+%include "swig_interfaces/kDataFrame/dbgIterator.i"
+%include "swig_interfaces/kDataFrame/defaultColumn.i"
+
 /******** kDataFrame Interface ************/
 
-
-/******** colored_kDataFrame Interface ************/
-
-%{
-#include "colored_kDataFrame.hpp"
-%}
-
-%include "swig_interfaces/colored_kDataFrame.i"
-
-
-/******** colored_kDataFrame Interface ************/
-
-/******** colorTable Interface ************/
-
-%{
-#include "colorTable.hpp"
-%}
-%include "swig_interfaces/colorTable.i"
-
-/******** batchQuery Interface ************/
-
-%{
-#include "batchQuery.hpp"
-%}
-
-%include "swig_interfaces/batchQuery.i"
-
-/******** batchQuery  Interface ************/
 
 %{
 #include "algorithms.hpp" // including algorithms
@@ -91,11 +70,11 @@ typedef unsigned long int 	uint64_t;
 
 // extend_algorithms
 
-%{
-#include "extend_algorithms.hpp" // including algorithms
-%}
+// %{
+// #include "extend_algorithms.hpp" // including algorithms
+// %}
 
-%include "swig_interfaces/algorithms/extend_algorithms.i"
+// %include "swig_interfaces/algorithms/extend_algorithms.i"
 
 /******** HashUtils Interface ************/
 

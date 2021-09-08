@@ -1,87 +1,55 @@
 class kDataFrameBlight : public kDataFrame {
-    public:
-        kDataFrameBlight();
+public:
+    kDataFrameBlight();
 
-        kDataFrameBlight(uint64_t ksize)
-        {
-            blight_index=new kmer_Set_Light(ksize);
-            kSize=ksize;
-        }
+    kDataFrameBlight(uint64_t ksize)
+    {
+        blight_index = new kmer_Set_Light(ksize);
+        kSize = ksize;
+    }
 
-        kDataFrameBlight(std::uint64_t ksize,string input_fasta_file);
-        kDataFrame *getTwin();
+    kDataFrameBlight(std::uint64_t ksize, string input_fasta_file);
+    kDataFrame* getTwin();
 
-        void reserve(std::uint64_t n);
-        void reserve (vector<std::uint64_t> countHistogram);
+    void _reserve(std::uint64_t n);
+    void _reserve(vector<std::uint64_t> countHistogram);
 
-        bool kmerExist(string kmer);
+    bool kmerExist(string kmer);
+    bool kmerExist(uint64_t kmer);
 
-        bool setCount(string kmer, std::uint64_t count);
-        bool setCount(std::uint64_t kmer, std::uint64_t count);
+    bool insert(const string& kmer);
+    bool insert(std::uint64_t kmer);
 
-        bool insert(string kmer);
+    std::uint64_t getkmerOrder(const string& kmer);
+    std::uint64_t getkmerOrder(std::uint64_t kmer);
 
-        bool insert(string kmer, std::uint64_t count);
+    bool erase(const string& kmer);
+    bool erase(std::uint64_t kmer);
 
-        bool insert(std::uint64_t kmer, std::uint64_t count);
+    std::uint64_t size();
 
-        bool insert(std::uint64_t kmer);
+    std::uint64_t max_size();
 
-        std::uint64_t getCount(string kmer);
-        std::uint64_t getCount(std::uint64_t kmer);
+    float load_factor();
 
-        bool erase(string kmer);
-        bool erase(std::uint64_t kmer);
+    float max_load_factor();
 
-        std::uint64_t size();
+    kDataFrameIterator begin();
 
-        std::uint64_t max_size();
-
-        float load_factor();
-
-        float max_load_factor();
-
-        kDataFrameIterator begin();
-
-        // kDataFrameIterator end();
-        kDataFrameIterator find(string kmer);
-        kDataFrameIterator find(uint64_t kmer);
+    // kDataFrameIterator end();
+    kDataFrameIterator find(const string& kmer);
+    kDataFrameIterator find(uint64_t kmer);
 
 
-        void serialize(string filePath);
+    void serialize(string filePath);
 
-        static kDataFrame *load(string filePath);
+    static kDataFrame* load(string filePath);
 
-        ~kDataFrameBlight() {
+    template<typename T, typename Container>
+    T getKmerColumnValue(const string& columnName, string kmer);
 
-        }
-
-
-        template<typename T,typename Container>
-        T getKmerColumnValue(string columnName,string kmer);
-
-        template<typename T,typename Container>
-        void setKmerColumnValue(string columnName,string kmer, T value);
-
-
-
-//        void changeDefaultColumnType(Column*);
-
-        Column* getDefaultColumn(){
-            return defaultColumn;
-        }
-
-        template<typename T,typename Container>
-        T getKmerDefaultColumnValue(string kmer);
-
-        template<typename T,typename Container>
-        T getKmerDefaultColumnValue(std::uint64_t kmer);
-
-        template<typename T,typename Container>
-        void setKmerDefaultColumnValue(string kmer, T value);
-
-        template<typename T,typename Container>
-        void setKmerDefaultColumnValue(std::uint64_t kmer, T value);
+    template<typename T, typename Container>
+    void setKmerColumnValue(const string& columnName, string kmer, T value);
 
 
 };

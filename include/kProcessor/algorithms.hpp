@@ -42,8 +42,8 @@ namespace kProcessor {
 
     vector<uint64_t> estimateKmersHistogram(string fileName, int kSize, int threads);
 
-/// Load the kmers in the input file into the output kDataframe. Input File can be of formats: fastq,fasta, sam, and bam.
-    void parseSequences(string seqFileName, int nThreads, kDataFrame *output);
+// Load the kmers in the input file into the output kDataframe. Input File can be of formats: fastq,fasta, sam, and bam.
+// void parseSequences(string seqFileName, int nThreads, kDataFrame *output);
 
 /// Load the kmers in the input file into the output kDataframe. Input File can be of formats: fastq,fasta.
     void parseSequences(kmerDecoder *KD, kDataFrame *output);
@@ -132,6 +132,15 @@ namespace kProcessor {
     kDataFrame* innerJoin(vector<kDataFrame *> input, vector<uint32_t> kmersToKeep);
     //colored_kDataFrame * indexPriorityQueue(kmerDecoder *KD, string names_fileName, kDataFrame *frame);
     //colored_kDataFrame * indexPriorityQueue2(kmerDecoder *KD, string names_fileName, kDataFrame *frame);
+
+
+    // Extended functions
+    uint64_t aggregate_count(kDataFrame* kf, const string& countColName);
+    void transform_normalize(kDataFrame* kf, const string& countColName, uint64_t totalCount);
+    kDataFrame* filter_zeroCounts(kDataFrame* res, uint32_t allDatasets);
+    void transform_foldchange(kDataFrame* res, uint32_t nSamples, uint32_t nControl, uint32_t allDatasets, const string& foldChangeColName);
+    unordered_map<string, vector<double>> aggregate_foldChangeByGene(kDataFrame* res, const string foldChangeColName, const string colorColumnName);
+
     kDataFrame* parallelJoin(vector<string>& kdataframeFileNames, vector<uint32_t> kmersToKeep,uint64_t numThreads=1);
     
 }
