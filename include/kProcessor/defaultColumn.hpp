@@ -878,7 +878,7 @@ public:
         index=vector<uint32_t>(size);
     }
     ~deduplicatedColumn(){
-
+        delete values;
     }
 
     uint32_t  size()
