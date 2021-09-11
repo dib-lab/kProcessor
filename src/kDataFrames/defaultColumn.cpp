@@ -1619,7 +1619,6 @@ void deduplicatedColumn<ColumnType,indexType>::insert(dataType item, uint32_t i)
     if(i>=index.size())
     {
         int logI=log2(i)+1;
-        cout<<i<<" "<<(1ULL<<logI)<<endl;
         index.resize(1ULL<<logI);
     }
 
