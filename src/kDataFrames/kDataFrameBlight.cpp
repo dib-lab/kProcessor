@@ -253,3 +253,7 @@ kDataFrameIterator kDataFrameBlight::find(uint64_t kmer) {
     throw logic_error("not implemented yet");
 }
 
+kDataFrame *kDataFrameBlight::clone() {
+    throw logic_error("not implemented yet");
+}
+

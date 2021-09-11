@@ -87,6 +87,23 @@ kDataFrameMAP::kDataFrameMAP(uint64_t ksize) {
             (kDataFrame *) this);
 }
 
+kDataFrame *kDataFrameMAP::clone() {
+    kDataFrameMAP* newOne=new kDataFrameMAP(kSize);
+    newOne->MAP=MAP;
+    for(auto c:columns)
+    {
+        newOne->columns[c.first]=c.second->clone();
+        if(c.first == "count")
+            newOne->countColumn=(vectorColumn<uint32_t>*)newOne->columns[c.first];
+    }
+    delete newOne->endIterator;
+    newOne->endIterator=new kDataFrameIterator(
+            (_kDataFrameIterator *) new kDataFrameMAPIterator(MAP.end(), newOne, kSize),
+            (kDataFrame *) newOne);
+
+    return newOne;
+}
+
 kDataFrameMAP::kDataFrameMAP(uint64_t ksize,uint64_t nKmers) {
     this->class_name = "MAP"; // Temporary until resolving #17
     this->kSize = ksize;
@@ -283,3 +300,4 @@ kDataFrameIterator kDataFrameMAP::find(uint64_t kmer) {
             (_kDataFrameIterator *) new kDataFrameMAPIterator(MAP.find(kmer), this, kSize),
             (kDataFrame *) this));
 }
+

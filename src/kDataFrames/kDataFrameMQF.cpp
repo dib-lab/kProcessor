@@ -165,6 +165,17 @@ kDataFrameMQF::kDataFrameMQF() : kDataFrame() {
     endIterator=new  kDataFrameIterator(it,(kDataFrame*)this);
 }
 
+kDataFrame *kDataFrameMQF::clone() {
+    uint64_t q=log2(this->mqf->metadata->nslots);
+    kDataFrameMQF* newOne=new kDataFrameMQF(kSize,q,KD->hash_mode);
+    qf_copy(newOne->mqf,mqf);
+    for(auto c:columns)
+    {
+        newOne->columns[c.first]=c.second->clone();
+    }
+    return newOne;
+}
+
 kDataFrameMQF::kDataFrameMQF(uint64_t ksize, uint8_t q, hashingModes hash_mode) : kDataFrame(ksize) {
 
     this->class_name = "MQF"; // Temporary until resolving #17

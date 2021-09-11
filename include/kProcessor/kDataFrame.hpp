@@ -306,6 +306,7 @@ public:
   explicit kDataFrame(uint8_t kSize);
 
 
+  virtual kDataFrame* clone()=0;
   virtual ~kDataFrame();
 /// creates a new kDataframe using the same parameters as the current kDataFrame.
 /*! It is like clone but without copying the data */
@@ -529,7 +530,11 @@ public:
   kDataFrameMQF(std::uint64_t kSize,vector<std::uint64_t> kmersHistogram);
   kDataFrameMQF(std::uint64_t kSize,uint64_t nKmers);
   kDataFrameMQF(kDataFrame* frame);
-  ~kDataFrameMQF(){
+
+
+    kDataFrame *clone() override;
+
+    ~kDataFrameMQF(){
     qf_destroy(mqf);
     delete mqf;
   }
@@ -632,7 +637,9 @@ public:
   kDataFrameBMQF(std::uint64_t ksize,vector<std::uint64_t> countHistogram,uint8_t tagSize
     ,double falsePositiveRate);
 
-  kDataFrameBMQF(kDataFrame* frame,string filename);
+    kDataFrame *clone() override;
+
+    kDataFrameBMQF(kDataFrame* frame,string filename);
 
   ~kDataFrameBMQF(){
     delete bufferedmqf;
@@ -710,7 +717,10 @@ public:
   kDataFrameMAP(std::uint64_t ksize);
   kDataFrameMAP(std::uint64_t kSize,vector<std::uint64_t> kmersHistogram);
   kDataFrameMAP(std::uint64_t kSize,uint64_t nKmers);
-  kDataFrame* getTwin();
+
+    kDataFrame *clone() override;
+
+    kDataFrame* getTwin();
   void _reserve (std::uint64_t n);
   void _reserve (vector<std::uint64_t> countHistogram);
 
@@ -808,9 +818,7 @@ public:
     kDataFramePHMAP(uint64_t kSize,vector<uint64_t> kmersHistogram);
 
 
-
-
-
+    kDataFrame *clone() override;
 
 
     kDataFrame *getTwin();
@@ -977,6 +985,7 @@ public:
 
     ~kDataFrameBlight() = default;
 
+    kDataFrame *clone() override;
 
     template<typename T,typename Container>
     T getKmerColumnValue(const string& columnName,string kmer);
