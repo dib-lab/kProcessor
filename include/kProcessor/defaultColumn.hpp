@@ -66,7 +66,7 @@ public:
     }
     void resize(uint32_t size)
     {
-        dataV.resize(size);
+        dataV.resize(size+1);
     }
     void insert(T item,uint32_t index);
     T get(uint32_t index);

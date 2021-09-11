@@ -72,6 +72,8 @@ Column *Column::getContainerByName(std::size_t hash) {
         return new deduplicatedColumn<StringColorColumn>();
     }else if (hash == typeid(deduplicatedColumn<prefixTrie>).hash_code()) {
         return new deduplicatedColumn<prefixTrie>();
+    }else if (hash == typeid(deduplicatedColumn<prefixTrie,phmap::flat_hash_map<uint32_t,uint32_t>>).hash_code()) {
+        return new deduplicatedColumn<prefixTrie,phmap::flat_hash_map<uint32_t,uint32_t>>();
     } else {
         throw logic_error("Failed to load Unknown Column " + hash);
     }
