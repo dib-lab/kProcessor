@@ -1243,6 +1243,87 @@ TEST_P(kDataFrameTest,transformMultiColumns)
 
 }
 
+TEST_P(kDataFrameTest,transformInPlaceMultiColumns)
+{
+    EXPECT_EQ(kframe->empty(), true);
+
+    int insertedKmers=0;
+    for(auto k:*kmers)
+    {
+        kframe->setCount(k.first,k.second);
+        if(kframe->load_factor()>=kframe->max_load_factor()*0.8)
+        {
+            break;
+        }
+        insertedKmers++;
+    }
+    int checkedKmers=0;
+    kframe->addColumn("intColumn",new vectorColumn<int>(kframe->size()));
+    kframe->addColumn("doubleColumn",new vectorColumn<double>(kframe->size()));
+    kframe->addColumn("boolColumn",new vectorColumn<bool>(kframe->size()));
+
+    map<string,tuple<int,double,bool> > simColumns;
+    kDataFrameIterator it=kframe->begin();
+    while(it!=kframe->end())
+    {
+        string kmer=it.getKmer();
+
+        int randInt=rand()%1000000;
+        double randDouble=(double)(rand()%1000000);
+        bool randBool=rand()%2==0;
+
+        simColumns[kmer]=make_tuple(randInt*-1,ceil(randDouble),!randBool);
+
+        kframe->setKmerColumnValue<int, vectorColumn<int> >("intColumn",kmer,randInt);
+        kframe->setKmerColumnValue<double, vectorColumn<double> >("doubleColumn",kmer,randDouble);
+        kframe->setKmerColumnValue<bool, vectorColumn<bool> >("boolColumn",kmer,randBool);
+        it++;
+    }
+    kProcessor::transformInPlace(kframe,[](kDataFrameIterator& it)
+    {
+        int count0;
+        it.getColumnValue<int, vectorColumn<int> >("intColumn", count0);
+        it.setColumnValue<int, vectorColumn<int> >("intColumn", count0 *-1);
+
+        double dV;
+
+        it.getColumnValue<double, vectorColumn<double> >("doubleColumn", dV);
+        it.setColumnValue<double, vectorColumn<double> >("doubleColumn", ceil(dV));
+
+        bool bV;
+
+
+        it.getColumnValue<bool, vectorColumn<bool> >("boolColumn", bV);
+        it.setColumnValue<bool, vectorColumn<bool> >("boolColumn", !(bV));
+
+
+    });
+    for(auto simRow:simColumns)
+    {
+        string kmer=simRow.first;
+        int randInt=get<0>(simRow.second);
+        double randDouble=get<1>(simRow.second);
+        bool randBool=get<2>(simRow.second);
+
+        int retInt=kframe->getKmerColumnValue<int, vectorColumn<int> >("intColumn",kmer);
+        double retDouble=kframe->getKmerColumnValue<double, vectorColumn<double> >("doubleColumn",kmer);
+        bool retBool=kframe->getKmerColumnValue<bool, vectorColumn<bool>>("boolColumn",kmer);
+
+        ASSERT_EQ(randInt,retInt);
+        ASSERT_EQ(randDouble,retDouble);
+        ASSERT_EQ(randBool,retBool);
+
+    }
+
+    vector<string> correctColumNames={"intColumn","doubleColumn","boolColumn","count"};
+    sort(correctColumNames.begin(),correctColumNames.end());
+    vector<string> columnNames=kframe->getColumnNames();
+    sort(columnNames.begin(),columnNames.end());
+    ASSERT_EQ(columnNames,correctColumNames);
+    delete kframe;
+    kframe= nullptr;
+
+}
 
 TEST_P(kDataFrameTest,filterLessThan5)
 {
