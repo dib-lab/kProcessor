@@ -1616,8 +1616,13 @@ void deduplicatedColumn<prefixTrie,phmap::flat_hash_map<uint32_t,uint32_t> >::se
 
 template<typename ColumnType,typename indexType>
 void deduplicatedColumn<ColumnType,indexType>::insert(dataType item, uint32_t i) {
-    while(i>=index.size())
-        index.resize(index.size()*2);
+    if(i>=index.size())
+    {
+        int logI=log2(i)+1;
+        cout<<i<<" "<<(1ULL<<logI)<<endl;
+        index.resize(1ULL<<logI);
+    }
+
     index[i] = values->insertAndGetIndex(item);
 }
 template<>
