@@ -1169,7 +1169,8 @@ namespace kProcessor {
         kframe->addCountColumn();
         while (kmer_data_base.ReadNextKmer(kmer_object, counter)) {
             kmer_object.to_string(str);
-            kframe->setCount(str, counter);
+            uint64_t count=kframe->getCount(str);
+            kframe->setCount(str, counter+count);
         }
 
     }
