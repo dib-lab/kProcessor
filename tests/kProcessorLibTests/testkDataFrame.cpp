@@ -1181,6 +1181,20 @@ TEST_P(algorithmsTest,parsingTest)
   int chunkSize=1000;
 
   kProcessor::countKmersFromFile(kframe, {{"mode", 1}}, fileName, 1000); // Mode 1 : kmers, KmerSize will be cloned from the kFrame
+
+  string db=fileName+"."+std::to_string(kSize);
+  kDataFrame* kmc= new kDataFrameMAP(kSize);
+  kProcessor::loadFromKMC(kmc,db);
+
+  for(auto k:*kmc)
+  {
+      uint64_t kmcCount=k.getCount();
+      uint64_t kProcessorCount=kframe->getCount(k.getKmer());
+      ASSERT_EQ(kmcCount,kProcessorCount);
+  }
+
+  delete kmc;
+
   kmerDecoder *KD_KMERS = kmerDecoder::getInstance(fileName, chunkSize, KMERS, kframe->KD->hash_mode, {{"kSize", kSize}});
 
     while (!KD_KMERS->end()) {
