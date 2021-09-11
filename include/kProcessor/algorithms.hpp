@@ -56,7 +56,7 @@ namespace kProcessor {
     void countKmersFromString(kDataFrame *frame, std::map<std::string, int> parse_params, string sequence);
 
 /// Applies a function on each row in the input kDataframe. The output is another kDataframe with the same kmers and new columns defined based on the user defined function.
-    kDataFrame *transform(kDataFrame *input,  function<kmerRow (kmerRow i)>);
+    kDataFrame *transform(kDataFrame *input,  function<void (kDataFrameIterator& i)>);
 
 /// Applies a function on each row in the input kDataframe. the function updates one or more columns in the input kdataframe based on the user defined function.
     void transformInPlace(kDataFrame *input,  function<void (kDataFrameIterator& i)>);

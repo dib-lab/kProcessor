@@ -29,12 +29,11 @@ namespace kProcessor {
 
     kDataFrame *transform_normalize(kDataFrame *kf, const string &column_name, uint64_t totalCount) {
 
-        kf = kProcessor::transform(kf, [=, & column_name, & totalCount](kmerRow it) -> kmerRow {
+        kf = kProcessor::transform(kf, [=, & column_name, & totalCount](kDataFrameIterator& it) -> void {
             uint32_t count0;
             it.getColumnValue<uint32_t, vectorColumn<uint32_t> >(column_name, count0);
             double normalized = (double) count0 * (100000000.0) / totalCount;
             it.setColumnValue<uint32_t, vectorColumn<uint32_t> >(column_name, (uint32_t) normalized);
-            return it;
         });
 
         return kf;
@@ -46,7 +45,7 @@ namespace kProcessor {
         uint32_t nControlSamples = nAllSamples - nTestSamples;
         res->addColumn(output_col_name, new vectorColumn<double>(res->size()));
 
-        res = kProcessor::transform(res, [=](kmerRow it) -> kmerRow {
+        res = kProcessor::transform(res, [=](kDataFrameIterator& it) -> kmerRow {
             unsigned i = 0;
             uint32_t sampleSum = 0;
             for (; i < nTestSamples; i++) {
@@ -66,7 +65,7 @@ namespace kProcessor {
             double controlAVG = (double) controlSum / (double) nControlSamples;
             double foldChange = sampleAVG / controlAVG;
             it.setColumnValue<double, vectorColumn<double> >(output_col_name, foldChange);
-            return it;
+
         });
 
         return res;

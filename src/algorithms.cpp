@@ -124,29 +124,14 @@ namespace kProcessor {
 
     }
 
-    kDataFrame *transform(kDataFrame *input, function<kmerRow (kmerRow i)> fn) {
-        kDataFrame *res = input->getTwin();
-        res->addCountColumn();
-        kDataFrameIterator it = input->begin();
-        while (it != input->end()) {
-            kmerRow newkmer = fn(it.getKmerRow());
-            res->insert(newkmer);
+    kDataFrame *transform(kDataFrame *input, function<void (kDataFrameIterator& i)> fn) {
+        kDataFrame *res = input->clone();
+        kDataFrameIterator it = res->begin();
+        while (it != res->end()) {
+            fn(it);
             it++;
         }
-        // for(auto col: input->columns)
-        // {
-        //     string newColName= col.first;
-        //     Column* column=col.second->getTwin();
-        //     column->resize(res->size());
-        //     res->addColumn(newColName, column);
-        // }
-        // for(auto kmer:(*res))
-        // {
-        //     for (auto col: input->columns) {
-        //         string newColName = col.first;
-        //         res->setKmerColumnValueFromOtherColumn(input,col.first, newColName,kmer.getKmer());
-        //     }
-        // }
+
         return res;
 
     }
