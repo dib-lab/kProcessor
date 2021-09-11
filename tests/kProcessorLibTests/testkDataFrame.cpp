@@ -794,14 +794,18 @@ TEST_P(kDataFrameTest,convertTOMQF)
     EXPECT_EQ(kframe->empty(), true);
 
     int insertedKmers=0;
-    for(auto k:*kmers)
+    auto kIT=kmers->begin();
+    string NovelKmer=kIT->first;
+    kIT++;
+    while(kIT != kmers->end())
     {
-        kframe->setCount(k.first,k.second);
+        kframe->setCount(kIT->first,kIT->second);
         if(kframe->load_factor()>=kframe->max_load_factor()*0.8)
         {
             break;
         }
         insertedKmers++;
+        kIT++;
     }
     int checkedKmers=0;
     kframe->addColumn("boolColumn",new vectorColumn<bool>(kframe->size()));
@@ -847,20 +851,32 @@ TEST_P(kDataFrameTest,convertTOMQF)
         EXPECT_EQ(randBool,retBool);
 
     }
+    // test a alien kmer
+    ASSERT_EQ(kframeMQF->kmerExist(NovelKmer),false);
+    try{
+        int retInt=kframeMQF->getKmerColumnValue<int, vectorColumn<int> >("intColumn",NovelKmer);
+        FAIL();
+    }
+    catch(const std::exception & e)
+    {
+        EXPECT_STREQ( "item not found!", e.what() );
+    }
 }
 TEST_P(kDataFrameTest,convertTOBMQF)
 {
     EXPECT_EQ(kframe->empty(), true);
 
     int insertedKmers=0;
-    for(auto k:*kmers)
+    auto kIT=kmers->begin();
+    while(kIT!=kmers->end())
     {
-        kframe->setCount(k.first,k.second);
+        kframe->setCount(kIT->first,kIT->second);
         if(kframe->load_factor()>=kframe->max_load_factor()*0.8)
         {
             break;
         }
         insertedKmers++;
+        kIT++;
     }
    // int checkedKmers=0;
     kframe->addColumn("boolColumn",new vectorColumn<bool>(kframe->size()));
@@ -897,6 +913,8 @@ TEST_P(kDataFrameTest,convertTOBMQF)
         checkedKmers++;
     }
     ASSERT_EQ(checkedKmers,simColumns.size());
+
+
 //    for(auto simRow:simColumns)
 //    {
 //        string kmer=simRow.first;
