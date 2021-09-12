@@ -642,7 +642,7 @@ namespace kProcessor {
                 for(auto k:*kf)
                 {
                     if(kmersInserted++ % chunkSize ==0 )
-                        cout<<kmersInserted<< " kmers are processed from "<<fileName<<endl;
+                        cout<<kmersInserted<< " kmers ("<< (kmersInserted-1) / chunkSize<<" / " <<"10) are processed from "<<fileName<<endl;
 
 
                     uint32_t order=lastKmerID;

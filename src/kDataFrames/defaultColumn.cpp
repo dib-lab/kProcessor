@@ -880,7 +880,7 @@ void prefixTrie::loadFromQueryColorColumn(mixVectors  *col) {
 
     }
 
-    uint64_t tmpSize = col->numIntegers() / 10;
+    uint64_t tmpSize = max((uint32_t)(col->numIntegers() / 10),(uint32_t)10);
 
 
     uint64_t tmpEdgesTop = 0;
@@ -1412,6 +1412,7 @@ void prefixTrie::shorten(deque<uint32_t> &input, deque<uint32_t> &output) {
 
 }
 
+// paste the output to
 void prefixTrie::exportTree(string prefix, int treeIndex) {
     string outFilename = prefix + to_string(treeIndex);
     ofstream out(outFilename.c_str());
@@ -1491,7 +1492,7 @@ Column *prefixTrie::clone() {
     for(unsigned  i = 0 ; i < tree.size() ; i++){
         res->tree[i]=new sdsl::bit_vector(*tree[i]);
         res->edges[i]=new vectype(*edges[i]);
-        res->bp_tree[i]=new sdsl::bp_support_sada<>(*bp_tree[i]);
+        res->bp_tree[i]=new sdsl::bp_support_sada<>((res->tree[i]));
     }
 
     res->starts=starts;
@@ -1569,6 +1570,15 @@ typename deduplicatedColumn<ColumnType,indexType>::dataType deduplicatedColumn<C
         return values->get(0);
     return values->get(index[order]);
 }
+
+template<>
+typename deduplicatedColumn<prefixTrie,phmap::flat_hash_map<uint32_t,uint32_t>>::dataType deduplicatedColumn<prefixTrie,phmap::flat_hash_map<uint32_t,uint32_t>>::get(uint32_t order) {
+    auto it=index.find(order);
+    if(it == index.end())
+        return values->get(0);
+    return values->get(it->second);
+}
+
 
 template<typename ColumnType,typename indexType>
 Column *deduplicatedColumn<ColumnType,indexType>::getTwin() {

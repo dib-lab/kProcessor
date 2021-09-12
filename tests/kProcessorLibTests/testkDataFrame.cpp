@@ -302,6 +302,18 @@ void setFunctionsTest::SetUp()
         }
         kDataFrameMAP* indexRes=new kDataFrameMAP(k);
         kProcessor::indexPriorityQueue(frames,"",indexRes);
+
+        auto prevColor=(deduplicatedColumn< mixVectors>*)indexRes->columns["color"];
+        auto newColor=new deduplicatedColumn<prefixTrie>();
+        newColor->index=prevColor->index;
+//        for(uint32_t i =0;i<prevColor->index.size();i++)
+//        {
+//            newColor->index[i]=prevColor->index[i];
+//        }
+
+        newColor->values=new prefixTrie(prevColor->values);
+        indexRes->columns["colorOptimized"]=newColor;
+
         indexRes->addColumn("double",new vectorColumn<double>(indexRes->size()));
         for(auto k:*indexRes)
         {
@@ -1736,6 +1748,10 @@ TEST_P(setFunctionsTest,parallelinnerJoinTest)
         vector<uint32_t> colorsCorrect=input[2]->getKmerColumnValue<vector<uint32_t >, deduplicatedColumn<mixVectors> >("color",it.getHashedKmer());
         vector<uint32_t> colors;
         it.getColumnValue<vector<uint32_t >, deduplicatedColumn<mixVectors> >("color2",colors);
+        ASSERT_EQ(colors,colorsCorrect);
+
+        colors.clear();
+        it.getColumnValue<vector<uint32_t >, deduplicatedColumn< prefixTrie> >("colorOptimized2",colors);
         ASSERT_EQ(colors,colorsCorrect);
 
         double dV;

@@ -709,6 +709,7 @@ public:
     uint32_t getNumColors();
     uint64_t sizeInBytes();
     void explainSize();
+    // paste the output to http://magjac.com/graphviz-visual-editor/
     void exportTree(string prefix,int tree);
     Column* getTwin();
     void resize(uint32_t size);
