@@ -56,7 +56,7 @@ int main(int argc, char *argv[])
     kDataFrame* output=kProcessor::parallelJoin(filenames,kmersToKeep,nThreads);
     cout<<"Merging finished "<<endl;
     cout<<"Final number of kmers "<<output->size()<<endl;
-
+    output->save(outPath);
     if(checkIndex)
     {
         ii=0;
@@ -107,7 +107,7 @@ int main(int argc, char *argv[])
             delete kf;
         }
     }
-    output->save(outPath);
+
     delete output;
     return 0;
 
