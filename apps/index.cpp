@@ -10,6 +10,7 @@
 #include "CLI11.hpp"
 #include <typeinfo>
 #include "defaultColumn.hpp"
+#include <parallel_hashmap/btree.h>
 
 using namespace std;
 
@@ -85,7 +86,7 @@ int main(int argc, char *argv[])
         if(mapDeduplicate)
         {
             auto prevColor=(deduplicatedColumn< mixVectors>*)output->columns["color"];
-            auto newColor=new deduplicatedColumn<prefixTrie,phmap::flat_hash_map<uint32_t,uint32_t> >();
+            auto newColor=new deduplicatedColumn<prefixTrie,phmap::btree_map<uint32_t,uint32_t> >();
             for(uint32_t i =0;i<prevColor->index.size();i++)
             {
                 newColor->index[i]=prevColor->index[i];

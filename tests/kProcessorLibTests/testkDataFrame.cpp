@@ -11,6 +11,7 @@
 #include <tuple>
 #include "defaultColumn.hpp"
 
+#include <parallel_hashmap/btree.h>
 
 #include <set>
 using namespace std;
@@ -304,12 +305,12 @@ void setFunctionsTest::SetUp()
         kProcessor::indexPriorityQueue(frames,"",indexRes);
 
         auto prevColor=(deduplicatedColumn< mixVectors>*)indexRes->columns["color"];
-        auto newColor=new deduplicatedColumn<prefixTrie>();
-        newColor->index=prevColor->index;
-//        for(uint32_t i =0;i<prevColor->index.size();i++)
-//        {
-//            newColor->index[i]=prevColor->index[i];
-//        }
+        auto newColor=new deduplicatedColumn<prefixTrie,phmap::btree_map<uint32_t,uint32_t>>();
+        //newColor->index=prevColor->index;
+        for(uint32_t i =0;i<prevColor->index.size();i++)
+        {
+            newColor->index[i]=prevColor->index[i];
+        }
 
         newColor->values=new prefixTrie(prevColor->values);
         indexRes->columns["colorOptimized"]=newColor;
@@ -1751,7 +1752,7 @@ TEST_P(setFunctionsTest,parallelinnerJoinTest)
         ASSERT_EQ(colors,colorsCorrect);
 
         colors.clear();
-        it.getColumnValue<vector<uint32_t >, deduplicatedColumn< prefixTrie> >("colorOptimized2",colors);
+        it.getColumnValue<vector<uint32_t >, deduplicatedColumn< prefixTrie,phmap::btree_map<uint32_t,uint32_t>> >("colorOptimized2",colors);
         ASSERT_EQ(colors,colorsCorrect);
 
         double dV;

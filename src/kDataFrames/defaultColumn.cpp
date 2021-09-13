@@ -4,7 +4,11 @@
 #include <cereal/types/vector.hpp>
 #include <cereal/types/memory.hpp>
 #include "parallel_hashmap/phmap_dump.h"
+#include <parallel_hashmap/btree.h>
 #include <cereal/archives/binary.hpp>
+#include <cereal/types/unordered_map.hpp>
+#include <cereal/types/memory.hpp>
+
 #include <stack>
 #include <queue>
 #include <iterator>
@@ -40,6 +44,8 @@ class deduplicatedColumn<prefixTrie>;
 template
 class deduplicatedColumn<prefixTrie,phmap::flat_hash_map<uint32_t,uint32_t>>;
 
+template
+class deduplicatedColumn<prefixTrie,phmap::btree_map<uint32_t,uint32_t>>;
 
 template
 class deduplicatedColumn<insertColorColumn>;
@@ -74,6 +80,8 @@ Column *Column::getContainerByName(std::size_t hash) {
         return new deduplicatedColumn<prefixTrie>();
     }else if (hash == typeid(deduplicatedColumn<prefixTrie,phmap::flat_hash_map<uint32_t,uint32_t>>).hash_code()) {
         return new deduplicatedColumn<prefixTrie,phmap::flat_hash_map<uint32_t,uint32_t>>();
+    }else if (hash == typeid(deduplicatedColumn<prefixTrie,phmap::btree_map<uint32_t,uint32_t>>).hash_code()) {
+        return new deduplicatedColumn<prefixTrie,phmap::btree_map<uint32_t,uint32_t>>();
     } else {
         throw logic_error("Failed to load Unknown Column " + hash);
     }
@@ -423,7 +431,15 @@ vector<uint32_t> mixVectors::getWithIndex(uint32_t index) {
     }
     return res;
 }
+mixVectors::mixVectors(vector<vector<uint32_t> > colorsInput,uint32_t noSamples) {
+    colors.push_back(new vectorOfVectors(0, 1));
+    numColors=colorsInput.size();
+    this->noSamples=noSamples;
+    uint32_t colorId = 1;
+    idsMap = sdsl::int_vector<>(numColors + 1);
+    //vecto
 
+}
 mixVectors::mixVectors(insertColorColumn *col) {
     col->populateColors();
     colors.push_back(new vectorOfVectors(0, 1));
@@ -1508,10 +1524,6 @@ deduplicatedColumn<ColumnType,indexType>::deduplicatedColumn(uint32_t size){
     index=indexType(size);
 }
 
-template<>
-deduplicatedColumn<prefixTrie,phmap::flat_hash_map<uint32_t,uint32_t> >::deduplicatedColumn(uint32_t size){
-
-}
 
 template<typename ColumnType,typename indexType>
 void deduplicatedColumn<ColumnType,indexType>::serialize(string filename) {
@@ -1535,6 +1547,99 @@ void deduplicatedColumn<ColumnType,indexType>::deserialize(string filename) {
     os.close();
     values = new ColumnType();
     values->deserialize(containerFilename);
+}
+
+
+
+
+
+template<typename ColumnType,typename indexType>
+typename deduplicatedColumn<ColumnType,indexType>::dataType deduplicatedColumn<ColumnType,indexType>::get(uint32_t order) {
+    if(order >= index.size())
+        return values->get(0);
+    return values->get(index[order]);
+}
+
+
+
+template<typename ColumnType,typename indexType>
+Column *deduplicatedColumn<ColumnType,indexType>::getTwin() {
+    deduplicatedColumn<ColumnType,indexType>* col=new deduplicatedColumn<ColumnType,indexType>();
+    col->values=(ColumnType*)values->clone();
+    col->index=indexType(index.size());
+    return col;
+}
+
+
+template<typename ColumnType,typename indexType>
+void deduplicatedColumn<ColumnType,indexType>::resize(uint32_t size) {
+    index.resize(size);
+}
+
+
+
+template<typename ColumnType,typename indexType>
+void
+deduplicatedColumn<ColumnType,indexType>::setValueFromColumn(Column *Container, uint32_t inputOrder, uint32_t outputOrder) {
+    deduplicatedColumn<ColumnType,indexType> *other = ((deduplicatedColumn<ColumnType,indexType> *) Container);
+    while(outputOrder>=index.size())
+        index.resize(index.size()*2);
+    index[outputOrder] = other->index[inputOrder];
+    // values should be clones
+}
+
+
+
+template<typename ColumnType,typename indexType>
+void deduplicatedColumn<ColumnType,indexType>::insert(dataType item, uint32_t i) {
+    if(i>=index.size())
+    {
+        int logI=log2(i)+1;
+        index.resize(1ULL<<logI);
+    }
+
+    index[i] = values->insertAndGetIndex(item);
+}
+
+
+template<typename ColumnType,typename indexType>
+Column *deduplicatedColumn<ColumnType,indexType>::clone() {
+    deduplicatedColumn<ColumnType,indexType>* res=new deduplicatedColumn<ColumnType,indexType>();
+    res->index=index;
+    res->values=(ColumnType*)values->clone();
+    return res;
+}
+
+
+template<>
+void deduplicatedColumn<prefixTrie,phmap::flat_hash_map<uint32_t,uint32_t> >::insert(dataType item, uint32_t i) {
+    index[i] = values->insertAndGetIndex(item);
+}
+template<>
+void deduplicatedColumn<prefixTrie,phmap::flat_hash_map<uint32_t,uint32_t> >::setValueFromColumn(Column *Container, uint32_t inputOrder, uint32_t outputOrder) {
+    deduplicatedColumn<prefixTrie,phmap::flat_hash_map<uint32_t,uint32_t> > *other = ((deduplicatedColumn<prefixTrie,phmap::flat_hash_map<uint32_t,uint32_t> > *) Container);
+    index[outputOrder] = other->index[inputOrder];
+    // values should be clones
+}
+
+template<>
+void deduplicatedColumn<prefixTrie,phmap::flat_hash_map<uint32_t,uint32_t> >::resize(uint32_t size) {
+
+}
+
+template<>
+Column *deduplicatedColumn<prefixTrie,phmap::flat_hash_map<uint32_t,uint32_t> >::getTwin() {
+    deduplicatedColumn<prefixTrie,phmap::flat_hash_map<uint32_t,uint32_t> >* col=new deduplicatedColumn<prefixTrie,phmap::flat_hash_map<uint32_t,uint32_t> >();
+    col->values=(prefixTrie*)values->clone();
+    col->index=phmap::flat_hash_map<uint32_t,uint32_t>();
+    return col;
+}
+template<>
+typename deduplicatedColumn<prefixTrie,phmap::flat_hash_map<uint32_t,uint32_t>>::dataType deduplicatedColumn<prefixTrie,phmap::flat_hash_map<uint32_t,uint32_t>>::get(uint32_t order) {
+    auto it=index.find(order);
+    if(it == index.end())
+        return values->get(0);
+    return values->get(it->second);
 }
 
 
@@ -1564,15 +1669,39 @@ void deduplicatedColumn<prefixTrie,phmap::flat_hash_map<uint32_t,uint32_t> >::de
 }
 
 
-template<typename ColumnType,typename indexType>
-typename deduplicatedColumn<ColumnType,indexType>::dataType deduplicatedColumn<ColumnType,indexType>::get(uint32_t order) {
-    if(order >= index.size())
-        return values->get(0);
-    return values->get(index[order]);
+template<>
+deduplicatedColumn<prefixTrie,phmap::flat_hash_map<uint32_t,uint32_t> >::deduplicatedColumn(uint32_t size){
+
+}
+
+
+///////////// btree
+
+template<>
+void deduplicatedColumn<prefixTrie,phmap::btree_map<uint32_t,uint32_t> >::insert(dataType item, uint32_t i) {
+    index[i] = values->insertAndGetIndex(item);
+}
+template<>
+void deduplicatedColumn<prefixTrie,phmap::btree_map<uint32_t,uint32_t> >::setValueFromColumn(Column *Container, uint32_t inputOrder, uint32_t outputOrder) {
+    deduplicatedColumn<prefixTrie,phmap::btree_map<uint32_t,uint32_t> > *other = ((deduplicatedColumn<prefixTrie,phmap::btree_map<uint32_t,uint32_t> > *) Container);
+    index[outputOrder] = other->index[inputOrder];
+    // values should be clones
 }
 
 template<>
-typename deduplicatedColumn<prefixTrie,phmap::flat_hash_map<uint32_t,uint32_t>>::dataType deduplicatedColumn<prefixTrie,phmap::flat_hash_map<uint32_t,uint32_t>>::get(uint32_t order) {
+void deduplicatedColumn<prefixTrie,phmap::btree_map<uint32_t,uint32_t> >::resize(uint32_t size) {
+
+}
+
+template<>
+Column *deduplicatedColumn<prefixTrie,phmap::btree_map<uint32_t,uint32_t> >::getTwin() {
+    deduplicatedColumn<prefixTrie,phmap::btree_map<uint32_t,uint32_t> >* col=new deduplicatedColumn<prefixTrie,phmap::btree_map<uint32_t,uint32_t> >();
+    col->values=(prefixTrie*)values->clone();
+    col->index=phmap::btree_map<uint32_t,uint32_t>();
+    return col;
+}
+template<>
+typename deduplicatedColumn<prefixTrie,phmap::btree_map<uint32_t,uint32_t>>::dataType deduplicatedColumn<prefixTrie,phmap::btree_map<uint32_t,uint32_t>>::get(uint32_t order) {
     auto it=index.find(order);
     if(it == index.end())
         return values->get(0);
@@ -1580,69 +1709,35 @@ typename deduplicatedColumn<prefixTrie,phmap::flat_hash_map<uint32_t,uint32_t>>:
 }
 
 
-template<typename ColumnType,typename indexType>
-Column *deduplicatedColumn<ColumnType,indexType>::getTwin() {
-    deduplicatedColumn<ColumnType,indexType>* col=new deduplicatedColumn<ColumnType,indexType>();
-    col->values=(ColumnType*)values->clone();
-    col->index=indexType(index.size());
-    return col;
-}
-
 template<>
-Column *deduplicatedColumn<prefixTrie,phmap::flat_hash_map<uint32_t,uint32_t> >::getTwin() {
-    deduplicatedColumn<prefixTrie,phmap::flat_hash_map<uint32_t,uint32_t> >* col=new deduplicatedColumn<prefixTrie,phmap::flat_hash_map<uint32_t,uint32_t> >();
-    col->values=(prefixTrie*)values->clone();
-    col->index=phmap::flat_hash_map<uint32_t,uint32_t>();
-    return col;
-}
+void deduplicatedColumn<prefixTrie,phmap::btree_map<uint32_t,uint32_t> >::serialize(string filename) {
+    string indexFilename = filename + ".index";
+    string containerFilename = filename + ".container";
 
-template<typename ColumnType,typename indexType>
-void deduplicatedColumn<ColumnType,indexType>::resize(uint32_t size) {
-    index.resize(size);
+    std::ofstream os(indexFilename, std::ios::binary);
+    cereal::BinaryOutputArchive archive(os);
+    archive(index);
+    os.close();
+
+    values->serialize(containerFilename);
 }
 
 
 template<>
-void deduplicatedColumn<prefixTrie,phmap::flat_hash_map<uint32_t,uint32_t> >::resize(uint32_t size) {
+void deduplicatedColumn<prefixTrie,phmap::btree_map<uint32_t,uint32_t> >::deserialize(string filename) {
+    string indexFilename = filename + ".index";
+    string containerFilename = filename + ".container";
 
+    std::ifstream osi(indexFilename, std::ios::binary);
+    cereal::BinaryInputArchive iarchive(osi);
+    iarchive(index);
+
+    values = new prefixTrie();
+    values->deserialize(containerFilename);
 }
 
-template<typename ColumnType,typename indexType>
-void
-deduplicatedColumn<ColumnType,indexType>::setValueFromColumn(Column *Container, uint32_t inputOrder, uint32_t outputOrder) {
-    deduplicatedColumn<ColumnType,indexType> *other = ((deduplicatedColumn<ColumnType,indexType> *) Container);
-    while(outputOrder>=index.size())
-        index.resize(index.size()*2);
-    index[outputOrder] = other->index[inputOrder];
-    // values should be clones
-}
 
 template<>
-void deduplicatedColumn<prefixTrie,phmap::flat_hash_map<uint32_t,uint32_t> >::setValueFromColumn(Column *Container, uint32_t inputOrder, uint32_t outputOrder) {
-    deduplicatedColumn<prefixTrie,phmap::flat_hash_map<uint32_t,uint32_t> > *other = ((deduplicatedColumn<prefixTrie,phmap::flat_hash_map<uint32_t,uint32_t> > *) Container);
-    index[outputOrder] = other->index[inputOrder];
-    // values should be clones
-}
+deduplicatedColumn<prefixTrie,phmap::btree_map<uint32_t,uint32_t> >::deduplicatedColumn(uint32_t size){
 
-template<typename ColumnType,typename indexType>
-void deduplicatedColumn<ColumnType,indexType>::insert(dataType item, uint32_t i) {
-    if(i>=index.size())
-    {
-        int logI=log2(i)+1;
-        index.resize(1ULL<<logI);
-    }
-
-    index[i] = values->insertAndGetIndex(item);
-}
-template<>
-void deduplicatedColumn<prefixTrie,phmap::flat_hash_map<uint32_t,uint32_t> >::insert(dataType item, uint32_t i) {
-    index[i] = values->insertAndGetIndex(item);
-}
-
-template<typename ColumnType,typename indexType>
-Column *deduplicatedColumn<ColumnType,indexType>::clone() {
-    deduplicatedColumn<ColumnType,indexType>* res=new deduplicatedColumn<ColumnType,indexType>();
-    res->index=index;
-    res->values=(ColumnType*)values->clone();
-    return res;
 }

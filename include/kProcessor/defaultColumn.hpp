@@ -605,6 +605,7 @@ public:
     virtual void resize(uint32_t size)=0;
 
 };
+class StringColorColumn;
 class mixVectors: public queryColorColumn{
 public:
     typedef vector<uint32_t> dataType ;
@@ -618,6 +619,9 @@ public:
         colors.push_back(new vectorOfVectors());
     }
     mixVectors(insertColorColumn* col);
+
+    mixVectors(vector<vector<uint32_t> > colors,uint32_t noSamples);
+
     ~mixVectors(){
         for(auto v:colors)
             delete v;
