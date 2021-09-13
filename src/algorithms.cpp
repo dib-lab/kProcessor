@@ -610,7 +610,7 @@ namespace kProcessor {
             while(moreWork)
             {
                 kf=nullptr;
-
+                unsigned sampleID;
 #pragma omp critical
                 {
                     if(i==kdataframeFileNames.size()){
@@ -618,24 +618,29 @@ namespace kProcessor {
                         maxID=max(lastKmerID,maxID);
                     }
                     else{
-                        fileName=kdataframeFileNames[i];
-                        kf=kDataFrame::load(fileName);
-                        cout<<"Loaded "<<fileName<<endl;
-                        columns.resize(kf->columns.size());
-                        unsigned t=0;
-                        for(auto c: kf->columns)
-                        {
-
-                            output->addColumn(c.first+to_string(i),c.second->getTwin());
-                            columns[t]= make_pair(c.second,output->columns[c.first+to_string(i)]);
-                            t++;
-                        }
-                        cout<<"Columns created"<<endl;
-                        i++;
+                        sampleID=i++;
+                        fileName=kdataframeFileNames[sampleID];
                     }
+                    cout<<"Output Size = "<<output->size()<<endl;
                 }
+
                 if(!moreWork)
                     break;
+                kf=kDataFrame::load(fileName);
+                cout<<"Loaded "<<fileName<<endl;
+#pragma omp critical
+                {
+                    columns.resize(kf->columns.size());
+                    unsigned t=0;
+                    for(auto c: kf->columns)
+                    {
+
+                        output->addColumn(c.first+to_string(sampleID),c.second->getTwin());
+                        columns[t]= make_pair(c.second,output->columns[c.first+to_string(sampleID)]);
+                        t++;
+                    }
+                }
+
 
                 uint64_t kmersInserted=0;
                 uint64_t chunkSize=kf->size()/10;

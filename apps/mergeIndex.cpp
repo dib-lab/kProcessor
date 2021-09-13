@@ -107,6 +107,8 @@ int main(int argc, char *argv[])
             delete kf;
         }
     }
+    output->save(outPath);
+    delete output;
     return 0;
 
 
