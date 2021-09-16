@@ -27,11 +27,11 @@ int main(int argc, char *argv[]){
 //    uint64_t nkmers=2722829058;
     uint64_t nkmers=2722829058;
     uint32_t maximum=0;
-    sdsl::int_vector<32> intVector(nkmers+1);
+   // sdsl::int_vector<32> intVector(nkmers+1);
     for(auto i:newColor->index)
     {
         maximum=max(maximum,i.second);
-        intVector[i.first]=i.second;
+     //   intVector[i.first]=i.second;
     }
     deque<pair<double,string> > results;
     double tmpSize=newColor->index.size()*4*2/(1024*1024);
@@ -48,15 +48,17 @@ int main(int argc, char *argv[]){
 
 
 
-    tmpSize=sdsl::size_in_mega_bytes(intVector);
-    results.push_back(make_pair(tmpSize,"Plain Int Vector"));
+//    tmpSize=sdsl::size_in_mega_bytes(intVector);
+//    results.push_back(make_pair(tmpSize,"Plain Int Vector"));
+    sdsl::vlc_vector<>* vlcVector;
+    sdsl::enc_vector<>* encVector;
 //    sdsl::util::bit_compress(intVector);
 //    tmpSize=sdsl::size_in_mega_bytes(intVector);
 //   results.push_back(make_pair(tmpSize,"bit compress Int Vector"));
-    auto  vlcVector=new sdsl::vlc_vector<>(intVector);
-    tmpSize=sdsl::size_in_mega_bytes(*vlcVector);
-    results.push_back(make_pair(tmpSize,"vlc Vector"));
-    delete vlcVector;
+//    vlcVector=new sdsl::vlc_vector<>(intVector);
+//    tmpSize=sdsl::size_in_mega_bytes(*vlcVector);
+//    results.push_back(make_pair(tmpSize,"vlc Vector"));
+//    delete vlcVector;
 //    auto encVector = new sdsl::enc_vector<>(intVector);
 //    tmpSize=sdsl::size_in_mega_bytes(*encVector);
 //    results.push_back(make_pair(tmpSize,"enc Vector"));
@@ -96,7 +98,7 @@ int main(int argc, char *argv[]){
     cout<<"Delta = "<<delta<<" size= "<<deltaSize<<"total = "<<orders.size()<<endl;
     string mixResult="Mix:";
     sdsl::int_vector<> deltaValues(deltaSize+1);
-    uint32_t dIt;
+    uint32_t dIt=0;
     uint32_t maxOld=0;
     for(ii=1;ii<orders.size();ii++)
     {
@@ -123,9 +125,33 @@ int main(int argc, char *argv[]){
     sdsl::util::bit_compress(deltaValues);
     results.push_back(make_pair(tmpSize+sdsl::size_in_mega_bytes(deltaValues),mixResult+" bit compressed values"));
 
-    vlcVector=new sdsl::vlc_vector<>(deltaValues);
-    results.push_back(make_pair(tmpSize+sdsl::size_in_mega_bytes(*vlcVector),mixResult+" vlc values"));
+    encVector=new sdsl::enc_vector<>(deltaValues);
+    results.push_back(make_pair(tmpSize+sdsl::size_in_mega_bytes(*encVector),mixResult+" enc values"));
     delete vlcVector;
+
+
+
+    sdsl::int_vector intVector2(orders.size());
+    for(ii=0;ii<orders.size();ii++)
+        intVector2[ii]=newColor->index[orders[ii]];
+
+    vlcVector=new sdsl::vlc_vector<>(intVector2);
+    encVector= new sdsl::enc_vector<>(orders);
+    cout<<"Order enc = "<<sdsl::size_in_mega_bytes(*encVector)<<endl;
+    cout<<"values vlc = "<<sdsl::size_in_mega_bytes(*vlcVector)<<endl;
+
+    tmpSize=sdsl::size_in_mega_bytes(*vlcVector)+sdsl::size_in_mega_bytes(*encVector);
+    results.push_back(make_pair(tmpSize,"order(enc) values(vlc)"));
+    delete encVector;
+    delete vlcVector;
+    vlcVector=new sdsl::vlc_vector<>(orders);
+    encVector= new sdsl::enc_vector<>(intVector2);
+    cout<<"Order vlc = "<<sdsl::size_in_mega_bytes(*vlcVector)<<endl;
+    cout<<"values enc = "<<sdsl::size_in_mega_bytes(*encVector)<<endl;
+
+
+    tmpSize=sdsl::size_in_mega_bytes(*vlcVector)+sdsl::size_in_mega_bytes(*encVector);
+    results.push_back(make_pair(tmpSize,"order(vlc) values(enc)"));
 
 
     sort(results.begin(),results.end());
