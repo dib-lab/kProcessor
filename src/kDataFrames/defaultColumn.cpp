@@ -1164,6 +1164,8 @@ void prefixTrie::loadFromQueryColorColumn(mixVectors  *col) {
     }
     cout << "Possible saving " << edgesSum << endl;
 
+    sdsl::util::bit_compress(idsMap);
+
     explainSize();
 
 }
