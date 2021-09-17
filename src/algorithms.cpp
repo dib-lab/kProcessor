@@ -650,13 +650,19 @@ namespace kProcessor {
                         cout<<kmersInserted<< " kmers ("<< (kmersInserted-1) / chunkSize<<" / " <<"10) are processed from "<<fileName<<endl;
 
 
+                    uint64_t kmerHash=k.getHashedKmer();
                     uint32_t order=lastKmerID;
-                    map->try_emplace_l(k.getHashedKmer(),
-                                       [&order](uint32_t& v) {
+                    bool found = map->if_contains_unsafe(kmerHash,[&order](const uint32_t& v) {
                         order=v;
-                        }
-                        ,lastKmerID);
-
+                    }
+                    );
+                    if(!found){
+                        map->try_emplace_l(kmerHash,
+                                           [&order](uint32_t& v) {
+                            order=v;
+                            }
+                            ,lastKmerID);
+                    }
                     if(order==lastKmerID)
                     {
                         lastKmerID+=numThreads;
