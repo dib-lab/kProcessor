@@ -597,11 +597,14 @@ namespace kProcessor {
         cout<<"Number of threads = "<<omp_get_num_threads()<<endl;
         unsigned i=0;
         uint32_t maxID=0;
-#pragma omp parallel shared(i)
+        uint32_t lastID=1;
+#pragma omp parallel shared(i,lastID)
         {
 
             int threadID=omp_get_thread_num();
-            uint32_t lastKmerID=threadID+1;
+            uint32_t lastKmerID;
+            #pragma omp atomic capture
+            lastKmerID=lastID++;
             kDataFramePHMAP::MapType* map=output->getMap();
             vector<pair<Column*,Column*> > columns;
             kDataFrame* kf;
@@ -670,7 +673,9 @@ namespace kProcessor {
                         ,lastKmerID);
                     if(order==lastKmerID)
                     {
-                        lastKmerID+=numThreads;
+#pragma omp atomic capture
+                        lastKmerID=lastID++;
+
                     }
 
                     uint32_t inputOrder=k.getOrder();
@@ -687,10 +692,26 @@ namespace kProcessor {
                 delete kf;
             }
         }
-        for(auto c:output->columns)
-        {
-            c.second->resize(maxID+1);
-        }
+        output->lastKmerOrder=lastID+1;
+        for(auto c: output->columns)
+            c.second->resize(lastID+1);
+//        vector<uint32_t> translate(output->size()+1);
+//        uint64_t index=0;
+//        for(auto k:*output)
+//        {
+//            translate[index++]=k.getOrder();
+//        }
+//        for(auto c:output->columns)
+//        {
+//            auto newColumn=c.second->getTwin();
+//            newColumn->resize(output->size());
+//            for(unsigned i=0;i<output->size();i++)
+//            {
+//                newColumn->setValueFromColumn(c.second,translate[i],i+1);
+//            }
+//            delete c.second;
+//            c.second=newColumn;
+//        }
         return output;
     }
     void indexMega(string filename,string tmpFolder, kDataFrame *frame) {

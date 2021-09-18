@@ -289,7 +289,7 @@ protected:
   std::uint64_t kSize;
   string class_name; // Default = MQF, change if MAP. Temporary until resolving #17
 
-  uint64_t lastKmerOrder;
+
 
   unordered_map<uint64_t,uint32_t> orderCheckpoints;
   uint32_t lastCheckpoint;
@@ -297,6 +297,7 @@ protected:
   kDataFrameIterator* endIterator;
   friend class kDataFrameIterator;
 public:
+    uint64_t lastKmerOrder;
     unordered_map<string, Column*> columns;
     typedef kDataFrameIterator iterator;
     typedef kmerRow value_type;
