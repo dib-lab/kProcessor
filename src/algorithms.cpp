@@ -598,7 +598,7 @@ namespace kProcessor {
         unsigned i=0;
         uint32_t maxID=0;
         uint32_t lastID=1;
-#pragma omp parallel shared(i,lastID)
+#pragma omp parallel shared(i,lastID) private(kf)
         {
 
             int threadID=omp_get_thread_num();
