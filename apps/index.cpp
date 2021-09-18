@@ -78,7 +78,7 @@ int main(int argc, char *argv[])
         }
     }
 
-    kDataFrame* output= new kDataFramePHMAP(kSize,TwoBitsHasher);
+    kDataFrame* output= new kDataFramePHMAP(kSize);
     kProcessor::indexPriorityQueue(frames,tmpFolder,output,num_vectors,vector_size);
     cout<<"Indexing Finished"<<endl;
     if(isPrefixTrie)
