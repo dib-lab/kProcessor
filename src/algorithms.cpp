@@ -652,17 +652,22 @@ namespace kProcessor {
 
                     uint64_t kmerHash=k.getHashedKmer();
                     uint32_t order=lastKmerID;
-                    bool found = map->if_contains_unsafe(kmerHash,[&order](const uint32_t& v) {
+//                    bool found = map->if_contains_unsafe(kmerHash,[&order](const uint32_t& v) {
+//                        order=v;
+//                    }
+//                    );
+//                    if(!found){
+//                        map->try_emplace_l(kmerHash,
+//                                           [&order](uint32_t& v) {
+//                            order=v;
+//                            }
+//                            ,lastKmerID);
+//                    }
+                    map->try_emplace_l(kmerHash,
+                                       [&order](uint32_t& v) {
                         order=v;
-                    }
-                    );
-                    if(!found){
-                        map->try_emplace_l(kmerHash,
-                                           [&order](uint32_t& v) {
-                            order=v;
-                            }
-                            ,lastKmerID);
-                    }
+                        }
+                        ,lastKmerID);
                     if(order==lastKmerID)
                     {
                         lastKmerID+=numThreads;
