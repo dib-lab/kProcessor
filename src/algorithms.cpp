@@ -1103,7 +1103,7 @@ namespace kProcessor {
         for(i=0; i< orderRange; i++)
         {
             if(i%chunk==0 )
-                cout<<(int)(((float)i/(float)orderRange)*100)<<"%"<<endl;
+                cerr<<(int)(((float)i/(float)orderRange)*100)<<"%"<<endl;
 
             if(i % ordersVecSize ==0 && i != 0 )
             {
@@ -1136,7 +1136,7 @@ namespace kProcessor {
                     colorsVecID++;
                 }
                 if(lastColorID%100000==0)
-                    cout<<"Colors "<<lastColorID<<endl;
+                    cerr<<"Colors "<<lastColorID<<endl;
             }
             else{
                 currColorID=it->second;
