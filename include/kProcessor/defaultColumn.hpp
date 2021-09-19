@@ -589,7 +589,10 @@ public:
     ~queryColorColumn() override = default;
     uint32_t  insertAndGetIndex(vector<uint32_t >& item);
     virtual vector<uint32_t > getWithIndex(uint32_t index)=0;
-
+    uint32_t getNumColors()
+    {
+        return numColors;
+    }
     virtual void insert(vector<uint32_t >& item,uint32_t index) = 0;
     virtual vector<uint32_t > get(uint32_t index)=0;
 
@@ -710,7 +713,7 @@ public:
     void deserialize(string filename);
     void shorten(deque<uint32_t> & input,deque<uint32_t> & output);
    // void _shorten(vector<uint32_t> & input,vector<uint32_t> & output, vector<uint32_t> & remaining);
-    uint32_t getNumColors();
+
     uint64_t sizeInBytes();
     void explainSize();
     // paste the output to http://magjac.com/graphviz-visual-editor/
@@ -732,6 +735,58 @@ public:
 
     Column *clone() override;
 };
+class prefixForest: public queryColorColumn{
+public:
+    typedef  vector<uint32_t> dataType;
+    typedef  sdsl::int_vector<> vectype;
+    deque<prefixTrie*> trees;
+    deque<vectype*>  orderColorID;
+    deque<vectype*>  ColorIDPointer;
+    uint32_t orderVecSize;
+    uint32_t colorVecSize;
+
+    prefixForest()
+    {
+    }
+    prefixForest(uint32_t orderVecSize, uint32_t colorVecSize)
+    {
+        this->orderVecSize=orderVecSize;
+        this->colorVecSize=colorVecSize;
+    }
+
+    ~prefixForest(){
+        for(auto t:trees)
+            delete t;
+        for(auto b:orderColorID)
+            delete b;
+        for(auto b:ColorIDPointer)
+            delete b;
+
+    }
+
+    uint32_t  insertAndGetIndex(vector<uint32_t >& item);
+    vector<uint32_t > getWithIndex(uint32_t index);
+
+    void insert(vector<uint32_t >& item,uint32_t index);
+    vector<uint32_t > get(uint32_t index);
+
+    void serialize(string filename);
+    void deserialize(string filename);
+
+    uint64_t sizeInBytes();
+    void explainSize();
+    Column* getTwin();
+    void resize(uint32_t size);
+    uint32_t size()
+    {
+        return numColors;
+    }
+
+    Column *clone() override;
+};
+
+
+
 
 class StringColorColumn: public Column{
 public:

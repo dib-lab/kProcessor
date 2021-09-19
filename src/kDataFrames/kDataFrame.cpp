@@ -56,7 +56,7 @@ void kDataFrame::save(string filePath)
         c.second->serialize(filename);
     }
     out<<"default\t"<<0<<"\tNULL"<<endl;
-    out<<"lastKmerOrder=\t"<<lastKmerOrder<<"\tNULL"<<endl;
+    out<<"lastKmerOrder\t"<<lastKmerOrder<<"\tNULL"<<endl;
 
 
 
