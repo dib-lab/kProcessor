@@ -1098,8 +1098,13 @@ namespace kProcessor {
         ofstream colorsFile(tmpFolder+"colors");
         vector<uint32_t> currColor(noColumns);
         uint32_t lastColorID=1;
+        cout<<"NUm of kmers "<<orderRange<<endl;
+        uint32_t chunk=orderRange/10;
         for(i=0; i< orderRange; i++)
         {
+            if(i%chunk==0 )
+                cout<<(int)(((float)i/(float)orderRange)*100)<<"%"<<endl;
+
             if(i % ordersVecSize ==0 && i != 0 )
             {
                 sdsl::util::bit_compress(orders);
@@ -1126,11 +1131,12 @@ namespace kProcessor {
                 if(colorsTop==colorsVecSize)
                 {
                     colorsTop=0;
-
                     sdsl::util::bit_compress(colors);
                     colors.serialize(colorsFile);
                     colorsVecID++;
                 }
+                if(lastColorID%100000==0)
+                    cout<<"Colors "<<lastColorID<<endl;
             }
             else{
                 currColorID=it->second;
