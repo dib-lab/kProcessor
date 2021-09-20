@@ -684,7 +684,7 @@ public:
     deque<sdsl::bit_vector*> tree;
     deque<sdsl::bp_support_sada<>*> bp_tree;
     sdsl::int_vector<64> starts;
-    sdsl::int_vector<64> idsMap;
+    sdsl::int_vector<> idsMap;
     sdsl::int_vector<> translateEdges;
     prefixTrie(){
         queryCache= new lru_cache_t<uint64_t, vector<uint32_t>>(1);

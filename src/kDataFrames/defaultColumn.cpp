@@ -851,7 +851,7 @@ void prefixTrie::loadFromQueryColorColumn(mixVectors  *col) {
     col->explainSize();
     col->sortColors();
     cerr << "Colors Sorted" << endl;
-    idsMap = sdsl::int_vector<64>(col->idsMap.size());
+    idsMap = sdsl::int_vector<>(col->idsMap.size());
     sdsl::int_vector<> invIdsMap(col->idsMap.size());
 #pragma omp parallel for
     for (unsigned int i = 0; i < col->idsMap.size(); i++) {
