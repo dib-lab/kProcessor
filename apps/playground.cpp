@@ -22,12 +22,12 @@ int main(int argc, char *argv[]){
     kDataFrame* index=kDataFrame::load(indexFileName);
     kProcessor::createPrefixForest(index,tmpFolder);
 
-    vector<deduplicatedColumn<prefixTrie,phmap::flat_hash_map<uint32_t,uint32_t>>*> columns;
+    vector<deduplicatedColumn<prefixTrie,phmap::btree_map<uint32_t,uint32_t>>*> columns;
     uint32_t i=0;
     auto it=index->columns.find("color"+to_string(i));
     while(it!=index->columns.end())
     {
-        columns.push_back((deduplicatedColumn<prefixTrie,phmap::flat_hash_map<uint32_t,uint32_t>>*) it->second);
+        columns.push_back((deduplicatedColumn<prefixTrie,phmap::btree_map<uint32_t,uint32_t>>*) it->second);
         i++;
         it=index->columns.find("color"+to_string(i));
     }

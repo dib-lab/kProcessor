@@ -13,6 +13,8 @@
 #include <omp.h>
 #include "mum.h"
 
+#include <parallel_hashmap/btree.h>
+
 using namespace std::chrono;
 
 
@@ -1072,13 +1074,13 @@ namespace kProcessor {
 
     void createPrefixForest(kDataFrame* index, string tmpFolder){
         unsigned i=0;
-        vector<deduplicatedColumn<prefixTrie,phmap::flat_hash_map<uint32_t,uint32_t>>* > trees;
+        vector<deduplicatedColumn<prefixTrie,phmap::btree_map<uint32_t,uint32_t>>* > trees;
         auto it=index->columns.find("color"+to_string(i));
         uint32_t noSamples=0;
         while(it!=index->columns.end())
         {
             i++;
-            trees.push_back((deduplicatedColumn<prefixTrie,phmap::flat_hash_map<uint32_t,uint32_t>>* )it->second);
+            trees.push_back((deduplicatedColumn<prefixTrie,phmap::btree_map<uint32_t,uint32_t>>* )it->second);
             noSamples+=trees.back()->values->noSamples;
             it=index->columns.find("color"+to_string(i));
         }
