@@ -1085,6 +1085,7 @@ namespace kProcessor {
             it=index->columns.find("color"+to_string(i));
         }
         uint32_t noColumns=i;
+        cerr<<"Number of trees "<<noColumns<<endl;
         phmap::flat_hash_map<uint64_t,uint32_t> invColor;
         phmap::flat_hash_map<uint32_t,uint32_t> colorHistogram;
         const uint32_t colorsVecSize= noColumns *10000;
@@ -1100,17 +1101,18 @@ namespace kProcessor {
         ofstream colorsFile(tmpFolder+"colors");
         vector<uint32_t> currColor(noColumns);
         uint32_t lastColorID=1;
-        cout<<"NUm of kmers "<<orderRange<<endl;
+        cerr<<"Num of kmers "<<orderRange<<endl;
         uint32_t chunk=orderRange/10;
         for(i=0; i< orderRange; i++)
         {
-            if(i%chunk==0 )
+            if(i%chunk==0)
                 cerr<<(int)(((float)i/(float)orderRange)*100)<<"%"<<endl;
 
             if(i % ordersVecSize ==0 && i != 0 )
             {
-                sdsl::util::bit_compress(orders);
-                orders.serialize(orderFile);
+                sdsl::int_vector<> tmp=orders;
+                sdsl::util::bit_compress(tmp);
+                tmp.serialize(orderFile);
                 ordersVecID++;
             }
             for(unsigned j=0; j<trees.size(); j++ )
@@ -1133,8 +1135,9 @@ namespace kProcessor {
                 if(colorsTop==colorsVecSize)
                 {
                     colorsTop=0;
-                    sdsl::util::bit_compress(colors);
-                    colors.serialize(colorsFile);
+                    sdsl::int_vector<> tmp=colors;
+                    sdsl::util::bit_compress(tmp);
+                    tmp.serialize(colorsFile);
                     colorsVecID++;
                 }
                 if(lastColorID%100000==0)
@@ -1147,12 +1150,16 @@ namespace kProcessor {
             orders[i % ordersVecSize]=currColorID;
 
         }
+        ofstream hist("hist");
+        for(auto h:colorHistogram)
+            hist<<h.first<<"it"<<h.second<<endl;
         sdsl::util::bit_compress(orders);
         orders.serialize(orderFile);
         ordersVecID++;
         sdsl::util::bit_compress(colors);
         colors.serialize(colorsFile);
         colorsVecID++;
+        cerr<<"Final Colors created "<<lastColorID<<endl;
 
         orderFile.close();
         colorsFile.close();

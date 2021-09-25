@@ -851,8 +851,8 @@ void prefixTrie::loadFromQueryColorColumn(mixVectors  *col) {
     col->explainSize();
     col->sortColors();
     cerr << "Colors Sorted" << endl;
-    idsMap = sdsl::int_vector<>(col->idsMap.size());
-    sdsl::int_vector<> invIdsMap(col->idsMap.size());
+    idsMap = sdsl::int_vector<32>(col->idsMap.size());
+    sdsl::int_vector<32> invIdsMap(col->idsMap.size());
 #pragma omp parallel for
     for (unsigned int i = 0; i < col->idsMap.size(); i++) {
         invIdsMap[col->idsMap[i]] = i;
@@ -1164,7 +1164,7 @@ void prefixTrie::loadFromQueryColorColumn(mixVectors  *col) {
     }
     cout << "Possible saving " << edgesSum << endl;
 
-    sdsl::util::bit_compress(idsMap);
+   // sdsl::util::bit_compress(idsMap);
 
     explainSize();
 
@@ -1847,18 +1847,18 @@ void prefixForest::explainSize() {
     uint64_t totalSize=0;
     for(auto t:trees)
         totalSize+=t->sizeInBytes();
-    cout<<"Size of the trees = "<<totalSize/(1024.0*1024.0)<<"MB"<<endl;
+    cerr<<"Size of the trees = "<<totalSize/(1024.0*1024.0)<<"MB"<<endl;
     totalSize=0;
     for(auto v:ColorIDPointer)
         totalSize+=sdsl::size_in_bytes(*v);
-    cout<<"Size Color ID to tree pointers = "<<totalSize/(1024.0*1024.0)<<"MB"<<endl;
+    cerr<<"Size Color ID to tree pointers = "<<totalSize/(1024.0*1024.0)<<"MB"<<endl;
     totalSize=0;
 
     for(auto v:orderColorID)
         totalSize+=sdsl::size_in_bytes(*v);
-    cout<<"Size of the kmerOrder to colorID = "<<totalSize/(1024.0*1024.0)<<"MB"<<endl;
+    cerr<<"Size of the kmerOrder to colorID = "<<totalSize/(1024.0*1024.0)<<"MB"<<endl;
 
-    cout<<"Total = "<<sizeInBytes()/(1024.0*1024.0)<<"MB"<<endl;
+     cerr<<"Total = "<<sizeInBytes()/(1024.0*1024.0)<<"MB"<<endl;
 
 }
 
