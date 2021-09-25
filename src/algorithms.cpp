@@ -1185,22 +1185,22 @@ namespace kProcessor {
         forest->orderColorID.resize(ordersVecID);
         for(unsigned i=0;i<ordersVecID;i++)
         {
-            forest->orderColorID[i]=new prefixTrie::vectype ();
+            forest->orderColorID[i]=new prefixForest::vectype ();
             forest->orderColorID[i]->load(orderInputFile);
         }
 
         forest->ColorIDPointer.resize(colorsVecID);
         for(unsigned i=0;i<colorsVecID;i++)
         {
-            forest->ColorIDPointer[i]=new prefixTrie::vectype ();
+            forest->ColorIDPointer[i]=new prefixForest::vectype ();
             forest->ColorIDPointer[i]->load(colorsInputFile);
         }
 
         forest->explainSize();
-        for(unsigned  i=0; i< noColumns;i++)
-        {
-            index->columns.erase("color"+ to_string(i));
-        }
+//        for(unsigned  i=0; i< noColumns;i++)
+//        {
+//            index->columns.erase("color"+ to_string(i));
+//        }
         index->columns["color"]=(Column*)forest;
 
     }

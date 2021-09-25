@@ -32,6 +32,7 @@ int main(int argc, char *argv[]){
         it=index->columns.find("color"+to_string(i));
     }
     uint32_t noColumns=i;
+    uint32_t noErrors=0;
 
     prefixForest* forest=(prefixForest*)index->columns["color"];
     for(uint64_t o=0;o<index->lastKmerOrder;o++)
@@ -49,8 +50,18 @@ int main(int argc, char *argv[]){
         vector<uint32_t> query=forest->get(o);
 
         if(query!=correct){
-            cout<<"Error"<<endl;
-            return -1;
+            query=forest->get(o);
+            cout<<"query: ";
+            for(auto c: query)
+                cout<<c<<" ";
+            cout<<endl;
+            cout<<"correct: ";
+            for(auto c: correct)
+                cout<<c<<" ";
+            cout<<endl;
+            noErrors++;
+            if(noErrors>10)
+             return -1;
         }
 
     }

@@ -1759,15 +1759,17 @@ vector<uint32_t> prefixForest::getWithIndex(uint32_t index)  {
     uint32_t resTop=0;
     uint32_t orderVecID=index/orderVecSize;
     uint32_t orderSubIndex=index%orderVecSize;
-    uint32_t colorID=(*(orderColorID[orderVecID]))[orderSubIndex];
+    uint32_t colorID=(*(orderColorID[orderVecID]))[orderSubIndex]*trees.size();
     uint32_t colorVecID=colorID/colorVecSize;
-    uint32_t colorSubIndex=colorID/colorVecSize;
+    uint32_t colorSubIndex=colorID%colorVecSize;
+    uint32_t samplesOffset=0;
     for(unsigned i=0;i<trees.size();i++)
     {
         uint32_t pointer=(*(ColorIDPointer[colorVecID]))[colorSubIndex++];
         vector<uint32_t> tmp=trees[i]->getWithIndex(pointer);
         for(auto s:tmp)
-            result[resTop++]=s;
+            result[resTop++]=s+samplesOffset;
+        samplesOffset+=trees[i]->noSamples;
     }
     result.resize(resTop);
     return result;
