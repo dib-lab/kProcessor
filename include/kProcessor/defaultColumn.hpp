@@ -686,8 +686,10 @@ public:
     sdsl::int_vector<64> starts;
     sdsl::int_vector<32> idsMap;
     sdsl::int_vector<> translateEdges;
+    uint64_t totalSize;
     prefixTrie(){
         queryCache= new lru_cache_t<uint64_t, vector<uint32_t>>(1);
+        totalSize=0;
     }
     prefixTrie(insertColorColumn* col);
     prefixTrie(mixVectors* col);
@@ -841,6 +843,8 @@ public:
     prefixTrieIterator(prefixTrie* origin, uint32_t pos){
         this->origin=origin;
         finished=false;
+        if(pos>=origin->totalSize)
+            throw std::out_of_range("tree of size "+to_string(origin->totalSize)+ " doesnt have the pos "+ to_string(origin->totalSize));
         teleport(pos);
     }
     prefixTrieIterator& operator= (const prefixTrieIterator& other){

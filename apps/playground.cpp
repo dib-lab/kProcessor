@@ -12,6 +12,7 @@
 #include <cereal/types/unordered_map.hpp>
 #include <cereal/types/memory.hpp>
 #include <cereal/archives/binary.hpp>
+#include <omp.h>
 using namespace std;
 
 
@@ -19,6 +20,8 @@ int main(int argc, char *argv[]){
 
     string indexFileName=argv[1];
     string tmpFolder=argv[2];
+    int nThreads=atoi(argv[3]);
+    omp_set_num_threads(nThreads);
     kDataFrame* index=kDataFrame::load(indexFileName);
     kProcessor::createPrefixForest(index,tmpFolder);
 
@@ -35,8 +38,14 @@ int main(int argc, char *argv[]){
     uint32_t noErrors=0;
 
     prefixForest* forest=(prefixForest*)index->columns["color"];
-    for(uint64_t o=0;o<index->lastKmerOrder;o++)
+    forest->serialize("forest");
+    cout<<"Kmers to check = "<<index->lastKmerOrder<<endl;
+    uint64_t chunk=index->lastKmerOrder/20;
+//#pragma omp parallel for firstprivate (noErrors,noColumns,columns)
+    for(uint64_t o=1;o<index->lastKmerOrder;o++)
     {
+        if(o%chunk==0)
+            cout<<((double)o/(double)index->lastKmerOrder)*100 <<"% of the kmers are tested"<<endl;
         uint64_t samplesCount=0;
         vector<uint32_t> correct;
         for(uint32_t i=0;i<noColumns;i++)
@@ -49,7 +58,7 @@ int main(int argc, char *argv[]){
         }
         vector<uint32_t> query=forest->get(o);
 
-        if(query!=correct){
+        if(query!=correct && noErrors<=10){
             query=forest->get(o);
             cout<<"query: ";
             for(auto c: query)
@@ -60,8 +69,6 @@ int main(int argc, char *argv[]){
                 cout<<c<<" ";
             cout<<endl;
             noErrors++;
-            if(noErrors>10)
-             return -1;
         }
 
     }

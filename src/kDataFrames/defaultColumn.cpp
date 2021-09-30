@@ -1164,6 +1164,9 @@ void prefixTrie::loadFromQueryColorColumn(mixVectors  *col) {
     }
     cout << "Possible saving " << edgesSum << endl;
 
+    for(auto t:tree)
+        totalSize+= t->size();
+
    // sdsl::util::bit_compress(idsMap);
 
     explainSize();
@@ -1264,9 +1267,11 @@ void prefixTrie::deserialize(string filename) {
     idsMap.load(input);
     starts.load(input);
     translateEdges.load(input);
+    totalSize=0;
     for (uint32_t i = 0; i < starts.size(); i++) {
         tree.push_back(new sdsl::bit_vector());
         tree.back()->load(input);
+        totalSize+=tree.back()->size();
         bp_tree.push_back(new sdsl::bp_support_sada<>());
         bp_tree.back()->load(input, tree.back());
         edges.push_back(new vectype());
@@ -1514,7 +1519,7 @@ Column *prefixTrie::clone() {
     res->starts=starts;
     res->idsMap=idsMap;
     res->translateEdges=translateEdges;
-
+    res->totalSize+=totalSize;
     return res;
 }
 
@@ -1807,6 +1812,7 @@ void prefixForest::deserialize(string filename) {
     uint32_t tmp;
     input.read((char *) (&(tmp)), sizeof(uint32_t));
     trees=deque<prefixTrie*>(tmp);
+
     for(unsigned i=0;i<trees.size();i++)
     {
         trees[i]=new prefixTrie();
