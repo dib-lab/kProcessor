@@ -646,21 +646,20 @@ public:
 
 
 class prefixTrie: public queryColorColumn{
-private:
-    lru_cache_t<uint64_t, vector<uint32_t>>* queryCache;
-    unordered_map<uint64_t ,vector<uint32_t > > nodesCache;
-    deque<sdsl::int_vector<>*>  unCompressedEdges;
 public:
+    typedef  vector<uint32_t> dataType;
     typedef  sdsl::int_vector<> vectype;
     uint32_t cacheUsed=0;
     deque<vectype*>  edges;
     deque<sdsl::bit_vector*> tree;
     deque<sdsl::bp_support_sada<>*> bp_tree;
     sdsl::int_vector<64> starts;
-    sdsl::int_vector<64> idsMap;
+    sdsl::int_vector<32> idsMap;
     sdsl::int_vector<> translateEdges;
+    uint64_t totalSize;
     prefixTrie(){
         queryCache= new lru_cache_t<uint64_t, vector<uint32_t>>(1);
+        totalSize=0;
     }
     prefixTrie(insertColorColumn* col);
     prefixTrie(mixVectors* col);
@@ -686,9 +685,10 @@ public:
     void deserialize(string filename);
     void shorten(deque<uint32_t> & input,deque<uint32_t> & output);
    // void _shorten(vector<uint32_t> & input,vector<uint32_t> & output, vector<uint32_t> & remaining);
-    uint32_t getNumColors();
+
     uint64_t sizeInBytes();
     void explainSize();
+    // paste the output to http://magjac.com/graphviz-visual-editor/
     void exportTree(string prefix,int tree);
     Column* getTwin();
     void resize(uint32_t size);
@@ -854,27 +854,25 @@ public:
 };
 
 
-template<typename  T, typename ColumnType>
+template<typename ColumnType,typename indexType = vector<uint32_t> >
 class deduplicatedColumn: public Column{
 public:
-    vector<uint32_t> index;
+    // typedef typename ColumnType::dataType dataType;
+    indexType index;
     ColumnType* values;
     deduplicatedColumn(){
-        index.resize(1);
     }
-    deduplicatedColumn(uint32_t size){
-        index=vector<uint32_t>(size);
-    }
+    deduplicatedColumn(uint32_t size);
     ~deduplicatedColumn(){
-
+        delete values;
     }
 
     uint32_t  size()
     {
         return index.size();
     }
-    void insert(T item,uint32_t index);
-    // T get(uint32_t index);
+    void insert(dataType item,uint32_t index);
+    dataType get(uint32_t index);
 
     void serialize(string filename);
     void deserialize(string filename);
@@ -887,7 +885,7 @@ public:
 
 };
 
-%template(deduplicatedColumn_stringColorColumn) deduplicatedColumn<vector<string>, StringColorColumn>;
-%template(deduplicatedColumn_mixVectors) deduplicatedColumn<vector<uint32_t>, mixVectors>;
-%template(deduplicatedColumn_prefixTrie) deduplicatedColumn<vector<uint32_t>, prefixTrie>;
-%template(deduplicatedColumn_insertColorColumn) deduplicatedColumn<vector<uint32_t>, insertColorColumn>;
+// %template(deduplicatedColumn_stringColorColumn) deduplicatedColumn<vector<string>, StringColorColumn>;
+// %template(deduplicatedColumn_mixVectors) deduplicatedColumn<vector<uint32_t>, mixVectors>;
+// %template(deduplicatedColumn_prefixTrie) deduplicatedColumn<vector<uint32_t>, prefixTrie>;
+// %template(deduplicatedColumn_insertColorColumn) deduplicatedColumn<vector<uint32_t>, insertColorColumn>;

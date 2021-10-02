@@ -28,9 +28,6 @@ namespace kProcessor {
     // void parseSequences(string seqFileName, int nThreads, kDataFrame *output);
 
     /// Load the kmers in the input file into the output kDataframe. Input File can be of formats: fastq,fasta.
-    void parseSequences(kmerDecoder* KD, kDataFrame* output);
-
-    /// Load the kmers in the input file into the output kDataframe. Input File can be of formats: fastq,fasta.
     void countKmersFromFile(kDataFrame* kframe, std::map<std::string, int> parse_params, string filename,
         int chunk_size = 1000);
 
