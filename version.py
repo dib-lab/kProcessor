@@ -24,7 +24,7 @@ def increment_patch_version(patch_version):
 
 MAJOR = 2
 MINOR = 0
-PATCH = 2
+PATCH = 3
 
 
 def get_version():
