@@ -953,6 +953,8 @@ public:
     bool kmerExist(string kmer);
     bool kmerExist(uint64_t kmer);
 
+    bool setOrder(const string &kmer, std::uint64_t count);
+    bool setOrder(std::uint64_t kmer, std::uint64_t count);
 
     uint32_t insert(const string &kmer) override;
     uint32_t insert(std::uint64_t kmer) override;

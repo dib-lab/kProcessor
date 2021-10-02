@@ -65,7 +65,7 @@ namespace kProcessor {
     }
 
     inline void _dedup(kDataFrameIterator &it, string colorColumnName, vector<string> &color){
-        it.getColumnValue<vector<string>, deduplicatedColumn<vector<string>, StringColorColumn>>(colorColumnName, color);
+        it.getColumnValue<vector<string>, deduplicatedColumn<StringColorColumn>>(colorColumnName, color);
     }
 
     unordered_map<string, vector<double>> aggregate_foldChangeByGene(kDataFrame* res, const string foldChangeColName, const string colorColumnName) {
@@ -77,8 +77,8 @@ namespace kProcessor {
             double foldChange;
             it.getColumnValue<double, vectorColumn<double> >(foldChangeColName, foldChange);
             vector<string> color;
-            _dedup(it, colorColumnName, color);
-            it.getColumnValue<vector<string>, deduplicatedColumn<vector<string>, StringColorColumn>>(colorColumnName, color);
+            // _dedup(it, colorColumnName, color);
+            it.getColumnValue<vector<string>, deduplicatedColumn<StringColorColumn>>(colorColumnName, color);
             for (auto c : color)
             {
                 (*dict)[c].push_back(foldChange);
