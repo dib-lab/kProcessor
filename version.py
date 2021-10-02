@@ -19,8 +19,12 @@ def get_pypa_dev_latest():
 
 def increment_patch_version(patch_version):
     patch_version = patch_version.split('.')
-    return f"{patch_version[0]}.{patch_version[1]}.{int(patch_version[2]) + 1}.{patch_version[3]}"
-
+    modified_version = f"{patch_version[0]}.{patch_version[1]}.{int(patch_version[2]) + 1}"
+    if len(patch_version) == 4:
+        modified_version += f".{patch_version[3]}"
+    else:
+        modified_version += f".dev0"
+    return modified_version
 
 MAJOR = 2
 MINOR = 0
