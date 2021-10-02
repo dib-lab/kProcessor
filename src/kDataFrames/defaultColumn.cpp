@@ -4,7 +4,11 @@
 #include <cereal/types/vector.hpp>
 #include <cereal/types/memory.hpp>
 #include "parallel_hashmap/phmap_dump.h"
+#include <parallel_hashmap/btree.h>
 #include <cereal/archives/binary.hpp>
+#include <cereal/types/unordered_map.hpp>
+#include <cereal/types/memory.hpp>
+
 #include <stack>
 #include <queue>
 #include <iterator>
@@ -27,18 +31,24 @@ template
 class vectorColumn<uint32_t>;
 
 template
-class deduplicatedColumn<vector<string>, StringColorColumn>;
+class deduplicatedColumn<StringColorColumn>;
 
 
 template
-class deduplicatedColumn<vector<uint32_t>, mixVectors>;
+class deduplicatedColumn<mixVectors>;
 
 
 template
-class deduplicatedColumn<vector<uint32_t>, prefixTrie>;
+class deduplicatedColumn<prefixTrie>;
 
 template
-class deduplicatedColumn<vector<uint32_t>, insertColorColumn>;
+class deduplicatedColumn<prefixTrie,phmap::flat_hash_map<uint32_t,uint32_t>>;
+
+template
+class deduplicatedColumn<prefixTrie,phmap::btree_map<uint32_t,uint32_t>>;
+
+template
+class deduplicatedColumn<insertColorColumn>;
 
 bool is_file_exist(const char *fileName) {
     std::ifstream infile(fileName);
@@ -62,12 +72,16 @@ Column *Column::getContainerByName(std::size_t hash) {
         return new mixVectors();
     } else if (hash == typeid(prefixTrie).hash_code()) {
         return new prefixTrie();
-    } else if (hash == typeid(deduplicatedColumn<vector<uint32_t>, mixVectors>).hash_code()) {
-        return new deduplicatedColumn<vector<uint32_t>, mixVectors>();
-    } else if (hash == typeid(deduplicatedColumn<vector<string>, StringColorColumn>).hash_code()) {
-        return new deduplicatedColumn<vector<string>, StringColorColumn>();
-    }else if (hash == typeid(deduplicatedColumn<vector<uint32_t>, prefixTrie>).hash_code()) {
-        return new deduplicatedColumn<vector<uint32_t>, prefixTrie>();
+    } else if (hash == typeid(deduplicatedColumn<mixVectors>).hash_code()) {
+        return new deduplicatedColumn<mixVectors>();
+    } else if (hash == typeid(deduplicatedColumn<StringColorColumn>).hash_code()) {
+        return new deduplicatedColumn<StringColorColumn>();
+    }else if (hash == typeid(deduplicatedColumn<prefixTrie>).hash_code()) {
+        return new deduplicatedColumn<prefixTrie>();
+    }else if (hash == typeid(deduplicatedColumn<prefixTrie,phmap::flat_hash_map<uint32_t,uint32_t>>).hash_code()) {
+        return new deduplicatedColumn<prefixTrie,phmap::flat_hash_map<uint32_t,uint32_t>>();
+    }else if (hash == typeid(deduplicatedColumn<prefixTrie,phmap::btree_map<uint32_t,uint32_t>>).hash_code()) {
+        return new deduplicatedColumn<prefixTrie,phmap::btree_map<uint32_t,uint32_t>>();
     } else {
         throw logic_error("Failed to load Unknown Column " + hash);
     }
@@ -417,7 +431,15 @@ vector<uint32_t> mixVectors::getWithIndex(uint32_t index) {
     }
     return res;
 }
+mixVectors::mixVectors(vector<vector<uint32_t> > colorsInput,uint32_t noSamples) {
+    colors.push_back(new vectorOfVectors(0, 1));
+    numColors=colorsInput.size();
+    this->noSamples=noSamples;
+    uint32_t colorId = 1;
+    idsMap = sdsl::int_vector<>(numColors + 1);
+    //vecto
 
+}
 mixVectors::mixVectors(insertColorColumn *col) {
     col->populateColors();
     colors.push_back(new vectorOfVectors(0, 1));
@@ -829,8 +851,8 @@ void prefixTrie::loadFromQueryColorColumn(mixVectors  *col) {
     col->explainSize();
     col->sortColors();
     cerr << "Colors Sorted" << endl;
-    idsMap = sdsl::int_vector<64>(col->idsMap.size());
-    sdsl::int_vector<> invIdsMap(col->idsMap.size());
+    idsMap = sdsl::int_vector<32>(col->idsMap.size());
+    sdsl::int_vector<32> invIdsMap(col->idsMap.size());
 #pragma omp parallel for
     for (unsigned int i = 0; i < col->idsMap.size(); i++) {
         invIdsMap[col->idsMap[i]] = i;
@@ -874,7 +896,7 @@ void prefixTrie::loadFromQueryColorColumn(mixVectors  *col) {
 
     }
 
-    uint64_t tmpSize = col->numIntegers() / 10;
+    uint64_t tmpSize = max((uint32_t)(col->numIntegers() / 10),(uint32_t)10);
 
 
     uint64_t tmpEdgesTop = 0;
@@ -1142,6 +1164,11 @@ void prefixTrie::loadFromQueryColorColumn(mixVectors  *col) {
     }
     cout << "Possible saving " << edgesSum << endl;
 
+    for(auto t:tree)
+        totalSize+= t->size();
+
+   // sdsl::util::bit_compress(idsMap);
+
     explainSize();
 
 }
@@ -1240,9 +1267,11 @@ void prefixTrie::deserialize(string filename) {
     idsMap.load(input);
     starts.load(input);
     translateEdges.load(input);
+    totalSize=0;
     for (uint32_t i = 0; i < starts.size(); i++) {
         tree.push_back(new sdsl::bit_vector());
         tree.back()->load(input);
+        totalSize+=tree.back()->size();
         bp_tree.push_back(new sdsl::bp_support_sada<>());
         bp_tree.back()->load(input, tree.back());
         edges.push_back(new vectype());
@@ -1254,9 +1283,7 @@ void prefixTrie::deserialize(string filename) {
 }
 
 
-uint32_t prefixTrie::getNumColors() {
-    return numColors;
-}
+
 
 uint64_t prefixTrie::sizeInBytes() {
     uint64_t res = 0;
@@ -1406,6 +1433,7 @@ void prefixTrie::shorten(deque<uint32_t> &input, deque<uint32_t> &output) {
 
 }
 
+// paste the output to
 void prefixTrie::exportTree(string prefix, int treeIndex) {
     string outFilename = prefix + to_string(treeIndex);
     ofstream out(outFilename.c_str());
@@ -1485,19 +1513,25 @@ Column *prefixTrie::clone() {
     for(unsigned  i = 0 ; i < tree.size() ; i++){
         res->tree[i]=new sdsl::bit_vector(*tree[i]);
         res->edges[i]=new vectype(*edges[i]);
-        res->bp_tree[i]=new sdsl::bp_support_sada<>(*bp_tree[i]);
+        res->bp_tree[i]=new sdsl::bp_support_sada<>((res->tree[i]));
     }
 
     res->starts=starts;
     res->idsMap=idsMap;
     res->translateEdges=translateEdges;
-
+    res->totalSize+=totalSize;
     return res;
 }
 
 
-template<typename T, typename ColumnType>
-void deduplicatedColumn<T, ColumnType>::serialize(string filename) {
+template<typename ColumnType,typename indexType>
+deduplicatedColumn<ColumnType,indexType>::deduplicatedColumn(uint32_t size){
+    index=indexType(size);
+}
+
+
+template<typename ColumnType,typename indexType>
+void deduplicatedColumn<ColumnType,indexType>::serialize(string filename) {
     string indexFilename = filename + ".index";
     string containerFilename = filename + ".container";
     std::ofstream os(indexFilename, std::ios::binary);
@@ -1508,8 +1542,8 @@ void deduplicatedColumn<T, ColumnType>::serialize(string filename) {
 }
 
 
-template<typename T, typename ColumnType>
-void deduplicatedColumn<T, ColumnType>::deserialize(string filename) {
+template<typename ColumnType,typename indexType>
+void deduplicatedColumn<ColumnType,indexType>::deserialize(string filename) {
     string indexFilename = filename + ".index";
     string containerFilename = filename + ".container";
     std::ifstream os(indexFilename, std::ios::binary);
@@ -1521,49 +1555,386 @@ void deduplicatedColumn<T, ColumnType>::deserialize(string filename) {
 }
 
 
-template<typename T, typename ColumnType>
-T deduplicatedColumn<T, ColumnType>::get(uint32_t order) {
+
+
+
+template<typename ColumnType,typename indexType>
+typename deduplicatedColumn<ColumnType,indexType>::dataType deduplicatedColumn<ColumnType,indexType>::get(uint32_t order) {
     if(order >= index.size())
         return values->get(0);
     return values->get(index[order]);
 }
 
-template<typename T, typename ColumnType>
-Column *deduplicatedColumn<T, ColumnType>::getTwin() {
-    deduplicatedColumn<T, ColumnType>* col=new deduplicatedColumn<T, ColumnType>();
+
+
+template<typename ColumnType,typename indexType>
+Column *deduplicatedColumn<ColumnType,indexType>::getTwin() {
+    deduplicatedColumn<ColumnType,indexType>* col=new deduplicatedColumn<ColumnType,indexType>();
     col->values=(ColumnType*)values->clone();
-    col->index=vector<uint32_t>(index.size());
+    col->index=indexType(index.size());
     return col;
 }
 
 
-
-template<typename T, typename ColumnType>
-void deduplicatedColumn<T, ColumnType>::resize(uint32_t size) {
+template<typename ColumnType,typename indexType>
+void deduplicatedColumn<ColumnType,indexType>::resize(uint32_t size) {
     index.resize(size);
 }
 
-template<typename T, typename ColumnType>
+
+
+template<typename ColumnType,typename indexType>
 void
-deduplicatedColumn<T, ColumnType>::setValueFromColumn(Column *Container, uint32_t inputOrder, uint32_t outputOrder) {
-    deduplicatedColumn<T, ColumnType> *other = ((deduplicatedColumn<T, ColumnType> *) Container);
+deduplicatedColumn<ColumnType,indexType>::setValueFromColumn(Column *Container, uint32_t inputOrder, uint32_t outputOrder) {
+    deduplicatedColumn<ColumnType,indexType> *other = ((deduplicatedColumn<ColumnType,indexType> *) Container);
     while(outputOrder>=index.size())
         index.resize(index.size()*2);
     index[outputOrder] = other->index[inputOrder];
     // values should be clones
 }
 
-template<typename T, typename ColumnType>
-void deduplicatedColumn<T, ColumnType>::insert(T item, uint32_t i) {
-    while(i>=index.size())
-        index.resize(index.size()*2);
+
+
+template<typename ColumnType,typename indexType>
+void deduplicatedColumn<ColumnType,indexType>::insert(dataType item, uint32_t i) {
+    if(i>=index.size())
+    {
+        int logI=log2(i)+1;
+        index.resize(1ULL<<logI);
+    }
+
     index[i] = values->insertAndGetIndex(item);
 }
 
-template<typename T, typename ColumnType>
-Column *deduplicatedColumn<T, ColumnType>::clone() {
-    deduplicatedColumn<T, ColumnType>* res=new deduplicatedColumn<T, ColumnType>();
+
+template<typename ColumnType,typename indexType>
+Column *deduplicatedColumn<ColumnType,indexType>::clone() {
+    deduplicatedColumn<ColumnType,indexType>* res=new deduplicatedColumn<ColumnType,indexType>();
     res->index=index;
     res->values=(ColumnType*)values->clone();
     return res;
+}
+
+
+template<>
+void deduplicatedColumn<prefixTrie,phmap::flat_hash_map<uint32_t,uint32_t> >::insert(dataType item, uint32_t i) {
+    index[i] = values->insertAndGetIndex(item);
+}
+template<>
+void deduplicatedColumn<prefixTrie,phmap::flat_hash_map<uint32_t,uint32_t> >::setValueFromColumn(Column *Container, uint32_t inputOrder, uint32_t outputOrder) {
+    deduplicatedColumn<prefixTrie,phmap::flat_hash_map<uint32_t,uint32_t> > *other = ((deduplicatedColumn<prefixTrie,phmap::flat_hash_map<uint32_t,uint32_t> > *) Container);
+    index[outputOrder] = other->index[inputOrder];
+    // values should be clones
+}
+
+template<>
+void deduplicatedColumn<prefixTrie,phmap::flat_hash_map<uint32_t,uint32_t> >::resize(uint32_t size) {
+
+}
+
+template<>
+Column *deduplicatedColumn<prefixTrie,phmap::flat_hash_map<uint32_t,uint32_t> >::getTwin() {
+    deduplicatedColumn<prefixTrie,phmap::flat_hash_map<uint32_t,uint32_t> >* col=new deduplicatedColumn<prefixTrie,phmap::flat_hash_map<uint32_t,uint32_t> >();
+    col->values=(prefixTrie*)values->clone();
+    col->index=phmap::flat_hash_map<uint32_t,uint32_t>();
+    return col;
+}
+template<>
+typename deduplicatedColumn<prefixTrie,phmap::flat_hash_map<uint32_t,uint32_t>>::dataType deduplicatedColumn<prefixTrie,phmap::flat_hash_map<uint32_t,uint32_t>>::get(uint32_t order) {
+    auto it=index.find(order);
+    if(it == index.end())
+        return values->get(0);
+    return values->get(it->second);
+}
+
+
+template<>
+void deduplicatedColumn<prefixTrie,phmap::flat_hash_map<uint32_t,uint32_t> >::serialize(string filename) {
+    string indexFilename = filename + ".index";
+    string containerFilename = filename + ".container";
+
+    phmap::BinaryOutputArchive ar_out(indexFilename.c_str());
+    index.dump(ar_out);
+
+    values->serialize(containerFilename);
+}
+
+
+template<>
+void deduplicatedColumn<prefixTrie,phmap::flat_hash_map<uint32_t,uint32_t> >::deserialize(string filename) {
+    string indexFilename = filename + ".index";
+    string containerFilename = filename + ".container";
+
+    phmap::BinaryInputArchive ar_in(indexFilename.c_str());
+    index.load(ar_in);
+
+
+    values = new prefixTrie();
+    values->deserialize(containerFilename);
+}
+
+
+template<>
+deduplicatedColumn<prefixTrie,phmap::flat_hash_map<uint32_t,uint32_t> >::deduplicatedColumn(uint32_t size){
+
+}
+
+
+///////////// btree
+
+template<>
+void deduplicatedColumn<prefixTrie,phmap::btree_map<uint32_t,uint32_t> >::insert(dataType item, uint32_t i) {
+    index[i] = values->insertAndGetIndex(item);
+}
+template<>
+void deduplicatedColumn<prefixTrie,phmap::btree_map<uint32_t,uint32_t> >::setValueFromColumn(Column *Container, uint32_t inputOrder, uint32_t outputOrder) {
+    deduplicatedColumn<prefixTrie,phmap::btree_map<uint32_t,uint32_t> > *other = ((deduplicatedColumn<prefixTrie,phmap::btree_map<uint32_t,uint32_t> > *) Container);
+    index[outputOrder] = other->index[inputOrder];
+    // values should be clones
+}
+
+template<>
+void deduplicatedColumn<prefixTrie,phmap::btree_map<uint32_t,uint32_t> >::resize(uint32_t size) {
+
+}
+
+template<>
+Column *deduplicatedColumn<prefixTrie,phmap::btree_map<uint32_t,uint32_t> >::getTwin() {
+    deduplicatedColumn<prefixTrie,phmap::btree_map<uint32_t,uint32_t> >* col=new deduplicatedColumn<prefixTrie,phmap::btree_map<uint32_t,uint32_t> >();
+    col->values=(prefixTrie*)values->clone();
+    col->index=phmap::btree_map<uint32_t,uint32_t>();
+    return col;
+}
+template<>
+typename deduplicatedColumn<prefixTrie,phmap::btree_map<uint32_t,uint32_t>>::dataType deduplicatedColumn<prefixTrie,phmap::btree_map<uint32_t,uint32_t>>::get(uint32_t order) {
+    auto it=index.find(order);
+    if(it == index.end())
+        return values->get(0);
+    return values->get(it->second);
+}
+
+
+template<>
+void deduplicatedColumn<prefixTrie,phmap::btree_map<uint32_t,uint32_t> >::serialize(string filename) {
+    string indexFilename = filename + ".index";
+    string containerFilename = filename + ".container";
+
+    std::ofstream os(indexFilename, std::ios::binary);
+    cereal::BinaryOutputArchive archive(os);
+    archive(index);
+    os.close();
+
+    values->serialize(containerFilename);
+}
+
+
+template<>
+void deduplicatedColumn<prefixTrie,phmap::btree_map<uint32_t,uint32_t> >::deserialize(string filename) {
+    string indexFilename = filename + ".index";
+    string containerFilename = filename + ".container";
+
+    std::ifstream osi(indexFilename, std::ios::binary);
+    cereal::BinaryInputArchive iarchive(osi);
+    iarchive(index);
+
+    values = new prefixTrie();
+    values->deserialize(containerFilename);
+}
+
+
+template<>
+deduplicatedColumn<prefixTrie,phmap::btree_map<uint32_t,uint32_t> >::deduplicatedColumn(uint32_t size){
+
+}
+
+uint32_t prefixForest::insertAndGetIndex(vector<uint32_t> &item) {
+    throw std::logic_error("insertAndGetIndex is not supported in prefixForest");
+}
+
+void prefixForest::insert(vector<uint32_t> &item, uint32_t index) {
+    throw std::logic_error("insertAndGetIndex is not supported in prefixForest");
+
+}
+
+vector<uint32_t> prefixForest::get(uint32_t index) {
+    return getWithIndex(index);
+}
+vector<uint32_t> prefixForest::getWithIndex(uint32_t index)  {
+    vector<uint32_t> result(noSamples);
+    uint32_t resTop=0;
+    uint32_t orderVecID=index/orderVecSize;
+    uint32_t orderSubIndex=index%orderVecSize;
+    uint32_t colorID=(*(orderColorID[orderVecID]))[orderSubIndex]*trees.size();
+    uint32_t colorVecID=colorID/colorVecSize;
+    uint32_t colorSubIndex=colorID%colorVecSize;
+    uint32_t samplesOffset=0;
+    for(unsigned i=0;i<trees.size();i++)
+    {
+        uint32_t pointer=(*(ColorIDPointer[colorVecID]))[colorSubIndex++];
+        vector<uint32_t> tmp=trees[i]->getWithIndex(pointer);
+        for(auto s:tmp)
+            result[resTop++]=s+samplesOffset;
+        samplesOffset+=trees[i]->noSamples;
+    }
+    result.resize(resTop);
+    return result;
+}
+void prefixForest::serialize(string filename) {
+    ofstream out(filename.c_str());
+    out.write((char *) (&(noSamples)), sizeof(uint64_t));
+    out.write((char *) (&(numColors)), sizeof(uint64_t));
+    out.write((char *) (&(colorVecSize)), sizeof(uint32_t));
+    out.write((char *) (&(orderVecSize)), sizeof(uint32_t));
+    uint32_t tmp=trees.size();
+    out.write((char *) (&(tmp)), sizeof(uint32_t));
+    for(unsigned i=0;i<trees.size();i++)
+    {
+        trees[i]->serialize(filename+".tree."+ to_string(i));
+    }
+    tmp=orderColorID.size();
+    out.write((char *) (&(tmp)), sizeof(uint32_t));
+    for(auto v: orderColorID)
+        v->serialize(out);
+    tmp=ColorIDPointer.size();
+    out.write((char *) (&(tmp)), sizeof(uint32_t));
+    for(auto v: ColorIDPointer)
+        v->serialize(out);
+
+    out.close();
+}
+
+void prefixForest::deserialize(string filename) {
+    ifstream input(filename.c_str());
+    input.read((char *) (&(noSamples)), sizeof(uint64_t));
+    input.read((char *) (&(numColors)), sizeof(uint64_t));
+    input.read((char *) (&(colorVecSize)), sizeof(uint32_t));
+    input.read((char *) (&(orderVecSize)), sizeof(uint32_t));
+    uint32_t tmp;
+    input.read((char *) (&(tmp)), sizeof(uint32_t));
+    trees=deque<prefixTrie*>(tmp);
+
+    for(unsigned i=0;i<trees.size();i++)
+    {
+        trees[i]=new prefixTrie();
+        trees[i]->deserialize(filename+".tree."+ to_string(i));
+    }
+    input.read((char *) (&(tmp)), sizeof(uint32_t));
+    orderColorID=deque<vectype *>(tmp);
+    for(unsigned i=0; i<orderColorID.size() ; i++){
+        orderColorID[i]=new vectype ();
+        orderColorID[i]->load(input);
+    }
+
+    input.read((char *) (&(tmp)), sizeof(uint32_t));
+    ColorIDPointer=deque<vectype *>(tmp);
+    for(unsigned i=0; i<ColorIDPointer.size() ; i++)
+    {
+        ColorIDPointer[i]=new vectype ();
+
+        ColorIDPointer[i]->load(input);
+    }
+
+    input.close();
+
+}
+
+
+
+uint64_t prefixForest::sizeInBytes() {
+    uint64_t totalSize=8;
+    for(auto t:trees)
+        totalSize+=t->sizeInBytes();
+    for(auto v:ColorIDPointer)
+        totalSize+=sdsl::size_in_bytes(*v);
+    for(auto v:orderColorID)
+        totalSize+=sdsl::size_in_bytes(*v);
+    return totalSize;
+}
+
+void prefixForest::explainSize() {
+    uint64_t totalSize=0;
+    for(auto t:trees)
+        totalSize+=t->sizeInBytes();
+    cerr<<"Size of the trees = "<<totalSize/(1024.0*1024.0)<<"MB"<<endl;
+    totalSize=0;
+    for(auto v:ColorIDPointer)
+        totalSize+=sdsl::size_in_bytes(*v);
+    cerr<<"Size Color ID to tree pointers = "<<totalSize/(1024.0*1024.0)<<"MB"<<endl;
+    totalSize=0;
+
+    for(auto v:orderColorID)
+        totalSize+=sdsl::size_in_bytes(*v);
+    cerr<<"Size of the kmerOrder to colorID = "<<totalSize/(1024.0*1024.0)<<"MB"<<endl;
+
+     cerr<<"Total = "<<sizeInBytes()/(1024.0*1024.0)<<"MB"<<endl;
+
+}
+
+Column *prefixForest::getTwin() {
+    prefixForest* result=new prefixForest();
+    result->numColors=numColors;
+    result->noSamples=noSamples;
+    result->orderVecSize=orderVecSize;
+    result->colorVecSize=colorVecSize;
+
+    result->orderColorID=deque<vectype*>(orderColorID.size());
+    // same as clone but order is blank
+    for(unsigned i=0; i< result->orderColorID.size() ; i++ )
+    {
+        result->orderColorID[i] = new vectype (orderColorID[i]->size());
+    }
+    result->ColorIDPointer=deque<vectype*>(ColorIDPointer.size());
+    for(unsigned i=0; i< result->ColorIDPointer.size() ; i++ )
+    {
+        result->ColorIDPointer[i] = new vectype (*ColorIDPointer[i]);
+    }
+    result->trees=deque<prefixTrie*>(trees.size());
+    for(unsigned i=0; i< result->trees.size();i++)
+        result->trees[i]=(prefixTrie*) trees[i]->clone();
+
+    return result;
+}
+
+void prefixForest::resize(uint32_t size) {
+    uint32_t currSize=orderVecSize*orderColorID.size();
+    if(currSize > size)
+    {
+        uint32_t neededVecs=(size/orderVecSize)+1;
+        for(unsigned i=neededVecs+1;i<orderColorID.size();i++)
+            delete orderColorID[i];
+        orderColorID.erase(orderColorID.begin()+neededVecs+1,orderColorID.end());
+    }
+    else if (currSize < size)
+    {
+        while(currSize < size){
+            orderColorID.push_back(new vectype(orderVecSize));
+            currSize=orderVecSize*orderColorID.size();
+        }
+    }
+
+}
+
+Column *prefixForest::clone() {
+    prefixForest* result=new prefixForest();
+    result->numColors=numColors;
+    result->noSamples=noSamples;
+    result->orderVecSize=orderVecSize;
+    result->colorVecSize=colorVecSize;
+
+    result->orderColorID=deque<vectype*>(orderColorID.size());
+    for(unsigned i=0; i< result->orderColorID.size() ; i++ )
+    {
+        result->orderColorID[i] = new vectype (*orderColorID[i]);
+    }
+    result->ColorIDPointer=deque<vectype*>(ColorIDPointer.size());
+    for(unsigned i=0; i< result->ColorIDPointer.size() ; i++ )
+    {
+        result->ColorIDPointer[i] = new vectype (*ColorIDPointer[i]);
+    }
+    result->trees=deque<prefixTrie*>(trees.size());
+    for(unsigned i=0; i< result->trees.size();i++)
+        result->trees[i]=(prefixTrie*) trees[i]->clone();
+
+
+    return result;
 }

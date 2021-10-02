@@ -640,3 +640,7 @@ bool kDataFrameBMQF::kmerExist(string kmerS) {
 bool kDataFrameBMQF::kmerExist(uint64_t kmer) {
     return getkmerOrder(kmer) > 0 ;
 }
+
+kDataFrame *kDataFrameBMQF::clone() {
+    throw logic_error("not implemented yet");
+}

@@ -47,6 +47,7 @@ public:
 template<typename  T>
 class vectorColumn: public Column{
 public:
+    typedef T dataType;
     vector<T> dataV;
     vectorColumn(){
       dataV=vector<T>(1000);
@@ -65,7 +66,7 @@ public:
     }
     void resize(uint32_t size)
     {
-        dataV.resize(size);
+        dataV.resize(size+1);
     }
     void insert(T item,uint32_t index);
     T get(uint32_t index);
@@ -110,6 +111,7 @@ public:
 
 class insertColorColumn: public Column{
 public:
+    typedef vector<uint32_t> dataType;
     uint32_t NUM_VECTORS=20;
     uint32_t VECTOR_SIZE=1000000;
     vector<sdsl::int_vector<> > colors;
@@ -579,6 +581,7 @@ public:
 
 class queryColorColumn : public Column{
 public:
+    typedef vector<uint32_t> dataType;
     uint64_t  noSamples;
 
     uint64_t numColors;
@@ -586,7 +589,10 @@ public:
     ~queryColorColumn() override = default;
     uint32_t  insertAndGetIndex(vector<uint32_t >& item);
     virtual vector<uint32_t > getWithIndex(uint32_t index)=0;
-
+    uint32_t getNumColors()
+    {
+        return numColors;
+    }
     virtual void insert(vector<uint32_t >& item,uint32_t index) = 0;
     virtual vector<uint32_t > get(uint32_t index)=0;
 
@@ -602,8 +608,10 @@ public:
     virtual void resize(uint32_t size)=0;
 
 };
+class StringColorColumn;
 class mixVectors: public queryColorColumn{
 public:
+    typedef vector<uint32_t> dataType ;
     deque<vectorBase*> colors;
     sdsl::int_vector<> idsMap;
     mixVectors(){
@@ -614,6 +622,9 @@ public:
         colors.push_back(new vectorOfVectors());
     }
     mixVectors(insertColorColumn* col);
+
+    mixVectors(vector<vector<uint32_t> > colors,uint32_t noSamples);
+
     ~mixVectors(){
         for(auto v:colors)
             delete v;
@@ -666,16 +677,19 @@ private:
     unordered_map<uint64_t ,vector<uint32_t > > nodesCache;
     deque<sdsl::int_vector<>*>  unCompressedEdges;
 public:
+    typedef  vector<uint32_t> dataType;
     typedef  sdsl::int_vector<> vectype;
     uint32_t cacheUsed=0;
     deque<vectype*>  edges;
     deque<sdsl::bit_vector*> tree;
     deque<sdsl::bp_support_sada<>*> bp_tree;
     sdsl::int_vector<64> starts;
-    sdsl::int_vector<64> idsMap;
+    sdsl::int_vector<32> idsMap;
     sdsl::int_vector<> translateEdges;
+    uint64_t totalSize;
     prefixTrie(){
         queryCache= new lru_cache_t<uint64_t, vector<uint32_t>>(1);
+        totalSize=0;
     }
     prefixTrie(insertColorColumn* col);
     prefixTrie(mixVectors* col);
@@ -701,9 +715,10 @@ public:
     void deserialize(string filename);
     void shorten(deque<uint32_t> & input,deque<uint32_t> & output);
    // void _shorten(vector<uint32_t> & input,vector<uint32_t> & output, vector<uint32_t> & remaining);
-    uint32_t getNumColors();
+
     uint64_t sizeInBytes();
     void explainSize();
+    // paste the output to http://magjac.com/graphviz-visual-editor/
     void exportTree(string prefix,int tree);
     Column* getTwin();
     void resize(uint32_t size);
@@ -722,9 +737,62 @@ public:
 
     Column *clone() override;
 };
+class prefixForest: public queryColorColumn{
+public:
+    typedef  vector<uint32_t> dataType;
+    typedef  sdsl::int_vector<> vectype;
+    deque<prefixTrie*> trees;
+    deque<vectype*>  orderColorID;
+    deque<vectype*>  ColorIDPointer;
+    uint32_t orderVecSize;
+    uint32_t colorVecSize;
+
+    prefixForest()
+    {
+    }
+    prefixForest(uint32_t orderVecSize, uint32_t colorVecSize)
+    {
+        this->orderVecSize=orderVecSize;
+        this->colorVecSize=colorVecSize;
+    }
+
+    ~prefixForest(){
+        for(auto t:trees)
+            delete t;
+        for(auto b:orderColorID)
+            delete b;
+        for(auto b:ColorIDPointer)
+            delete b;
+
+    }
+
+    uint32_t  insertAndGetIndex(vector<uint32_t >& item);
+    vector<uint32_t > getWithIndex(uint32_t index);
+
+    void insert(vector<uint32_t >& item,uint32_t index);
+    vector<uint32_t > get(uint32_t index);
+
+    void serialize(string filename);
+    void deserialize(string filename);
+
+    uint64_t sizeInBytes();
+    void explainSize();
+    Column* getTwin();
+    void resize(uint32_t size);
+    uint32_t size()
+    {
+        return numColors;
+    }
+
+    Column *clone() override;
+};
+
+
+
 
 class StringColorColumn: public Column{
 public:
+    typedef vector<string> dataType;
     vector<vector<uint32_t > > colors;
     flat_hash_map<uint32_t,string> namesMap;
 
@@ -775,6 +843,8 @@ public:
     prefixTrieIterator(prefixTrie* origin, uint32_t pos){
         this->origin=origin;
         finished=false;
+        if(pos>=origin->totalSize)
+            throw std::out_of_range("tree of size "+to_string(origin->totalSize)+ " doesnt have the pos "+ to_string(origin->totalSize));
         teleport(pos);
     }
     prefixTrieIterator& operator= (const prefixTrieIterator& other){
@@ -866,27 +936,25 @@ public:
 };
 
 
-template<typename  T, typename ColumnType>
+template<typename ColumnType,typename indexType = vector<uint32_t> >
 class deduplicatedColumn: public Column{
 public:
-    vector<uint32_t> index;
+    typedef typename ColumnType::dataType dataType;
+    indexType index;
     ColumnType* values;
     deduplicatedColumn(){
-        index.resize(1);
     }
-    deduplicatedColumn(uint32_t size){
-        index=vector<uint32_t>(size);
-    }
+    deduplicatedColumn(uint32_t size);
     ~deduplicatedColumn(){
-
+        delete values;
     }
 
     uint32_t  size()
     {
         return index.size();
     }
-    void insert(T item,uint32_t index);
-    T get(uint32_t index);
+    void insert(dataType item,uint32_t index);
+    dataType get(uint32_t index);
 
     void serialize(string filename);
     void deserialize(string filename);

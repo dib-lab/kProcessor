@@ -19,13 +19,13 @@ kDataFrameMQFIterator::kDataFrameMQFIterator(QF *mqf, uint64_t kSize, kmerDecode
     qfi = new QFi();
     qf_iterator(mqf, qfi, 0);
     this->KD = KD;
-    order=0;
+    order=1;
 }
 kDataFrameMQFIterator::kDataFrameMQFIterator(QFi *mqfIt, uint64_t kSize, kmerDecoder *KD)
         : _kDataFrameIterator(kSize) {
     qfi = mqfIt;
     this->KD = KD;
-    order=0;
+    order=1;
 
 }
 kDataFrameMQFIterator::kDataFrameMQFIterator(const kDataFrameMQFIterator &other) :
@@ -163,6 +163,17 @@ kDataFrameMQF::kDataFrameMQF() : kDataFrame() {
     kDataFrameMQFIterator *it = new kDataFrameMQFIterator(mqf, kSize, KD);
     it->endIterator();
     endIterator=new  kDataFrameIterator(it,(kDataFrame*)this);
+}
+
+kDataFrame *kDataFrameMQF::clone() {
+    uint64_t q=log2(this->mqf->metadata->nslots);
+    kDataFrameMQF* newOne=new kDataFrameMQF(kSize,q,KD->hash_mode);
+    qf_copy(newOne->mqf,mqf);
+    for(auto c:columns)
+    {
+        newOne->columns[c.first]=c.second->clone();
+    }
+    return newOne;
 }
 
 kDataFrameMQF::kDataFrameMQF(uint64_t ksize, uint8_t q, hashingModes hash_mode) : kDataFrame(ksize) {
@@ -562,12 +573,12 @@ bool kDataFrameMQF::_insert(string kmer) {
 }
 uint64_t kDataFrameMQF::getkmerOrder(const string &kmer) {
     uint64_t hash = KD->hash_kmer(kmer) % mqf->metadata->range;
-    return itemOrder(mqf, hash);
+    return itemOrder(mqf, hash)+1;
 }
 
 uint64_t kDataFrameMQF::getkmerOrder(uint64_t kmer) {
     uint64_t hash = kmer % mqf->metadata->range;
-    return itemOrder(mqf, hash);
+    return itemOrder(mqf, hash)+1;
 }
 
 
@@ -637,8 +648,11 @@ kDataFrame *kDataFrameMQF::load(string filePath) {
 
 
 bool kDataFrameMQF::kmerExist(string kmerS) {
-    return getkmerOrder(kmerS) > 0 ;
+    uint64_t hash = KD->hash_kmer(kmerS) % mqf->metadata->range;
+    return qf_count_key(mqf, hash)>0;
+
 }
 bool kDataFrameMQF::kmerExist(uint64_t kmer) {
-    return getkmerOrder(kmer) > 0 ;
+    uint64_t hash = kmer % mqf->metadata->range;
+    return qf_count_key(mqf, hash)>0;
 }

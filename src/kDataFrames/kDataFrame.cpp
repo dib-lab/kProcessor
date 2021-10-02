@@ -55,10 +55,11 @@ void kDataFrame::save(string filePath)
         out<<c.first<<"\t"<<columnType<<"\t"<<suffix<<endl;
         c.second->serialize(filename);
     }
-
-    
     out<<"default\t"<<0<<"\tNULL"<<endl;
-    
+    out<<"lastKmerOrder\t"<<lastKmerOrder<<"\tNULL"<<endl;
+
+
+
     out.close();
     this->serialize(filePath);
 }
@@ -95,7 +96,15 @@ kDataFrame * kDataFrame::load(string filePath) {
 	    if(name== "count")
 	      res->countColumn=(vectorColumn<unsigned int>*)c;
         }
-        inp >> name >> type >> path;
+        while(inp >> name >> type >> path)
+        {
+            if(name=="lastKmerOrder")
+            {
+                res->lastKmerOrder=type;
+            }
+        }
+
+
        
     }
 
@@ -262,6 +271,8 @@ void dbgIterator::generateNextKmers(){
     for(auto c:possibleNuc)
     {
         string candidate=suffix+c;
+        if(candidate==currentKmer)
+            continue;
         if(frame->kmerExist(candidate)  )
             nextFwdKmers.push_back(candidate);
     }

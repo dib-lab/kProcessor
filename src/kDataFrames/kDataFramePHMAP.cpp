@@ -321,3 +321,19 @@ kDataFrameIterator kDataFramePHMAP::find(uint64_t kmer) {
 kDataFramePHMAP::MapType *kDataFramePHMAP::getMap()  {
     return &MAP;
 }
+
+kDataFrame *kDataFramePHMAP::clone() {
+    kDataFramePHMAP* newOne=new kDataFramePHMAP(kSize);
+    newOne->MAP=MAP;
+    for(auto c:columns)
+    {
+        newOne->columns[c.first]=c.second->clone();
+        if(c.first == "count")
+            newOne->countColumn=(vectorColumn<uint32_t>*)newOne->columns[c.first];
+    }
+    delete newOne->endIterator;
+    newOne->endIterator=new kDataFrameIterator(
+            (_kDataFrameIterator *) new kDataFramePHMAPIterator(newOne->MAP.end(), newOne, kSize),
+            (kDataFrame *) newOne);
+    return newOne;
+}

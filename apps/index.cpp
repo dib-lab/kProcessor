@@ -9,6 +9,8 @@
 #include "algorithms.hpp"
 #include "CLI11.hpp"
 #include <typeinfo>
+#include "defaultColumn.hpp"
+#include <parallel_hashmap/btree.h>
 
 using namespace std;
 
@@ -21,6 +23,8 @@ int main(int argc, char *argv[])
     string outPath;
     uint32_t num_vectors=20;
     uint32_t vector_size=1000000;
+    bool isPrefixTrie=false;
+    bool mapDeduplicate=false;
 
     app.add_option("-i,--input", inputPath,
                    "File containig a list of kDataframe paths")->required();
@@ -34,6 +38,13 @@ int main(int argc, char *argv[])
                    "Number of vectors in the output mixvectors column");
     app.add_option("-s,--vectorSize", vector_size,
                    "size of vectors in the output mixvectors column");
+
+    app.add_flag("-p,--createPrefixTrie", isPrefixTrie,
+                 "Create a prefix trie for the index. It takes more time but the final index size is much smaller");
+
+    app.add_flag("-m,--deduplicateWithMap", mapDeduplicate,
+                 "kProcessor stores the deduplication pointers in vector by defualt. it can changed to use flat_hash_map by this flag."
+                 "It takes more memory but it will take less if joins is going to be applied on the result index");
 
 
     CLI11_PARSE(app, argc, argv);
@@ -67,9 +78,37 @@ int main(int argc, char *argv[])
         }
     }
 
-    kDataFrame* output= new kDataFramePHMAP(kSize,integer_hasher);
+    kDataFrame* output= new kDataFramePHMAP(kSize);
     kProcessor::indexPriorityQueue(frames,tmpFolder,output,num_vectors,vector_size);
     cout<<"Indexing Finished"<<endl;
+    if(isPrefixTrie)
+    {
+        if(mapDeduplicate)
+        {
+            auto prevColor=(deduplicatedColumn< mixVectors>*)output->columns["color"];
+            auto newColor=new deduplicatedColumn<prefixTrie,phmap::btree_map<uint32_t,uint32_t> >();
+            for(uint32_t i =0;i<prevColor->index.size();i++)
+            {
+                newColor->index[i]=prevColor->index[i];
+            }
+
+            newColor->values=new prefixTrie(prevColor->values);
+            output->columns["color"]=newColor;
+            delete prevColor;
+        }
+        else{
+            auto prevColor=(deduplicatedColumn< mixVectors>*)output->columns["color"];
+            auto newColor=new deduplicatedColumn<prefixTrie>();
+            newColor->index=prevColor->index;
+            newColor->values=new prefixTrie(prevColor->values);
+            output->columns["color"]=newColor;
+            delete prevColor;
+        }
+    }
+    else if (mapDeduplicate)
+    {
+        cout<<"Not Supported yet! email: mostafa.shokrof@gmail.com"<<endl;
+    }
 
     // output->save(outPath);
     //    cout<<"Saving Finished"<<endl;
