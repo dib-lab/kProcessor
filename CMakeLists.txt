@@ -172,6 +172,7 @@ endif()
 
 if(BUILD_USECASES)
     add_subdirectory(usecases/kDifferentialExpression/)
+    add_subdirectory(usecases/kProcessor_corticall/)
 endif()
 
 #### Building Documentation with Doxygen
