@@ -1,0 +1,5 @@
+sample_name,library,parent
+3D7,parent_reference,none
+HB3,parent_reference,none
+ERR019061,progny_short,3D7xHB3
+ERR019054,progny_short,3D7xHB3
