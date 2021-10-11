@@ -2,6 +2,9 @@ pepfile: "project_config.yaml"
 configfile: "config.yaml"
 
 kSize=config["kSize"]
+outFolder=config["outFolder"]
+tmpFolder=config["tmpFolder"]
+
 references=list(filter(lambda x:x.library=="parent_reference",pep.samples))
 references=[(x.sample_name,x.file[0]) for x in references]
 references=dict(references)
@@ -22,22 +25,22 @@ def getFile(dict,name):
 
 rule all:
     input:
-        expand("{sample}.ctx",sample=dbgs),
-        expand("{sample}.cleaned.edgesInfered.ctx",sample=progny_short.keys()),
-        expand("{sample}.kmc_pre",sample=dbgs),
-        expand("{sample}.ref.{ref}.ctp.gz", sample=progny_short.keys(), ref=references.keys()),
-        expand("{sample}.se.ctp.gz",sample=progny_short.keys()),
-        expand("{sample}.contigs.fa",sample=progny_short.keys()),
-        expand("{sample}.unitigs.fa",sample=progny_short.keys()),
-        expand("{sample}.kframe.phmap",sample=progny_short.keys())
+        expand(outFolder+"corticall/{sample}.ctx",sample=dbgs),
+        expand(outFolder+"corticall/{sample}.cleaned.edgesInfered.ctx",sample=progny_short.keys()),
+        expand(outFolder+"kmc/{sample}.kmc_pre",sample=dbgs),
+        expand(outFolder+"corticall/{sample}.ref.{ref}.ctp.gz", sample=progny_short.keys(), ref=references.keys()),
+        expand(outFolder+"corticall/{sample}.se.ctp.gz",sample=progny_short.keys()),
+        expand(outFolder+"corticall/{sample}.contigs.fa",sample=progny_short.keys()),
+        expand(outFolder+"bcalm/{sample}.unitigs.fa",sample=progny_short.keys()),
+        expand(outFolder+"kProcessor/{sample}.kframe.phmap",sample=progny_short.keys())
 
 
 rule buildParentDBG:
     input:  lambda wildcards: getFile(references,f"{wildcards.sample}")
     output:
-        ctx="{sample}.ctx",
-        time="{sample}.build.time"
-    log: "{sample}.build.log"
+        ctx=outFolder+"corticall/{sample}.ctx",
+        time=outFolder+"corticall/{sample}.build.time"
+    log: outFolder+"corticall/{sample}.build.log"
     conda: "env.yaml"
     shell:
        	"""
@@ -47,9 +50,9 @@ rule buildParentDBG:
 rule buildPrognyDBG:
     input:  lambda wildcards: getFile(progny_short,f"{wildcards.sample}")
     output:
-        ctx="{sample}.ctx",
-        time="{sample}.build.time"
-    log: "{sample}.build.log"
+        ctx=outFolder+"corticall/{sample}.ctx",
+        time=outFolder+"corticall/{sample}.build.time"
+    log: outFolder+"corticall/{sample}.build.log"
     conda: "env.yaml"
     shell:
        	"""
@@ -57,15 +60,15 @@ rule buildPrognyDBG:
         """
 
 rule cleanPrognyDBG:
-    input:  "{sample}.ctx"
+    input:  outFolder+"corticall/{sample}.ctx"
     output:
-        ctx="{sample}.cleaned.ctx",
-        covg_after="{sample}.cleaned.covg_after",
-        covg_before="{sample}.cleaned.covg_before",
-        len_after="{sample}.cleaned.len_after",
-        len_before="{sample}.cleaned.len_before",
-        time="{sample}.clean.time"
-    log: "{sample}.clean.log"
+        ctx=outFolder+"corticall/{sample}.cleaned.ctx",
+        covg_after=outFolder+"corticall/{sample}.cleaned.covg_after",
+        covg_before=outFolder+"corticall/{sample}.cleaned.covg_before",
+        len_after=outFolder+"corticall/{sample}.cleaned.len_after",
+        len_before=outFolder+"corticall/{sample}.cleaned.len_before",
+        time=outFolder+"corticall/{sample}.clean.time"
+    log: outFolder+"corticall/{sample}.clean.log"
     conda: "env.yaml"
     shell:
        	"""
@@ -74,11 +77,11 @@ rule cleanPrognyDBG:
 
 
 rule inferEdgesPrognyDBG:
-    input:  "{sample}.cleaned.ctx"
+    input:  outFolder+"corticall/{sample}.cleaned.ctx"
     output:
-        ctx="{sample}.cleaned.edgesInfered.ctx",
-        time="{sample}.inferedges.time"
-    log: "{sample}.inferedges.log"
+        ctx=outFolder+"corticall/{sample}.cleaned.edgesInfered.ctx",
+        time=outFolder+"corticall/{sample}.inferedges.time"
+    log: outFolder+"corticall/{sample}.inferedges.log"
     conda: "env.yaml"
     shell:
        	"""
@@ -87,12 +90,12 @@ rule inferEdgesPrognyDBG:
 
 rule threadSEProgny:
     input:
-        ctx="{sample}.cleaned.edgesInfered.ctx",
+        ctx=outFolder+"corticall/{sample}.cleaned.edgesInfered.ctx",
         reads=lambda wildcards: getFile(progny_short,f"{wildcards.sample}")
     output:
-        ctp="{sample}.se.ctp.gz",
-        time="{sample}.threadSE.time"
-    log: "{sample}.threadSE.log"
+        ctp=outFolder+"corticall/{sample}.se.ctp.gz",
+        time=outFolder+"corticall/{sample}.threadSE.time"
+    log: outFolder+"corticall/{sample}.threadSE.log"
     conda: "env.yaml"
     shell:
        	"""
@@ -104,12 +107,12 @@ rule threadSEProgny:
 
 rule threadParentRef:
     input:
-        ctx="{sample}.cleaned.edgesInfered.ctx",
+        ctx=outFolder+"corticall/{sample}.cleaned.edgesInfered.ctx",
         ref= lambda wildcards: getFile(references,f"{wildcards.ref}")
     output:
-        ctp="{sample}.ref.{ref}.ctp.gz",
-        time="{sample}.{ref}.threadParent.time"
-    log: "{sample}.{ref}.threadParent.log"
+        ctp=outFolder+"corticall/{sample}.ref.{ref}.ctp.gz",
+        time=outFolder+"corticall/{sample}.{ref}.threadParent.time"
+    log: outFolder+"corticall/{sample}.{ref}.threadParent.log"
     conda: "env.yaml"
     shell:
        	"""
@@ -122,13 +125,13 @@ rule threadParentRef:
 
 rule contigs:
     input:
-        ctx="{sample}.cleaned.edgesInfered.ctx",
-        ctpSE="{sample}.se.ctp.gz",
-        ctpRef= expand("{sample}.ref.{ref}.ctp.gz",sample="{sample}",ref=references.keys())
+        ctx=outFolder+"corticall/{sample}.cleaned.edgesInfered.ctx",
+        ctpSE=outFolder+"corticall/{sample}.se.ctp.gz",
+        ctpRef= expand(outFolder+"corticall/{sample}.ref.{ref}.ctp.gz",sample="{sample}",ref=references.keys())
     output:
-        contigs="{sample}.contigs.fa",
-        time="{sample}.contigs.time"
-    log: "{sample}.contigs.log"
+        contigs=outFolder+"corticall/{sample}.contigs.fa",
+        time=outFolder+"corticall/{sample}.contigs.time"
+    log: outFolder+"corticall/{sample}.contigs.log"
     conda: "env.yaml"
     shell:
        	"""
@@ -144,76 +147,64 @@ rule contigs:
 rule kmcParent:
     input:  lambda wildcards: getFile(references,f"{wildcards.sample}")
     output:
-         pre="{sample}.kmc_pre",
-         suf="{sample}.kmc_suf",
-         time="{sample}.kmc.time"
+         pre=outFolder+"kmc/{sample}.kmc_pre",
+         suf=outFolder+"kmc/{sample}.kmc_suf",
+         time=outFolder+"kmc/{sample}.kmc.time"
     threads: 4
-    log: "{sample}.kmc.log"
+    log: outFolder+"kmc/{sample}.kmc.log"
     shell:
        	"""
-	/usr/bin/time -v -o {output.time} KMC/bin/kmc -ci1 -t{threads} -k{kSize} -m4 -fm {input} {wildcards.sample}  ./ &> {log}
-        """
+	mkdir -p {tmpFolder}$$/
+	/usr/bin/time -v -o {output.time} KMC/bin/kmc -ci1 -t{threads} -k{kSize} -m4 -fm {input} {outFolder}kmc/{wildcards.sample}  {tmpFolder}$$/ &> {log}
+        rm -rf {tmpFolder}$$/
+	"""
 
 
 rule kmcProgny:
     input: lambda wildcards: getFile(progny_short,f"{wildcards.experiment}")
     output:
-         pre="{experiment}.kmc_pre",
-         suf="{experiment}.kmc_suf",
-         time="{experiment}.kmc.time"
+         pre=outFolder+"kmc/{experiment}.kmc_pre",
+         suf=outFolder+"kmc/{experiment}.kmc_suf",
+         time=outFolder+"kmc/{experiment}.kmc.time"
     conda:
          "env.yaml"
     threads: 4
-    log: "{experiment}.kmc.log"
+    log: outFolder+"kmc/{experiment}.kmc.log"
     shell:
        	"""
+	    mkdir -p {tmpFolder}$$/
     	    echo {input} |tr -s ' ' $'\n' > {wildcards.experiment}.lst
-	        /usr/bin/time -v -o {output.time} KMC/bin/kmc -ci1 -cs1000000  -hp  -t{threads} -k{kSize} -m4  @{wildcards.experiment}.lst {wildcards.experiment}  ./ &> {log}
-
+	        /usr/bin/time -v -o {output.time} KMC/bin/kmc -ci1 -cs1000000  -hp  -t{threads} -k{kSize} -m4  @{wildcards.experiment}.lst {outFolder}kmc/{wildcards.experiment}  {tmpFolder}$$/ &> {log}
+		rm -rf {tmpFolder}$$/
 	     #   rm {wildcards.experiment}.lst
         """
 
 rule buildPrognyDBGKprocessor:
-    input:  kmc= "{sample}.kmc_pre"
+    input:  kmc= outFolder+"kmc/{sample}.kmc_pre"
     output:
-        ctx="{sample}.kframe.phmap",
-        time="{sample}.kprocessor.build.time"
-    log: "{sample}.kprocessor.build.log"
+        ctx=outFolder+"kProcessor/{sample}.kframe.phmap",
+        time=outFolder+"kProcessor/{sample}.kprocessor.build.time"
+    log: outFolder+"kProcessor/{sample}.kprocessor.build.log"
     conda: "env.yaml"
     shell:
        	"""
-	       /usr/bin/time -v -o {output.time} ../../apps/loadFromKMC {wildcards.sample} PHMAP {wildcards.sample}.kframe  &> {log}
+	       /usr/bin/time -v -o {output.time} ../../apps/loadFromKMC {outFolder}kmc/{wildcards.sample} PHMAP {outFolder}kProcessor/{wildcards.sample}.kframe  &> {log}
         """
 
 
 rule bcalmProgny:
     input: lambda wildcards: getFile(progny_short,f"{wildcards.experiment}")
     output:
-         unitigs="{experiment}.unitigs.fa",
-         time="{experiment}.bcalm.time"
+         unitigs=outFolder+"bcalm/{experiment}.unitigs.fa",
+         time=outFolder+"bcalm/{experiment}.bcalm.time"
     conda:
          "env.yaml"
     threads: 4
-    log: "{experiment}.bcalm.log"
+    log: outFolder+"bcalm/{experiment}.bcalm.log"
     shell:
        	"""
     	    echo {input} |tr -s ' ' $'\n' > {wildcards.experiment}.lst
-    	    /usr/bin/time -v -o {output.time} bcalm -nb-cores {threads} -in {wildcards.experiment}.lst -kmer-size {kSize} -abundance-min 1 -out {wildcards.experiment} &> {log}
+    	    /usr/bin/time -v -o {output.time} bcalm -nb-cores {threads} -in {wildcards.experiment}.lst -kmer-size {kSize} -abundance-min 1 -out {outFolder}bcalm/{wildcards.experiment} &> {log}
         """
 
-
-
-# rule kDifferntialExpression:
-#     input:
-#          sample="sample.kmc_pre",
-#          control="control.kmc_pre",
-#          transpictome=transpictome
-#     output: "kDifferntialExpression.medianChange.lst"
-#     log: "kDifferntialExpression.log"
-#
-#     shell:
-#        	"""
-# 	./kDifferntialExpression -g {input.transpictome} -s sample -c control -o {output} &> {log}
-#         """
-#
 
