@@ -32,7 +32,7 @@ rule all:
         expand(outFolder+"corticall/{sample}.se.ctp.gz",sample=progny_short.keys()),
         expand(outFolder+"corticall/{sample}.contigs.fa",sample=progny_short.keys()),
         expand(outFolder+"bcalm/{sample}.unitigs.fa",sample=progny_short.keys()),
-        expand(outFolder+"kProcessor/{sample}.kframe.phmap",sample=progny_short.keys())
+        expand(outFolder+"kProcessor/{sample}.kframe.cleaned.phmap",sample=progny_short.keys())
 
 
 rule buildParentDBG:
@@ -207,4 +207,21 @@ rule bcalmProgny:
     	    /usr/bin/time -v -o {output.time} bcalm -nb-cores {threads} -in {wildcards.experiment}.lst -kmer-size {kSize} -abundance-min 1 -out {outFolder}bcalm/{wildcards.experiment} &> {log}
         """
 
+
+rule cleanPrognyDBGKprocessor:
+    input:
+        kframe=outFolder+"kProcessor/{sample}.kframe.phmap",
+        unitigs=outFolder+"bcalm/{sample}.unitigs.fa"
+    params:
+        kframeINPrefix=outFolder+"kProcessor/{sample}.kframe",
+        kframeOUTPrefix=outFolder+"kProcessor/{sample}.kframe.cleaned"
+    output:
+        kframe=outFolder+"kProcessor/{sample}.kframe.cleaned.phmap",
+        time=outFolder+"kProcessor/{sample}.kprocessor.clean.time"
+    log: outFolder+"kProcessor/{sample}.kprocessor.clean.log"
+    conda: "env.yaml"
+    shell:
+       	"""
+	       /usr/bin/time -v -o {output.time} ./cleanDBG -k  {params.kframeINPrefix} -u {input.unitigs} -o {params.kframeOUTPrefix}  &> {log}
+        """
 

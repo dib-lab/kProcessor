@@ -1,5 +1,5 @@
-add_executable(kCorticall main.cpp)
-target_link_libraries (kCorticall LINK_PUBLIC kProcessor MQF ${SEQAN_LIBRARIES} )
+add_executable(cleanDBG clean.cpp)
+target_link_libraries (cleanDBG LINK_PUBLIC kProcessor MQF ${SEQAN_LIBRARIES} )
 
 
 file(COPY Snakefile DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
