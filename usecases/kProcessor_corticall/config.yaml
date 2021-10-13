@@ -1,1 +1,3 @@
 kSize: 31
+outFolder: "out/"
+tmpFolder: "/scratch/mshokrof/"
