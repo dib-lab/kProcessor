@@ -47,7 +47,7 @@ rule all:
         expand(outFolder+"kmc/{sample}.kmc_pre",sample=dbgs),
 #        expand(outFolder+"corticall/{sampleParents}.ref.ctp.gz", sample=sampleParent), 
         expand(outFolder+"corticall/{sample}.se.ctp.gz",sample=progny_short.keys()),
-#        expand(outFolder+"corticall/{sample}.contigs.fa",sample=progny_short.keys()),
+        expand(outFolder+"corticall/{sample}.contigs.fa",sample=progny_short.keys()),
         expand(outFolder+"bcalm/{sample}.unitigs.fa",sample=progny_short.keys()),
         expand(outFolder+"kProcessor/{sample}.kframe.cleaned.phmap",sample=progny_short.keys()),
         expand(outFolder+"kProcessor/{sample}.kframe.bmqf.bmqf",sample=progny_short.keys())
@@ -141,6 +141,32 @@ rule threadSEProgny:
 	       /usr/bin/time -v -o {output.time} mccortex {kSize} thread  -t1 -W -E -m {resources.mem_gb}G -o {output.ctp} -1 {input.reads[0]} -1 {input.reads[1]} {input.ctx} &> {log}
         """
 
+rule threadPEProgny:
+    input:
+        ctx=outFolder+"corticall/{sample}.cleaned.edgesInfered.popped.ctx",
+        SE_CTP=outFolder+"corticall/{sample}.se.ctp.gz",
+        reads=lambda wildcards: getFile(progny_short,f"{wildcards.sample}")
+    output:
+        ctp=outFolder+"corticall/{sample}.pe.ctp.gz",
+        time=outFolder+"corticall/{sample}.threadPE.time"
+    log: outFolder+"corticall/{sample}.threadPE.log"
+    conda: "env.yaml"
+    resources: mem_gb= lambda wildcards: getFileSizeInGB(outFolder+f"corticall/{wildcards.sample}.cleaned.edgesInfered.popped.ctx") * 8
+    shell:
+       	"""
+       	# arguments meaining:
+       	# -W Use two-way gap filling (liberal)
+       	# -E Skip extra check after gap bridging
+       	            mkdir -p {tmpFolder}$$/
+                    /usr/bin/time -v -o {output.time} mccortex {kSize} thread -m {resources.mem_gb}G -t 1 -W -E -2 {input.reads[0]}:{input.reads[1]} -p {input.SE_CTP} -o {tmpFolder}$$/pe.ctp.gz {input.ctx}
+                    mccortex {kSize} links -T {tmpFolder}$$/link.stats.txt -L 1000 {tmpFolder}$$/pe.ctp.gz
+                    LINK_THRESH=$(grep 'suggested_cutoff=' {tmpFolder}$$/link.stats.txt | grep -oE '[0-9,]+$')
+                    mccortex {kSize} links --clean $LINK_THRESH --out {output.ctp} {tmpFolder}$$/pe.ctp.gz
+                    rm -rf {tmpFolder}$$/
+        """
+
+
+
 rule threadParentRef:
     input:
         ctx=outFolder+"corticall/{sample}.cleaned.edgesInfered.popped.ctx",
@@ -164,6 +190,7 @@ rule contigs:
     input:
         ctx=outFolder+"corticall/{sample}.cleaned.edgesInfered.ctx",
         ctpSE=outFolder+"corticall/{sample}.se.ctp.gz",
+        ctpPE=outFolder+"corticall/{sample}.pe.ctp.gz",
         ctpRef= lambda wildcards: getFile(sampleParents,f"{wildcards.sample}")
     output:
         contigs=outFolder+"corticall/{sample}.contigs.fa",
@@ -175,8 +202,10 @@ rule contigs:
        	# arguments meaining:
        	# -M  Do not use the missing information check
        	# -G Genome size in bases
-
-	    /usr/bin/time -v -o {output.time} mccortex {kSize} contigs  -t1 -m 4G -G 23332839 -M -o {output.contigs} -p {input.ctpRef[0]} -p {input.ctpRef[1]} -p {input.ctpSE} {input.ctx} &> {log}
+        mkdir -p {tmpFolder}$$/
+	    /usr/bin/time -v -o {output.time} mccortex {kSize} contigs  -t1 -m 4G -G 23332839 -M -o {tmpFolder}$$/contigs.fa -p {input.ctpRef[0]} -p {input.ctpRef[1]} -p {input.ctpSE} -p {input.ctpPE} {input.ctx} &> {log}
+	    cd-hit-est -T 0 -M 4000 -c 0.95 -i {tmpFolder}$$/contigs.fa -o {output.contigs}
+	    rm -rf {tmpFolder}$$/
         """
 
 
@@ -237,7 +266,10 @@ rule buildPrognyDBGKprocessorBMQF:
     conda: "env.yaml"
     shell:
        	"""
-	       /usr/bin/time -v -o {output.time} ../../apps/loadFromKMC {outFolder}kmc/{wildcards.sample} BMQF {outFolder}kProcessor/{wildcards.sample}.kframe.bmqf  &> {log}
+       	mkdir -p {tmpFolder}$$/
+	    /usr/bin/time -v -o {output.time} ../../apps/loadFromKMC {outFolder}kmc/{wildcards.sample} BMQF {tmpFolder}$$/{wildcards.sample}.kframe.bmqf  &> {log}
+        mv {tmpFolder}$$/{wildcards.sample}.kframe.bmqf* {outFolder}kProcessor/
+        rm -rf {tmpFolder}$$/
         """
 
 
