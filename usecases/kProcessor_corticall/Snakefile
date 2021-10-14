@@ -13,14 +13,28 @@ references=dict(references)
 progny_short=list(filter(lambda x:x.library=="progny_short",pep.samples))
 progny_short=[(x.sample_name,x.file) for x in progny_short]
 progny_short=dict(progny_short)
-
-
 dbgs=list(references.keys())+list(progny_short.keys())
 
+sampleParents={}
+
+for s in list(filter(lambda x:x.library=="progny_short",pep.samples)):
+    parents=s.parent.split("x")
+    sampleParents[s.sample_name]=[]
+    for p in parents:
+    	sampleParents[s.sample_name].append(outFolder+"corticall/"+(s.sample_name+"."+p)+".ref.ctp.gz")
 
 
 def getFile(dict,name):
     return dict[name]
+
+import os,math
+
+def getFQSizeInGB(name):
+    files=progny_short[name]
+    res=0
+    for f in files:
+    	res+=os.path.getsize(f)
+    return int(math.ceil(float(res)/(1024.0*1024.0*1024.0)))
 
 
 rule all:
@@ -28,7 +42,7 @@ rule all:
         expand(outFolder+"corticall/{sample}.ctx",sample=dbgs),
         expand(outFolder+"corticall/{sample}.cleaned.edgesInfered.ctx",sample=progny_short.keys()),
         expand(outFolder+"kmc/{sample}.kmc_pre",sample=dbgs),
-        expand(outFolder+"corticall/{sample}.ref.{ref}.ctp.gz", sample=progny_short.keys(), ref=references.keys()),
+     #   expand(outFolder+"corticall/{sampleParent}.ref.ctp.gz", sample=sampleParent), 
         expand(outFolder+"corticall/{sample}.se.ctp.gz",sample=progny_short.keys()),
         expand(outFolder+"corticall/{sample}.contigs.fa",sample=progny_short.keys()),
         expand(outFolder+"bcalm/{sample}.unitigs.fa",sample=progny_short.keys()),
@@ -54,9 +68,10 @@ rule buildPrognyDBG:
         time=outFolder+"corticall/{sample}.build.time"
     log: outFolder+"corticall/{sample}.build.log"
     conda: "env.yaml"
+    resources: mem_gb= lambda wildcards: getFQSizeInGB(f"{wildcards.sample}") * 8
     shell:
        	"""
-	       /usr/bin/time -v -o {output.time} mccortex {kSize} build -k {kSize} -t 3 --sample {wildcards.sample} -S -m 10G -n 150M -2 {input[0]}:{input[1]} {output.ctx} &> {log}
+	       /usr/bin/time -v -o {output.time} mccortex {kSize} build -k {kSize} -t 3 --sample {wildcards.sample} -S -m {resources.mem_gb}G -n 150M -2 {input[0]}:{input[1]} {output.ctx} &> {log}
         """
 
 rule cleanPrognyDBG:
@@ -110,7 +125,7 @@ rule threadParentRef:
         ctx=outFolder+"corticall/{sample}.cleaned.edgesInfered.ctx",
         ref= lambda wildcards: getFile(references,f"{wildcards.ref}")
     output:
-        ctp=outFolder+"corticall/{sample}.ref.{ref}.ctp.gz",
+        ctp=outFolder+"corticall/{sample}.{ref}.ref.ctp.gz",
         time=outFolder+"corticall/{sample}.{ref}.threadParent.time"
     log: outFolder+"corticall/{sample}.{ref}.threadParent.log"
     conda: "env.yaml"
@@ -127,7 +142,7 @@ rule contigs:
     input:
         ctx=outFolder+"corticall/{sample}.cleaned.edgesInfered.ctx",
         ctpSE=outFolder+"corticall/{sample}.se.ctp.gz",
-        ctpRef= expand(outFolder+"corticall/{sample}.ref.{ref}.ctp.gz",sample="{sample}",ref=references.keys())
+        ctpRef= lambda wildcards: getFile(sampleParents,f"{wildcards.sample}")
     output:
         contigs=outFolder+"corticall/{sample}.contigs.fa",
         time=outFolder+"corticall/{sample}.contigs.time"

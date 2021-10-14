@@ -258,3 +258,4 @@ inputData/references/PfDd2.April2018.fasta.gz	ftp.sanger.ac.uk/pub/project/patho
 inputData/references/Pf7G8.April2018.fasta.gz	ftp.sanger.ac.uk/pub/project/pathogens/Plasmodium/falciparum/PF3K/ReferenceGenomes_Version1/GENOMES/Pf7G8.April2018.fasta.gz
 inputData/references/Pf803.Jul2019.fasta.gz	https://github.com/mcveanlab/CortexJDK/blob/master/manuscript/data/PfGB4.Jul2019.fasta.gz?raw=true
 inputData/references/Pf36F11.Jul2019.fasta.gz	https://github.com/mcveanlab/CortexJDK/blob/master/manuscript/data/Pf36F11.Jul2019.fasta.gz?raw=true
+inputData/references/PfGB4.Jul2019.fasta.gz	https://github.com/mcveanlab/CortexJDK/blob/master/manuscript/data/PfGB4.Jul2019.fasta.gz?raw=true
