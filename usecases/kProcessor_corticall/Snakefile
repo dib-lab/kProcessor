@@ -42,15 +42,16 @@ def getFileSizeInGB(file):
 
 rule all:
     input:
-        expand(outFolder+"corticall/{sample}.ctx",sample=dbgs),
-        expand(outFolder+"corticall/{sample}.cleaned.edgesInfered.popped.ctx",sample=progny_short.keys()),
-        expand(outFolder+"kmc/{sample}.kmc_pre",sample=dbgs),
-#        expand(outFolder+"corticall/{sampleParents}.ref.ctp.gz", sample=sampleParent), 
-        expand(outFolder+"corticall/{sample}.se.ctp.gz",sample=progny_short.keys()),
-        expand(outFolder+"corticall/{sample}.contigs.fa",sample=progny_short.keys()),
-        expand(outFolder+"bcalm/{sample}.unitigs.fa",sample=progny_short.keys()),
-        expand(outFolder+"kProcessor/{sample}.kframe.cleaned.phmap",sample=progny_short.keys()),
+        expand(outFolder+"kProcessor/{sample}.kframe.phmap",sample=dbgs),
         expand(outFolder+"kProcessor/{sample}.kframe.bmqf.bmqf",sample=progny_short.keys())
+#        expand(outFolder+"corticall/{sample}.ctx",sample=dbgs),
+#        expand(outFolder+"corticall/{sample}.cleaned.edgesInfered.popped.ctx",sample=progny_short.keys()),
+#        expand(outFolder+"kmc/{sample}.kmc_pre",sample=dbgs),
+#        expand(outFolder+"corticall/{sampleParents}.ref.ctp.gz", sample=sampleParent), 
+#        expand(outFolder+"corticall/{sample}.se.ctp.gz",sample=progny_short.keys()),
+#        expand(outFolder+"corticall/{sample}.contigs.fa",sample=progny_short.keys()),
+#        expand(outFolder+"bcalm/{sample}.unitigs.fa",sample=progny_short.keys()),
+#        expand(outFolder+"kProcessor/{sample}.kframe.cleaned.phmap",sample=progny_short.keys()),
 
 
 rule buildParentDBG:
