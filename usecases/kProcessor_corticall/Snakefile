@@ -45,8 +45,8 @@ rule all:
         expand(outFolder+"corticall/{sample}.ctx",sample=dbgs),
         expand(outFolder+"corticall/{sample}.cleaned.edgesInfered.popped.ctx",sample=progny_short.keys()),
         expand(outFolder+"kmc/{sample}.kmc_pre",sample=dbgs),
-     #   expand(outFolder+"corticall/{sampleParent}.ref.ctp.gz", sample=sampleParent), 
-     #   expand(outFolder+"corticall/{sample}.se.ctp.gz",sample=progny_short.keys()),
+#        expand(outFolder+"corticall/{sampleParents}.ref.ctp.gz", sample=sampleParent), 
+        expand(outFolder+"corticall/{sample}.se.ctp.gz",sample=progny_short.keys()),
 #        expand(outFolder+"corticall/{sample}.contigs.fa",sample=progny_short.keys()),
         expand(outFolder+"bcalm/{sample}.unitigs.fa",sample=progny_short.keys()),
         expand(outFolder+"kProcessor/{sample}.kframe.cleaned.phmap",sample=progny_short.keys()),
@@ -132,29 +132,31 @@ rule threadSEProgny:
         time=outFolder+"corticall/{sample}.threadSE.time"
     log: outFolder+"corticall/{sample}.threadSE.log"
     conda: "env.yaml"
+    resources: mem_gb= lambda wildcards: getFileSizeInGB(outFolder+f"corticall/{wildcards.sample}.cleaned.edgesInfered.popped.ctx") * 8
     shell:
        	"""
        	# arguments meaining:
        	# -W Use two-way gap filling (liberal)
        	# -E Skip extra check after gap bridging
-	       /usr/bin/time -v -o {output.time} mccortex {kSize} thread  -t1 -W -E -m 4G -o {output.ctp} -1 {input.reads[0]} -1 {input.reads[1]} {input.ctx} &> {log}
+	       /usr/bin/time -v -o {output.time} mccortex {kSize} thread  -t1 -W -E -m {resources.mem_gb}G -o {output.ctp} -1 {input.reads[0]} -1 {input.reads[1]} {input.ctx} &> {log}
         """
 
 rule threadParentRef:
     input:
-        ctx=outFolder+"corticall/{sample}.cleaned.edgesInfered.ctx",
+        ctx=outFolder+"corticall/{sample}.cleaned.edgesInfered.popped.ctx",
         ref= lambda wildcards: getFile(references,f"{wildcards.ref}")
     output:
         ctp=outFolder+"corticall/{sample}.{ref}.ref.ctp.gz",
         time=outFolder+"corticall/{sample}.{ref}.threadParent.time"
     log: outFolder+"corticall/{sample}.{ref}.threadParent.log"
     conda: "env.yaml"
+    resources: mem_gb= lambda wildcards: getFileSizeInGB(outFolder+f"corticall/{wildcards.sample}.cleaned.edgesInfered.popped.ctx") * 8
     shell:
        	"""
        	# arguments meaining:
        	# -W Use two-way gap filling (liberal)
        	# -E Skip extra check after gap bridging
-	       /usr/bin/time -v -o {output.time} mccortex {kSize} thread  -t1 -W -E -m 4G -o {output.ctp} -1 {input.ref}  {input.ctx} &> {log}
+	       /usr/bin/time -v -o {output.time} mccortex {kSize} thread  -t1 -W -E -m {resources.mem_gb}G -o {output.ctp} -1 {input.ref}  {input.ctx} &> {log}
         """
 
 
