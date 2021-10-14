@@ -49,7 +49,8 @@ rule all:
      #   expand(outFolder+"corticall/{sample}.se.ctp.gz",sample=progny_short.keys()),
 #        expand(outFolder+"corticall/{sample}.contigs.fa",sample=progny_short.keys()),
         expand(outFolder+"bcalm/{sample}.unitigs.fa",sample=progny_short.keys()),
-        expand(outFolder+"kProcessor/{sample}.kframe.cleaned.phmap",sample=progny_short.keys())
+        expand(outFolder+"kProcessor/{sample}.kframe.cleaned.phmap",sample=progny_short.keys()),
+        expand(outFolder+"kProcessor/{sample}.kframe.bmqf.bmqf",sample=progny_short.keys())
 
 
 rule buildParentDBG:
@@ -124,7 +125,7 @@ rule popBubblesPrognyDBG:
 
 rule threadSEProgny:
     input:
-        ctx=outFolder+"corticall/{sample}.cleaned.edgesInfered.ctx",
+        ctx=outFolder+"corticall/{sample}.cleaned.edgesInfered.popped.ctx",
         reads=lambda wildcards: getFile(progny_short,f"{wildcards.sample}")
     output:
         ctp=outFolder+"corticall/{sample}.se.ctp.gz",
@@ -224,6 +225,19 @@ rule buildPrognyDBGKprocessor:
        	"""
 	       /usr/bin/time -v -o {output.time} ../../apps/loadFromKMC {outFolder}kmc/{wildcards.sample} PHMAP {outFolder}kProcessor/{wildcards.sample}.kframe  &> {log}
         """
+
+rule buildPrognyDBGKprocessorBMQF:
+    input:  kmc= outFolder+"kmc/{sample}.kmc_pre"
+    output:
+        ctx=outFolder+"kProcessor/{sample}.kframe.bmqf.bmqf",
+        time=outFolder+"kProcessor/{sample}.kprocessor.buildbmqf.time"
+    log: outFolder+"kProcessor/{sample}.kprocessor.buildbmqf.log"
+    conda: "env.yaml"
+    shell:
+       	"""
+	       /usr/bin/time -v -o {output.time} ../../apps/loadFromKMC {outFolder}kmc/{wildcards.sample} BMQF {outFolder}kProcessor/{wildcards.sample}.kframe.bmqf  &> {log}
+        """
+
 
 
 rule bcalmProgny:

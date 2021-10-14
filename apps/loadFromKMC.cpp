@@ -16,17 +16,21 @@ int main(int argc, char *argv[])
     string outPath=argv[3];
 
     kDataFrame* kframe;
-    if(kdataframeType=="PHMAP")
+    if(kdataframeType=="PHMAP" || kdataframeType=="BMQF")
         kframe=new kDataFramePHMAP();
     else if(kdataframeType=="MAP")
         kframe=new kDataFrameMAP();
-    else if(kdataframeType=="BMQF")
-        kframe=new kDataFrameBMQF();
 
     kProcessor::loadFromKMC(kframe,inputPath);
 
     cout<<"Number of kmers ="<<kframe->size()<<endl;
 
+    if(kdataframeType=="BMQF")
+    {
+        kDataFrame* kframe2=new kDataFrameBMQF(kframe,outPath);
+        kframe2->save(outPath);
+        return 0;
+    }
     kframe->save(outPath);
 
     return 0;
