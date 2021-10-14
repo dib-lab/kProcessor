@@ -36,15 +36,18 @@ def getFQSizeInGB(name):
     	res+=os.path.getsize(f)
     return int(math.ceil(float(res)/(1024.0*1024.0*1024.0)))
 
+def getFileSizeInGB(file):
+    res = os.path.getsize(file)
+    return int(math.ceil(float(res)/(1024.0*1024.0*1024.0)))
 
 rule all:
     input:
         expand(outFolder+"corticall/{sample}.ctx",sample=dbgs),
-        expand(outFolder+"corticall/{sample}.cleaned.edgesInfered.ctx",sample=progny_short.keys()),
+        expand(outFolder+"corticall/{sample}.cleaned.edgesInfered.popped.ctx",sample=progny_short.keys()),
         expand(outFolder+"kmc/{sample}.kmc_pre",sample=dbgs),
      #   expand(outFolder+"corticall/{sampleParent}.ref.ctp.gz", sample=sampleParent), 
-        expand(outFolder+"corticall/{sample}.se.ctp.gz",sample=progny_short.keys()),
-        expand(outFolder+"corticall/{sample}.contigs.fa",sample=progny_short.keys()),
+     #   expand(outFolder+"corticall/{sample}.se.ctp.gz",sample=progny_short.keys()),
+#        expand(outFolder+"corticall/{sample}.contigs.fa",sample=progny_short.keys()),
         expand(outFolder+"bcalm/{sample}.unitigs.fa",sample=progny_short.keys()),
         expand(outFolder+"kProcessor/{sample}.kframe.cleaned.phmap",sample=progny_short.keys())
 
@@ -71,7 +74,7 @@ rule buildPrognyDBG:
     resources: mem_gb= lambda wildcards: getFQSizeInGB(f"{wildcards.sample}") * 8
     shell:
        	"""
-	       /usr/bin/time -v -o {output.time} mccortex {kSize} build -k {kSize} -t 3 --sample {wildcards.sample} -S -m {resources.mem_gb}G -n 150M -2 {input[0]}:{input[1]} {output.ctx} &> {log}
+	       /usr/bin/time -v -o {output.time} mccortex {kSize} build -k {kSize} -t 3 --sample {wildcards.sample} -S -m {resources.mem_gb}G  -2 {input[0]}:{input[1]} {output.ctx} &> {log}
         """
 
 rule cleanPrognyDBG:
@@ -85,9 +88,10 @@ rule cleanPrognyDBG:
         time=outFolder+"corticall/{sample}.clean.time"
     log: outFolder+"corticall/{sample}.clean.log"
     conda: "env.yaml"
+    resources: mem_gb= lambda wildcards: getFileSizeInGB(outFolder+f"corticall/{wildcards.sample}.ctx") * 4
     shell:
        	"""
-	       /usr/bin/time -v -o {output.time} mccortex {kSize} clean -t 1  -m 4G -o {output.ctx} -S  -c {output.covg_before} -C {output.covg_after} -l {output.len_before} -L {output.len_after} {input} &> {log}
+	       /usr/bin/time -v -o {output.time} mccortex {kSize} clean -t 1  -m {resources.mem_gb}G -o {output.ctx} -S  -c {output.covg_before} -C {output.covg_after} -l {output.len_before} -L {output.len_after} {input} &> {log}
         """
 
 
@@ -102,6 +106,21 @@ rule inferEdgesPrognyDBG:
        	"""
 	       /usr/bin/time -v -o {output.time} mccortex {kSize} inferedges -m 4G -o {output.ctx} {input} &> {log}
         """
+
+
+rule popBubblesPrognyDBG:
+    input:  outFolder+"corticall/{sample}.cleaned.edgesInfered.ctx"
+    output:
+        ctx=outFolder+"corticall/{sample}.cleaned.edgesInfered.popped.ctx",
+        time=outFolder+"corticall/{sample}.popBubbles.time"
+    log: outFolder+"corticall/{sample}.popBubbles.log"
+    conda: "env.yaml"
+    resources: mem_gb= lambda wildcards: getFileSizeInGB(outFolder+f"corticall/{wildcards.sample}.cleaned.edgesInfered.ctx") * 2
+    shell:
+       	"""
+	       /usr/bin/time -v -o {output.time} mccortex {kSize} popbubbles  -m {resources.mem_gb}G -o {output.ctx}  {input} &> {log}
+        """
+
 
 rule threadSEProgny:
     input:
