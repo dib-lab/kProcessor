@@ -40,6 +40,11 @@ def getFileSizeInGB(file):
     res = os.path.getsize(file)
     return int(math.ceil(float(res)/(1024.0*1024.0*1024.0)))
 
+
+framesToBeJoined = expand(outFolder+"kProcessor/{sample}.kframe.cleaned.phmap",sample=progny_short.keys())
+framesToBeJoined+= expand(outFolder+"kProcessor/{sample}.kframe.phmap",sample=references.keys())
+print(framesToBeJoined)
+
 rule all:
     input:
         expand(outFolder+"kProcessor/{sample}.kframe.phmap",sample=dbgs),
@@ -308,3 +313,18 @@ rule cleanPrognyDBGKprocessor:
 	       /usr/bin/time -v -o {output.time} ./cleanDBG -k  {params.kframeINPrefix} -u {input.unitigs} -o {params.kframeOUTPrefix}  &> {log}
         """
 
+rule index:
+    input:
+         frames= framesToBeJoined
+    output:
+         index=outFolder+"kProcessor/cdbg.phmap",
+         lst=outFolder+"kProcessor/cdbg.inputLst"
+    params:
+         prefix=outFolder+"kProcessor/cdbg"
+    log: outFolder+"kProcessor/cdbg.log"
+    shell:
+        """
+                mkdir -p {outFolder}
+                echo {input.frames} | tr -s ' ' $'\n'| sed -e 's/.bmqf$//' > {output.lst}
+                ./runIndexing.sh {output.lst} 30 {params.prefix}  &> {log}
+        """
