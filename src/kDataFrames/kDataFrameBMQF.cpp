@@ -332,7 +332,7 @@ bool kDataFrameBMQF::_insert(const string &kmer){
     }
     uint64_t hash= KD->hash_kmer(kmer) % bufferedmqf->disk->metadata->range;
     try{
-        bufferedMQF_insert(bufferedmqf,hash,lastKmerOrder++,false,false);
+        bufferedMQF_insert(bufferedmqf,hash,1,false,false);
     }
     catch(overflow_error & e)
     {
@@ -405,7 +405,7 @@ bool kDataFrameBMQF::_insert(uint64_t hash){
         reserve(bufferedmqf->disk->metadata->nslots);
     }
     try{
-        bufferedMQF_insert(bufferedmqf,hash,lastKmerOrder++,false,false);
+        bufferedMQF_insert(bufferedmqf,hash,1,false,false);
     }
     catch(overflow_error & e)
     {
