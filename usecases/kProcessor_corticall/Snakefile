@@ -131,7 +131,7 @@ rule convertKframeToBMQF:
        	mkdir -p {tmpFolder}$$/
 	    /usr/bin/time -v -o {output.time} ../../apps/convert  -i {params.inputPrefix} -t BMQF -o {tmpFolder}$$/{params.outputPrefix}  &> {log}
         mv {tmpFolder}$$/{params.outputPrefix}* {outFolder}kProcessor/
-     #   rm -rf {tmpFolder}$$/
+        rm -rf {tmpFolder}$$/
         """
 
 
@@ -180,8 +180,12 @@ rule index:
     log: outFolder+"kProcessor/cdbg.log"
     shell:
         """
-                mkdir -p {tmpFolder}$$/ 
-                echo {input.frames} | tr -s ' ' $'\n'| sed -e 's/.phmap$//' > {output.lst}
-                /usr/bin/time -o {output.time} -v  ../../apps/index -i  {output.lst}    -t {tmpFolder}$$/ -o   {params.prefix} -n 20 -s 100000000  -p   &> {log}
-		rm -rf {tmpFolder}$$/
+                mkdir -p {tmpFolder}$$/
+                MYTMP="{tmpFolder}$$/"
+                echo {input.frames} | tr -s ' ' $'\n'| sed -e 's/.bmqf$//' > {output.lst}
+                numSamples=$(wc -l {output.lst}  |cut -f1 -d' ')
+                paste -d '/' <(yes "$MYTMP" |head -n $numSamples) <(parallel --gnu -k basename {{}} < {output.lst}) >  $MYTMP/inputlst
+                parallel --gnu -j 5 --tmpdir $MYTMP  "cp {{}}.bmqf {{}}.bmqf.bufferedMem.metadata {{}}.bmqf.ondisk.metadata {{}}.extra   $MYTMP" :::: {output.lst}
+                /usr/bin/time -o {output.time} -v  ../../apps/index -i  $MYTMP/inputlst    -t {tmpFolder}$$/ -o {params.prefix} -n 20 -s 100000000  -p   &> {log}
+	        	rm -rf {tmpFolder}$$/
         """
