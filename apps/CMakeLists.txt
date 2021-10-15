@@ -14,6 +14,9 @@ add_executable(loadFromKMC loadFromKMC.cpp)
 
 target_link_libraries (loadFromKMC LINK_PUBLIC kProcessor MQF ${SEQAN_LIBRARIES}  ${ntcardLib})
 
+add_executable(convert convert.cpp)
+target_link_libraries (convert LINK_PUBLIC kProcessor MQF ${SEQAN_LIBRARIES}  ${ntcardLib})
+
 
 add_executable(index index.cpp)
 target_link_libraries (index LINK_PUBLIC kProcessor MQF ${SEQAN_LIBRARIES}  ${ntcardLib})

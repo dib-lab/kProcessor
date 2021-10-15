@@ -136,6 +136,14 @@ uint32_t kDataFrameBlight::insert(uint64_t kmer) {
     return true;
 }
 
+bool  kDataFrameBlight::setOrder(const string &kmer, std::uint64_t count){
+    throw logic_error("kDataFrameBlight is static. Insertion is not allowed");
+    return true;
+}
+bool  kDataFrameBlight::setOrder(std::uint64_t kmer, std::uint64_t count){
+    throw logic_error("kDataFrameBlight is static. Insertion is not allowed");
+    return true;
+}
 
 
 uint64_t kDataFrameBlight::getkmerOrder(const string &kmerS) {

@@ -23,7 +23,6 @@ for s in list(filter(lambda x:x.library=="progny_short",pep.samples)):
     for p in parents:
     	sampleParents[s.sample_name].append(outFolder+"corticall/"+(s.sample_name+"."+p)+".ref.ctp.gz")
 
-
 def getFile(dict,name):
     return dict[name]
 
@@ -41,15 +40,15 @@ def getFileSizeInGB(file):
     return int(math.ceil(float(res)/(1024.0*1024.0*1024.0)))
 
 
-framesToBeJoined = expand(outFolder+"kProcessor/{sample}.kframe.cleaned.phmap",sample=progny_short.keys())
-framesToBeJoined+= expand(outFolder+"kProcessor/{sample}.kframe.phmap",sample=references.keys())
-#print(framesToBeJoined)
+framesToBeJoined = expand(outFolder+"kProcessor/{sample}.kframe.cleaned.bmqf.bmqf",sample=progny_short.keys())
+framesToBeJoined+= expand(outFolder+"kProcessor/{sample}.kframe.bmqf.bmqf",sample=references.keys())
+print(framesToBeJoined)
 
 rule all:
     input:
          expand(outFolder+"kProcessor/{sample}.kframe.phmap",sample=dbgs),
-         outFolder+"kProcessor/cdbg.phmap"
-         expand(outFolder+"kProcessor/{sample}.kframe.bmqf.bmqf",sample=progny_short.keys
+         outFolder+"kProcessor/cdbg.phmap",
+ #        expand(outFolder+"kProcessor/{sample}.kframe.bmqf.bmqf",sample=progny_short.keys)
 #        expand(outFolder+"kmc/{sample}.kmc_pre",sample=dbgs),
 #        expand(outFolder+"bcalm/{sample}.unitigs.fa",sample=progny_short.keys()),
 #        expand(outFolder+"kProcessor/{sample}.kframe.cleaned.phmap",sample=progny_short.keys()),
@@ -100,22 +99,40 @@ rule buildPrognyDBGKprocessor:
        	"""
 	       /usr/bin/time -v -o {output.time} ../../apps/loadFromKMC {outFolder}kmc/{wildcards.sample} PHMAP {outFolder}kProcessor/{wildcards.sample}.kframe  &> {log}
         """
+#
+# rule buildPrognyDBGKprocessorBMQF:
+#     input:  kmc= outFolder+"kmc/{sample}.kmc_pre"
+#     output:
+#         ctx=outFolder+"kProcessor/{sample}.kframe.bmqf.bmqf",
+#         time=outFolder+"kProcessor/{sample}.kprocessor.buildbmqf.time"
+#     log: outFolder+"kProcessor/{sample}.kprocessor.buildbmqf.log"
+#     conda: "env.yaml"
+#     shell:
+#        	"""
+#        	mkdir -p {tmpFolder}$$/
+# 	    /usr/bin/time -v -o {output.time} ../../apps/loadFromKMC {outFolder}kmc/{wildcards.sample} BMQF {tmpFolder}$$/{wildcards.sample}.kframe.bmqf  &> {log}
+#         mv {tmpFolder}$$/{wildcards.sample}.kframe.bmqf* {outFolder}kProcessor/
+#         rm -rf {tmpFolder}$$/
+#         """
 
-rule buildPrognyDBGKprocessorBMQF:
-    input:  kmc= outFolder+"kmc/{sample}.kmc_pre"
+
+rule convertKframeToBMQF:
+    input:  kframe= outFolder+"kProcessor/{sample}.phmap"
     output:
-        ctx=outFolder+"kProcessor/{sample}.kframe.bmqf.bmqf",
-        time=outFolder+"kProcessor/{sample}.kprocessor.buildbmqf.time"
-    log: outFolder+"kProcessor/{sample}.kprocessor.buildbmqf.log"
+        kframe=outFolder+"kProcessor/{sample}.bmqf.bmqf",
+        time=outFolder+"kProcessor/{sample}.kprocessor.covert.bmqf.time"
+    params:
+        inputPrefix = outFolder+"kProcessor/{sample}",
+        outputPrefix= "{sample}.bmqf"
+    log: outFolder+"kProcessor/{sample}.kprocessor.convert.bmqf.log"
     conda: "env.yaml"
     shell:
        	"""
        	mkdir -p {tmpFolder}$$/
-	    /usr/bin/time -v -o {output.time} ../../apps/loadFromKMC {outFolder}kmc/{wildcards.sample} BMQF {tmpFolder}$$/{wildcards.sample}.kframe.bmqf  &> {log}
-        mv {tmpFolder}$$/{wildcards.sample}.kframe.bmqf* {outFolder}kProcessor/
-        rm -rf {tmpFolder}$$/
+	    /usr/bin/time -v -o {output.time} ../../apps/convert  -i {params.inputPrefix} -t BMQF -o {tmpFolder}$$/{params.outputPrefix}  &> {log}
+        mv {tmpFolder}$$/{params.outputPrefix}* {outFolder}kProcessor/
+     #   rm -rf {tmpFolder}$$/
         """
-
 
 
 rule bcalmProgny:

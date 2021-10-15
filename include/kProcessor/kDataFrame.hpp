@@ -342,8 +342,8 @@ The difference between setCount and insert is that setCount set the count to N n
 /// returns the count of the kmer in the kDataFrame, i.e. the number of times the kmer is inserted in the kdataFrame.
   virtual std::uint64_t getkmerOrder(const string &kmer)=0;
   virtual std::uint64_t getkmerOrder(std::uint64_t kmer)=0;
-  bool setOrder(const string &kmer, std::uint64_t N);
-  bool setOrder(std::uint64_t kmer,std::uint64_t N);
+  virtual bool setOrder(const string &kmer, std::uint64_t N)=0;
+  virtual  bool setOrder(std::uint64_t kmer,std::uint64_t N)=0;
 // Removes  a kmer from the kDataFrame
 /*! Returns bool value indicating whether the kmer is erased or not*/
   virtual bool erase(const string &kmer)=0;
