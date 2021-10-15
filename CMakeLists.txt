@@ -111,6 +111,7 @@ set(LIBRARY_NAME
 
 file(GLOB kProcessorLibSrc
         ${CMAKE_CURRENT_SOURCE_DIR}/src/algorithms.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/dbgUtils.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/extend_algorithms.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/kDataFrames/defaultColumn.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/kDataFrames/kDataFrameBlight.cpp
@@ -127,8 +128,7 @@ file(GLOB kProcessorLibSrc
         )
 
 add_library(${LIBRARY_NAME} STATIC
-    ${kProcessorLibSrc}
-    )
+    ${kProcessorLibSrc})
 
 
 target_link_libraries(kProcessor MQF)
