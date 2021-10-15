@@ -42,12 +42,17 @@ def getFileSizeInGB(file):
 
 framesToBeJoined = expand(outFolder+"kProcessor/{sample}.kframe.cleaned.bmqf.bmqf",sample=progny_short.keys())
 framesToBeJoined+= expand(outFolder+"kProcessor/{sample}.kframe.bmqf.bmqf",sample=references.keys())
-print(framesToBeJoined)
+
+
+
+framesToBeJoinedPhmap = expand(outFolder+"kProcessor/{sample}.kframe.cleaned.phmap",sample=progny_short.keys())
+framesToBeJoinedPhmap += expand(outFolder+"kProcessor/{sample}.kframe.phmap",sample=references.keys())
+
 
 rule all:
     input:
          expand(outFolder+"kProcessor/{sample}.kframe.phmap",sample=dbgs),
-         outFolder+"kProcessor/cdbg.phmap",
+         outFolder+"kProcessor/cdbg.joined.phmap",
  #        expand(outFolder+"kProcessor/{sample}.kframe.bmqf.bmqf",sample=progny_short.keys)
 #        expand(outFolder+"kmc/{sample}.kmc_pre",sample=dbgs),
 #        expand(outFolder+"bcalm/{sample}.unitigs.fa",sample=progny_short.keys()),
@@ -187,5 +192,25 @@ rule index:
                 paste -d '/' <(yes "$MYTMP" |head -n $numSamples) <(parallel --gnu -k basename {{}} < {output.lst}) >  $MYTMP/inputlst
                 parallel --gnu -j 5 --tmpdir $MYTMP  "cp {{}}.bmqf {{}}.bmqf.bufferedMem.metadata {{}}.bmqf.ondisk.metadata {{}}.extra   $MYTMP" :::: {output.lst}
                 /usr/bin/time -o {output.time} -v  ../../apps/index -i  $MYTMP/inputlst    -t {tmpFolder}$$/ -o {params.prefix} -n 20 -s 100000000  -p   &> {log}
+	        	rm -rf {tmpFolder}$$/
+        """
+
+
+rule JoinAll:
+    input:
+         frames= framesToBeJoinedPhmap,
+         index=outFolder+"kProcessor/cdbg.phmap"
+    output:
+         index=outFolder+"kProcessor/cdbg.joined.phmap",
+         lst=outFolder+"kProcessor/cdbg.joined.inputLst",
+	 time=outFolder+"kProcessor/cdbg.kprocessor.joining.time"
+    params:
+         prefix=outFolder+"kProcessor/cdbg.joined"
+    log: outFolder+"kProcessor/cdbg.joining.log"
+    shell:
+        """
+                mkdir -p {tmpFolder}$$/
+                echo {input.frames} {input.index} | tr -s ' ' $'\n'| sed -e 's/.phmap$//' > {output.lst}
+                /usr/bin/time -o {output.time} -v  ../../apps/mergeIndex  -n 8 -i  {output.lst}    -t {tmpFolder}$$/ -o {params.prefix}   &> {log}
 	        	rm -rf {tmpFolder}$$/
         """
