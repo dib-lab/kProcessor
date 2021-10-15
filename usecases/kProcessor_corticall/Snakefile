@@ -43,12 +43,13 @@ def getFileSizeInGB(file):
 
 framesToBeJoined = expand(outFolder+"kProcessor/{sample}.kframe.cleaned.phmap",sample=progny_short.keys())
 framesToBeJoined+= expand(outFolder+"kProcessor/{sample}.kframe.phmap",sample=references.keys())
-print(framesToBeJoined)
+#print(framesToBeJoined)
 
 rule all:
     input:
         expand(outFolder+"kProcessor/{sample}.kframe.phmap",sample=dbgs),
-        expand(outFolder+"kProcessor/{sample}.kframe.bmqf.bmqf",sample=progny_short.keys())
+        expand(outFolder+"kProcessor/{sample}.kframe.bmqf.bmqf",sample=progny_short.keys()),
+        outFolder+"kProcessor/cdbg.phmap"
 #        expand(outFolder+"corticall/{sample}.ctx",sample=dbgs),
 #        expand(outFolder+"corticall/{sample}.cleaned.edgesInfered.popped.ctx",sample=progny_short.keys()),
 #        expand(outFolder+"kmc/{sample}.kmc_pre",sample=dbgs),
@@ -318,13 +319,15 @@ rule index:
          frames= framesToBeJoined
     output:
          index=outFolder+"kProcessor/cdbg.phmap",
-         lst=outFolder+"kProcessor/cdbg.inputLst"
+         lst=outFolder+"kProcessor/cdbg.inputLst",
+	 time=outFolder+"kProcessor/cdbg.kprocessor.indexing.time"
     params:
          prefix=outFolder+"kProcessor/cdbg"
     log: outFolder+"kProcessor/cdbg.log"
     shell:
         """
-                mkdir -p {outFolder}
-                echo {input.frames} | tr -s ' ' $'\n'| sed -e 's/.bmqf$//' > {output.lst}
-                ./runIndexing.sh {output.lst} 30 {params.prefix}  &> {log}
+                mkdir -p {tmpFolder}$$/ 
+                echo {input.frames} | tr -s ' ' $'\n'| sed -e 's/.phmap$//' > {output.lst}
+                /usr/bin/time -o {output.time} -v  ../../apps/index -i  {output.lst}    -t {tmpFolder}$$/ -o   {params.prefix} -n 20 -s 100000000  -p   &> {log}
+		rm -rf {tmpFolder}$$/
         """
