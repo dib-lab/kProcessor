@@ -16,9 +16,11 @@ progny_short=dict(progny_short)
 dbgs=list(references.keys())+list(progny_short.keys())
 
 sampleParents={}
+sampleParentsNames={}
 
 for s in list(filter(lambda x:x.library=="progny_short",pep.samples)):
     parents=s.parent.split("x")
+    sampleParentsNames[s.sample_name]=parents
     sampleParents[s.sample_name]=[]
     for p in parents:
     	sampleParents[s.sample_name].append(outFolder+"corticall/"+(s.sample_name+"."+p)+".ref.ctp.gz")
@@ -53,6 +55,8 @@ rule all:
     input:
          expand(outFolder+"kProcessor/{sample}.kframe.phmap",sample=dbgs),
          outFolder+"kProcessor/cdbg.joined.phmap",
+         expand(outFolder+"kProcessor/{sample}.novelkmers.phmap",sample=progny_short.keys())
+
  #        expand(outFolder+"kProcessor/{sample}.kframe.bmqf.bmqf",sample=progny_short.keys)
 #        expand(outFolder+"kmc/{sample}.kmc_pre",sample=dbgs),
 #        expand(outFolder+"bcalm/{sample}.unitigs.fa",sample=progny_short.keys()),
@@ -214,3 +218,27 @@ rule JoinAll:
                 /usr/bin/time -o {output.time} -v  ../../apps/mergeIndex  -n 8 -i  {output.lst}    -t {tmpFolder}$$/ -o {params.prefix}   &> {log}
 	        	rm -rf {tmpFolder}$$/
         """
+
+rule detectNovelKmers:
+    input:
+         index=outFolder+"kProcessor/cdbg.joined.phmap",
+         lst=outFolder+"kProcessor/cdbg.joined.inputLst",
+         sample_table="sample_table.csv"
+    output:
+         kframe=outFolder+"kProcessor/{sample}.novelkmers.phmap",
+         time =outFolder+"kProcessor/{sample}.detectnovelkmers.time"
+    params:
+        outputPrefix=outFolder+"kProcessor/{sample}.novelkmers",
+        inputPrefix=outFolder+"kProcessor/cdbg.joined",
+        parents= lambda wildcards: getFile(sampleParentsNames,f"{wildcards.sample}")
+    log: outFolder+"kProcessor/{sample}.detectnovelkmers.log"
+    shell:
+        """
+                mkdir -p {tmpFolder}$$/
+
+                cat {input.lst} |parallel --gnu -k 'basename {{}}|cut -f1 -d'.' ' > {tmpFolder}$$/tmp.lst
+                cat {input.sample_table} |cut -f1,3 -d','| tr -s ',' $'\t' > {tmpFolder}$$/tmp2.lst
+                /usr/bin/time -o {output.time} -v  ./detectNovelKmers -k {params.inputPrefix} -l {tmpFolder}$$/tmp.lst -s {wildcards.sample} -p {params.parents[0]} -p {params.parents[1]} -t {tmpFolder}$$/tmp2.lst -o {params.outputPrefix} &> {log}
+            	rm -rf  {tmpFolder}$$/
+        """
+
