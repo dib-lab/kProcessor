@@ -1034,15 +1034,15 @@ namespace kProcessor {
                     delete get<3>(colorTuple);
                 }
             }
-
-            uint64_t prevColor = output->getkmerOrder(currHash);
+            string kmerS=input[0]->KD->ihash_kmer(currHash);
+            uint64_t prevColor = output->getkmerOrder(kmerS);
             if (prevColor != 0) {
                 cout << "Error in Indexing detected at kmer " << currHash << endl;
                 cout << "should be empty vector and found  " << endl;
             }
-            
-            output->insert(currHash);
-            output->setKmerColumnValue<vector<uint32_t> , deduplicatedColumn< insertColorColumn>>("i",currHash, colorVec);
+
+            output->insert(kmerS);
+            output->setKmerColumnValue<vector<uint32_t> , deduplicatedColumn< insertColorColumn>>("i",kmerS, colorVec);
 
             // auto res=output->getKmerDefaultColumnValue<vector<uint32_t >, insertColorColumn>(currHash);
             // //	cout<<res.size()<<endl;

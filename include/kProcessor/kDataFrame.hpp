@@ -389,11 +389,15 @@ The difference between setCount and insert is that setCount set the count to N n
   std::uint64_t ksize() const{return kSize;}
 
   void setkSize(std::uint64_t k){
-
     kSize=k;
     if(KD!= nullptr)
+    {
+        kmerDecoder* newKD=new Kmers(kSize,KD->hash_mode);
         delete KD;
-    KD= new Kmers(kSize);
+        KD=newKD;
+    }else{
+        KD= new Kmers(kSize);
+    }
   }
 
 

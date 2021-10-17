@@ -81,6 +81,7 @@ int main(int argc, char *argv[])
     kDataFrame* output= new kDataFramePHMAP(kSize);
     kProcessor::indexPriorityQueue(frames,tmpFolder,output,num_vectors,vector_size);
     cout<<"Indexing Finished"<<endl;
+    cout<<"Final Number of Kmers = "<<output->size()<<endl;
     if(isPrefixTrie)
     {
         if(mapDeduplicate)

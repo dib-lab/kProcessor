@@ -1906,7 +1906,7 @@ TEST_P(indexingTest,indexPriorityQSaveAndLoad)
         kDataFrameIterator it=inputFrames[i]->begin();
         while(it!=inputFrames[i]->end())
         {
-            vector<uint32_t> colors=kframeLoaded->getKmerColumnValue<vector<uint32_t >, deduplicatedColumn<mixVectors> >("color",it.getHashedKmer());
+            vector<uint32_t> colors=kframeLoaded->getKmerColumnValue<vector<uint32_t >, deduplicatedColumn<mixVectors> >("color",it.getKmer());
             ASSERT_NE(colors.size(),0);
             auto colorIt=colors.end();
             colorIt=find(colors.begin(),colors.end(),i);
@@ -1928,7 +1928,7 @@ TEST_P(indexingTest,indexPriorityQ)
     int chunkSize = 1000;
     int q = 25;
 //    kDataFrame *KF = new kDataFrameMQF(25, q, integer_hasher);
-    KF = new kDataFramePHMAP(25,integer_hasher);
+    KF = new kDataFramePHMAP(25);
 
     kmerDecoder *KD_KMERS = kProcessor::initialize_kmerDecoder(filename, chunkSize, "kmers", {{"k_size", 25}});
 
@@ -1953,7 +1953,7 @@ TEST_P(indexingTest,indexPriorityQ)
         kDataFrameIterator it=inputFrames[i]->begin();
         while(it!=inputFrames[i]->end())
         {
-            vector<uint32_t> colors=KF->getKmerColumnValue<vector<uint32_t >, deduplicatedColumn<mixVectors> >("color",it.getHashedKmer());
+            vector<uint32_t> colors=KF->getKmerColumnValue<vector<uint32_t >, deduplicatedColumn<mixVectors> >("color",it.getKmer());
             ASSERT_NE(colors.size(),0);
             auto colorIt=colors.end();
             colorIt=find(colors.begin(),colors.end(),i);
