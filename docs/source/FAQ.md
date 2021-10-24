@@ -2,6 +2,9 @@
 
 <hr>
 
+!!! note
+    Hashing and Reading, modes alongside with the kmers parameters are tightly associated with the kDataFrame object.
+
 ## **1. Hashing**
 
 ### 1.1 What are kDataFrame hashing modes?
@@ -28,7 +31,7 @@ On the other hand, the reversible hashing mode is slower than the irreversible m
 
 ---
 
-## **2. Sequence Parsing Parameters**
+## **2. Sequence Parsing**
 
 In order to extract the kmers from a sequences file or string in kProcessor, you will need to pass a Python dictionary with the parsing parameters.
 
@@ -38,61 +41,117 @@ Keys of the dictionary are *strings* describing the parameter type, values are i
 
 ### 2.2 Modes
 
-There are three modes for decoding the sequences substrings `kmers`, `skipmers`, `minimizers`
+There are four modes for decoding the sequences substrings `KMERS`, `SKIPMERS`, `MINIMIZERS`, and `PROTEIN`. The following table describes the reading mode/hashing mode compatibility. True values represent the modes that can be used together.
 
-#### 2.2.1 kmers
+| **Reading Mode** | **Hashing Mode**           | **Compatible?** |
+|:----------------:|:--------------------------:|:---------------:|
+| KMERS            | mumur_hasher               | true            |
+| SKIPMERS         | mumur_hasher               | true            |
+| MINIMIZERS       | mumur_hasher               | true            |
+| PROTEIN          | mumur_hasher               | false           |
+| KMERS            | integer_hasher             | true            |
+| SKIPMERS         | integer_hasher             | true            |
+| MINIMIZERS       | integer_hasher             | true            |
+| PROTEIN          | integer_hasher             | false           |
+| KMERS            | TwoBits_hasher             | true            |
+| SKIPMERS         | TwoBits_hasher             | true            |
+| MINIMIZERS       | TwoBits_hasher             | true            |
+| PROTEIN          | TwoBits_hasher             | false           |
+| KMERS            | nonCanonicalInteger_Hasher | true            |
+| SKIPMERS         | nonCanonicalInteger_Hasher | true            |
+| MINIMIZERS       | nonCanonicalInteger_Hasher | true            |
+| PROTEIN          | nonCanonicalInteger_Hasher | false           |
+| KMERS            | protein_hasher             | false           |
+| SKIPMERS         | protein_hasher             | false           |
+| MINIMIZERS       | protein_hasher             | false           |
+| PROTEIN          | protein_hasher             | true            |
+| KMERS            | proteinDayhoff_hasher      | false           |
+| SKIPMERS         | proteinDayhoff_hasher      | false           |
+| MINIMIZERS       | proteinDayhoff_hasher      | false           |
+| PROTEIN          | proteinDayhoff_hasher      | true            |
+
+#### 2.2.1 KMERS
     
 - Description: Extracts the sequences substrings in the default popular mode "kmers".
+- Reading Mode: `KMERS`
 - Parameters: 
-    - "mode" : 1
-    - k_size: total number of bases
+    - k_size: total number of nucleotide bases
 
-#### 2.2.2 skipmers
+#### 2.2.2 SKIPMERS
 
 - Description: A cyclic pattern of picked or skipped positions. [read more about skipmers](https://www.biorxiv.org/content/10.1101/179960v2)
+- Reading Mode: `SKIPMERS`
 - Parameters:
-    - "mode" : 2
     - "k_size": total number of bases 
     - "m": used bases per cycle
     - "n": cycle length
 
-#### 2.2.3 minimizers
+#### 2.2.3 MINIMIZERS
 
 - Description: short substrings that represents the sequence. [read more about minimizers](https://homolog.us/blogs/bioinfo/2017/10/25/intro-minimizer/)
+- Reading Mode: `MINIMIZERS`
 - Parameters:
-    - "mode" : 3
     - "k_size": total number of bases 
     - "w": window size
 
-### 2.3 Examples
+#### 2.2.4 PROTEIN
 
-#### 2.3.1 Extract kmers with kmer size 31
+- Description: Parsing protein sequences to extract the sequence substrings.
+- Reading Mode: `PROTEIN`
+- Parameters: 
+    - k_size: total number of amino acid bases
+
+### 2.3 Default Hashing and Reading Modes
+
+- kDataFrameMQF/kDataFrameBMQF: Default reading mode is `KMERS` and the default hashing mode is `integer_hasher` which is reversible.
+- kDataFramePHMAP: Default reading mode is `KMERS` and the default hashing mode is `TwoBits_hasher` which is reversible.
+- kDataFrameMAP: Default reading mode is `KMERS` and the default hashing mode is `TwoBits_hasher` which is reversible.
+
+!!! note "technical information"
+    The `twoBits_hasher` is used to avoid the double hashing of the kmers since the underlying data structures has an internal hashing. `twoBits_hasher` is not an actual hasher, it just converts a kmer substring to it's corresponding two-bits representation.
+
+
+### 2.4 Examples
+
+#### 2.4.1 Extract kmers with kmer size 31
 
 ```python
 parse_params = {
-    "mode" : 1,
-    "k_size" : 31
+    "kSize" : 31
 }
+
+KF_KMERS = kDataFramePHMAP(KMERS, twoBits_hasher, parse_params)
 ```
 
-#### 2.3.2 Extract skipmers with k = 10, m = 2, n = 3
+#### 2.4.2 Extract skipmers with k = 10, m = 2, n = 3
 
 ```python
 parse_params = {
-    "mode" : 2,
-    "k_size" : 10,
+    "k" : 10,
     "m" : 2,
     "n" : 3
 }
+
+KF_SKIPMERS = kp.kDataFramePHMAP(SKIPMERS, integer_hasher, parse_params)
 ```
 
-#### 2.3.2 Extract Minimzers with k = 5, w = 10
+#### 2.4.3 Extract Minimzers with k = 5, w = 10
 
 ```python
 parse_params = {
-    "mode" : 3,
-    "k_size" : 5,
+    "k" : 5,
     "w" : 10,
 }
+
+KF_MINIMIZERS = kp.kDataFramePHMAP(MINIMIZERS, twoBits_hasher, parse_params)
 ```
 
+#### 2.4.4 Extract Protein with kSize = 5
+
+```python
+parse_params = {
+    "kSize" : 5,
+}
+
+KF_PROTEIN = kp.kDataFramePHMAP(PROTEIN, protein_hasher, parse_params)
+```
