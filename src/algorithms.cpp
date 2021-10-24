@@ -334,30 +334,11 @@ namespace kProcessor {
     }
 
 
-    void countKmersFromFile(kDataFrame *kframe, std::map<std::string, int> parse_params, string filename, int chunk_size) {
-        // parse_params["mode"] = 1 > Default: Kmers
-        // parse_params["mode"] = 2 > Skipmers
-        // parse_params["mode"] = 3 > Minimizers
+    void countKmersFromFile(kDataFrame *kframe, string filename, int chunk_size) {
 
-        // Initialize kmerDecoder
-      //  vector<uint64_t> countHistogram= estimateKmersHistogram(filename, kframe->getkSize() ,1);
-        kframe->reserve(100000);
-        std::string mode = "kmers";
-        bool check_mode = (parse_params.find("mode") != parse_params.end());
-        if (check_mode){
-            if (parse_params["mode"] == 2) mode = "skipmers";
-            else if (parse_params["mode"] == 3) mode = "minimizers";
-        }
-
-        parse_params["k_size"] = kframe->ksize();
-        parse_params["k"] = kframe->ksize();
-        kmerDecoder * KD = initialize_kmerDecoder(filename, chunk_size, mode, parse_params);
-
-        // Clone the hashing
-
-        kmerDecoder_setHashing(KD, kframe->KD->hash_mode);
-
-        // Processing
+        // kframe->reserve(100000);
+        // Make a new kmerDecoder to pass the filename, but get all the params from the kDataFrame KD.
+        kmerDecoder * KD = new Kmers(filename, chunk_size, kframe->ksize(), kframe->KD->hash_mode);
 
         while (!KD->end()) {
             KD->next_chunk();
@@ -367,16 +348,14 @@ namespace kProcessor {
                 }
             }
         }
-        delete KD;
 
+        delete KD;
 
     }
 
-    void countKmersFromString(kmerDecoder *KD, string sequence, kDataFrame *output) {
-        if (KD->get_kSize() != (int)output->getkSize()) {
-            std::cerr << "kmerDecoder kSize must be equal to kDataFrame kSize" << std::endl;
-            exit(1);
-        }
+    void countKmersFromString(string sequence, kDataFrame *output) {
+
+        kmerDecoder * KD = kmerDecoder::getInstance(output->KD->slicing_mode, output->KD->hash_mode, output->KD->string_to_params(output->KD->params_to_string()));
 
         std::vector<kmer_row> kmers;
         KD->seq_to_kmers(sequence, kmers);
@@ -385,41 +364,7 @@ namespace kProcessor {
             output->insert(kmer.hash);
         }
 
-    }
-
-    void countKmersFromString(kDataFrame * frame, std::map<std::string, int> parse_params, string sequence){
-
-        // parse_params["mode"] = 1 > Default: Kmers
-        // parse_params["mode"] = 2 > Skipmers
-        // parse_params["mode"] = 3 > Minimizers
-
-        // Initialize kmerDecoder
-        std::string mode = "kmers";
-        bool check_mode = (parse_params.find("mode") != parse_params.end());
-        if (check_mode){
-            if (parse_params["mode"] == 2) mode = "skipmers";
-            else if (parse_params["mode"] == 3) mode = "minimizers";
-        }
-
-        parse_params["k_size"] = frame->ksize();
-        parse_params["k"] = frame->ksize();
-        kmerDecoder * KD = initialize_kmerDecoder(mode, parse_params);
-
-        // Clone the hashing
-
-        kmerDecoder_setHashing(KD, frame->KD->hash_mode);
-
-        if (KD->get_kSize() != (int)frame->getkSize()) {
-            std::cerr << "kmerDecoder kSize must be equal to kDataFrame kSize" << std::endl;
-            exit(1);
-        }
-
-        std::vector<kmer_row> kmers;
-        KD->seq_to_kmers(sequence, kmers);
-
-        for (const auto &kmer : kmers) {
-            frame->insert(kmer.hash);
-        }
+        delete KD;
 
     }
 

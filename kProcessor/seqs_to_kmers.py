@@ -24,15 +24,13 @@ def index(kframe, parse_params, filename, chunk_size, names_fileName):
     """
 
 
-def countKmersFromFile(kframe, parse_params, filename, chunk_size):
+def countKmersFromFile(kframe, filename, chunk_size):
     """Load the kmers with their counts in the input file into the output kDataframe. Input File can be of formats: fastq,fasta.
 
     .. note:: The kDataFrame of this function are passed-by-reference. So, it returns nothing.
 
     :param kframe: the kDataFrame to be filled with the kmers with their counts
     :type kframe: :class:`kProcessor.kDataFrame`
-    :param parse_params: Sequence Decoding parameters
-    :type parse_params: dict
     :param filename: Sequence(s) file path
     :type filename: str
     :param chunk_size: Number of sequences to parse at once.
@@ -42,31 +40,27 @@ def countKmersFromFile(kframe, parse_params, filename, chunk_size):
 
     Example:
         >>> import kProcessor as kp
-        >>> KF = kDataFramePHMAP(11)
-        >>> kp.parseSequencesFromFile(KF, "kmers", {"k_size": 11}, "seq.fa", 1000) # Fill the KF with the kmers and counts
+        >>> KF = kp.kDataFramePHMAP(11)
+        >>> kp.parseSequencesFromFile(KF, "seq.fa", 1000) # Fill the KF with the kmers and counts
 
     """
     pass
 
-def countKmersFromString(kFrame, parse_params, seq):
+def countKmersFromString(seq, kFrame):
     """Load the kmers in the input string into the output kDataframe.
 
     .. note:: The kDataFrame of this function are passed-by-reference. So, it returns nothing.
 
     :param kFrame: the kDataFrame to be filled with the kmers with their counts
     :type kFrame: :class:`kProcessor.kDataFrame`
-    :param parse_params: Sequence Decoding parameters
-    :type parse_params: dict
     :param sequence: Sequence to be parsed
     :type sequence: string
-
-     .. note:: Read more about the usage of parse_params in the FAQ page.
 
     Example:
         >>> import kProcessor as kp
         >>> KF = kDataFramePHMAP(11)
         >>> seq = "ACGATCGATCGATTATATATATCGACGATCGATCGTACGTAGC"
-        >>> kp.parseSequencesFromString(KF, "kmers", {"k_size": 11}, seq) # Fill the KF with the kmers and counts
+        >>> kp.parseSequencesFromString(seq, KF) # Fill the KF with the kmers and counts
 
     """
     pass
