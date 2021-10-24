@@ -589,7 +589,7 @@ TEST_P(algorithmsTest,parsingTest)
   string fileName=get<2>(GetParam());
   int chunkSize=1000;
 
-  kProcessor::countKmersFromFile(kframe, {{"mode", 1}}, fileName, 1000); // Mode 1 : kmers, KmerSize will be cloned from the kFrame
+  kProcessor::countKmersFromFile(kframe, fileName, 1000); // Mode 1 : kmers, KmerSize will be cloned from the kFrame
   kmerDecoder *KMERS = kProcessor::initialize_kmerDecoder(fileName, 1000, "kmers", {{"k_size", kSize}});
 
     while (!KMERS->end()) {
@@ -940,7 +940,7 @@ TEST_P(kDataFrameBufferedTest,parsingTest)
 //string fileName=get<1>(GetParam());
     int kSize=kframe->getkSize();
     int chunkSize = 1000;
-    kProcessor::countKmersFromFile(kframe, {{"mode", 1}}, fileName, chunkSize); // Mode 1 : kmers, KmerSize will be cloned from the kFrame
+    kProcessor::countKmersFromFile(kframe, fileName, chunkSize); // Mode 1 : kmers, KmerSize will be cloned from the kFrame
 
     ifstream kmerCountGoldFile("test.noN.dsk.txt");
     string kmer;
@@ -987,7 +987,7 @@ TEST_P(algorithmsTest,parsingTest2)
     kDataFrame* kframe=getFrame(make_tuple(kframeType,kSize));
     string fileName=get<2>(GetParam());
     RecordProperty("kdataFrame Type", kframe->get_class_name());
-    kProcessor::countKmersFromFile(kframe, {{"mode", 1}}, fileName, 1000); // Mode 1 : kmers, KmerSize will be cloned from the kFrame
+    kProcessor::countKmersFromFile(kframe, fileName, 1000); // Mode 1 : kmers, KmerSize will be cloned from the kFrame
     string goldFileName=fileName.substr(0,fileName.size()-6)+"."+to_string(kSize)+".dsk.txt";
     ifstream kmerCountGoldFile(goldFileName);
     string kmer;
