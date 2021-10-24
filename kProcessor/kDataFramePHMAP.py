@@ -6,7 +6,7 @@ class kDataFramePHMAP(kDataFrame):
     The abstract base class defining a kDataFramePHMAP.
     """
 
-    def __init__(self, kSize, mode=1):
+    def __init__(self, kSize):
         """Instantiate a kDataFramePHMAP object with predefined kmer size.
 
         :param kSize: Kmer Size
@@ -17,25 +17,25 @@ class kDataFramePHMAP(kDataFrame):
 
         Instantiation Example:
             >>> import kProcessor as kp
-            >>> KF_MQF = kp.kDataFramePHMAP(31) # kSize = 31, Hashing Mode = 1
-            >>> KF2_MQF = kp.kDataFramePHMAP(31, 0) # kSize = 31, Hashing Mode = 0
+            >>> KF_PHMAP_1 = kp.kDataFramePHMAP(31) # kSize = 31
+            >>> KF_PHMAP_2 = kp.kDataFramePHMAP(PROTEIN, protein_hasher, {'kSize': 5}); # Reading/hashing mode = protein, kSize = 5
+            >>> KF_PHMAP_3 = kp.kDataFramePHMAP(PROTEIN, proteinDayhoff_hasher, {'kSize': 11}); # Reading mode = protein, hashing mode = dayhoff encoding, kSize = 11
 
 
-        .. note:: Read more about hashing modes in the FAQ page.
+
+        .. note:: Read more about reading and hashing modes in the FAQ page.
 
         """
         pass
 
 
-    # Will publish it later after cloning kmerDecoder settings.
-    # def getTwin(self):
-    #     """creates a new ``kDataFramePHMAP`` using the same parameters as the current ``kDataFramePHMAP``.
-    #
-    #     :return: A shallow copy of the current ``kDataFramePHMAP``.
-    #     :rtype: kDataFramePHMAP
-    #
-    #     """
-    #     # pass
+    def getTwin(self):
+        """creates a new ``kDataFramePHMAP`` using the same parameters as the current ``kDataFramePHMAP``.
+    
+        :return: A shallow copy of the current ``kDataFramePHMAP``.
+        :rtype: kDataFramePHMAP
+    
+        """
 
     def reserve(self, n):
         """Request a capacity change so that the kDataFramePHMAP can approximately hold at least n kmers

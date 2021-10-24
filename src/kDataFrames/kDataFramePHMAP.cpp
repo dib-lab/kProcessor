@@ -253,7 +253,7 @@ kDataFrame *kDataFramePHMAP::load(string filePath) {
 }
 
 kDataFrame *kDataFramePHMAP::getTwin() {
-    return ((kDataFrame *) new kDataFramePHMAP(kSize, this->KD->hash_mode));
+    return ((kDataFrame *) new kDataFramePHMAP(this->KD->slicing_mode, this->KD->hash_mode, this->KD->string_to_params(this->KD->params_to_string())));
 }
 
 void kDataFramePHMAP::reserve(uint64_t n) {
