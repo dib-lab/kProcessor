@@ -1,9 +1,7 @@
 class kDataFramePHMAP : public kDataFrame {
         public:
-        kDataFramePHMAP();
         kDataFramePHMAP(uint64_t ksize);
         kDataFramePHMAP(readingModes RM, hashingModes hash_mode, map<string, int> params);
-        kDataFramePHMAP(uint64_t ksize, hashingModes hash_mode);
         kDataFrame* getTwin();
         void reserve(uint64_t n);
 
