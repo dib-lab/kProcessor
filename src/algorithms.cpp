@@ -428,7 +428,7 @@ namespace kProcessor {
         }
         for(auto col: columns)
         {
-            col.second->resize(res->size());
+            col.second->resize(res->size()+1);
             res->addColumn(col.first,col.second);
         }
 

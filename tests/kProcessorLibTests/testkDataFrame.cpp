@@ -1685,19 +1685,29 @@ TEST_P(setFunctionsTest,innerJoinTest2)
     auto it=result->begin();
     while(it!=result->end())
     {
+        string currKmer=it.getKmer();
         for(unsigned i=0 ; i<2; i++){
             uint32_t countRes;
             it.getColumnValue<uint32_t,vectorColumn<uint32_t> >("count"+to_string(i),countRes);
-            uint32_t countGold=input[i]->getCount(it.getHashedKmer());
+            uint32_t countGold=input[i]->getCount(currKmer);
             ASSERT_EQ(countRes,countGold);
         }
-        vector<uint32_t> colorsCorrect=input[2]->getKmerColumnValue<vector<uint32_t >, deduplicatedColumn<mixVectors> >("color",it.getHashedKmer());
+        vector<uint32_t> colorsCorrect=input[2]->getKmerColumnValue<vector<uint32_t >, deduplicatedColumn<mixVectors> >("color",currKmer);
         vector<uint32_t> colors;
         it.getColumnValue<vector<uint32_t >, deduplicatedColumn<mixVectors> >("color2",colors);
+        if(colors!=colorsCorrect)
+        {
+            colors.clear();
+            colorsCorrect.clear();
+            it.getColumnValue<vector<uint32_t >, deduplicatedColumn<mixVectors> >("color2",colors);
+            colorsCorrect=input[2]->getKmerColumnValue<vector<uint32_t >, deduplicatedColumn<mixVectors> >("color",currKmer);
+
+
+        }
         ASSERT_EQ(colors,colorsCorrect);
         double dV;
         it.getColumnValue<double, vectorColumn<double> >("double2",dV);
-        double dv2=input[2]->getKmerColumnValue<double, vectorColumn<double> >("double",it.getHashedKmer());
+        double dv2=input[2]->getKmerColumnValue<double, vectorColumn<double> >("double",currKmer);
         ASSERT_EQ(dV,dv2);
         it++;
 
@@ -2011,7 +2021,7 @@ TEST_P(indexingTest,indexPriorityQAndOptimize)
         kDataFrameIterator it=inputFrames[i]->begin();
         while(it!=inputFrames[i]->end())
         {
-            vector<uint32_t> colors=kframeLoaded->getKmerColumnValue<vector<uint32_t >, deduplicatedColumn<prefixTrie> >("color",it.getHashedKmer());
+            vector<uint32_t> colors=kframeLoaded->getKmerColumnValue<vector<uint32_t >, deduplicatedColumn<prefixTrie> >("color",it.getKmer());
             ASSERT_NE(colors.size(),0);
             auto colorIt=colors.end();
             colorIt=find(colors.begin(),colors.end(),i);

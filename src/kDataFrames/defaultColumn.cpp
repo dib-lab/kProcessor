@@ -831,12 +831,14 @@ void vectorOfVectors::sort(sdsl::int_vector<> &idsMap) {
 
 prefixTrie::prefixTrie(insertColorColumn *col)
 {
+    totalSize=0;
     queryCache=nullptr;
     mixVectors* qq= new mixVectors(col);
     loadFromQueryColorColumn(qq);
     delete qq;
 }
 prefixTrie::prefixTrie(mixVectors *col) {
+    totalSize=0;
     queryCache=nullptr;
     loadFromQueryColorColumn(col);
 
@@ -851,8 +853,8 @@ void prefixTrie::loadFromQueryColorColumn(mixVectors  *col) {
     col->explainSize();
     col->sortColors();
     cerr << "Colors Sorted" << endl;
-    idsMap = sdsl::int_vector<32>(col->idsMap.size());
-    sdsl::int_vector<32> invIdsMap(col->idsMap.size());
+    idsMap = sdsl::int_vector<32>(col->idsMap.size()+1);
+    sdsl::int_vector<32> invIdsMap(col->idsMap.size()+1);
 #pragma omp parallel for
     for (unsigned int i = 0; i < col->idsMap.size(); i++) {
         invIdsMap[col->idsMap[i]] = i;
@@ -941,9 +943,11 @@ void prefixTrie::loadFromQueryColorColumn(mixVectors  *col) {
     delete bp_tree[currTree];
     delete unCompressedEdges[currTree];
     tree[currTree]=new sdsl::bit_vector(tmpSize * 2);
+    totalSize= 0;
     for(uint32_t i=1;i<currTree;i++)
     {
         starts[i]=starts[i-1]+tree[i-1]->size();
+        totalSize += tree[i-1]->size();
     }
     while (!nextColor.empty()) {
         auto colorTuple = nextColor.top();
@@ -1007,8 +1011,10 @@ void prefixTrie::loadFromQueryColorColumn(mixVectors  *col) {
 
             currTree=noSamples-currColor[0]-1;
             // dont update current tree becuase shortern starts[currTree] to be 0
+            totalSize= 0;
             for(uint32_t i=1;i<currTree;i++)
             {
+                totalSize+= tree[i-1]->size();
                 starts[i]=starts[i-1]+tree[i-1]->size();
             }
             tmpEdgesTop = 0;
@@ -1154,7 +1160,7 @@ void prefixTrie::loadFromQueryColorColumn(mixVectors  *col) {
 //        cout<<endl;
 //    }
 
-
+    cout<<processedColors<<"/"<<numColors<<endl;
 
 
 
@@ -1163,9 +1169,9 @@ void prefixTrie::loadFromQueryColorColumn(mixVectors  *col) {
         edgesSum += (a.first - 1) * (a.second);
     }
     cout << "Possible saving " << edgesSum << endl;
-
+    totalSize=0;
     for(auto t:tree)
-        totalSize+= t->size();
+        totalSize+=t->size();
 
    // sdsl::util::bit_compress(idsMap);
 

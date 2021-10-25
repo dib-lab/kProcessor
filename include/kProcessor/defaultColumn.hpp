@@ -843,8 +843,8 @@ public:
     prefixTrieIterator(prefixTrie* origin, uint32_t pos){
         this->origin=origin;
         finished=false;
-        if(pos>=origin->totalSize)
-            throw std::out_of_range("tree of size "+to_string(origin->totalSize)+ " doesnt have the pos "+ to_string(origin->totalSize));
+        if(pos > origin->totalSize)
+            throw std::out_of_range("tree of size "+to_string(origin->totalSize)+ " doesnt have the pos "+ to_string(pos));
         teleport(pos);
     }
     prefixTrieIterator& operator= (const prefixTrieIterator& other){
