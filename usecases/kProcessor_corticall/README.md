@@ -39,7 +39,7 @@ cmake --build build -j4
 ## Download the Data
 ```bash
 cd build/usecases/kProcessor_corticall
-./downloadData.sh
+snakemake --use-conda -s download.smk
 ```
 
 
