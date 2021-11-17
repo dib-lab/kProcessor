@@ -1,0 +1,9 @@
+sample_name,file
+3D7,inputData/references/GCF_000002765.5_GCA_000002765_genomic.fna.gz
+HB3,inputData/references/PfHB3.April2018.fasta.gz
+DD2,inputData/references/PfDd2.April2018.fasta.gz
+7G8,inputData/references/Pf7G8.April2018.fasta.gz
+GB4,inputData/references/PfGB4.Jul2019.fasta.gz
+803,inputData/references/Pf803.Jul2019.fasta.gz
+ERR019061,inputData/illumina/ERR019061_1.fastq.gz
+ERR019061,inputData/illumina/ERR019061_2.fastq.gz
