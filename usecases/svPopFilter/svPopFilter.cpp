@@ -57,13 +57,13 @@ int main(int argc, char *argv[]){
                    "Kdataframe path")->required();
     app.add_option("-s,--sv", vcf_input,
                    "structural variants in vcf format ")->required();
-    app.add_option("-r,--ref", refName,
+    app.add_option("-g,--ref", refName,
                    "Reference Name in vcf format ")->required();
 
-    app.add_option("-1,--pair1", fq1,
+    app.add_option("-f,--pair1", fq1,
                    "Reads fq format pair 1 ")->required();
 
-    app.add_option("-2,--pair2", fq2,
+    app.add_option("-r,--pair2", fq2,
                    "Reads fq format pair 2")->required();
 
 
@@ -75,6 +75,7 @@ int main(int argc, char *argv[]){
 
 
     CLI11_PARSE(app, argc, argv);
+
     kseq_t *kseqObj{};
     auto fp = gzopen(refName.c_str(), "r");
     kseqObj = kseq_init(fp);
