@@ -124,7 +124,7 @@ public:
     insertColorColumn(){
         colorsTop=vector<uint32_t>(NUM_VECTORS);
         vecCount=vector<uint32_t>(NUM_VECTORS);
-        for(int i=0;i<NUM_VECTORS;i++) {
+        for(unsigned i=0;i<NUM_VECTORS;i++) {
             colors.push_back(sdsl::int_vector<>(VECTOR_SIZE));
             colorsTop[i]=0;
             vecCount[i]=0;
@@ -138,7 +138,7 @@ public:
         colorsTop=vector<uint32_t>(NUM_VECTORS);
         vecCount=vector<uint32_t>(NUM_VECTORS);
         this->noSamples=noSamples;
-        for(int i=0;i<NUM_VECTORS;i++) {
+        for(unsigned i=0;i<NUM_VECTORS;i++) {
             colors.push_back(sdsl::int_vector<>(VECTOR_SIZE));
             colorsTop[i]=0;
             vecCount[i]=0;

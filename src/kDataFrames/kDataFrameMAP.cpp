@@ -54,6 +54,7 @@ uint64_t kDataFrameMAPIterator::getOrder() {
 
 bool kDataFrameMAPIterator::setOrder(uint64_t count) {
     iterator->second = count;
+    return true;
 }
 
 
