@@ -55,10 +55,10 @@ int main(int argc, char *argv[]){
     {
         histArr[h.first-1]=h.second;
     }
-    histArr[0]=max(1,histArr[0]);
-    histArr[1]=max(1,histArr[1]);
-    histArr[2]=max(1,histArr[2]);
-    histArr[3]=max(1,histArr[3]);
+    histArr[0]=max((uint64_t)1,histArr[0]);
+    histArr[1]=max((uint64_t)1,histArr[1]);
+    histArr[2]=max((uint64_t)1,histArr[2]);
+    histArr[3]=max((uint64_t)1,histArr[3]);
 
     double fp,fn;
     int kThreshold=kProcessor::utils::cleaning_pick_kmer_threshold(histArr, histSize,
