@@ -16,7 +16,7 @@ short=list(filter(lambda x:x.library=="illumina",pep.samples))
 short=[(x.sample_name,x.file) for x in short]
 short=dict(short)
 
-dbgs=list(references.keys())+list(progny_short.keys())
+dbgs=list(references.keys())+list(short.keys())
 
 
 
@@ -37,7 +37,7 @@ def getFileSizeInGB(file):
     return int(math.ceil(float(res)/(1024.0*1024.0*1024.0)))
 
 
-framesToBeJoined = expand(outFolder+"kProcessor/{sample}.kframe.cleaned.bmqf.bmqf",sample=progny_short.keys())
+framesToBeJoined = expand(outFolder+"kProcessor/{sample}.kframe.cleaned.bmqf.bmqf",sample=short.keys())
 framesToBeJoined+= expand(outFolder+"kProcessor/{sample}.kframe.bmqf.bmqf",sample=references.keys())
 
 
@@ -84,7 +84,7 @@ rule kmcProgny:
        	"""
 	    mkdir -p {tmpFolder}$$/
     	    echo {input} |tr -s ' ' $'\n' > {wildcards.experiment}.lst
-	        /usr/bin/time -v -o {output.time} KMC/bin/kmc -ci1 -cs1000000  -hp  -t{threads} -k{kSize} -m4  @{wildcards.experiment}.lst {outFolder}kmc/{wildcards.experiment}  {tmpFolder}$$/ &> {log}
+	        /usr/bin/time -v -o {output.time} KMC/bin/kmc -ci3 -cs1000000  -hp  -t{threads} -k{kSize} -m4  @{wildcards.experiment}.lst {outFolder}kmc/{wildcards.experiment}  {tmpFolder}$$/ &> {log}
 		rm -rf {tmpFolder}$$/
 	     #   rm {wildcards.experiment}.lst
         """
@@ -127,12 +127,15 @@ rule bcalmProgny:
          time=outFolder+"bcalm/{experiment}.bcalm.time"
     conda:
          "env.yaml"
-    threads: 4
+    threads: 32
     log: outFolder+"bcalm/{experiment}.bcalm.log"
     shell:
        	"""
+
+       	mkdir -p {tmpFolder}$$/
     	    echo {input} |tr -s ' ' $'\n' > {wildcards.experiment}.lst
-    	    /usr/bin/time -v -o {output.time} bcalm -nb-cores {threads} -in {wildcards.experiment}.lst -kmer-size {kSize} -abundance-min 1 -out {outFolder}bcalm/{wildcards.experiment} &> {log}
+    	    /usr/bin/time -v -o {output.time} bcalm -nb-cores {threads} -max-memory 50000 -in {wildcards.experiment}.lst -kmer-size {kSize} -abundance-min 3 -out {outFolder}bcalm/{wildcards.experiment} -out-tmp {tmpFolder}$$/  &> {log}
+	    rm -rf {tmpFolder}$$/
         """
 
 
@@ -150,7 +153,7 @@ rule cleanPrognyDBGKprocessor:
     conda: "env.yaml"
     shell:
        	"""
-	       /usr/bin/time -v -o {output.time} ./cleanDBG -k  {params.kframeINPrefix} -u {input.unitigs} -o {params.kframeOUTPrefix}  &> {log}
+	       /usr/bin/time -v -o {output.time}  ../kProcessor_corticall/cleanDBG -k  {params.kframeINPrefix} -u {input.unitigs} -o {params.kframeOUTPrefix}  &> {log}
         """
 
 rule index:
