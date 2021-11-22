@@ -49,8 +49,7 @@ int main(int argc, char *argv[]){
     string refName;
     string outputFilename;
     string tempDir="";
-    string fq1;
-    string fq2;
+    vector<string> fq;
 
 
     app.add_option("-k,--kframe", kframePath,
@@ -60,11 +59,8 @@ int main(int argc, char *argv[]){
     app.add_option("-g,--ref", refName,
                    "Reference Name in vcf format ")->required();
 
-    app.add_option("-f,--pair1", fq1,
-                   "Reads fq format pair 1 ")->required();
-
-    app.add_option("-r,--pair2", fq2,
-                   "Reads fq format pair 2")->required();
+    app.add_option("-r,--reads", fq,
+                   "Reads pair1:pair2. can be repeated ")->required();
 
 
 
@@ -139,7 +135,7 @@ int main(int argc, char *argv[]){
         //cout<<ref<<"\t"<<pos<<"\t"<<refSeq<<"\t"<<sampleSeq<<"\t"<<svType<<endl;
 
     }
-    cout<<"variants parsed parsed"<<endl;
+    cout<<"variants parsed"<<endl;
     contigsFile.close();
     namesFile.close();
 
@@ -165,71 +161,76 @@ int main(int argc, char *argv[]){
 
     // extract reads
 
-    kseq_t *kseqObjFq1{};
-    kseq_t *kseqObjFq2{};
-    auto fp1 = gzopen(fq1.c_str(), "r");
-    auto fp2 = gzopen(fq2.c_str(), "r");
-    kseqObjFq1 = kseq_init(fp1);
-    kseqObjFq2 = kseq_init(fp2);
+    unsigned readsProcessed=0;
 
-    auto kmerDecoder=svkmers->getkmerDecoder();
     deque<tuple<string,string,string> > readsBuffer1;
     deque<tuple<string,string,string> > readsBuffer2;
     vector<deque<uint32_t> > readsBufferIDS(numVariants);
 
-    unsigned readsProcessed=0;
-    while(kseq_read(kseqObjFq1)>=0 && kseq_read(kseqObjFq2)>=0){
-        string read1=kseqObjFq1->seq.s;
-        string read2=kseqObjFq2->seq.s;
-        vector<kmer_row> kmers;
-        kmerDecoder->seq_to_kmers(read1,kmers);
-        kmerDecoder->seq_to_kmers(read2,kmers);
+    for(auto file:fq){
+        vector<string> files= tokenize(file,':');
+        kseq_t *kseqObjFq1{};
+        kseq_t *kseqObjFq2{};
+        auto fp1 = gzopen(files[0].c_str(), "r");
+        auto fp2 = gzopen(files[1].c_str(), "r");
+        kseqObjFq1 = kseq_init(fp1);
+        kseqObjFq2 = kseq_init(fp2);
 
-        string header1=kseqObjFq1->name.s;
-        string header2=kseqObjFq2->name.s;
+        auto kmerDecoder=svkmers->getkmerDecoder();
 
-        string qual1= kseqObjFq1->qual.s;
-        string qual2= kseqObjFq2->qual.s;
+        while(kseq_read(kseqObjFq1)>=0 && kseq_read(kseqObjFq2)>=0){
+            string read1=kseqObjFq1->seq.s;
+            string read2=kseqObjFq2->seq.s;
+            vector<kmer_row> kmers;
+            kmerDecoder->seq_to_kmers(read1,kmers);
+            kmerDecoder->seq_to_kmers(read2,kmers);
 
-        vector<uint32_t> numMatches(numVariants,0);
-        for(auto k:kmers)
-        {
-            if(svkmers->kmerExist(k.hash) && kframe->kmerExist(k.hash) )
+            string header1=kseqObjFq1->name.s;
+            string header2=kseqObjFq2->name.s;
+
+            string qual1= kseqObjFq1->qual.s;
+            string qual2= kseqObjFq2->qual.s;
+
+            vector<uint32_t> numMatches(numVariants,0);
+            for(auto k:kmers)
             {
-                vector<string> colors=svkmers->getKmerColumnValue<vector<string> ,deduplicatedColumn<StringColorColumn>>("color",k.hash);
-                for(auto c:colors)
+                if(svkmers->kmerExist(k.hash) && kframe->kmerExist(k.hash) )
                 {
-                    uint32_t i=variantToId[c];
-                    numMatches[i]++;
+                    vector<string> colors=svkmers->getKmerColumnValue<vector<string> ,deduplicatedColumn<StringColorColumn>>("color",k.hash);
+                    for(auto c:colors)
+                    {
+                        uint32_t i=variantToId[c];
+                        numMatches[i]++;
+                    }
                 }
             }
-        }
-        bool readAdded=false;
-        for(unsigned  i=0;i<numMatches.size();i++)
-        {
-            double perc=(double)numMatches[i]/(double)kmers.size();
-            if(perc>=0.5)
+            bool readAdded=false;
+            for(unsigned  i=0;i<numMatches.size();i++)
             {
-                if(!readAdded){
-                    readAdded=true;
-                    readsBuffer1.push_back(make_tuple(header1,read1,qual1));
-                    readsBuffer2.push_back(make_tuple(header2,read2,qual2));
+                double perc=(double)numMatches[i]/(double)kmers.size();
+                if(perc>=0.5)
+                {
+                    if(!readAdded){
+                        readAdded=true;
+                        readsBuffer1.push_back(make_tuple(header1,read1,qual1));
+                        readsBuffer2.push_back(make_tuple(header2,read2,qual2));
+                    }
+                    readsBufferIDS[i].push_back(readsBuffer1.size()-1);
                 }
-                readsBufferIDS[i].push_back(readsBuffer1.size()-1);
             }
-        }
-        if(readsProcessed++ %100000 == 0)
-        {
-            cout<<"Processed "<<readsProcessed<< "reads and saved "<<readsBufferIDS.size()<<"reads"<<endl;
-        }
+            if(readsProcessed++ %100000 == 0)
+            {
+                cout<<"Processed "<<readsProcessed<< "reads and saved "<<readsBuffer1.size()*2<<"reads"<<endl;
+            }
 
+        }
     }
     for(unsigned i=0; i<numVariants; i++)
     {
         ofstream readsOut1(outputFilename+"."+ to_string(i)+".1.fq");
         for(auto r: readsBufferIDS[i])
         {
-            readsOut1<< get<0>(readsBuffer1[r])<<"\n"
+            readsOut1<<"@"<< get<0>(readsBuffer1[r])<<"\n"
             <<get<1>(readsBuffer1[r])<<"\n+\n"
             <<get<2>(readsBuffer1[r])<<"\n";
         }
