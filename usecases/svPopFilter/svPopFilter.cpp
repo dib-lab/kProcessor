@@ -69,7 +69,7 @@ int main(int argc, char *argv[]){
 
 
     app.add_option("-o,--output", outputFilename,
-                   "Output file of median change per genes")->required();
+                   "Output prefix")->required();
     app.add_option("-t,--temp-dir", tempDir,
                    "Temporary Directory ");
 
@@ -138,6 +138,7 @@ int main(int argc, char *argv[]){
         //cout<<ref<<"\t"<<pos<<"\t"<<refSeq<<"\t"<<sampleSeq<<"\t"<<svType<<endl;
 
     }
+    cout<<"variants parsed parsed"<<endl;
     contigsFile.close();
     namesFile.close();
 
@@ -174,6 +175,8 @@ int main(int argc, char *argv[]){
     deque<tuple<string,string,string> > readsBuffer1;
     deque<tuple<string,string,string> > readsBuffer2;
     vector<deque<uint32_t> > readsBufferIDS(numVariants);
+
+    unsigned readsProcessed=0;
     while(kseq_read(kseqObjFq1)>=0 && kseq_read(kseqObjFq2)>=0){
         string read1=kseqObjFq1->seq.s;
         string read2=kseqObjFq2->seq.s;
@@ -213,6 +216,10 @@ int main(int argc, char *argv[]){
                 }
                 readsBufferIDS[i].push_back(readsBuffer1.size()-1);
             }
+        }
+        if(readsProcessed++ %100000 == 0)
+        {
+            cout<<"Processed "<<readsProcessed<< "reads and saved "<<readsBufferIDS.size()<<"reads"<<endl;
         }
 
     }
