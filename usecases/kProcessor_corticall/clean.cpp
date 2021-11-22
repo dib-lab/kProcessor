@@ -55,6 +55,10 @@ int main(int argc, char *argv[]){
     {
         histArr[h.first-1]=h.second;
     }
+    histArr[0]=max(1,histArr[0]);
+    histArr[1]=max(1,histArr[1]);
+    histArr[2]=max(1,histArr[2]);
+    histArr[3]=max(1,histArr[3]);
 
     double fp,fn;
     int kThreshold=kProcessor::utils::cleaning_pick_kmer_threshold(histArr, histSize,
@@ -77,12 +81,6 @@ int main(int argc, char *argv[]){
             uint32_t unitigLen = kSize+ seq.second.size() -1;
 
             bool removeTip= isTip && unitigLen < minKeepTip;
-
-
-
-
-
-
             size_t top=0;
             for (const auto &kmer : seq.second) {
                 untigsCount[top++]=kframe->getCount(kmer.hash);
