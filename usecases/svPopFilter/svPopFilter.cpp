@@ -170,7 +170,10 @@ int main(int argc, char *argv[]){
     vector<deque<uint32_t> > readsBufferIDS(numVariants);
 
     for(auto file:fq){
+
         vector<string> files= tokenize(file,':');
+        cout<<"Processing "<<files[0]<<" and "<<files[1]<<endl;
+
         kseq_t *kseqObjFq1{};
         kseq_t *kseqObjFq2{};
         auto fp1 = gzopen(files[0].c_str(), "r");
