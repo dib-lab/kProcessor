@@ -147,6 +147,8 @@ int main(int argc, char *argv[]){
     kmerDecoder *KD_KMERS = kProcessor::initialize_kmerDecoder(contigsFileName, chunkSize, "kmers", {{"k_size", kSize}});
     kProcessor::index(KD_KMERS, contigsFileName+".names", svkmers);
     svkmers->save(tempDir + "SV");
+
+    cout<<"Indexing finished"<<endl;
     //delete svkmers;
 
 //    vector<string> joiningInput;
@@ -218,7 +220,7 @@ int main(int argc, char *argv[]){
                     readsBufferIDS[i].push_back(readsBuffer1.size()-1);
                 }
             }
-            if(readsProcessed++ %100000 == 0)
+            if(++readsProcessed %100000 == 0)
             {
                 cout<<"Processed "<<readsProcessed<< "reads and saved "<<readsBuffer1.size()*2<<"reads"<<endl;
             }
