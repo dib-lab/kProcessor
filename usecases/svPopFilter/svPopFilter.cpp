@@ -148,6 +148,8 @@ int main(int argc, char *argv[]){
     kmerDecoder *KD_KMERS = kProcessor::initialize_kmerDecoder(contigsFileName, chunkSize, "kmers", {{"k_size", kSize}});
     kProcessor::index(KD_KMERS, contigsFileName+".names", svkmers);
     svkmers->save(tempDir + "SV");
+
+    cout<<"Indexing finished"<<endl;
     //delete svkmers;
 
 //    vector<string> joiningInput;
@@ -169,7 +171,10 @@ int main(int argc, char *argv[]){
     vector<deque<uint32_t> > readsBufferIDS(numVariants);
 
     for(auto file:fq){
+
         vector<string> files= tokenize(file,':');
+        cout<<"Processing "<<files[0]<<" and "<<files[1]<<endl;
+
         kseq_t *kseqObjFq1{};
         kseq_t *kseqObjFq2{};
 	cout<<files[0]<<endl;
