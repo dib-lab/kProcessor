@@ -72,6 +72,7 @@ int main(int argc, char *argv[]){
 
     CLI11_PARSE(app, argc, argv);
 
+    cout<<fq.size()<<endl;
     kseq_t *kseqObj{};
     auto fp = gzopen(refName.c_str(), "r");
     kseqObj = kseq_init(fp);
@@ -141,7 +142,7 @@ int main(int argc, char *argv[]){
 
     kDataFrame* kframe= kDataFrame::load(kframePath);
     uint32_t kSize=kframe->ksize();
-    delete kframe;
+    //    delete kframe;
     int chunkSize = 1000;
     kDataFrame* svkmers = new kDataFramePHMAP(kSize, integer_hasher);
     kmerDecoder *KD_KMERS = kProcessor::initialize_kmerDecoder(contigsFileName, chunkSize, "kmers", {{"k_size", kSize}});
@@ -171,6 +172,8 @@ int main(int argc, char *argv[]){
         vector<string> files= tokenize(file,':');
         kseq_t *kseqObjFq1{};
         kseq_t *kseqObjFq2{};
+	cout<<files[0]<<endl;
+	cout<<files[1]<<endl;
         auto fp1 = gzopen(files[0].c_str(), "r");
         auto fp2 = gzopen(files[1].c_str(), "r");
         kseqObjFq1 = kseq_init(fp1);
@@ -185,7 +188,7 @@ int main(int argc, char *argv[]){
             kmerDecoder->seq_to_kmers(read1,kmers);
             kmerDecoder->seq_to_kmers(read2,kmers);
 
-            string header1=kseqObjFq1->name.s;
+	    string header1=kseqObjFq1->name.s;
             string header2=kseqObjFq2->name.s;
 
             string qual1= kseqObjFq1->qual.s;
@@ -218,7 +221,7 @@ int main(int argc, char *argv[]){
                     readsBufferIDS[i].push_back(readsBuffer1.size()-1);
                 }
             }
-            if(readsProcessed++ %100000 == 0)
+            if(++readsProcessed %100000 == 0)
             {
                 cout<<"Processed "<<readsProcessed<< "reads and saved "<<readsBuffer1.size()*2<<"reads"<<endl;
             }
