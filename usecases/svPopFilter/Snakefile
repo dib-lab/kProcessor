@@ -8,6 +8,8 @@ tmpFolder=config["tmpFolder"]
 references=list(filter(lambda x:x.library=="parent_reference",pep.samples))
 references=[(x.sample_name,x.file[0]) for x in references]
 references=dict(references)
+reference= references[list(references.keys())[0]]
+
 
 variants=list(filter(lambda x:x.library=="variants",pep.samples))[0].file
 
@@ -48,7 +50,8 @@ framesToBeJoined+= expand(outFolder+"kProcessor/{sample}.kframe.bmqf.bmqf",sampl
 
 rule all:
     input:
-         outFolder+"kProcessor/cdbg.phmap"
+         outFolder+"kProcessor/cdbg.phmap",
+         outFolder+"kProcessor/variants.phmap"
  #        expand(outFolder+"kProcessor/{sample}.kframe.bmqf.bmqf",sample=progny_short.keys)
 #        expand(outFolder+"kmc/{sample}.kmc_pre",sample=dbgs),
 #        expand(outFolder+"bcalm/{sample}.unitigs.fa",sample=progny_short.keys()),
@@ -177,6 +180,26 @@ rule index:
                 /usr/bin/time -o {output.time} -v  ../../apps/index -i  $MYTMP/inputlst    -t {tmpFolder}$$/ -o {params.prefix} -n 20 -s 100000000  -p   &> {log}
 	        	rm -rf {tmpFolder}$$/
         """
+
+
+rule createSVFrame:
+    input:
+        variants= outFolder+"kProcessor/{sample}.phmap",
+        reference=reference
+    output:
+        kframe=outFolder+"kProcessor/variants",
+        time=outFolder+"kProcessor/{sample}.indexing.variants.time"
+    params:
+        outputPrefix= "{sample}.bmqf"
+    log: outFolder+"kProcessor/{sample}.kprocessor.convert.bmqf.log"
+    conda: "env.yaml"
+    shell:
+        """
+        mkdir -p {tmpFolder}$$/
+       /usr/bin/time -v -o {output.time} createSVFrame -k {kSize} -s {input.varants}  -g {input.refrence} -o {params.outputPrefix} -t {tmpFolder}$$/ &> {log}
+     
+        rm -rf {tmpFolder}$$/
+     """
 
 
 # rule JoinAll:
