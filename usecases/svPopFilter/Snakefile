@@ -205,10 +205,10 @@ rule createSVFrame:
 rule extractReads:
     input:
         kframe=outFolder+"kProcessor/variants.phmap",
-        read1=,
-        read2=
+        read1=lambda wildcards: getFile(short,f"{wildcards.experiment}")[0],
+        read2=lambda wildcards: getFile(short,f"{wildcards.experiment}")[1]
     output:
-        out=outFolder+"kProcessor/variants.output",
+        out=outFolder+"kProcessor/reads/variants.output.{experiment}",
         time=outFolder+"kProcessor/variants.extractReads.time"
     params:
         inputPrefix=outFolder+ "kProcessor/variants"
