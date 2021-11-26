@@ -72,7 +72,7 @@ int main(int argc, char *argv[]){
 
     CLI11_PARSE(app, argc, argv);
 
-    cout<<fq.size()<<endl;
+    
     kseq_t *kseqObj{};
     auto fp = gzopen(refName.c_str(), "r");
     kseqObj = kseq_init(fp);
@@ -113,19 +113,20 @@ int main(int argc, char *argv[]){
         string eref=refs[ref].substr(pos-1,refSeq.size());
         string newSeq;
         uint32_t start=0;
-        if(pos>=50)
-            start=pos-50;
+	uint32_t margin=1000;
+        if(pos>=margin)
+            start=pos-margin;
         if(svType== "INS")
         {
 
-            uint32_t end=min((uint32_t)refs[ref].size(),pos+50);
+            uint32_t end=min((uint32_t)refs[ref].size(),pos+margin);
             newSeq=refs[ref].substr(start,pos-1-start)+ sampleSeq +refs[ref].substr(pos,end-pos);
 
         }
         else if (svType == "DEL")
         {
             uint32_t afterDel=pos+refSeq.size();
-            uint32_t end=min((uint32_t)refs[ref].size(), afterDel +50 );
+            uint32_t end=min((uint32_t)refs[ref].size(), afterDel +margin );
             newSeq=refs[ref].substr(start,pos-1-start)+ sampleSeq +refs[ref].substr(afterDel-1,end-afterDel);
         }
         printFasta(contigsFile,id,newSeq);
@@ -142,14 +143,23 @@ int main(int argc, char *argv[]){
 
     kDataFrame* kframe= kDataFrame::load(kframePath);
     uint32_t kSize=kframe->ksize();
+    int tmpcount=0;
+    
     //    delete kframe;
     int chunkSize = 1000;
-    kDataFrame* svkmers = new kDataFramePHMAP(kSize, integer_hasher);
-    kmerDecoder *KD_KMERS = kProcessor::initialize_kmerDecoder(contigsFileName, chunkSize, "kmers", {{"k_size", kSize}});
+    kDataFrame* svkmers = new kDataFramePHMAP(kSize);
+    //kmerDecoder *KD_KMERS = svkmers->getkmerDecoder();
+    kmerDecoder *KD_KMERS =kProcessor::initialize_kmerDecoder(contigsFileName, chunkSize, "kmers", {{"k_size", kSize}});
+    KD_KMERS->setHashingMode(TwoBits_hasher,kSize);
+    cout<<"Indexing starts"<<endl;
     kProcessor::index(KD_KMERS, contigsFileName+".names", svkmers);
     svkmers->save(tempDir + "SV");
 
-    cout<<"Indexing finished"<<endl;
+    cout<<"Indexing finished "<<svkmers->size()<<endl;
+    cout<<kSize<<endl;
+    cout<<kframe->getkmerDecoder()->hash_mode<<endl;
+    cout<<svkmers->ksize()<<endl;
+    cout<<svkmers->getkmerDecoder()->hash_mode<<endl;
     //delete svkmers;
 
 //    vector<string> joiningInput;
@@ -169,7 +179,7 @@ int main(int argc, char *argv[]){
     deque<tuple<string,string,string> > readsBuffer1;
     deque<tuple<string,string,string> > readsBuffer2;
     vector<deque<uint32_t> > readsBufferIDS(numVariants);
-
+    
     for(auto file:fq){
 
         vector<string> files= tokenize(file,':');
@@ -184,24 +194,22 @@ int main(int argc, char *argv[]){
         kseqObjFq1 = kseq_init(fp1);
         kseqObjFq2 = kseq_init(fp2);
 
-        auto kmerDecoder=svkmers->getkmerDecoder();
+        auto kmerDecoder=kframe->getkmerDecoder();
 
         while(kseq_read(kseqObjFq1)>=0 && kseq_read(kseqObjFq2)>=0){
             string read1=kseqObjFq1->seq.s;
             string read2=kseqObjFq2->seq.s;
+	    // cout<<read1<<endl<<read2<<endl;
             vector<kmer_row> kmers;
-            kmerDecoder->seq_to_kmers(read1,kmers);
-            kmerDecoder->seq_to_kmers(read2,kmers);
-
-	    string header1=kseqObjFq1->name.s;
-            string header2=kseqObjFq2->name.s;
-
-            string qual1= kseqObjFq1->qual.s;
-            string qual2= kseqObjFq2->qual.s;
+	    vector<kmer_row> kmers2;
+	    kmerDecoder->seq_to_kmers(read1,kmers);
+            kmerDecoder->seq_to_kmers(read2,kmers2);
+	    kmers.insert(std::end(kmers), std::begin(kmers2), std::end(kmers2));
 
             vector<uint32_t> numMatches(numVariants,0);
             for(auto k:kmers)
             {
+	      //  cout<<k.str<<"\t"<<svkmers->kmerExist(k.str)<<"\t"<< kframe->kmerExist(k.str)<<endl;
                 if(svkmers->kmerExist(k.hash) && kframe->kmerExist(k.hash) )
                 {
                     vector<string> colors=svkmers->getKmerColumnValue<vector<string> ,deduplicatedColumn<StringColorColumn>>("color",k.hash);
@@ -216,9 +224,18 @@ int main(int argc, char *argv[]){
             for(unsigned  i=0;i<numMatches.size();i++)
             {
                 double perc=(double)numMatches[i]/(double)kmers.size();
-                if(perc>=0.5)
+		
+                if(perc>=0.6)
                 {
+		  //  cout<<read1<<endl;
+		  //	  cout<<i<<" "<<perc<<endl;
                     if(!readAdded){
+		      	string header1=kseqObjFq1->name.s;
+			string header2=kseqObjFq2->name.s;
+
+			string qual1= kseqObjFq1->qual.s;
+			string qual2= kseqObjFq2->qual.s;
+
                         readAdded=true;
                         readsBuffer1.push_back(make_tuple(header1,read1,qual1));
                         readsBuffer2.push_back(make_tuple(header2,read2,qual2));

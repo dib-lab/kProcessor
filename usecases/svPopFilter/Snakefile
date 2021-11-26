@@ -5,9 +5,10 @@ kSize=config["kSize"]
 outFolder=config["outFolder"]
 tmpFolder=config["tmpFolder"]
 
-references=list(filter(lambda x:x.library=="parent_reference",pep.samples))
+references=list(filter(lambda x:x.library=="reference",pep.samples))
 references=[(x.sample_name,x.file[0]) for x in references]
 references=dict(references)
+print(references)
 reference= references[list(references.keys())[0]]
 
 
@@ -184,19 +185,19 @@ rule index:
 
 rule createSVFrame:
     input:
-        variants= outFolder+"kProcessor/{sample}.phmap",
+        variants= variants,
         reference=reference
     output:
-        kframe=outFolder+"kProcessor/variants",
-        time=outFolder+"kProcessor/{sample}.indexing.variants.time"
+        kframe=outFolder+"kProcessor/variants.phmap",
+        time=outFolder+"kProcessor/variants.kprocessor.time"
     params:
-        outputPrefix= "{sample}.bmqf"
-    log: outFolder+"kProcessor/{sample}.kprocessor.convert.bmqf.log"
+        outputPrefix=outFolder+ "kProcessor/variants"
+    log: outFolder+"kProcessor/variants.kprocessor.log"
     conda: "env.yaml"
     shell:
         """
         mkdir -p {tmpFolder}$$/
-       /usr/bin/time -v -o {output.time} createSVFrame -k {kSize} -s {input.varants}  -g {input.refrence} -o {params.outputPrefix} -t {tmpFolder}$$/ &> {log}
+       /usr/bin/time -v -o {output.time} ./createSVFrame -k {kSize} -s {input.variants}  -g {input.reference} -o {params.outputPrefix} -t {tmpFolder}$$/ &> {log}
      
         rm -rf {tmpFolder}$$/
      """
