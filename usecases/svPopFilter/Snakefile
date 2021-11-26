@@ -51,8 +51,10 @@ framesToBeJoined+= expand(outFolder+"kProcessor/{sample}.kframe.bmqf.bmqf",sampl
 
 rule all:
     input:
-         outFolder+"kProcessor/cdbg.phmap",
-         outFolder+"kProcessor/variants.phmap"
+        expand(outFolder+"kProcessor/reads/variants.output.{experiment}",experiment=short.keys());
+#         outFolder+"kProcessor/cdbg.phmap",
+#         outFolder+"kProcessor/variants.phmap",
+
  #        expand(outFolder+"kProcessor/{sample}.kframe.bmqf.bmqf",sample=progny_short.keys)
 #        expand(outFolder+"kmc/{sample}.kmc_pre",sample=dbgs),
 #        expand(outFolder+"bcalm/{sample}.unitigs.fa",sample=progny_short.keys()),
