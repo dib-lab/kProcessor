@@ -202,6 +202,24 @@ rule createSVFrame:
         rm -rf {tmpFolder}$$/
      """
 
+rule extractReads:
+    input:
+        kframe=outFolder+"kProcessor/variants.phmap",
+        read1=,
+        read2=
+    output:
+        out=outFolder+"kProcessor/variants.output",
+        time=outFolder+"kProcessor/variants.extractReads.time"
+    params:
+        inputPrefix=outFolder+ "kProcessor/variants"
+    log: outFolder+"kProcessor/variants.extractReads.log"
+    conda: "env.yaml"
+    shell:
+        """
+        mkdir -p {tmpFolder}$$/
+       /usr/bin/time -v -o {output.time} ./extractReads -k {kSize} -s {params.inputPrefix}  -r {input.read1}:{input.read2}  -o {output.out} -t {tmpFolder}$$/ > {output.out} 2> {log}
+        rm -rf {tmpFolder}$$/
+     """
 
 # rule JoinAll:
 #     input:
