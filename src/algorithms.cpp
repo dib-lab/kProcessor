@@ -1072,112 +1072,112 @@ namespace kProcessor {
         output->addColumn("color",colorColumn);
     }
 
-    void createPrefixForest(kDataFrame* index, string tmpFolder,uint32_t num_vectors,uint32_t vector_size){
-        unsigned i=0;
-        vector<deduplicatedColumn<prefixTrie,phmap::btree_map<uint32_t,uint32_t>>* > trees;
-        auto it=index->columns.find("color"+to_string(i));
-        uint32_t noSamples=0;
-        while(it!=index->columns.end())
-        {
-            i++;
-            trees.push_back((deduplicatedColumn<prefixTrie,phmap::btree_map<uint32_t,uint32_t>>* )it->second);
-            noSamples+=trees.back()->values->noSamples;
-            it=index->columns.find("color"+to_string(i));
-        }
-        uint32_t noColumns=i;
-        cerr<<"Number of trees "<<noColumns<<endl;
-        phmap::flat_hash_map<uint64_t,uint32_t> invColor;
-        phmap::flat_hash_map<uint32_t,uint32_t> colorHistogram;
-        const uint32_t colorsVecSize= noColumns *10000;
-        const uint32_t ordersVecSize=noColumns *10000;
-
-        //sdsl::int_vector<> colors(colorsVecSize);
-        //uint32_t colorsTop=noColumns;
-        //uint32_t colorsVecID=0;
-        sdsl::int_vector<> orders(ordersVecSize);
-        uint32_t ordersVecID=0;
-        uint32_t orderRange=index->lastKmerOrder;
-        ofstream orderFile(tmpFolder+"orders");
-        auto colors=new insertColorColumn(noColumns, tmpFolder,num_vectors,vector_size);
-        //ofstream colorsFile(tmpFolder+"colors");
-        vector<uint32_t> currColor(noColumns);
-        uint32_t lastColorID=1;
-        cerr<<"Num of kmers "<<orderRange<<endl;
-        uint32_t chunk=orderRange/10;
-        for(i=0; i< orderRange; i++)
-        {
-            if(i%chunk==0)
-                cerr<<(int)(((float)i/(float)orderRange)*100)<<"%"<<endl;
-
-            if(i % ordersVecSize ==0 && i != 0 )
-            {
-                sdsl::int_vector<> tmp=orders;
-                sdsl::util::bit_compress(tmp);
-                tmp.serialize(orderFile);
-                ordersVecID++;
-            }
-            currColor.clear();
-            for(unsigned j=0; j<trees.size(); j++ )
-            {
-                auto it = trees[j]->index.find(i);
-                currColor[j]=0;
-                if(it!=trees[j]->index.end()){
-                    currColor.push_back(j);
-                    currColor.push_back(it->second);
-                }
-            }
-            orders[i % ordersVecSize]=colors->insertAndGetIndex(currColor);
-
-
-        }
-        cerr<<"step one finsihed"<<endl;
-//        ofstream hist("hist");
-//        for(auto h:colorHistogram)
-//            hist<<h.first<<"\t"<<h.second<<endl;
-        sdsl::util::bit_compress(orders);
-        orders.serialize(orderFile);
-        ordersVecID++;
-
-        orderFile.close();
-
-
-
-        prefixForest* forest=new prefixForest();
-        forest->noSamples=noSamples;
-        forest->numColors=invColor.size();
-        invColor.clear();
-
-        forest->orderVecSize=ordersVecSize;
-        forest->trees=deque<prefixTrie*>(trees.size());
-        for(unsigned i=0;i<trees.size();i++){
-            forest->trees[i]=(prefixTrie*)(trees[i]->values->clone());
-   //         delete trees[i];
-        }
-        cerr<<"Copying trees is finished"<<endl;
-
-        ifstream orderInputFile(tmpFolder+"orders");
-
-        forest->orderColorID.resize(ordersVecID);
-        for(unsigned i=0;i<ordersVecID;i++)
-        {
-            forest->orderColorID[i]=new prefixForest::vectype ();
-            forest->orderColorID[i]->load(orderInputFile);
-        }
-        cerr<<"Orders is loaded"<<endl;
-
-        forest->ColorIDPointer=new mixVectors(colors);
-        prefixTrie* ptmp= new prefixTrie(forest->ColorIDPointer);
-        ptmp->explainSize();
-        cerr<<"colors is loaded"<<endl;
-
-        forest->explainSize();
-//        for(unsigned  i=0; i< noColumns;i++)
+//    void createPrefixForest(kDataFrame* index, string tmpFolder,uint32_t num_vectors,uint32_t vector_size){
+//        unsigned i=0;
+//        vector<deduplicatedColumn<prefixTrie,phmap::btree_map<uint32_t,uint32_t>>* > trees;
+//        auto it=index->columns.find("color"+to_string(i));
+//        uint32_t noSamples=0;
+//        while(it!=index->columns.end())
 //        {
-//            index->columns.erase("color"+ to_string(i));
+//            i++;
+//            trees.push_back((deduplicatedColumn<prefixTrie,phmap::btree_map<uint32_t,uint32_t>>* )it->second);
+//            noSamples+=trees.back()->values->noSamples;
+//            it=index->columns.find("color"+to_string(i));
 //        }
-        index->columns["color"]=(Column*)forest;
-
-    }
+//        uint32_t noColumns=i;
+//        cerr<<"Number of trees "<<noColumns<<endl;
+//        phmap::flat_hash_map<uint64_t,uint32_t> invColor;
+//        phmap::flat_hash_map<uint32_t,uint32_t> colorHistogram;
+//        const uint32_t colorsVecSize= noColumns *10000;
+//        const uint32_t ordersVecSize=noColumns *10000;
+//
+//        //sdsl::int_vector<> colors(colorsVecSize);
+//        //uint32_t colorsTop=noColumns;
+//        //uint32_t colorsVecID=0;
+//        sdsl::int_vector<> orders(ordersVecSize);
+//        uint32_t ordersVecID=0;
+//        uint32_t orderRange=index->lastKmerOrder;
+//        ofstream orderFile(tmpFolder+"orders");
+//        auto colors=new insertColorColumn(noColumns, tmpFolder,num_vectors,vector_size);
+//        //ofstream colorsFile(tmpFolder+"colors");
+//        vector<uint32_t> currColor(noColumns);
+//        uint32_t lastColorID=1;
+//        cerr<<"Num of kmers "<<orderRange<<endl;
+//        uint32_t chunk=orderRange/10;
+//        for(i=0; i< orderRange; i++)
+//        {
+//            if(i%chunk==0)
+//                cerr<<(int)(((float)i/(float)orderRange)*100)<<"%"<<endl;
+//
+//            if(i % ordersVecSize ==0 && i != 0 )
+//            {
+//                sdsl::int_vector<> tmp=orders;
+//                sdsl::util::bit_compress(tmp);
+//                tmp.serialize(orderFile);
+//                ordersVecID++;
+//            }
+//            currColor.clear();
+//            for(unsigned j=0; j<trees.size(); j++ )
+//            {
+//                auto it = trees[j]->index.find(i);
+//                currColor[j]=0;
+//                if(it!=trees[j]->index.end()){
+//                    currColor.push_back(j);
+//                    currColor.push_back(it->second);
+//                }
+//            }
+//            orders[i % ordersVecSize]=colors->insertAndGetIndex(currColor);
+//
+//
+//        }
+//        cerr<<"step one finsihed"<<endl;
+////        ofstream hist("hist");
+////        for(auto h:colorHistogram)
+////            hist<<h.first<<"\t"<<h.second<<endl;
+//        sdsl::util::bit_compress(orders);
+//        orders.serialize(orderFile);
+//        ordersVecID++;
+//
+//        orderFile.close();
+//
+//
+//
+//        prefixForest* forest=new prefixForest();
+//        forest->noSamples=noSamples;
+//        forest->numColors=invColor.size();
+//        invColor.clear();
+//
+//        forest->orderVecSize=ordersVecSize;
+//        forest->trees=deque<prefixTrie*>(trees.size());
+//        for(unsigned i=0;i<trees.size();i++){
+//            forest->trees[i]=(prefixTrie*)(trees[i]->values->clone());
+//   //         delete trees[i];
+//        }
+//        cerr<<"Copying trees is finished"<<endl;
+//
+//        ifstream orderInputFile(tmpFolder+"orders");
+//
+//        forest->orderColorID.resize(ordersVecID);
+//        for(unsigned i=0;i<ordersVecID;i++)
+//        {
+//            forest->orderColorID[i]=new prefixForest::vectype ();
+//            forest->orderColorID[i]->load(orderInputFile);
+//        }
+//        cerr<<"Orders is loaded"<<endl;
+//
+//        forest->ColorIDPointer=new mixVectors(colors);
+//        prefixTrie* ptmp= new prefixTrie(forest->ColorIDPointer);
+//        ptmp->explainSize();
+//        cerr<<"colors is loaded"<<endl;
+//
+//        forest->explainSize();
+////        for(unsigned  i=0; i< noColumns;i++)
+////        {
+////            index->columns.erase("color"+ to_string(i));
+////        }
+//        index->columns["color"]=(Column*)forest;
+//
+//    }
     void mergeIndexes(vector<kDataFrame *> &input, string tmpFolder, kDataFrame *output) {
 
         // typedef deduplicatedColumn<vector<uint32_t>, mixVectors> colorColumnType;

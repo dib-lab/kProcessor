@@ -190,6 +190,7 @@ class _vectorBaseIterator{
     virtual bool operator !=(const _vectorBaseIterator& other)=0;
     virtual vector<uint32_t> operator*()=0;
     virtual uint32_t getID()=0;
+    virtual uint32_t getLocalID()=0;
     virtual ~_vectorBaseIterator(){};
 
 };
@@ -232,6 +233,7 @@ public:
         (*iterator)++;
         return *this;
     }
+
     /// Compare the position of each iterator in the underlying datastructure.
     /*! returns True when current and other points to the same kmer */
     bool operator ==(const vectorBaseIterator& other)
@@ -250,6 +252,9 @@ public:
 
     uint32_t getID(){
         return iterator->getID();
+    }
+    uint32_t getLocalID(){
+        return iterator->getLocalID();
     }
     ~vectorBaseIterator(){
         delete iterator;
@@ -414,6 +419,10 @@ public:
     {
         return (startsIt-origin->starts.begin())+origin->beginID;
     }
+    uint32_t getLocalID()
+    {
+        return (startsIt-origin->starts.begin());
+    }
     ~vectorOfVectorsIterator(){};
 
 };
@@ -574,6 +583,10 @@ public:
     {
         return (it-origin->vec.begin())/origin->colorsize+origin->beginID;
     }
+    uint32_t getLocalID()
+    {
+        return (it-origin->vec.begin())/origin->colorsize;
+    }
     ~fixedSizeVectorIterator(){};
 
 };
@@ -609,6 +622,7 @@ public:
 
 };
 class StringColorColumn;
+
 class mixVectors: public queryColorColumn{
 public:
     typedef vector<uint32_t> dataType ;
@@ -643,6 +657,7 @@ public:
     void serialize(string filename);
     void deserialize(string filename);
     void sortColors();
+    void createSortedIndex();
 
 //    void optimize2();
 //    void optimize3(insertColorColumn* col);
@@ -669,6 +684,22 @@ public:
 
     Column *clone() override;
 
+
+};
+class mixVectorSortedIterator{
+public:
+    mixVectors* data;
+    uint32_t curr;
+    uint32_t end;
+    mixVectorSortedIterator(){
+        data=nullptr;
+        curr=0;
+        end=0;
+    }
+    mixVectorSortedIterator(mixVectors* pdata,vector<uint32_t> scope={});
+    void next();
+    pair<uint32_t, vector<uint32_t> > get();
+    bool finished();
 
 };
 class prefixTrieIterator;
@@ -741,54 +772,54 @@ public:
 
     Column *clone() override;
 };
-class prefixForest: public queryColorColumn{
-public:
-    typedef  vector<uint32_t> dataType;
-    typedef  sdsl::int_vector<> vectype;
-    deque<prefixTrie*> trees;
-    deque<vectype*>  orderColorID;
-    mixVectors*  ColorIDPointer;
-
-    uint32_t orderVecSize;
-
-    prefixForest()
-    {
-    }
-    prefixForest(uint32_t orderVecSize)
-    {
-        this->orderVecSize=orderVecSize;
-    }
-
-    ~prefixForest(){
-        for(auto t:trees)
-            delete t;
-        for(auto b:orderColorID)
-            delete b;
-        delete ColorIDPointer;
-
-
-    }
-
-    uint32_t  insertAndGetIndex(vector<uint32_t >& item);
-    vector<uint32_t > getWithIndex(uint32_t index);
-
-    void insert(vector<uint32_t >& item,uint32_t index);
-    vector<uint32_t > get(uint32_t index);
-
-    void serialize(string filename);
-    void deserialize(string filename);
-
-    uint64_t sizeInBytes();
-    void explainSize();
-    Column* getTwin();
-    void resize(uint32_t size);
-    uint32_t size()
-    {
-        return numColors;
-    }
-
-    Column *clone() override;
-};
+//class prefixForest: public queryColorColumn{
+//public:
+//    typedef  vector<uint32_t> dataType;
+//    typedef  sdsl::int_vector<> vectype;
+//    deque<prefixTrie*> trees;
+//    deque<vectype*>  orderColorID;
+//    mixVectors*  ColorIDPointer;
+//
+//    uint32_t orderVecSize;
+//
+//    prefixForest()
+//    {
+//    }
+//    prefixForest(uint32_t orderVecSize)
+//    {
+//        this->orderVecSize=orderVecSize;
+//    }
+//
+//    ~prefixForest(){
+//        for(auto t:trees)
+//            delete t;
+//        for(auto b:orderColorID)
+//            delete b;
+//        delete ColorIDPointer;
+//
+//
+//    }
+//
+//    uint32_t  insertAndGetIndex(vector<uint32_t >& item);
+//    vector<uint32_t > getWithIndex(uint32_t index);
+//
+//    void insert(vector<uint32_t >& item,uint32_t index);
+//    vector<uint32_t > get(uint32_t index);
+//
+//    void serialize(string filename);
+//    void deserialize(string filename);
+//
+//    uint64_t sizeInBytes();
+//    void explainSize();
+//    Column* getTwin();
+//    void resize(uint32_t size);
+//    uint32_t size()
+//    {
+//        return numColors;
+//    }
+//
+//    Column *clone() override;
+//};
 
 
 

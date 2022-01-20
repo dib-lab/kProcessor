@@ -432,6 +432,7 @@ vector<uint32_t> mixVectors::getWithIndex(uint32_t index) {
     return res;
 }
 mixVectors::mixVectors(vector<vector<uint32_t> > colorsInput,uint32_t noSamples) {
+    sorted=false;
     colors.push_back(new vectorOfVectors(0, 1));
     numColors=colorsInput.size();
     this->noSamples=noSamples;
@@ -441,6 +442,7 @@ mixVectors::mixVectors(vector<vector<uint32_t> > colorsInput,uint32_t noSamples)
 
 }
 mixVectors::mixVectors(insertColorColumn *col) {
+    sorted=false;
     col->populateColors();
     colors.push_back(new vectorOfVectors(0, 1));
     this->noSamples = col->noSamples;
@@ -477,9 +479,12 @@ mixVectors::mixVectors(insertColorColumn *col) {
 }
 
 void mixVectors::sortColors() {
+    if(sorted)
+        return;
 #pragma omp parallel for
     for (unsigned int i = 0; i < colors.size(); i++)
         colors[i]->sort(idsMap);
+    sorted=true;
 }
 
 
@@ -636,6 +641,69 @@ Column *mixVectors::clone() {
         res->colors[i]=colors[i]->clone();
     res->idsMap=idsMap;
     return res;
+}
+
+void mixVectors::createSortedIndex() {
+    if(!sortedColorsIndex.empty())
+        return;
+    sortColors();
+    sortedColorsIndex.resize(numColors+3);
+    auto compare = [](tuple<vector<uint32_t>, uint32_t, vectorBaseIterator *, vectorBaseIterator *> lhs,
+            tuple<vector<uint32_t>, uint32_t, vectorBaseIterator *, vectorBaseIterator *> rhs) {
+        if (std::get<0>(lhs)[0] < std::get<0>(rhs)[0])
+            return true;
+        else if (std::get<0>(lhs)[0] > std::get<0>(rhs)[0])
+            return false;
+
+
+        for (unsigned int i = 1; i < std::get<0>(lhs).size() && i < std::get<0>(rhs).size(); i++)
+            if (std::get<0>(lhs)[i] > std::get<0>(rhs)[i])
+                return true;
+            else if (std::get<0>(lhs)[i] < std::get<0>(rhs)[i])
+                return false;
+            return std::get<0>(lhs).size() > std::get<0>(rhs).size();
+    };
+    priority_queue<tuple<vector<uint32_t>, uint32_t, vectorBaseIterator *, vectorBaseIterator *>, vector<tuple<vector<uint32_t>, uint32_t, vectorBaseIterator *, vectorBaseIterator *> >, decltype(compare)> nextColor(
+            compare);
+    unsigned vecIndex=0;
+    for (auto c:colors) {
+        vectorBaseIterator *it = new vectorBaseIterator(c->begin());
+        vectorBaseIterator *itEnd = new vectorBaseIterator(c->end());
+        if (*it != *itEnd) {
+            vector<uint32_t> arr = **it;
+            if (!arr.empty())
+                nextColor.push(make_tuple(arr, vecIndex, it, itEnd));
+            else{
+                delete it;
+                delete itEnd;
+            }
+        }
+        else{
+            delete it;
+            delete itEnd;
+        }
+        vecIndex++;
+
+    }
+    unsigned currColor=0;
+    while (!nextColor.empty()) {
+        auto colorTuple = nextColor.top();
+        nextColor.pop();
+        vecIndex=std::get<1>(colorTuple);
+        auto currIterator=std::get<2>(colorTuple);
+        auto endIterator=std::get<3>(colorTuple);
+
+        sortedColorsIndex[currColor]=make_pair(vecIndex, currIterator->getLocalID());
+        currColor++;
+        currIterator->next();
+        if (*currIterator != *endIterator) {
+            std::get<0>(colorTuple) = *(*(currIterator));
+            nextColor.push(colorTuple);
+        } else {
+            delete currIterator;
+            delete endIterator;
+        }
+    }
 }
 
 
@@ -949,6 +1017,7 @@ void prefixTrie::loadFromQueryColorColumn(mixVectors  *col) {
         starts[i]=starts[i-1]+tree[i-1]->size();
         totalSize += tree[i-1]->size();
     }
+    auto sortedIterator=new mixVectorSortedIterator(col);
     while (!nextColor.empty()) {
         auto colorTuple = nextColor.top();
         nextColor.pop();
@@ -959,7 +1028,22 @@ void prefixTrie::loadFromQueryColorColumn(mixVectors  *col) {
 //        }
 //        cout<<endl;
         vector<uint32_t> currColor(std::get<0>(colorTuple).begin(), std::get<0>(colorTuple).end());
+        uint32_t colorGlobalIndex=std::get<1>(colorTuple);
 
+        pair<uint32_t,vector<uint32_t> > testColor=sortedIterator->get();
+        if(testColor.first!= colorGlobalIndex || currColor != testColor.second)
+        {
+            cout<<"Error "<<colorGlobalIndex<<" should be "<<testColor.first<<endl;
+            cout<<"correct ";
+            for(auto c : currColor)
+                cout<<c<<" ";
+            cout<<endl<<"test ";
+            for(auto c : testColor.second)
+                cout<<c<<" ";
+            cout<<endl;
+        }
+
+        sortedIterator->next();
         unsigned int i = 0;
         for (; i < currPrefix.size() && i < std::get<0>(colorTuple).size(); i++) {
             if (currPrefix[i] != std::get<0>(colorTuple)[i])
@@ -1086,14 +1170,7 @@ void prefixTrie::loadFromQueryColorColumn(mixVectors  *col) {
         }
 
     }
-    for (unsigned int j = 0; j < pastNodes.size(); j++) {
-        (*tree[currTree])[tmpTreeTop++] = false;
-        if (tmpTreeTop == tree[currTree]->size()) {
-            cerr << "Tmp bp_tree of size " << tree[currTree]->size() << "(" << sdsl::size_in_mega_bytes(*tree[currTree])
-                 << "MB) is full! size will doubled" << endl;
-            tree[currTree]->resize(tree[currTree]->size() * 2);
-        }
-    }
+
     for (unsigned int k = 0; k < pastNodes.size(); k++) {
         nodesCache.erase(pastNodes[k]);
         rank++;
@@ -1753,179 +1830,207 @@ deduplicatedColumn<prefixTrie,phmap::btree_map<uint32_t,uint32_t> >::deduplicate
 
 }
 
-uint32_t prefixForest::insertAndGetIndex(vector<uint32_t> &item) {
-    throw std::logic_error("insertAndGetIndex is not supported in prefixForest");
-}
+//uint32_t prefixForest::insertAndGetIndex(vector<uint32_t> &item) {
+//    throw std::logic_error("insertAndGetIndex is not supported in prefixForest");
+//}
+//
+//void prefixForest::insert(vector<uint32_t> &item, uint32_t index) {
+//    throw std::logic_error("insertAndGetIndex is not supported in prefixForest");
+//
+//}
+//
+//vector<uint32_t> prefixForest::get(uint32_t index) {
+//    return getWithIndex(index);
+//}
+//vector<uint32_t> prefixForest::getWithIndex(uint32_t index)  {
+//    vector<uint32_t> result(noSamples);
+//    uint32_t resTop=0;
+//    uint32_t orderVecID=index/orderVecSize;
+//    uint32_t orderSubIndex=index%orderVecSize;
+//    uint32_t colorID=(*(orderColorID[orderVecID]))[orderSubIndex]*trees.size();
+//    //uint32_t colorVecID=colorID/colorVecSize;
+//    //uint32_t colorSubIndex=colorID%colorVecSize;
+//    vector<uint32_t> treePointers=ColorIDPointer->get(colorID);
+//    uint32_t samplesOffset=0;
+//    for(unsigned i=0;i<treePointers.size();i+=2)
+//    {
+//
+//        vector<uint32_t> tmp=trees[treePointers[i]]->getWithIndex(treePointers[i+1]);
+//        for(auto s:tmp)
+//            result[resTop++]=s+samplesOffset;
+//        samplesOffset+=trees[i]->noSamples;
+//    }
+//    result.resize(resTop);
+//    return result;
+//}
+//void prefixForest::serialize(string filename) {
+//    ofstream out(filename.c_str());
+//    out.write((char *) (&(noSamples)), sizeof(uint64_t));
+//    out.write((char *) (&(numColors)), sizeof(uint64_t));
+//    out.write((char *) (&(orderVecSize)), sizeof(uint32_t));
+//    uint32_t tmp=trees.size();
+//    out.write((char *) (&(tmp)), sizeof(uint32_t));
+//    for(unsigned i=0;i<trees.size();i++)
+//    {
+//        trees[i]->serialize(filename+".tree."+ to_string(i));
+//    }
+//    tmp=orderColorID.size();
+//    out.write((char *) (&(tmp)), sizeof(uint32_t));
+//    for(auto v: orderColorID)
+//        v->serialize(out);
+//    tmp=ColorIDPointer->size();
+//    out.write((char *) (&(tmp)), sizeof(uint32_t));
+//    for(auto v: *ColorIDPointer)
+//        v->serialize(out);
+//
+//    out.close();
+//    ColorIDPointer->serialize(filename+".colors.mixvectors");
+//}
+//
+//void prefixForest::deserialize(string filename) {
+//    ifstream input(filename.c_str());
+//    input.read((char *) (&(noSamples)), sizeof(uint64_t));
+//    input.read((char *) (&(numColors)), sizeof(uint64_t));
+//    input.read((char *) (&(orderVecSize)), sizeof(uint32_t));
+//    uint32_t tmp;
+//    input.read((char *) (&(tmp)), sizeof(uint32_t));
+//    trees=deque<prefixTrie*>(tmp);
+//
+//    for(unsigned i=0;i<trees.size();i++)
+//    {
+//        trees[i]=new prefixTrie();
+//        trees[i]->deserialize(filename+".tree."+ to_string(i));
+//    }
+//    input.read((char *) (&(tmp)), sizeof(uint32_t));
+//    orderColorID=deque<vectype *>(tmp);
+//    for(unsigned i=0; i<orderColorID.size() ; i++){
+//        orderColorID[i]=new vectype ();
+//        orderColorID[i]->load(input);
+//    }
+//
+//    ColorIDPointer=new mixVectors();
+//    ColorIDPointer->deserialize(filename+".colors.mixvectors");
+//
+//    input.close();
+//
+//}
+//
+//
+//
+//uint64_t prefixForest::sizeInBytes() {
+//    uint64_t totalSize=8;
+//    for(auto t:trees)
+//        totalSize+=t->sizeInBytes();
+//
+//    totalSize+=ColorIDPointer->sizeInBytes();
+//    for(auto v:orderColorID)
+//        totalSize+=sdsl::size_in_bytes(*v);
+//    return totalSize;
+//}
+//
+//void prefixForest::explainSize() {
+//    uint64_t totalSize=0;
+//    for(auto t:trees)
+//        totalSize+=t->sizeInBytes();
+//    cerr<<"Size of the trees = "<<totalSize/(1024.0*1024.0)<<"MB"<<endl;
+//    totalSize=0;
+//    totalSize+=ColorIDPointer->sizeInBytes();
+//
+//    cerr<<"Size Color ID to tree pointers = "<<totalSize/(1024.0*1024.0)<<"MB"<<endl;
+//    totalSize=0;
+//
+//    for(auto v:orderColorID)
+//        totalSize+=sdsl::size_in_bytes(*v);
+//    cerr<<"Size of the kmerOrder to colorID = "<<totalSize/(1024.0*1024.0)<<"MB"<<endl;
+//
+//     cerr<<"Total = "<<sizeInBytes()/(1024.0*1024.0)<<"MB"<<endl;
+//
+//     ColorIDPointer->explainSize();
+//}
+//
+//Column *prefixForest::getTwin() {
+//    prefixForest* result=new prefixForest();
+//    result->numColors=numColors;
+//    result->noSamples=noSamples;
+//    result->orderVecSize=orderVecSize;
+//
+//    result->orderColorID=deque<vectype*>(orderColorID.size());
+//    // same as clone but order is blank
+//    for(unsigned i=0; i< result->orderColorID.size() ; i++ )
+//    {
+//        result->orderColorID[i] = new vectype (orderColorID[i]->size());
+//    }
+//    result->ColorIDPointer= (mixVectors*)ColorIDPointer->clone();
+//    result->trees=deque<prefixTrie*>(trees.size());
+//    for(unsigned i=0; i< result->trees.size();i++)
+//        result->trees[i]=(prefixTrie*) trees[i]->clone();
+//
+//    return result;
+//}
+//
+//void prefixForest::resize(uint32_t size) {
+//    uint32_t currSize=orderVecSize*orderColorID.size();
+//    if(currSize > size)
+//    {
+//        uint32_t neededVecs=(size/orderVecSize)+1;
+//        for(unsigned i=neededVecs+1;i<orderColorID.size();i++)
+//            delete orderColorID[i];
+//        orderColorID.erase(orderColorID.begin()+neededVecs+1,orderColorID.end());
+//    }
+//    else if (currSize < size)
+//    {
+//        while(currSize < size){
+//            orderColorID.push_back(new vectype(orderVecSize));
+//            currSize=orderVecSize*orderColorID.size();
+//        }
+//    }
+//
+//}
+//
+//Column *prefixForest::clone() {
+//    prefixForest* result=new prefixForest();
+//    result->numColors=numColors;
+//    result->noSamples=noSamples;
+//    result->orderVecSize=orderVecSize;
+//
+//    result->orderColorID=deque<vectype*>(orderColorID.size());
+//    for(unsigned i=0; i< result->orderColorID.size() ; i++ )
+//    {
+//        result->orderColorID[i] = new vectype (*orderColorID[i]);
+//    }
+//    result->ColorIDPointer=(mixVectors*)ColorIDPointer->clone();
+//    result->trees=deque<prefixTrie*>(trees.size());
+//    for(unsigned i=0; i< result->trees.size();i++)
+//        result->trees[i]=(prefixTrie*) trees[i]->clone();
+//
+//
+//    return result;
+//}
 
-void prefixForest::insert(vector<uint32_t> &item, uint32_t index) {
-    throw std::logic_error("insertAndGetIndex is not supported in prefixForest");
-
-}
-
-vector<uint32_t> prefixForest::get(uint32_t index) {
-    return getWithIndex(index);
-}
-vector<uint32_t> prefixForest::getWithIndex(uint32_t index)  {
-    vector<uint32_t> result(noSamples);
-    uint32_t resTop=0;
-    uint32_t orderVecID=index/orderVecSize;
-    uint32_t orderSubIndex=index%orderVecSize;
-    uint32_t colorID=(*(orderColorID[orderVecID]))[orderSubIndex]*trees.size();
-    //uint32_t colorVecID=colorID/colorVecSize;
-    //uint32_t colorSubIndex=colorID%colorVecSize;
-    vector<uint32_t> treePointers=ColorIDPointer->get(colorID);
-    uint32_t samplesOffset=0;
-    for(unsigned i=0;i<treePointers.size();i+=2)
+mixVectorSortedIterator::mixVectorSortedIterator(mixVectors *pdata, vector<uint32_t> scope) {
+    pdata->createSortedIndex();
+    data=pdata;
+    if(scope.empty())
     {
-
-        vector<uint32_t> tmp=trees[treePointers[i]]->getWithIndex(treePointers[i+1]);
-        for(auto s:tmp)
-            result[resTop++]=s+samplesOffset;
-        samplesOffset+=trees[i]->noSamples;
+        curr=0;
+        end=pdata->numColors;
     }
-    result.resize(resTop);
-    return result;
-}
-void prefixForest::serialize(string filename) {
-    ofstream out(filename.c_str());
-    out.write((char *) (&(noSamples)), sizeof(uint64_t));
-    out.write((char *) (&(numColors)), sizeof(uint64_t));
-    out.write((char *) (&(orderVecSize)), sizeof(uint32_t));
-    uint32_t tmp=trees.size();
-    out.write((char *) (&(tmp)), sizeof(uint32_t));
-    for(unsigned i=0;i<trees.size();i++)
-    {
-        trees[i]->serialize(filename+".tree."+ to_string(i));
+    else{
+        throw std::logic_error("Not implemented yet");
     }
-    tmp=orderColorID.size();
-    out.write((char *) (&(tmp)), sizeof(uint32_t));
-    for(auto v: orderColorID)
-        v->serialize(out);
-    tmp=ColorIDPointer.size();
-    out.write((char *) (&(tmp)), sizeof(uint32_t));
-    for(auto v: ColorIDPointer)
-        v->serialize(out);
-
-    out.close();
-    ColorIDPointer->serialize(filename+".colors.mixvectors");
 }
 
-void prefixForest::deserialize(string filename) {
-    ifstream input(filename.c_str());
-    input.read((char *) (&(noSamples)), sizeof(uint64_t));
-    input.read((char *) (&(numColors)), sizeof(uint64_t));
-    input.read((char *) (&(orderVecSize)), sizeof(uint32_t));
-    uint32_t tmp;
-    input.read((char *) (&(tmp)), sizeof(uint32_t));
-    trees=deque<prefixTrie*>(tmp);
-
-    for(unsigned i=0;i<trees.size();i++)
-    {
-        trees[i]=new prefixTrie();
-        trees[i]->deserialize(filename+".tree."+ to_string(i));
-    }
-    input.read((char *) (&(tmp)), sizeof(uint32_t));
-    orderColorID=deque<vectype *>(tmp);
-    for(unsigned i=0; i<orderColorID.size() ; i++){
-        orderColorID[i]=new vectype ();
-        orderColorID[i]->load(input);
-    }
-
-    ColorIDPointer=new mixVectors();
-    ColorIDPointer->deserialize(filename+".colors.mixvectors");
-
-    input.close();
-
+void mixVectorSortedIterator::next() {
+    curr++;
 }
 
-
-
-uint64_t prefixForest::sizeInBytes() {
-    uint64_t totalSize=8;
-    for(auto t:trees)
-        totalSize+=t->sizeInBytes();
-
-    totalSize+=ColorIDPointer->sizeInBytes();
-    for(auto v:orderColorID)
-        totalSize+=sdsl::size_in_bytes(*v);
-    return totalSize;
+pair<uint32_t, vector<uint32_t> > mixVectorSortedIterator::get() {
+    uint32_t vecIndex=data->sortedColorsIndex[curr].first;
+    uint32_t colorIndex=data->sortedColorsIndex[curr].second;
+    return make_pair(colorIndex+data->colors[vecIndex]->beginID,
+                     data->colors[vecIndex]->get(colorIndex));
 }
 
-void prefixForest::explainSize() {
-    uint64_t totalSize=0;
-    for(auto t:trees)
-        totalSize+=t->sizeInBytes();
-    cerr<<"Size of the trees = "<<totalSize/(1024.0*1024.0)<<"MB"<<endl;
-    totalSize=0;
-    totalSize+=ColorIDPointer->sizeInBytes();
-
-    cerr<<"Size Color ID to tree pointers = "<<totalSize/(1024.0*1024.0)<<"MB"<<endl;
-    totalSize=0;
-
-    for(auto v:orderColorID)
-        totalSize+=sdsl::size_in_bytes(*v);
-    cerr<<"Size of the kmerOrder to colorID = "<<totalSize/(1024.0*1024.0)<<"MB"<<endl;
-
-     cerr<<"Total = "<<sizeInBytes()/(1024.0*1024.0)<<"MB"<<endl;
-
-     ColorIDPointer->explainSize();
-}
-
-Column *prefixForest::getTwin() {
-    prefixForest* result=new prefixForest();
-    result->numColors=numColors;
-    result->noSamples=noSamples;
-    result->orderVecSize=orderVecSize;
-
-    result->orderColorID=deque<vectype*>(orderColorID.size());
-    // same as clone but order is blank
-    for(unsigned i=0; i< result->orderColorID.size() ; i++ )
-    {
-        result->orderColorID[i] = new vectype (orderColorID[i]->size());
-    }
-    result->ColorIDPointer= (mixVectors*)ColorIDPointer->clone();
-    result->trees=deque<prefixTrie*>(trees.size());
-    for(unsigned i=0; i< result->trees.size();i++)
-        result->trees[i]=(prefixTrie*) trees[i]->clone();
-
-    return result;
-}
-
-void prefixForest::resize(uint32_t size) {
-    uint32_t currSize=orderVecSize*orderColorID.size();
-    if(currSize > size)
-    {
-        uint32_t neededVecs=(size/orderVecSize)+1;
-        for(unsigned i=neededVecs+1;i<orderColorID.size();i++)
-            delete orderColorID[i];
-        orderColorID.erase(orderColorID.begin()+neededVecs+1,orderColorID.end());
-    }
-    else if (currSize < size)
-    {
-        while(currSize < size){
-            orderColorID.push_back(new vectype(orderVecSize));
-            currSize=orderVecSize*orderColorID.size();
-        }
-    }
-
-}
-
-Column *prefixForest::clone() {
-    prefixForest* result=new prefixForest();
-    result->numColors=numColors;
-    result->noSamples=noSamples;
-    result->orderVecSize=orderVecSize;
-
-    result->orderColorID=deque<vectype*>(orderColorID.size());
-    for(unsigned i=0; i< result->orderColorID.size() ; i++ )
-    {
-        result->orderColorID[i] = new vectype (*orderColorID[i]);
-    }
-    result->ColorIDPointer=(mixVectors*)ColorIDPointer->clone();
-    result->trees=deque<prefixTrie*>(trees.size());
-    for(unsigned i=0; i< result->trees.size();i++)
-        result->trees[i]=(prefixTrie*) trees[i]->clone();
-
-
-    return result;
+bool mixVectorSortedIterator::finished() {
+    return curr >= end;
 }
