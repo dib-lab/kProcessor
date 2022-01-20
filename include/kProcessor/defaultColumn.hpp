@@ -614,12 +614,16 @@ public:
     typedef vector<uint32_t> dataType ;
     deque<vectorBase*> colors;
     sdsl::int_vector<> idsMap;
+    bool sorted;
+    vector<pair<uint32_t,uint32_t> > sortedColorsIndex;
     mixVectors(){
+        sorted=false;
         colors.push_back(new vectorOfVectors());
     }
     mixVectors(uint64_t noSamples){
         this->noSamples=noSamples;
         colors.push_back(new vectorOfVectors());
+        sorted=false;
     }
     mixVectors(insertColorColumn* col);
 
