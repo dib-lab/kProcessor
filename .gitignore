@@ -46,3 +46,4 @@ profile/*
 out/build/*
 .vs/*
 CMakeSettings.json
+/cmake-build-release-wsl/

@@ -743,17 +743,16 @@ public:
     typedef  sdsl::int_vector<> vectype;
     deque<prefixTrie*> trees;
     deque<vectype*>  orderColorID;
-    deque<vectype*>  ColorIDPointer;
+    mixVectors*  ColorIDPointer;
+
     uint32_t orderVecSize;
-    uint32_t colorVecSize;
 
     prefixForest()
     {
     }
-    prefixForest(uint32_t orderVecSize, uint32_t colorVecSize)
+    prefixForest(uint32_t orderVecSize)
     {
         this->orderVecSize=orderVecSize;
-        this->colorVecSize=colorVecSize;
     }
 
     ~prefixForest(){
@@ -761,8 +760,8 @@ public:
             delete t;
         for(auto b:orderColorID)
             delete b;
-        for(auto b:ColorIDPointer)
-            delete b;
+        delete ColorIDPointer;
+
 
     }
 

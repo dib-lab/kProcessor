@@ -127,7 +127,7 @@ namespace kProcessor {
      * the name of the columns are in the form of color<id>. I am using the id to sort the prefix tries in the forest.
      * the index is updated by the new forest and the prefix tries are deleted.
     */
-    void createPrefixForest(kDataFrame* index, string tmpFolder);
+    void createPrefixForest(kDataFrame* index, string tmpFolder,uint32_t num_vectors,uint32_t vector_size);
 
     /* Joins the input kdataframes into one kDataframe. All the columns in the input kdataframes will be copied to the output kdataframe and they will have new name in the format of "<inputColumnName><index in the input>".
      * kmersToKeep range is from 0-input.size() and it should be unique. kmers from kDataframes whose index exists in kmersToKeep will be inserted in the output dataframe.

@@ -1072,7 +1072,7 @@ namespace kProcessor {
         output->addColumn("color",colorColumn);
     }
 
-    void createPrefixForest(kDataFrame* index, string tmpFolder){
+    void createPrefixForest(kDataFrame* index, string tmpFolder,uint32_t num_vectors,uint32_t vector_size){
         unsigned i=0;
         vector<deduplicatedColumn<prefixTrie,phmap::btree_map<uint32_t,uint32_t>>* > trees;
         auto it=index->columns.find("color"+to_string(i));
@@ -1091,14 +1091,15 @@ namespace kProcessor {
         const uint32_t colorsVecSize= noColumns *10000;
         const uint32_t ordersVecSize=noColumns *10000;
 
-        sdsl::int_vector<> colors(colorsVecSize);
-        uint32_t colorsTop=noColumns;
-        uint32_t colorsVecID=0;
+        //sdsl::int_vector<> colors(colorsVecSize);
+        //uint32_t colorsTop=noColumns;
+        //uint32_t colorsVecID=0;
         sdsl::int_vector<> orders(ordersVecSize);
         uint32_t ordersVecID=0;
         uint32_t orderRange=index->lastKmerOrder;
         ofstream orderFile(tmpFolder+"orders");
-        ofstream colorsFile(tmpFolder+"colors");
+        auto colors=new insertColorColumn(noColumns, tmpFolder,num_vectors,vector_size);
+        //ofstream colorsFile(tmpFolder+"colors");
         vector<uint32_t> currColor(noColumns);
         uint32_t lastColorID=1;
         cerr<<"Num of kmers "<<orderRange<<endl;
@@ -1115,55 +1116,29 @@ namespace kProcessor {
                 tmp.serialize(orderFile);
                 ordersVecID++;
             }
+            currColor.clear();
             for(unsigned j=0; j<trees.size(); j++ )
             {
                 auto it = trees[j]->index.find(i);
                 currColor[j]=0;
-                if(it!=trees[j]->index.end())
-                    currColor[j]=it->second;
-            }
-            uint64_t hash=mum_hash(currColor.data(), currColor.size() * 4, 4495203915657755407);
-            auto it=invColor.find(hash);
-            uint32_t currColorID;
-            if(it==invColor.end())
-            {
-                currColorID=lastColorID++;
-                invColor[hash]=currColorID;
-                colorHistogram[currColorID]=1;
-                for(unsigned j=0;j<noColumns;j++)
-                    colors[colorsTop++]=currColor[j];
-                if(colorsTop==colorsVecSize)
-                {
-                    colorsTop=0;
-                    sdsl::int_vector<> tmp=colors;
-                    sdsl::util::bit_compress(tmp);
-                    tmp.serialize(colorsFile);
-                    colorsVecID++;
+                if(it!=trees[j]->index.end()){
+                    currColor.push_back(j);
+                    currColor.push_back(it->second);
                 }
-                if(lastColorID%100000==0)
-                    cerr<<"Colors "<<lastColorID<<endl;
             }
-            else{
-                currColorID=it->second;
-                colorHistogram[it->second]++;
-            }
-            orders[i % ordersVecSize]=currColorID;
+            orders[i % ordersVecSize]=colors->insertAndGetIndex(currColor);
+
 
         }
         cerr<<"step one finsihed"<<endl;
-        ofstream hist("hist");
-        for(auto h:colorHistogram)
-            hist<<h.first<<"\t"<<h.second<<endl;
+//        ofstream hist("hist");
+//        for(auto h:colorHistogram)
+//            hist<<h.first<<"\t"<<h.second<<endl;
         sdsl::util::bit_compress(orders);
         orders.serialize(orderFile);
         ordersVecID++;
-        sdsl::util::bit_compress(colors);
-        colors.serialize(colorsFile);
-        colorsVecID++;
-        cerr<<"Final Colors created "<<lastColorID<<" "<<invColor.size()<<endl;
 
         orderFile.close();
-        colorsFile.close();
 
 
 
@@ -1172,7 +1147,6 @@ namespace kProcessor {
         forest->numColors=invColor.size();
         invColor.clear();
 
-        forest->colorVecSize=colorsVecSize;
         forest->orderVecSize=ordersVecSize;
         forest->trees=deque<prefixTrie*>(trees.size());
         for(unsigned i=0;i<trees.size();i++){
@@ -1182,7 +1156,6 @@ namespace kProcessor {
         cerr<<"Copying trees is finished"<<endl;
 
         ifstream orderInputFile(tmpFolder+"orders");
-        ifstream colorsInputFile(tmpFolder+"colors");
 
         forest->orderColorID.resize(ordersVecID);
         for(unsigned i=0;i<ordersVecID;i++)
@@ -1192,12 +1165,9 @@ namespace kProcessor {
         }
         cerr<<"Orders is loaded"<<endl;
 
-        forest->ColorIDPointer.resize(colorsVecID);
-        for(unsigned i=0;i<colorsVecID;i++)
-        {
-            forest->ColorIDPointer[i]=new prefixForest::vectype ();
-            forest->ColorIDPointer[i]->load(colorsInputFile);
-        }
+        forest->ColorIDPointer=new mixVectors(colors);
+        prefixTrie* ptmp= new prefixTrie(forest->ColorIDPointer);
+        ptmp->explainSize();
         cerr<<"colors is loaded"<<endl;
 
         forest->explainSize();

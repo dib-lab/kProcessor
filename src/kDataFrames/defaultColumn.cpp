@@ -1771,13 +1771,14 @@ vector<uint32_t> prefixForest::getWithIndex(uint32_t index)  {
     uint32_t orderVecID=index/orderVecSize;
     uint32_t orderSubIndex=index%orderVecSize;
     uint32_t colorID=(*(orderColorID[orderVecID]))[orderSubIndex]*trees.size();
-    uint32_t colorVecID=colorID/colorVecSize;
-    uint32_t colorSubIndex=colorID%colorVecSize;
+    //uint32_t colorVecID=colorID/colorVecSize;
+    //uint32_t colorSubIndex=colorID%colorVecSize;
+    vector<uint32_t> treePointers=ColorIDPointer->get(colorID);
     uint32_t samplesOffset=0;
-    for(unsigned i=0;i<trees.size();i++)
+    for(unsigned i=0;i<treePointers.size();i+=2)
     {
-        uint32_t pointer=(*(ColorIDPointer[colorVecID]))[colorSubIndex++];
-        vector<uint32_t> tmp=trees[i]->getWithIndex(pointer);
+
+        vector<uint32_t> tmp=trees[treePointers[i]]->getWithIndex(treePointers[i+1]);
         for(auto s:tmp)
             result[resTop++]=s+samplesOffset;
         samplesOffset+=trees[i]->noSamples;
@@ -1789,7 +1790,6 @@ void prefixForest::serialize(string filename) {
     ofstream out(filename.c_str());
     out.write((char *) (&(noSamples)), sizeof(uint64_t));
     out.write((char *) (&(numColors)), sizeof(uint64_t));
-    out.write((char *) (&(colorVecSize)), sizeof(uint32_t));
     out.write((char *) (&(orderVecSize)), sizeof(uint32_t));
     uint32_t tmp=trees.size();
     out.write((char *) (&(tmp)), sizeof(uint32_t));
@@ -1807,13 +1807,13 @@ void prefixForest::serialize(string filename) {
         v->serialize(out);
 
     out.close();
+    ColorIDPointer->serialize(filename+".colors.mixvectors");
 }
 
 void prefixForest::deserialize(string filename) {
     ifstream input(filename.c_str());
     input.read((char *) (&(noSamples)), sizeof(uint64_t));
     input.read((char *) (&(numColors)), sizeof(uint64_t));
-    input.read((char *) (&(colorVecSize)), sizeof(uint32_t));
     input.read((char *) (&(orderVecSize)), sizeof(uint32_t));
     uint32_t tmp;
     input.read((char *) (&(tmp)), sizeof(uint32_t));
@@ -1831,14 +1831,8 @@ void prefixForest::deserialize(string filename) {
         orderColorID[i]->load(input);
     }
 
-    input.read((char *) (&(tmp)), sizeof(uint32_t));
-    ColorIDPointer=deque<vectype *>(tmp);
-    for(unsigned i=0; i<ColorIDPointer.size() ; i++)
-    {
-        ColorIDPointer[i]=new vectype ();
-
-        ColorIDPointer[i]->load(input);
-    }
+    ColorIDPointer=new mixVectors();
+    ColorIDPointer->deserialize(filename+".colors.mixvectors");
 
     input.close();
 
@@ -1850,8 +1844,8 @@ uint64_t prefixForest::sizeInBytes() {
     uint64_t totalSize=8;
     for(auto t:trees)
         totalSize+=t->sizeInBytes();
-    for(auto v:ColorIDPointer)
-        totalSize+=sdsl::size_in_bytes(*v);
+
+    totalSize+=ColorIDPointer->sizeInBytes();
     for(auto v:orderColorID)
         totalSize+=sdsl::size_in_bytes(*v);
     return totalSize;
@@ -1863,8 +1857,8 @@ void prefixForest::explainSize() {
         totalSize+=t->sizeInBytes();
     cerr<<"Size of the trees = "<<totalSize/(1024.0*1024.0)<<"MB"<<endl;
     totalSize=0;
-    for(auto v:ColorIDPointer)
-        totalSize+=sdsl::size_in_bytes(*v);
+    totalSize+=ColorIDPointer->sizeInBytes();
+
     cerr<<"Size Color ID to tree pointers = "<<totalSize/(1024.0*1024.0)<<"MB"<<endl;
     totalSize=0;
 
@@ -1874,6 +1868,7 @@ void prefixForest::explainSize() {
 
      cerr<<"Total = "<<sizeInBytes()/(1024.0*1024.0)<<"MB"<<endl;
 
+     ColorIDPointer->explainSize();
 }
 
 Column *prefixForest::getTwin() {
@@ -1881,7 +1876,6 @@ Column *prefixForest::getTwin() {
     result->numColors=numColors;
     result->noSamples=noSamples;
     result->orderVecSize=orderVecSize;
-    result->colorVecSize=colorVecSize;
 
     result->orderColorID=deque<vectype*>(orderColorID.size());
     // same as clone but order is blank
@@ -1889,11 +1883,7 @@ Column *prefixForest::getTwin() {
     {
         result->orderColorID[i] = new vectype (orderColorID[i]->size());
     }
-    result->ColorIDPointer=deque<vectype*>(ColorIDPointer.size());
-    for(unsigned i=0; i< result->ColorIDPointer.size() ; i++ )
-    {
-        result->ColorIDPointer[i] = new vectype (*ColorIDPointer[i]);
-    }
+    result->ColorIDPointer= (mixVectors*)ColorIDPointer->clone();
     result->trees=deque<prefixTrie*>(trees.size());
     for(unsigned i=0; i< result->trees.size();i++)
         result->trees[i]=(prefixTrie*) trees[i]->clone();
@@ -1925,18 +1915,13 @@ Column *prefixForest::clone() {
     result->numColors=numColors;
     result->noSamples=noSamples;
     result->orderVecSize=orderVecSize;
-    result->colorVecSize=colorVecSize;
 
     result->orderColorID=deque<vectype*>(orderColorID.size());
     for(unsigned i=0; i< result->orderColorID.size() ; i++ )
     {
         result->orderColorID[i] = new vectype (*orderColorID[i]);
     }
-    result->ColorIDPointer=deque<vectype*>(ColorIDPointer.size());
-    for(unsigned i=0; i< result->ColorIDPointer.size() ; i++ )
-    {
-        result->ColorIDPointer[i] = new vectype (*ColorIDPointer[i]);
-    }
+    result->ColorIDPointer=(mixVectors*)ColorIDPointer->clone();
     result->trees=deque<prefixTrie*>(trees.size());
     for(unsigned i=0; i< result->trees.size();i++)
         result->trees[i]=(prefixTrie*) trees[i]->clone();

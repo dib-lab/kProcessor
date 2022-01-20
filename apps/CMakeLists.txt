@@ -17,12 +17,19 @@ target_link_libraries (loadFromKMC LINK_PUBLIC kProcessor MQF ${SEQAN_LIBRARIES}
 add_executable(convert convert.cpp)
 target_link_libraries (convert LINK_PUBLIC kProcessor MQF ${SEQAN_LIBRARIES}  ${ntcardLib})
 
+add_executable(createForest createForest.cpp)
+target_link_libraries (createForest LINK_PUBLIC kProcessor MQF ${SEQAN_LIBRARIES}  ${ntcardLib})
+
 
 add_executable(index index.cpp)
 target_link_libraries (index LINK_PUBLIC kProcessor MQF ${SEQAN_LIBRARIES}  ${ntcardLib})
 
 add_executable(mergeIndex mergeIndex.cpp)
 target_link_libraries (mergeIndex LINK_PUBLIC kProcessor MQF ${SEQAN_LIBRARIES}  ${ntcardLib})
+
+add_executable(partitionReads_part1 partitionReads_part1.cpp)
+target_link_libraries (partitionReads_part1 LINK_PUBLIC kProcessor MQF ${SEQAN_LIBRARIES}  ${ntcardLib})
+
 
 
 add_executable(testIndex testIndex.cpp)
