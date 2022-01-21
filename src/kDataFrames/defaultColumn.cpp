@@ -704,7 +704,6 @@ void mixVectors::createSortedIndex() {
             delete endIterator;
         }
     }
-
 }
 
 
@@ -774,7 +773,8 @@ void fixedSizeVector::sort(sdsl::int_vector<> &idsMap) {
             if (lhs.first[i] < rhs.first[i])
                 return true;
             else if (lhs.first[i] > rhs.first[i])
-                return lhs.first.size() < rhs.first.size();
+                return false;
+            // return lhs.first.size() < rhs.first.size();
         return lhs.first.size() < rhs.first.size();
     });
     for (unsigned int i = 0; i < numColors; i++) {
@@ -955,16 +955,19 @@ void prefixTrie::loadFromQueryColorColumn(mixVectors  *col) {
     }
     cerr << "Inverted Ids is calculated" << endl;
 
-    auto sortedIterator=new mixVectorSortedIterator(col);
+
 
 
     uint64_t tmpSize = max((uint32_t)(col->numIntegers() / 10),(uint32_t)10);
     uint64_t tmpEdgesTop = 0;
     uint64_t tmpTreeTop = 0;
-    uint64_t currTree = 0;
+
     sdsl::int_vector<> tmp_edges(tmpSize);
 
+
     deque<uint32_t> currPrefix;
+    deque<uint64_t> pastNodes;
+
     unordered_map<int, uint64_t> addedEdgesHisto;
     for (int i = 0; i <= noSamples; i++)
         addedEdgesHisto[i] = 0;
@@ -973,174 +976,155 @@ void prefixTrie::loadFromQueryColorColumn(mixVectors  *col) {
     uint64_t printChunk=numColors/20;
     if(printChunk == 0)
         printChunk= numColors;
-    deque<uint64_t> pastNodes;
+
     uint64_t rank = 0;
-
-
-
-    pair<uint32_t,vector<uint32_t> > tmp=sortedIterator->get();
-
-    uint32_t firstNode=tmp.second[0];
-    currTree=noSamples-firstNode-1;
-    delete tree[currTree];
-    delete bp_tree[currTree];
-    delete unCompressedEdges[currTree];
-    tree[currTree]=new sdsl::bit_vector(tmpSize * 2);
     totalSize= 0;
-    for(uint32_t i=1;i<currTree;i++)
+//    totalSize= 0;
+//    for(uint32_t i=1;i<currTree;i++)
+//    {
+//        starts[i]=starts[i-1]+tree[i-1]->size();
+//        totalSize += tree[i-1]->size();
+//    }
+
+    for(unsigned currTree=0; currTree<noSamples ;currTree++)
     {
-        starts[i]=starts[i-1]+tree[i-1]->size();
-        totalSize += tree[i-1]->size();
-    }
+        unsigned currTreeID=noSamples-currTree-1;
 
+        vector<uint32_t> scopeBegin={currTreeID};
+        vector<uint32_t> scopeEnd={};
+        if(currTree != noSamples-1)
+            scopeEnd={currTreeID-1};
+        auto sortedIterator=new mixVectorSortedIterator(col,scopeBegin,scopeEnd);
 
-    for (;!sortedIterator->finished();sortedIterator->next()) {
+        if(!sortedIterator->finished())
+        {
+            delete tree[currTree];
+            tree[currTree]=new sdsl::bit_vector(tmpSize * 2);
+            tmpEdgesTop = 0;
+            tmpTreeTop = 0;
 
+            for (;!sortedIterator->finished();sortedIterator->next()) {
+                pair<uint32_t,vector<uint32_t> > tmp=sortedIterator->get();
+                uint32_t colorGlobalIndex=tmp.first;
+                vector<uint32_t> currColor=tmp.second;
 
-        pair<uint32_t,vector<uint32_t> > tmp=sortedIterator->get();
-        uint32_t colorGlobalIndex=tmp.first;
-        vector<uint32_t> currColor=tmp.second;
+                unsigned int i = 0;
+                for (; i < currPrefix.size() && i < currColor.size(); i++) {
+                    if (currPrefix[i] != currColor[i])
+                        break;
 
+                }
+                unordered_set<uint32_t> unneededNodes(currPrefix.begin() + i, currPrefix.end());
+                unordered_set<uint32_t> neededNodes(currColor.begin() , currColor.end());
+                deque<uint32_t> toBAdded;
+                toBAdded.clear();
+                bool hasUnneeded = false;
+                unsigned int j = 0;
+                for (; j < pastNodes.size(); j++) {
 
-        unsigned int i = 0;
-        for (; i < currPrefix.size() && i < currColor.size(); i++) {
-            if (currPrefix[i] != currColor[i])
-                break;
+                    for (auto c:nodesCache[pastNodes[j]])
+                        if (unneededNodes.find(c) != unneededNodes.end()) {
+                            hasUnneeded = true;
+                            break;
+                        }
 
-        }
-        unordered_set<uint32_t> unneededNodes(currPrefix.begin() + i, currPrefix.end());
-        unordered_set<uint32_t> neededNodes(currColor.begin() , currColor.end());
-        deque<uint32_t> toBAdded;
-        toBAdded.clear();
-        bool hasUnneeded = false;
-        unsigned int j = 0;
-        for (; j < pastNodes.size(); j++) {
+                    if (hasUnneeded)
+                        break;
 
-            for (auto c:nodesCache[pastNodes[j]])
-                if (unneededNodes.find(c) != unneededNodes.end()) {
-                    hasUnneeded = true;
-                    break;
+                }
+                for (unsigned int k = j; k < pastNodes.size(); k++) {
+                    for(auto t:nodesCache[pastNodes[k]])
+                    {
+                        if(neededNodes.find(t)!=neededNodes.end())
+                            toBAdded.push_back(t);
+                    }
+                    nodesCache.erase(pastNodes[k]);
+                    rank++;
+                    (*tree[currTree])[tmpTreeTop++] = 0;
+                    if (tmpTreeTop == tree[currTree]->size()) {
+                        cerr << "Tmp bp_tree of size " << tree[currTree]->size() << "(" << sdsl::size_in_mega_bytes(*tree[currTree])
+                        << "MB) is full! size will doubled" << endl;
+                        tree[currTree]->resize(tree[currTree]->size() * 2);
+                        tmpSize *= 2;
+                    }
+                }
+                pastNodes.erase(pastNodes.begin() + j, pastNodes.end());
+                currPrefix.erase(currPrefix.begin() + i, currPrefix.end());
+
+                for (auto it=currColor.begin()+i;it!=currColor.end();it++) {
+                    currPrefix.push_back(*it);
+                    toBAdded.push_back(*it);
+                }
+                std::sort(toBAdded.begin(), toBAdded.end());
+                auto last = std::unique(toBAdded.begin(), toBAdded.end());
+                toBAdded.erase(last, toBAdded.end());
+                addedEdgesHisto[toBAdded.size()] += 1;
+                uint32_t inputSize = toBAdded.size();
+                /// performance improv
+                deque<uint32_t> shortened;
+                shortened.clear();
+                shorten(toBAdded, shortened);
+                uint32_t outputSize=0;
+                for(auto s:shortened)
+                    outputSize+=nodesCache[s].size();
+                if(outputSize!=inputSize)
+                {
+                    cerr<<"Build error in rank "<<rank<<endl;
+                }
+                for (auto sample:shortened) {
+                    rank++;
+                    pastNodes.push_back(sample);
+                    (*tree[currTree])[tmpTreeTop++] = 1;
+                    if (tmpTreeTop == tree[currTree]->size()) {
+                        cerr << "Tmp bp_tree of size " << tree[currTree]->size() << "(" << sdsl::size_in_mega_bytes(*tree[currTree])
+                        << "MB) is full! size will doubled" << endl;
+                        tree[currTree]->resize(tree[currTree]->size() * 2);
+                    }
+
+                    tmp_edges[tmpEdgesTop++] = sample;
+                    if (tmpEdgesTop == tmp_edges.size()) {
+                        cerr << "Tmp edges of size (" << sdsl::size_in_mega_bytes(tmp_edges) << "MB) is full! size will doubled"
+                        << endl;
+                        tmp_edges.resize(tmp_edges.size() * 2);
+                    }
                 }
 
-            if (hasUnneeded)
-                break;
+                idsMap[invIdsMap[colorGlobalIndex]] = rank - 1;
+                processedColors++;
+                if(processedColors%printChunk==0)
+                    cout<<"Processed "<<processedColors<<" / "<<numColors<<endl;
 
-        }
-        for (unsigned int k = j; k < pastNodes.size(); k++) {
-            for(auto t:nodesCache[pastNodes[k]])
-            {
-                if(neededNodes.find(t)!=neededNodes.end())
-                    toBAdded.push_back(t);
+
             }
-            nodesCache.erase(pastNodes[k]);
-            rank++;
-            (*tree[currTree])[tmpTreeTop++] = 0;
-            if (tmpTreeTop == tree[currTree]->size()) {
-                cerr << "Tmp bp_tree of size " << tree[currTree]->size() << "(" << sdsl::size_in_mega_bytes(*tree[currTree])
-                     << "MB) is full! size will doubled" << endl;
-                tree[currTree]->resize(tree[currTree]->size() * 2);
-                tmpSize *= 2;
+            // close the remaining opened brackets
+            for (unsigned int k = 0; k < pastNodes.size(); k++) {
+                nodesCache.erase(pastNodes[k]);
+                rank++;
+                (*tree[currTree])[tmpTreeTop++] = false;
+                if (tmpTreeTop == tree[currTree]->size()) {
+                    cerr << "Tmp bp_tree of size " << tree[currTree]->size() << "(" << sdsl::size_in_mega_bytes(*tree[currTree])
+                    << "MB) is full! size will doubled" << endl;
+                    tree[currTree]->resize(tree[currTree]->size() * 2);
+                    tmpSize *= 2;
+                }
             }
-        }
-        pastNodes.erase(pastNodes.begin() + j, pastNodes.end());
-        currPrefix.erase(currPrefix.begin() + i, currPrefix.end());
-        if (currPrefix.empty() && rank > 0) {
+
+            delete bp_tree[currTree];
+            delete unCompressedEdges[currTree];
+
             tree[currTree]->resize(tmpTreeTop);
             bp_tree[currTree]=new sdsl::bp_support_sada<>(tree[currTree]);
             unCompressedEdges[currTree]=new sdsl::int_vector<>(tmpEdgesTop);
             std::copy(tmp_edges.begin(),tmp_edges.begin()+tmpEdgesTop,unCompressedEdges[currTree]->begin());
             sdsl::util::bit_compress(*unCompressedEdges[currTree]);
-
-            currTree=noSamples-currColor[0]-1;
-            // dont update current tree becuase shortern starts[currTree] to be 0
-            totalSize= 0;
-            for(uint32_t i=1;i<currTree;i++)
-            {
-                totalSize+= tree[i-1]->size();
-                starts[i]=starts[i-1]+tree[i-1]->size();
-            }
-            tmpEdgesTop = 0;
-            tmpTreeTop = 0;
             tmpSize = tmp_edges.size() * 2;
-            //tmp_edges.resize(tmpSize);
-            delete tree[currTree];
-            delete bp_tree[currTree];
-            delete unCompressedEdges[currTree];
-            tree[currTree]=new sdsl::bit_vector(tmpSize * 2);
-
-//            exportTree("tree.",edges.size()-1);
         }
 
-
-        // vector<uint32_t> tobeAdded(std::get<0>(colorTuple).size()-i);
-        //   std::copy(std::get<0>(colorTuple).begin(),std::get<0>(colorTuple).end(),tobeAdded.begin());
-//        for(auto it=currColor.begin() + i;it !=currColor.end();it++)
-//            toBAdded.
-        for (auto it=currColor.begin()+i;it!=currColor.end();it++) {
-            currPrefix.push_back(*it);
-            toBAdded.push_back(*it);
-        }
-        std::sort(toBAdded.begin(), toBAdded.end());
-        auto last = std::unique(toBAdded.begin(), toBAdded.end());
-        toBAdded.erase(last, toBAdded.end());
-        addedEdgesHisto[toBAdded.size()] += 1;
-        uint32_t inputSize = toBAdded.size();
-/// performance improv
-        deque<uint32_t> shortened;
-        shortened.clear();
-        shorten(toBAdded, shortened);
-        uint32_t outputSize=0;
-        for(auto s:shortened)
-            outputSize+=nodesCache[s].size();
-        if(outputSize!=inputSize)
-        {
-            cerr<<"Build error in rank "<<rank<<endl;
-        }
-        for (auto sample:shortened) {
-            rank++;
-            pastNodes.push_back(sample);
-            (*tree[currTree])[tmpTreeTop++] = 1;
-            if (tmpTreeTop == tree[currTree]->size()) {
-                cerr << "Tmp bp_tree of size " << tree[currTree]->size() << "(" << sdsl::size_in_mega_bytes(*tree[currTree])
-                     << "MB) is full! size will doubled" << endl;
-                tree[currTree]->resize(tree[currTree]->size() * 2);
-            }
-
-            tmp_edges[tmpEdgesTop++] = sample;
-            if (tmpEdgesTop == tmp_edges.size()) {
-                cerr << "Tmp edges of size (" << sdsl::size_in_mega_bytes(tmp_edges) << "MB) is full! size will doubled"
-                     << endl;
-                tmp_edges.resize(tmp_edges.size() * 2);
-            }
-        }
-
-        idsMap[invIdsMap[colorGlobalIndex]] = rank - 1;
-        processedColors++;
-        if(processedColors%printChunk==0)
-            cout<<"Processed "<<processedColors<<" / "<<numColors<<endl;
-
+        starts[currTree]=totalSize;
+        totalSize+=tree[currTree]->size();
 
     }
 
-    for (unsigned int k = 0; k < pastNodes.size(); k++) {
-        nodesCache.erase(pastNodes[k]);
-        rank++;
-        (*tree[currTree])[tmpTreeTop++] = false;
-        if (tmpTreeTop == tree[currTree]->size()) {
-            cerr << "Tmp bp_tree of size " << tree[currTree]->size() << "(" << sdsl::size_in_mega_bytes(*tree[currTree])
-                 << "MB) is full! size will doubled" << endl;
-            tree[currTree]->resize(tree[currTree]->size() * 2);
-            tmpSize *= 2;
-        }
-    }
-
-    //tmpStarts.push_back(rank);
-//    tmp_edges.resize(tmpEdgesTop);
-//    edges.push_back(new vectype(tmp_edges));
-
-    unCompressedEdges[currTree]=new sdsl::int_vector<>(tmpEdgesTop);
-    std::copy(tmp_edges.begin(),tmp_edges.begin()+tmpEdgesTop,unCompressedEdges[currTree]->begin());
-    sdsl::util::bit_compress(*unCompressedEdges[currTree]);
     unordered_map<uint32_t,uint32_t> nodesCount;
     for(auto e:unCompressedEdges)
     {
@@ -1154,7 +1138,7 @@ void prefixTrie::loadFromQueryColorColumn(mixVectors  *col) {
     {
         translateEdges[uniqueNodeID]=n.first;
         reverse[n.first]=uniqueNodeID;
-	uniqueNodeID++;
+	    uniqueNodeID++;
     }
 
     double unCompressedSize=0.0;
@@ -1167,19 +1151,11 @@ void prefixTrie::loadFromQueryColorColumn(mixVectors  *col) {
         for(auto n:*e)
             (*edges.back())[index++]=reverse[n];
         sdsl::util::bit_compress(*edges.back());
-        
         delete e;
     }
     unCompressedEdges.clear();
     cout<<"Uncompressed edges size = "<<unCompressedSize<<endl;
 
-    tree[currTree]->resize(tmpTreeTop);
-    bp_tree[currTree]=(new sdsl::bp_support_sada<>(tree[currTree]));
-
-    for(uint32_t i=1;i<noSamples;i++)
-    {
-        starts[i]=starts[i-1]+tree[i-1]->size();
-    }
     cout<<"Node Cache size = "<<nodesCache.size()<<endl;
 //    for(auto c: nodesCache) {
 //        cout << c.first << " -> ";
@@ -1189,20 +1165,11 @@ void prefixTrie::loadFromQueryColorColumn(mixVectors  *col) {
 //    }
 
     cout<<processedColors<<"/"<<numColors<<endl;
-
-
-
     uint64_t edgesSum = 0;
     for (auto a:addedEdgesHisto) {
         edgesSum += (a.first - 1) * (a.second);
     }
     cout << "Possible saving " << edgesSum << endl;
-    totalSize=0;
-    for(auto t:tree)
-        totalSize+=t->size();
-
-   // sdsl::util::bit_compress(idsMap);
-
     explainSize();
 
 }
@@ -1969,17 +1936,18 @@ mixVectorSortedIterator::mixVectorSortedIterator(mixVectors *pdata, vector<uint3
             vector<uint32_t>rhs) {
 
         vector<uint32_t> lhs=pdata->colors[lhsP.first]->get(lhsP.second);
-        if (lhs[0] < rhs[0])
+        if (lhs[0] > rhs[0])
             return true;
-        else if (lhs[0] > rhs[0])
+        else if (lhs[0] < rhs[0])
             return false;
 
         for (unsigned int i = 1; i < lhs.size() && i < rhs.size(); i++)
-            if (lhs[i] > rhs[i])
+            if (lhs[i] < rhs[i])
                 return true;
-            else if (lhs[i] < rhs[i])
+            else if (lhs[i] > rhs[i])
                 return false;
-            return lhs.size() >rhs.size();
+
+            return lhs.size() <rhs.size();
     };
 
     auto startIt=pdata->sortedColorsIndex.begin();
