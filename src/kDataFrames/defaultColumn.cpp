@@ -647,7 +647,7 @@ void mixVectors::createSortedIndex() {
     if(!sortedColorsIndex.empty())
         return;
     sortColors();
-    sortedColorsIndex.resize(numColors+3);
+    sortedColorsIndex.resize(numColors);
     auto compare = [](tuple<vector<uint32_t>, uint32_t, vectorBaseIterator *, vectorBaseIterator *> lhs,
             tuple<vector<uint32_t>, uint32_t, vectorBaseIterator *, vectorBaseIterator *> rhs) {
         if (std::get<0>(lhs)[0] < std::get<0>(rhs)[0])
@@ -697,13 +697,14 @@ void mixVectors::createSortedIndex() {
         currColor++;
         currIterator->next();
         if (*currIterator != *endIterator) {
-            std::get<0>(colorTuple) = *(*(currIterator));
+            std::get<0>(colorTuple) = **currIterator;
             nextColor.push(colorTuple);
         } else {
             delete currIterator;
             delete endIterator;
         }
     }
+
 }
 
 
@@ -911,67 +912,17 @@ prefixTrie::prefixTrie(mixVectors *col) {
     loadFromQueryColorColumn(col);
 
 }
-void prefixTrie::loadFromQueryColorColumn(mixVectors  *col) {
-
+void prefixTrie::initializeTrees(mixVectors *col) {
     noSamples = col->noSamples;
     numColors = col->numColors;
+
+    // initialize caches
     if(queryCache!=NULL)
         delete queryCache;
     queryCache=new lru_cache_t<uint64_t, vector<uint32_t>>(numColors/10);
-    col->explainSize();
-    col->sortColors();
-    cerr << "Colors Sorted" << endl;
+
     idsMap = sdsl::int_vector<32>(col->idsMap.size()+1);
-    sdsl::int_vector<32> invIdsMap(col->idsMap.size()+1);
-#pragma omp parallel for
-    for (unsigned int i = 0; i < col->idsMap.size(); i++) {
-        invIdsMap[col->idsMap[i]] = i;
-    }
-    cerr << "Inverted Ids is calculated" << endl;
 
-
-    auto compare = [](tuple<vector<uint32_t>, uint32_t, vectorBaseIterator *, vectorBaseIterator *> lhs,
-                      tuple<vector<uint32_t>, uint32_t, vectorBaseIterator *, vectorBaseIterator *> rhs) {
-        if (std::get<0>(lhs)[0] < std::get<0>(rhs)[0])
-            return true;
-        else if (std::get<0>(lhs)[0] > std::get<0>(rhs)[0])
-            return false;
-
-
-        for (unsigned int i = 1; i < std::get<0>(lhs).size() && i < std::get<0>(rhs).size(); i++)
-            if (std::get<0>(lhs)[i] > std::get<0>(rhs)[i])
-                return true;
-            else if (std::get<0>(lhs)[i] < std::get<0>(rhs)[i])
-                return false;
-        return std::get<0>(lhs).size() > std::get<0>(rhs).size();
-    };
-    priority_queue<tuple<vector<uint32_t>, uint32_t, vectorBaseIterator *, vectorBaseIterator *>, vector<tuple<vector<uint32_t>, uint32_t, vectorBaseIterator *, vectorBaseIterator *> >, decltype(compare)> nextColor(
-            compare);
-    for (auto c:col->colors) {
-        vectorBaseIterator *it = new vectorBaseIterator(c->begin());
-        vectorBaseIterator *itEnd = new vectorBaseIterator(c->end());
-        if (*it != *itEnd) {
-            vector<uint32_t> arr = **it;
-            if (!arr.empty())
-                nextColor.push(make_tuple(arr, it->getID(), it, itEnd));
-            else{
-                delete it;
-                delete itEnd;
-            }
-        }
-        else{
-            delete it;
-            delete itEnd;
-        }
-
-    }
-
-    uint64_t tmpSize = max((uint32_t)(col->numIntegers() / 10),(uint32_t)10);
-
-
-    uint64_t tmpEdgesTop = 0;
-    uint64_t tmpTreeTop = 0;
-    uint64_t currTree = 0;
     tree=  deque<sdsl::bit_vector*>(noSamples);
     bp_tree=deque<sdsl::bp_support_sada<>*>(noSamples);
     unCompressedEdges=deque<sdsl::int_vector<>*>(noSamples);
@@ -989,12 +940,31 @@ void prefixTrie::loadFromQueryColorColumn(mixVectors  *col) {
     }
     starts[0]=0;
 
+
+}
+void prefixTrie::loadFromQueryColorColumn(mixVectors  *col) {
+
+
+    initializeTrees(col);
+    col->createSortedIndex();
+    col->explainSize();
+    sdsl::int_vector<32> invIdsMap(col->idsMap.size()+1);
+#pragma omp parallel for
+    for (unsigned int i = 0; i < col->idsMap.size(); i++) {
+        invIdsMap[col->idsMap[i]] = i;
+    }
+    cerr << "Inverted Ids is calculated" << endl;
+
+    auto sortedIterator=new mixVectorSortedIterator(col);
+
+
+    uint64_t tmpSize = max((uint32_t)(col->numIntegers() / 10),(uint32_t)10);
+    uint64_t tmpEdgesTop = 0;
+    uint64_t tmpTreeTop = 0;
+    uint64_t currTree = 0;
     sdsl::int_vector<> tmp_edges(tmpSize);
+
     deque<uint32_t> currPrefix;
-
-
-
-
     unordered_map<int, uint64_t> addedEdgesHisto;
     for (int i = 0; i <= noSamples; i++)
         addedEdgesHisto[i] = 0;
@@ -1005,7 +975,12 @@ void prefixTrie::loadFromQueryColorColumn(mixVectors  *col) {
         printChunk= numColors;
     deque<uint64_t> pastNodes;
     uint64_t rank = 0;
-    uint32_t firstNode=std::get<0>(nextColor.top())[0];
+
+
+
+    pair<uint32_t,vector<uint32_t> > tmp=sortedIterator->get();
+
+    uint32_t firstNode=tmp.second[0];
     currTree=noSamples-firstNode-1;
     delete tree[currTree];
     delete bp_tree[currTree];
@@ -1017,36 +992,19 @@ void prefixTrie::loadFromQueryColorColumn(mixVectors  *col) {
         starts[i]=starts[i-1]+tree[i-1]->size();
         totalSize += tree[i-1]->size();
     }
-    auto sortedIterator=new mixVectorSortedIterator(col);
-    while (!nextColor.empty()) {
-        auto colorTuple = nextColor.top();
-        nextColor.pop();
-//        cout<<"c: ";
-//        for(auto c:std::get<0>(colorTuple))
-//        {
-//            cout<<c<<" ";
-//        }
-//        cout<<endl;
-        vector<uint32_t> currColor(std::get<0>(colorTuple).begin(), std::get<0>(colorTuple).end());
-        uint32_t colorGlobalIndex=std::get<1>(colorTuple);
 
-        pair<uint32_t,vector<uint32_t> > testColor=sortedIterator->get();
-        if(testColor.first!= colorGlobalIndex || currColor != testColor.second)
-        {
-            cout<<"Error "<<colorGlobalIndex<<" should be "<<testColor.first<<endl;
-            cout<<"correct ";
-            for(auto c : currColor)
-                cout<<c<<" ";
-            cout<<endl<<"test ";
-            for(auto c : testColor.second)
-                cout<<c<<" ";
-            cout<<endl;
-        }
 
-        sortedIterator->next();
+    for (;!sortedIterator->finished();sortedIterator->next()) {
+
+
+        pair<uint32_t,vector<uint32_t> > tmp=sortedIterator->get();
+        uint32_t colorGlobalIndex=tmp.first;
+        vector<uint32_t> currColor=tmp.second;
+
+
         unsigned int i = 0;
-        for (; i < currPrefix.size() && i < std::get<0>(colorTuple).size(); i++) {
-            if (currPrefix[i] != std::get<0>(colorTuple)[i])
+        for (; i < currPrefix.size() && i < currColor.size(); i++) {
+            if (currPrefix[i] != currColor[i])
                 break;
 
         }
@@ -1127,6 +1085,7 @@ void prefixTrie::loadFromQueryColorColumn(mixVectors  *col) {
         toBAdded.erase(last, toBAdded.end());
         addedEdgesHisto[toBAdded.size()] += 1;
         uint32_t inputSize = toBAdded.size();
+/// performance improv
         deque<uint32_t> shortened;
         shortened.clear();
         shorten(toBAdded, shortened);
@@ -1155,19 +1114,11 @@ void prefixTrie::loadFromQueryColorColumn(mixVectors  *col) {
             }
         }
 
-        idsMap[invIdsMap[std::get<1>(colorTuple)]] = rank - 1;
+        idsMap[invIdsMap[colorGlobalIndex]] = rank - 1;
         processedColors++;
         if(processedColors%printChunk==0)
             cout<<"Processed "<<processedColors<<" / "<<numColors<<endl;
-        std::get<2>(colorTuple)->next();
-        if (*std::get<2>(colorTuple) != *std::get<3>(colorTuple)) {
-            std::get<0>(colorTuple) = *(*(std::get<2>(colorTuple)));
-            std::get<1>(colorTuple) = std::get<2>(colorTuple)->getID();
-            nextColor.push(colorTuple);
-        } else {
-            delete std::get<2>(colorTuple);
-            delete std::get<3>(colorTuple);
-        }
+
 
     }
 
@@ -1607,6 +1558,8 @@ Column *prefixTrie::clone() {
 }
 
 
+
+
 template<typename ColumnType,typename indexType>
 deduplicatedColumn<ColumnType,indexType>::deduplicatedColumn(uint32_t size){
     index=indexType(size);
@@ -2007,17 +1960,71 @@ deduplicatedColumn<prefixTrie,phmap::btree_map<uint32_t,uint32_t> >::deduplicate
 //    return result;
 //}
 
-mixVectorSortedIterator::mixVectorSortedIterator(mixVectors *pdata, vector<uint32_t> scope) {
+mixVectorSortedIterator::mixVectorSortedIterator(mixVectors *pdata, vector<uint32_t> scopeBegin,vector<uint32_t> scopeEnd) {
     pdata->createSortedIndex();
     data=pdata;
-    if(scope.empty())
+    curr=0;
+    end=pdata->numColors;
+    auto compare = [&](pair<uint32_t,uint32_t> lhsP,
+            vector<uint32_t>rhs) {
+
+        vector<uint32_t> lhs=pdata->colors[lhsP.first]->get(lhsP.second);
+        if (lhs[0] < rhs[0])
+            return true;
+        else if (lhs[0] > rhs[0])
+            return false;
+
+        for (unsigned int i = 1; i < lhs.size() && i < rhs.size(); i++)
+            if (lhs[i] > rhs[i])
+                return true;
+            else if (lhs[i] < rhs[i])
+                return false;
+            return lhs.size() >rhs.size();
+    };
+
+    auto startIt=pdata->sortedColorsIndex.begin();
+    auto endIT=pdata->sortedColorsIndex.end();
+    if(!scopeBegin.empty())
     {
-        curr=0;
-        end=pdata->numColors;
+        startIt= lower_bound(pdata->sortedColorsIndex.begin(),pdata->sortedColorsIndex.end(),scopeBegin,compare);
+
+//        if(scopeBegin!={1})
+//        {
+//            vector<uint32_t> nextColor;
+//            if(scopeBegin.size()==1)
+//            {
+//                nextColor.resize(1);
+//                nextColor[0]=scopeBegin[0]-1;
+//            }
+//            else{
+//                int i;
+//                for(i=scopeBegin.size()-1;i>=0;i--)
+//                {
+//                    if(scopeBegin[i]!=data->noSamples)
+//                        break;
+//                }
+//                if(i==0)
+//                {
+//
+//                }
+//                else{
+//                    for(int j=0;j<i;j++)
+//                        nextColor.push_back(scopeBegin[j]);
+//                    nextColor.push_back(scopeBegin[i]+1);
+//                }
+//            }
+//        }
+//        else
+//        {
+//            end=pdata->numColors;
+//        }
     }
-    else{
-        throw std::logic_error("Not implemented yet");
+    if(!scopeEnd.empty())
+    {
+        endIT= lower_bound(startIt,pdata->sortedColorsIndex.end(),scopeEnd,compare);
     }
+    curr=startIt-data->sortedColorsIndex.begin();
+    end=endIT-data->sortedColorsIndex.begin();
 }
 
 void mixVectorSortedIterator::next() {

@@ -696,7 +696,7 @@ public:
         curr=0;
         end=0;
     }
-    mixVectorSortedIterator(mixVectors* pdata,vector<uint32_t> scope={});
+    mixVectorSortedIterator(mixVectors* pdata,vector<uint32_t> scopeBegin={},vector<uint32_t> scopeEnd={});
     void next();
     pair<uint32_t, vector<uint32_t> > get();
     bool finished();
@@ -729,6 +729,7 @@ public:
     prefixTrie(insertColorColumn* col);
     prefixTrie(mixVectors* col);
 
+    void initializeTrees(mixVectors* col);
     void loadFromQueryColorColumn(mixVectors* col);
     ~prefixTrie(){
         for(auto t:tree)
