@@ -45,14 +45,14 @@ map< pair<uint64_t,uint64_t>, insertColorColumn*> insertColumns;
 vector<tuple<string,uint64_t,uint64_t> > createQueryInputs() {
     vector<tuple<string, uint64_t, uint64_t> > queryInputs;
     vector<string> queryClasses = {"mixVectors", "prefixTrie"};
-    for (auto classType:queryClasses)
-        for (auto numColors: {10, 100, 1000})
-            for (auto numSamples:{10, 20, 100}) {
-                if (numColors == 1000 && (numSamples == 20 || numSamples == 100))
-                    continue;
-                queryInputs.push_back(make_tuple(classType, numSamples,numColors));
-            }
-    //queryInputs.push_back(make_tuple("prefixTrie", 10,5000));
+//    for (auto classType:queryClasses)
+//        for (auto numColors: {10, 100, 1000})
+//            for (auto numSamples:{10, 20, 100}) {
+//                if (numColors == 1000 && (numSamples == 20 || numSamples == 100))
+//                    continue;
+//                queryInputs.push_back(make_tuple(classType, numSamples,numColors));
+//            }
+    queryInputs.push_back(make_tuple("prefixTrie", 10,100));
     return queryInputs;
 }
 INSTANTIATE_TEST_SUITE_P(testcolorsTable,
