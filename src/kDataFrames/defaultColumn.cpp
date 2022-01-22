@@ -449,6 +449,7 @@ mixVectors::mixVectors(insertColorColumn *col) {
     uint32_t colorId = 1;
     numColors = col->noColors;
     idsMap = sdsl::int_vector<>(numColors + 1);
+    int tmpColors=0;
     for (int colorSize = 1; colorSize < col->NUM_VECTORS - 1; colorSize++) {
         int chunkNum = 0;
         string colorsFileName = col->tmpFolder + "insertOnlyColumn." + to_string(colorSize) + "." +
@@ -458,6 +459,7 @@ mixVectors::mixVectors(insertColorColumn *col) {
             f->loadFromInsertOnly(colorsFileName, idsMap);
             colors.push_back(f);
             colorId += f->size();
+            tmpColors+=f->size();
             colorsFileName = col->tmpFolder + "insertOnlyColumn." + to_string(colorSize) + "." +
                              to_string(chunkNum++);
         }
@@ -473,7 +475,10 @@ mixVectors::mixVectors(insertColorColumn *col) {
         colors.push_back(f);
         colorsFileName = col->tmpFolder + "insertOnlyColumn." + to_string(col->NUM_VECTORS - 1) + "." +
                          to_string(chunkNum++);
+        tmpColors+=f->size();
     }
+    if(tmpColors!=numColors)
+        cout<<"Error in loading colors from insert only"<<endl;
 
 
 }
@@ -989,11 +994,11 @@ void prefixTrie::loadFromQueryColorColumn(mixVectors  *col) {
     for(unsigned currTree=0; currTree<noSamples ;currTree++)
     {
         unsigned currTreeID=noSamples-currTree-1;
-
         vector<uint32_t> scopeBegin={currTreeID};
         vector<uint32_t> scopeEnd={};
-        if(currTree != noSamples-1)
+        if(currTree != noSamples-1){
             scopeEnd={currTreeID-1};
+        }
         auto sortedIterator=new mixVectorSortedIterator(col,scopeBegin,scopeEnd);
 
         if(!sortedIterator->finished())
@@ -1340,7 +1345,9 @@ void prefixTrie::shorten(deque<uint32_t> &input, deque<uint32_t> &output) {
         nodesCache[input[0]] = {input[0]};
         return;
     }
+
     uint32_t treeIndex = noSamples - input[0] - 1;
+
     if (starts[treeIndex]==UINT32_MAX||(*tree[treeIndex]).size() == 2)//empty tree or current tree
      {
         output.push_back(input[0]);

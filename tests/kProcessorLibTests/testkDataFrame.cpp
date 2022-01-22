@@ -73,6 +73,8 @@ void queryColumnTest::SetUp(){
       while(simColors.size() < numColors)
       {
           int n=rand()%(numSamples*2);
+          while(n==0)
+              n=rand()%(numSamples*2);
           set<uint32_t> colors;
           colors.clear();
           for(int j=0;j<n;j++)
