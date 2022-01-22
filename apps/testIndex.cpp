@@ -38,8 +38,8 @@ int main(int argc, char *argv[])
 #pragma omp parallel for
     for(int i=0;i<filenames.size();i++)
     {
-      cerr<<"Testing "<<filenames[i]+".testkmers"<<endl;
-        ifstream inp(filenames[i]+".testkmers");
+      cerr<<"Testing "<<filenames[i]<<endl;
+        ifstream inp(filenames[i]);
         string kmer;
 	uint64_t count;
         while(inp>>kmer>>count)
