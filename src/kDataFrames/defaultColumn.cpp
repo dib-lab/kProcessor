@@ -940,7 +940,7 @@ void prefixTrie::initializeTrees(mixVectors *col) {
     // initialize caches
     if(queryCache!=NULL)
         delete queryCache;
-    queryCache=new lru_cache_t<uint64_t, vector<uint32_t>>(numColors/10);
+   // queryCache=new lru_cache_t<uint64_t, vector<uint32_t>>(numColors/10);
 
     idsMap = sdsl::int_vector<32>(col->idsMap.size()+1);
 
@@ -1212,10 +1212,10 @@ vector<uint32_t > prefixTrie::get(uint32_t index) {
 }
 
 inline vector<uint32_t> prefixTrie::decodeColor(uint64_t treeIndex){
-    if(queryCache->Cached(treeIndex)) {
-        cacheUsed++;
-        return queryCache->Get(treeIndex);
-    }
+//    if(queryCache->Cached(treeIndex)) {
+//        cacheUsed++;
+//        return queryCache->Get(treeIndex);
+//    }
     deque<uint32_t> tmp;
     queue<uint64_t> Q;
     Q.push(treeIndex);
@@ -1251,8 +1251,8 @@ inline vector<uint32_t> prefixTrie::decodeColor(uint64_t treeIndex){
     vector<uint32_t> res(tmp.size());
     for (unsigned int i = 0; i < res.size(); i++)
         res[i] = tmp[i];
-    if(!queryCache->Cached(treeIndex) )
-        queryCache->Put(treeIndex,res);
+//    if(!queryCache->Cached(treeIndex) )
+//        queryCache->Put(treeIndex,res);
     return res;
 }
 
@@ -1533,7 +1533,7 @@ Column *prefixTrie::clone() {
     res->numColors = numColors;
     if(res->queryCache!=NULL)
         delete res->queryCache;
-    res->queryCache=new lru_cache_t<uint64_t, vector<uint32_t>>(numColors/10);
+  //  res->queryCache=new lru_cache_t<uint64_t, vector<uint32_t>>(numColors/10);
     res->edges= deque<vectype *>(edges.size());
     res->tree=deque<sdsl::bit_vector*>(tree.size());
     res->bp_tree=deque<sdsl::bp_support_sada<>*>(bp_tree.size());
