@@ -14,9 +14,9 @@ int main(int argc, char *argv[])
 {
     string inputList=argv[1];
     string framePath=argv[2];
-    int threads;
-    if(argc ==4)
-        threads=atoi(argv[3]);
+    int threads=1;
+//    if(argc ==4)
+//        threads=atoi(argv[3]);
 
     vector<string> filenames;
     vector<kDataFrame*> frames;
@@ -34,8 +34,8 @@ int main(int argc, char *argv[])
     uint64_t failedKmers=0;
     uint64_t notFoundKmers =0;
 
-    omp_set_num_threads(threads);
-#pragma omp parallel for
+  //  omp_set_num_threads(threads);
+//#pragma omp parallel for
     for(int i=0;i<filenames.size();i++)
     {
       cerr<<"Testing "<<filenames[i]<<endl;
