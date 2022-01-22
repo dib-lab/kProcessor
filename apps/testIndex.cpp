@@ -7,12 +7,16 @@
 #include "kDataFrame.hpp"
 #include <vector>
 #include "algorithms.hpp"
+#include <omp.h>
 using namespace std;
 
 int main(int argc, char *argv[])
 {
     string inputList=argv[1];
     string framePath=argv[2];
+    int threads;
+    if(argc ==4)
+        threads=atoi(argv[3]);
 
     vector<string> filenames;
     vector<kDataFrame*> frames;
@@ -30,6 +34,8 @@ int main(int argc, char *argv[])
     uint64_t failedKmers=0;
     uint64_t notFoundKmers =0;
 
+    omp_set_num_threads(threads);
+#pragma omp parallel for
     for(int i=0;i<filenames.size();i++)
     {
       cerr<<"Testing "<<filenames[i]+".testkmers"<<endl;
@@ -39,7 +45,7 @@ int main(int argc, char *argv[])
         while(inp>>kmer>>count)
         {
             testedKmers++;
-            vector<uint32_t> colors=indexFrame->getKmerColumnValue<vector<uint32_t >, deduplicatedColumn<mixVectors> >("color",kmer);
+            vector<uint32_t> colors=indexFrame->getKmerColumnValue<vector<uint32_t >, deduplicatedColumn<prefixTrie> >("color",kmer);
 	        if(colors.size()==0)
 	        {
 		        notFoundKmers++;

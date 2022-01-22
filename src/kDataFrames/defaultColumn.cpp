@@ -8,7 +8,8 @@
 #include <cereal/archives/binary.hpp>
 #include <cereal/types/unordered_map.hpp>
 #include <cereal/types/memory.hpp>
-
+#include <chrono>
+#include <utility>
 #include <stack>
 #include <queue>
 #include <iterator>
@@ -16,6 +17,13 @@
 #include <sdsl/util.hpp>
 #include "mum.h"
 #include <unistd.h>
+
+typedef std::chrono::high_resolution_clock::time_point TimeVar;
+
+#define duration(a) std::chrono::duration_cast<std::chrono::milliseconds>(a).count()
+#define timeNow() std::chrono::high_resolution_clock::now()
+
+
 
 template
 class vectorColumn<int>;
@@ -486,10 +494,13 @@ mixVectors::mixVectors(insertColorColumn *col) {
 void mixVectors::sortColors() {
     if(sorted)
         return;
+
+    TimeVar t1=timeNow();
 #pragma omp parallel for
     for (unsigned int i = 0; i < colors.size(); i++)
         colors[i]->sort(idsMap);
     sorted=true;
+    cout<<"Time to sort :"<<duration(timeNow()-t1)<<" ms"<<endl;
 }
 
 
@@ -652,6 +663,9 @@ void mixVectors::createSortedIndex() {
     if(!sortedColorsIndex.empty())
         return;
     sortColors();
+
+    TimeVar t1=timeNow();
+
     sortedColorsIndex.resize(numColors);
     auto compare = [](tuple<vector<uint32_t>, uint32_t, vectorBaseIterator *, vectorBaseIterator *> lhs,
             tuple<vector<uint32_t>, uint32_t, vectorBaseIterator *, vectorBaseIterator *> rhs) {
@@ -709,6 +723,8 @@ void mixVectors::createSortedIndex() {
             delete endIterator;
         }
     }
+
+    cout<<"Time to create sorted index:"<<duration(timeNow()-t1)<<" ms"<<endl;
 }
 
 
@@ -949,7 +965,7 @@ void prefixTrie::initializeTrees(mixVectors *col) {
 }
 void prefixTrie::loadFromQueryColorColumn(mixVectors  *col) {
 
-
+    TimeVar globalTime=timeNow();
     initializeTrees(col);
     col->createSortedIndex();
     col->explainSize();
@@ -993,6 +1009,7 @@ void prefixTrie::loadFromQueryColorColumn(mixVectors  *col) {
 
     for(unsigned currTree=0; currTree<noSamples ;currTree++)
     {
+        TimeVar t1=timeNow();
         unsigned currTreeID=noSamples-currTree-1;
         vector<uint32_t> scopeBegin={currTreeID};
         vector<uint32_t> scopeEnd={};
@@ -1127,6 +1144,7 @@ void prefixTrie::loadFromQueryColorColumn(mixVectors  *col) {
 
         starts[currTree]=totalSize;
         totalSize+=tree[currTree]->size();
+        cout<<"Time index tree number "<<currTreeID<<":"<<duration(timeNow()-t1)<<" ms"<<endl;
 
     }
 
@@ -1176,6 +1194,8 @@ void prefixTrie::loadFromQueryColorColumn(mixVectors  *col) {
     }
     cout << "Possible saving " << edgesSum << endl;
     explainSize();
+
+    cout<<"Time to create prefix trie(total) :"<<duration(timeNow()-globalTime)<<" ms"<<endl;
 
 }
 

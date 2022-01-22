@@ -13,13 +13,14 @@ using namespace std;
 
 int main(int argc, char *argv[]) {
     string inputIndex=argv[1];
+    string outputIndex=argv[2];
     kDataFrame* KF=kDataFrame::load(inputIndex);
     auto prevColor=(deduplicatedColumn< mixVectors>*)KF->columns["color"];
     auto newColor=new deduplicatedColumn<prefixTrie>();
     newColor->index=prevColor->index;
     newColor->values=new prefixTrie(prevColor->values);
     KF->columns["color"]=newColor;
-    KF->save(inputIndex);
+    KF->save(outputIndex);
     return 0;
 //    string inputList = argv[1];
 //    string framePath = argv[2];
