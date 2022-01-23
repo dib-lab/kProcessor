@@ -1018,6 +1018,10 @@ void prefixTrie::loadFromQueryColorColumn(mixVectors  *col) {
         }
         auto sortedIterator=new mixVectorSortedIterator(col,scopeBegin,scopeEnd);
 
+
+        deque<uint32_t> shortened;
+        deque<uint32_t> toBAdded;
+
         if(!sortedIterator->finished())
         {
             delete tree[currTree];
@@ -1038,7 +1042,7 @@ void prefixTrie::loadFromQueryColorColumn(mixVectors  *col) {
                 }
                 unordered_set<uint32_t> unneededNodes(currPrefix.begin() + i, currPrefix.end());
                 unordered_set<uint32_t> neededNodes(currColor.begin() , currColor.end());
-                deque<uint32_t> toBAdded;
+
                 toBAdded.clear();
                 bool hasUnneeded = false;
                 unsigned int j = 0;
@@ -1083,7 +1087,7 @@ void prefixTrie::loadFromQueryColorColumn(mixVectors  *col) {
                 addedEdgesHisto[toBAdded.size()] += 1;
                 uint32_t inputSize = toBAdded.size();
                 /// performance improv
-                deque<uint32_t> shortened;
+
                 shortened.clear();
                 shorten(toBAdded, shortened);
                 uint32_t outputSize=0;
@@ -1377,7 +1381,7 @@ void prefixTrie::shorten(deque<uint32_t> &input, deque<uint32_t> &output) {
             shorten(input, output);
         return;
     }
-    deque<uint32_t> remaining;
+
     vector<uint32_t> chosen;
     if ((*unCompressedEdges[treeIndex])[0] != input[0]) {
         cerr << "Wrong tree " << (*unCompressedEdges[treeIndex])[0] << endl;
