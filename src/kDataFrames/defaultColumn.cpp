@@ -496,9 +496,12 @@ void mixVectors::sortColors() {
         return;
 
     TimeVar t1=timeNow();
+
+    unsigned N=colors.size();
 #pragma omp parallel for
-    for (unsigned int i = 0; i < colors.size(); i++)
+    for (unsigned int i = 0; i < N; i++)
         colors[i]->sort(idsMap);
+
     sorted=true;
     cout<<"Time to sort :"<<duration(timeNow()-t1)<<" ms"<<endl;
 }
@@ -979,8 +982,9 @@ void prefixTrie::loadFromQueryColorColumn(mixVectors  *col) {
     col->createSortedIndex();
     col->explainSize();
     sdsl::int_vector<32> invIdsMap(col->idsMap.size()+1);
+    unsigned N=col->idsMap.size();
 #pragma omp parallel for
-    for (unsigned int i = 0; i < col->idsMap.size(); i++) {
+    for (unsigned int i = 0; i < N; i++) {
         invIdsMap[col->idsMap[i]] = i;
     }
     cerr << "Inverted Ids is calculated" << endl;
