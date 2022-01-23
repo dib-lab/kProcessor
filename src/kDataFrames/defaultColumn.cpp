@@ -963,6 +963,15 @@ void prefixTrie::initializeTrees(mixVectors *col) {
 
 
 }
+inline void setTreeValue(sdsl::bit_vector* tree,uint32_t index, bool value)
+{
+    (*tree)[index] = value;
+    if (index +1  == tree->size()) {
+        cerr << "Tmp bp_tree of size " << tree->size() << "(" << sdsl::size_in_mega_bytes(*tree)
+        << "MB) is full! size will doubled" << endl;
+        tree->resize(tree->size() * 2);
+    }
+}
 void prefixTrie::loadFromQueryColorColumn(mixVectors  *col) {
 
     TimeVar globalTime=timeNow();
@@ -1019,8 +1028,7 @@ void prefixTrie::loadFromQueryColorColumn(mixVectors  *col) {
         auto sortedIterator=new mixVectorSortedIterator(col,scopeBegin,scopeEnd);
 
 
-        deque<uint32_t> shortened;
-        deque<uint32_t> toBAdded;
+
 
         if(!sortedIterator->finished())
         {
@@ -1028,6 +1036,10 @@ void prefixTrie::loadFromQueryColorColumn(mixVectors  *col) {
             tree[currTree]=new sdsl::bit_vector(tmpSize * 2);
             tmpEdgesTop = 0;
             tmpTreeTop = 0;
+
+
+            deque<uint32_t> shortened;
+            deque<uint32_t> toBAdded;
 
             for (;!sortedIterator->finished();sortedIterator->next()) {
                 pair<uint32_t,vector<uint32_t> > tmp=sortedIterator->get();
@@ -1066,13 +1078,7 @@ void prefixTrie::loadFromQueryColorColumn(mixVectors  *col) {
                     }
                     nodesCache.erase(pastNodes[k]);
                     rank++;
-                    (*tree[currTree])[tmpTreeTop++] = 0;
-                    if (tmpTreeTop == tree[currTree]->size()) {
-                        cerr << "Tmp bp_tree of size " << tree[currTree]->size() << "(" << sdsl::size_in_mega_bytes(*tree[currTree])
-                        << "MB) is full! size will doubled" << endl;
-                        tree[currTree]->resize(tree[currTree]->size() * 2);
-                        tmpSize *= 2;
-                    }
+                    setTreeValue(tree[currTree],tmpTreeTop++,false);
                 }
                 pastNodes.erase(pastNodes.begin() + j, pastNodes.end());
                 currPrefix.erase(currPrefix.begin() + i, currPrefix.end());
@@ -1086,7 +1092,7 @@ void prefixTrie::loadFromQueryColorColumn(mixVectors  *col) {
                 toBAdded.erase(last, toBAdded.end());
                 addedEdgesHisto[toBAdded.size()] += 1;
                 uint32_t inputSize = toBAdded.size();
-                /// performance improv
+
 
                 shortened.clear();
                 shorten(toBAdded, shortened);
@@ -1100,13 +1106,8 @@ void prefixTrie::loadFromQueryColorColumn(mixVectors  *col) {
                 for (auto sample:shortened) {
                     rank++;
                     pastNodes.push_back(sample);
-                    (*tree[currTree])[tmpTreeTop++] = 1;
-                    if (tmpTreeTop == tree[currTree]->size()) {
-                        cerr << "Tmp bp_tree of size " << tree[currTree]->size() << "(" << sdsl::size_in_mega_bytes(*tree[currTree])
-                        << "MB) is full! size will doubled" << endl;
-                        tree[currTree]->resize(tree[currTree]->size() * 2);
-                    }
 
+                    setTreeValue(tree[currTree],tmpTreeTop++,true);
                     tmp_edges[tmpEdgesTop++] = sample;
                     if (tmpEdgesTop == tmp_edges.size()) {
                         cerr << "Tmp edges of size (" << sdsl::size_in_mega_bytes(tmp_edges) << "MB) is full! size will doubled"
@@ -1126,16 +1127,10 @@ void prefixTrie::loadFromQueryColorColumn(mixVectors  *col) {
             for (unsigned int k = 0; k < pastNodes.size(); k++) {
                 nodesCache.erase(pastNodes[k]);
                 rank++;
-                (*tree[currTree])[tmpTreeTop++] = false;
-                if (tmpTreeTop == tree[currTree]->size()) {
-                    cerr << "Tmp bp_tree of size " << tree[currTree]->size() << "(" << sdsl::size_in_mega_bytes(*tree[currTree])
-                    << "MB) is full! size will doubled" << endl;
-                    tree[currTree]->resize(tree[currTree]->size() * 2);
-                    tmpSize *= 2;
-                }
+                setTreeValue(tree[currTree],tmpTreeTop++,false);
             }
 
-            delete bp_tree[currTree];
+
             delete unCompressedEdges[currTree];
 
             tree[currTree]->resize(tmpTreeTop);
@@ -1198,7 +1193,6 @@ void prefixTrie::loadFromQueryColorColumn(mixVectors  *col) {
     }
     cout << "Possible saving " << edgesSum << endl;
     explainSize();
-
     cout<<"Time to create prefix trie(total) :"<<duration(timeNow()-globalTime)<<" ms"<<endl;
 
 }
@@ -1220,7 +1214,8 @@ inline vector<uint32_t> prefixTrie::decodeColor(uint64_t treeIndex){
 //        cacheUsed++;
 //        return queryCache->Get(treeIndex);
 //    }
-    deque<uint32_t> tmp;
+    vector<uint32_t> tmp;
+    tmp.reserve(noSamples);
     queue<uint64_t> Q;
     Q.push(treeIndex);
     // cout<<idsMap[index]<<" -> ";
@@ -1252,12 +1247,12 @@ inline vector<uint32_t> prefixTrie::decodeColor(uint64_t treeIndex){
     }
     //cout<<endl;
     sort(tmp.begin(),tmp.end());
-    vector<uint32_t> res(tmp.size());
-    for (unsigned int i = 0; i < res.size(); i++)
-        res[i] = tmp[i];
+    //vector<uint32_t> res(tmp.size());
+    //for (unsigned int i = 0; i < res.size(); i++)
+     //   res[i] = tmp[i];
 //    if(!queryCache->Cached(treeIndex) )
 //        queryCache->Put(treeIndex,res);
-    return res;
+    return tmp;
 }
 
 vector<uint32_t> prefixTrie::getWithIndex(uint32_t index) {
