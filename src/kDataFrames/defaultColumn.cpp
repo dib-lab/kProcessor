@@ -1073,7 +1073,8 @@ void prefixTrie::loadFromQueryColorColumn(mixVectors  *col) {
             vector<mixVectorSortedIterator> workChunks=sortedIterator->split(10000);
 
             delete sortedIterator;
-            unsigned nChunks=workChunks.size();
+            unsigned const nChunks=workChunks.size();
+#pragma omp parallel for ordered firstprivate(tmpEdgesTop , tmpTreeTop, localRank, currPrefix, rankMap,pastNodes ,nodesCache,toBAdded,shortened ,currTree,localTree,localEdges) shared(globalRank,treeIT,unCompressedEdgesIT,workChunks)
             for(unsigned w=0;w<nChunks;w++)
             {
                 tmpEdgesTop = 0;
@@ -1196,6 +1197,7 @@ void prefixTrie::loadFromQueryColorColumn(mixVectors  *col) {
 
                 //check size here
                 //merge
+                #pragma omp ordered
                 {
                     if(treeIT==tree[currTree]->begin())//first batch
                     {
@@ -1302,7 +1304,6 @@ void prefixTrie::loadFromQueryColorColumn(mixVectors  *col) {
                     processedColors+=numColorsToProcess;
                     if(processedColors%printChunk==0)
                         cout<<"Processed "<<processedColors<<" / "<<numColors<<endl;
-
                 }
 
 
