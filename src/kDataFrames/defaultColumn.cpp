@@ -975,6 +975,29 @@ inline void setTreeValue(sdsl::bit_vector* tree,uint32_t index, bool value)
         tree->resize(tree->size() * 2);
     }
 }
+inline void growTree(sdsl::bit_vector* tree,uint32_t minimumSize)
+{
+
+    uint32_t currSize=tree->size();
+    if(minimumSize<currSize)
+        return;
+    while(currSize < minimumSize)
+    {
+        currSize*=2;
+    }
+    tree->resize(currSize);
+}
+inline void growEdges(sdsl::int_vector<>* tree,uint32_t minimumSize)
+{
+    uint32_t currSize=tree->size();
+    if(minimumSize<currSize)
+        return;
+    while(currSize < minimumSize)
+    {
+        currSize*=2;
+    }
+    tree->resize(currSize);
+}
 void prefixTrie::loadFromQueryColorColumn(mixVectors  *col) {
 
     TimeVar globalTime=timeNow();
@@ -989,36 +1012,37 @@ void prefixTrie::loadFromQueryColorColumn(mixVectors  *col) {
     }
     cerr << "Inverted Ids is calculated" << endl;
 
+    uint64_t globalRank = 0;
 
 
-
-    uint64_t tmpSize = max((uint32_t)(col->numIntegers() / 10),(uint32_t)10);
+    uint64_t tmpSize = max((uint32_t)(col->numIntegers() / 20),(uint32_t)10);
     uint64_t tmpEdgesTop = 0;
     uint64_t tmpTreeTop = 0;
 
-    sdsl::int_vector<> tmp_edges(tmpSize);
-
+    sdsl::int_vector<> localEdges(tmpSize);
+    sdsl::bit_vector localTree(tmpSize*2);
+    uint64_t localRank = 0;
 
     deque<uint32_t> currPrefix;
     deque<uint64_t> pastNodes;
+    deque<uint32_t> shortened;
+    deque<uint32_t> toBAdded;
+    unordered_map<uint64_t ,vector<uint32_t > > nodesCache;
+    unordered_map<uint64_t,uint64_t> rankMap;
 
-    unordered_map<int, uint64_t> addedEdgesHisto;
-    for (int i = 0; i <= noSamples; i++)
-        addedEdgesHisto[i] = 0;
+    ///unordered_map<int, uint64_t> addedEdgesHisto;
+//    for (int i = 0; i <= noSamples; i++)
+//        addedEdgesHisto[i] = 0;
 
     uint64_t processedColors = 0;
     uint64_t printChunk=numColors/20;
     if(printChunk == 0)
         printChunk= numColors;
 
-    uint64_t rank = 0;
+
     totalSize= 0;
-//    totalSize= 0;
-//    for(uint32_t i=1;i<currTree;i++)
-//    {
-//        starts[i]=starts[i-1]+tree[i-1]->size();
-//        totalSize += tree[i-1]->size();
-//    }
+
+    unsigned prevSize=2;
 
     for(unsigned currTree=0; currTree<noSamples ;currTree++)
     {
@@ -1036,117 +1060,267 @@ void prefixTrie::loadFromQueryColorColumn(mixVectors  *col) {
 
         if(!sortedIterator->finished())
         {
-            delete tree[currTree];
-            tree[currTree]=new sdsl::bit_vector(tmpSize * 2);
-            tmpEdgesTop = 0;
-            tmpTreeTop = 0;
-
-
-            deque<uint32_t> shortened;
-            deque<uint32_t> toBAdded;
-
-            for (;!sortedIterator->finished();sortedIterator->next()) {
-                pair<uint32_t,vector<uint32_t> > tmp=sortedIterator->get();
-                uint32_t colorGlobalIndex=tmp.first;
-                vector<uint32_t> currColor=tmp.second;
-
-                unsigned int i = 0;
-                for (; i < currPrefix.size() && i < currColor.size(); i++) {
-                    if (currPrefix[i] != currColor[i])
-                        break;
-
-                }
-                unordered_set<uint32_t> unneededNodes(currPrefix.begin() + i, currPrefix.end());
-                unordered_set<uint32_t> neededNodes(currColor.begin() , currColor.end());
-
-                toBAdded.clear();
-                bool hasUnneeded = false;
-                unsigned int j = 0;
-                for (; j < pastNodes.size(); j++) {
-
-                    for (auto c:nodesCache[pastNodes[j]])
-                        if (unneededNodes.find(c) != unneededNodes.end()) {
-                            hasUnneeded = true;
-                            break;
-                        }
-
-                    if (hasUnneeded)
-                        break;
-
-                }
-                for (unsigned int k = j; k < pastNodes.size(); k++) {
-                    for(auto t:nodesCache[pastNodes[k]])
-                    {
-                        if(neededNodes.find(t)!=neededNodes.end())
-                            toBAdded.push_back(t);
-                    }
-                    nodesCache.erase(pastNodes[k]);
-                    rank++;
-                    setTreeValue(tree[currTree],tmpTreeTop++,false);
-                }
-                pastNodes.erase(pastNodes.begin() + j, pastNodes.end());
-                currPrefix.erase(currPrefix.begin() + i, currPrefix.end());
-
-                for (auto it=currColor.begin()+i;it!=currColor.end();it++) {
-                    currPrefix.push_back(*it);
-                    toBAdded.push_back(*it);
-                }
-                std::sort(toBAdded.begin(), toBAdded.end());
-                auto last = std::unique(toBAdded.begin(), toBAdded.end());
-                toBAdded.erase(last, toBAdded.end());
-                addedEdgesHisto[toBAdded.size()] += 1;
-                uint32_t inputSize = toBAdded.size();
-
-
-                shortened.clear();
-                shorten(toBAdded, shortened);
-                uint32_t outputSize=0;
-                for(auto s:shortened)
-                    outputSize+=nodesCache[s].size();
-                if(outputSize!=inputSize)
-                {
-                    cerr<<"Build error in rank "<<rank<<endl;
-                }
-                for (auto sample:shortened) {
-                    rank++;
-                    pastNodes.push_back(sample);
-
-                    setTreeValue(tree[currTree],tmpTreeTop++,true);
-                    tmp_edges[tmpEdgesTop++] = sample;
-                    if (tmpEdgesTop == tmp_edges.size()) {
-                        cerr << "Tmp edges of size (" << sdsl::size_in_mega_bytes(tmp_edges) << "MB) is full! size will doubled"
-                        << endl;
-                        tmp_edges.resize(tmp_edges.size() * 2);
-                    }
-                }
-
-                idsMap[invIdsMap[colorGlobalIndex]] = rank - 1;
-                processedColors++;
-                if(processedColors%printChunk==0)
-                    cout<<"Processed "<<processedColors<<" / "<<numColors<<endl;
-
-
-            }
-            // close the remaining opened brackets
-            for (unsigned int k = 0; k < pastNodes.size(); k++) {
-                nodesCache.erase(pastNodes[k]);
-                rank++;
-                setTreeValue(tree[currTree],tmpTreeTop++,false);
-            }
-
-
             delete unCompressedEdges[currTree];
+            delete tree[currTree];
+            tree[currTree]=new sdsl::bit_vector(prevSize*2);
+            unCompressedEdges[currTree]=new sdsl::int_vector<>(prevSize);
 
-            tree[currTree]->resize(tmpTreeTop);
-            bp_tree[currTree]=new sdsl::bp_support_sada<>(tree[currTree]);
-            unCompressedEdges[currTree]=new sdsl::int_vector<>(tmpEdgesTop);
-            std::copy(tmp_edges.begin(),tmp_edges.begin()+tmpEdgesTop,unCompressedEdges[currTree]->begin());
+
+            auto treeIT=tree[currTree]->begin();
+            auto unCompressedEdgesIT=unCompressedEdges[currTree]->begin();
+
+
+            vector<mixVectorSortedIterator> workChunks=sortedIterator->split(10000);
+
+            delete sortedIterator;
+            unsigned nChunks=workChunks.size();
+            for(unsigned w=0;w<nChunks;w++)
+            {
+                tmpEdgesTop = 0;
+                tmpTreeTop = 0;
+                localRank = 0;
+                currPrefix.clear();
+                rankMap.clear();
+                pastNodes.clear();
+                nodesCache.clear();
+                mixVectorSortedIterator currIterator=workChunks[w];
+//                cout<<"Top color ";
+//                for(auto a:currIterator.get().second)
+//                    cout<<a<<" ";
+//                cout<<endl;
+                unsigned numColorsToProcess=currIterator.end-currIterator.curr;
+                bool firstColor=true;
+                for (;!currIterator.finished();currIterator.next()) {
+                    pair<uint32_t,vector<uint32_t> > tmp=currIterator.get();
+                    uint32_t colorGlobalIndex=tmp.first;
+                    vector<uint32_t> currColor=tmp.second;
+//                    if(currColor==vector<uint32_t> ({ 1, 2, 4, 8, 9, 11, 13, 14, 19, 20, 24 }))
+//                    {
+//                        cout<<"Here 1 "<<endl;
+//                    }
+//                    if(currColor==vector<uint32_t> ({ 1, 2, 4, 8, 9, 11, 13, 14, 19, 20, 23, 24, 26 }))
+//                    {
+//                        cout<<"Here 2 "<<endl;
+//                    }
+                    unsigned int i = 0;
+                    for (; i < currPrefix.size() && i < currColor.size(); i++) {
+                        if (currPrefix[i] != currColor[i])
+                            break;
+
+                    }
+                    unordered_set<uint32_t> unneededNodes(currPrefix.begin() + i, currPrefix.end());
+                    unordered_set<uint32_t> neededNodes(currColor.begin() , currColor.end());
+
+                    toBAdded.clear();
+                    bool hasUnneeded = false;
+                    unsigned int j = 0;
+                    for (; j < pastNodes.size(); j++) {
+
+                        for (auto c:nodesCache[pastNodes[j]])
+                            if (unneededNodes.find(c) != unneededNodes.end()) {
+                                hasUnneeded = true;
+                                break;
+                            }
+
+                        if (hasUnneeded)
+                            break;
+
+                    }
+                    for (unsigned int k = j; k < pastNodes.size(); k++) {
+                        for(auto t:nodesCache[pastNodes[k]])
+                        {
+                            if(neededNodes.find(t)!=neededNodes.end())
+                                toBAdded.push_back(t);
+                        }
+                        nodesCache.erase(pastNodes[k]);
+                        localRank++;
+                        setTreeValue(&localTree,tmpTreeTop++,false);
+                    }
+                    pastNodes.erase(pastNodes.begin() + j, pastNodes.end());
+                    currPrefix.erase(currPrefix.begin() + i, currPrefix.end());
+
+                    for (auto it=currColor.begin()+i;it!=currColor.end();it++) {
+                        currPrefix.push_back(*it);
+                        toBAdded.push_back(*it);
+                    }
+                    std::sort(toBAdded.begin(), toBAdded.end());
+                    auto last = std::unique(toBAdded.begin(), toBAdded.end());
+                    toBAdded.erase(last, toBAdded.end());
+                    //addedEdgesHisto[toBAdded.size()] += 1;
+                    uint32_t inputSize = toBAdded.size();
+
+
+                    shortened.clear();
+                    if(firstColor)
+                    {
+                        shortened=toBAdded;
+                        firstColor=false;
+                        for(auto s:shortened)
+                        {
+                            nodesCache[s]={s};
+                        }
+                    }
+                    else{
+                        shorten(toBAdded,nodesCache, shortened);
+
+                    }
+                    uint32_t outputSize=0;
+                    for(auto s:shortened)
+                        outputSize+=nodesCache[s].size();
+                    if(outputSize!=inputSize)
+                    {
+                        cerr << "Build error in localRank " << localRank << endl;
+                    }
+                    for (auto sample:shortened) {
+                        localRank++;
+                        pastNodes.push_back(sample);
+
+                        setTreeValue(&localTree,tmpTreeTop++,true);
+                        localEdges[tmpEdgesTop++] = sample;
+                        if (tmpEdgesTop == localEdges.size()) {
+                            cerr << "Tmp edges of size (" << sdsl::size_in_mega_bytes(localEdges) << "MB) is full! size will doubled"
+                            << endl;
+                            localEdges.resize(localEdges.size() * 2);
+                        }
+                    }
+                    //idsMap[invIdsMap[colorGlobalIndex]] = localRank - 1;
+                    rankMap[colorGlobalIndex]=localRank - 1;
+
+                }
+                // close the remaining opened brackets
+                for (unsigned int k = 0; k < pastNodes.size(); k++) {
+                    nodesCache.erase(pastNodes[k]);
+                    localRank++;
+                    setTreeValue(&localTree,tmpTreeTop++,false);
+                }
+
+                //check size here
+                //merge
+                {
+                    if(treeIT==tree[currTree]->begin())//first batch
+                    {
+                        growTree(tree[currTree],tmpTreeTop);
+                        treeIT=tree[currTree]->begin();
+                        std::copy(localTree.begin(), localTree.begin() + tmpTreeTop, treeIT);
+                        treeIT+=(tmpTreeTop);
+
+                        growEdges(unCompressedEdges[currTree],tmpEdgesTop);
+                        unCompressedEdgesIT= unCompressedEdges[currTree]->begin();
+                        std::copy(localEdges.begin(), localEdges.begin() + tmpEdgesTop, unCompressedEdgesIT);
+                        unCompressedEdgesIT+=tmpEdgesTop;
+
+                        for(auto r: rankMap)
+                            idsMap[invIdsMap[r.first]] = globalRank + r.second;
+                        globalRank+=localRank;
+                    }
+                    else{
+                        sdsl::bp_support_sada<> bpSupport(tree[currTree]);
+                        unsigned leftPos=treeIT-tree[currTree]->begin()-1;
+                        unsigned rightPos=0;
+//                        cout<<(*tree[currTree])[leftPos]<<"-"<<localTree[rightPos]<<endl;
+                        while(rightPos< localEdges.size()&&(*tree[currTree])[leftPos]==0 && localTree[rightPos] ==1)
+                        {
+                            unsigned nodeID=bpSupport.find_open(leftPos);
+                            unsigned edgeIndex = bpSupport.rank(nodeID) - 1;
+                            unsigned nodeLeft= (*unCompressedEdges[currTree])[edgeIndex];
+                            unsigned nodeRight=localEdges[rightPos];
+//                            cout<<(*tree[currTree])[leftPos]<<"-"<<localTree[rightPos]<<endl;
+//                            cout<<nodeLeft<<"-"<<nodeRight<<endl;
+                            if(nodeLeft!=nodeRight)
+                                break;
+
+                            leftPos--;
+                            rightPos++;
+                        }
+                        if(rightPos==0)
+                            cout<<currTreeID<<" right "<<localEdges[rightPos]<<endl;
+
+                       // treeIT-=rightPos;//delete the closing
+                        treeIT=tree[currTree]->begin()+ leftPos+1;
+                        unsigned prevSize=treeIT-tree[currTree]->begin();
+
+                        tmpTreeTop-=rightPos;
+                        auto rightIT=localTree.begin()+rightPos;
+
+
+
+                        growTree(tree[currTree],prevSize+tmpTreeTop);
+                        treeIT=tree[currTree]->begin() + prevSize;
+                        treeIT=std::copy(rightIT, rightIT + tmpTreeTop, treeIT);
+
+
+
+//                        auto tmpSize=unCompressedEdgesIT-unCompressedEdges[currTree]->begin();
+//                        cout<<"LeftPos "<<leftPos<<endl;
+//                        auto tmpIT=unCompressedEdgesIT-5;
+//                        for(;tmpIT!=unCompressedEdgesIT;tmpIT++)
+//                        {
+//                            cout<<*tmpIT<<" ";
+//                        }
+//                        cout<<endl;
+//                        cout<<"Right POS "<< rightPos<<endl;
+//                        for(unsigned j =0;j<rightPos+5;j++)
+//                        {
+//                            cout<<localEdges[j]<<" ";
+//                        }
+//                        cout<<endl;
+
+
+
+                        tmpEdgesTop-=rightPos;
+
+
+                        auto rightEdgesIT=localEdges.begin()+rightPos;
+                        prevSize=unCompressedEdgesIT-unCompressedEdges[currTree]->begin();
+                        growEdges(unCompressedEdges[currTree],prevSize+tmpEdgesTop);
+                        unCompressedEdgesIT=unCompressedEdges[currTree]->begin() + prevSize;
+                        unCompressedEdgesIT=std::copy(rightEdgesIT,rightEdgesIT + tmpEdgesTop, unCompressedEdgesIT);
+
+//                        cout<<"Final"<<endl;
+//                        for(unsigned j=prevSize-10;j<prevSize+10;j++)
+//                            cout<<(*unCompressedEdges[currTree])[j]<<" ";
+//                        cout<<endl;
+
+
+                        globalRank-=(2*rightPos);
+                        for(auto r: rankMap){
+                            idsMap[invIdsMap[r.first]] = globalRank + r.second;
+//                            if(r.second<rightPos+1)
+//                                idsMap[invIdsMap[r.first]] = globalRank + r.second;
+//                            else{
+//                                cout<<"Here"<<endl;
+//                            }
+                        }
+                       // globalRank+=(localRank-rightPos);
+                       globalRank+=localRank;
+                    }
+
+
+
+
+
+                    processedColors+=numColorsToProcess;
+                    if(processedColors%printChunk==0)
+                        cout<<"Processed "<<processedColors<<" / "<<numColors<<endl;
+
+                }
+
+
+
+            }
+            unCompressedEdges[currTree]->resize(unCompressedEdgesIT-unCompressedEdges[currTree]->begin());
             sdsl::util::bit_compress(*unCompressedEdges[currTree]);
-            tmpSize = tmp_edges.size() * 2;
+            tree[currTree]->resize(treeIT-tree[currTree]->begin());
+            bp_tree[currTree]=new sdsl::bp_support_sada<>(tree[currTree]);
+        }
+        else{
+            // no colors start with this sample
+            globalRank+=2;
         }
 
         starts[currTree]=totalSize;
         totalSize+=tree[currTree]->size();
+        prevSize=tree[currTree]->size();
         cout<<"Time index tree number "<<currTreeID<<":"<<duration(timeNow()-t1)<<" ms"<<endl;
 
     }
@@ -1191,11 +1365,11 @@ void prefixTrie::loadFromQueryColorColumn(mixVectors  *col) {
 //    }
 
     cout<<processedColors<<"/"<<numColors<<endl;
-    uint64_t edgesSum = 0;
-    for (auto a:addedEdgesHisto) {
-        edgesSum += (a.first - 1) * (a.second);
-    }
-    cout << "Possible saving " << edgesSum << endl;
+//    uint64_t edgesSum = 0;
+//    for (auto a:addedEdgesHisto) {
+//        edgesSum += (a.first - 1) * (a.second);
+//    }
+//    cout << "Possible saving " << edgesSum << endl;
     explainSize();
     cout<<"Time to create prefix trie(total) :"<<duration(timeNow()-globalTime)<<" ms"<<endl;
 
@@ -1362,7 +1536,7 @@ void prefixTrie::explainSize() {
 }
 
 
-void prefixTrie::shorten(deque<uint32_t> &input, deque<uint32_t> &output) {
+void prefixTrie::shorten(deque<uint32_t> &input, unordered_map<uint64_t ,vector<uint32_t > >& nodesCache,deque<uint32_t> &output) {
     if (input.size() == 1) {
         output.push_back(input[0]);
         nodesCache[input[0]] = {input[0]};
@@ -1377,7 +1551,7 @@ void prefixTrie::shorten(deque<uint32_t> &input, deque<uint32_t> &output) {
         nodesCache[input[0]] = {input[0]};
         input.erase(input.begin());
         if (!input.empty())
-            shorten(input, output);
+            shorten(input, nodesCache,output);
         return;
     }
 
@@ -1459,7 +1633,7 @@ void prefixTrie::shorten(deque<uint32_t> &input, deque<uint32_t> &output) {
     }
 
     if (!input.empty()) {
-        shorten(input, output);
+        shorten(input, nodesCache,output);
     }
 
 }
@@ -2039,3 +2213,25 @@ pair<uint32_t, vector<uint32_t> > mixVectorSortedIterator::get() {
 bool mixVectorSortedIterator::finished() {
     return curr >= end;
 }
+
+vector<mixVectorSortedIterator> mixVectorSortedIterator::split(unsigned int chunkSize) {
+    unsigned numChunks=((end-curr)/chunkSize)+1;
+    vector<mixVectorSortedIterator> res;
+    res.reserve(numChunks);
+    unsigned startChunk=curr;
+    while(startChunk<end)
+    {
+        unsigned endChunk=startChunk+chunkSize;
+        endChunk=min(endChunk,end);
+        res.push_back(mixVectorSortedIterator(data,startChunk,endChunk));
+        startChunk+=chunkSize;
+    }
+    return res;
+}
+
+mixVectorSortedIterator::mixVectorSortedIterator(mixVectors *data, uint32_t curr, uint32_t anEnd) : data(data),
+                                                                                                    curr(curr),
+                                                                                                    end(anEnd)
+                                                                                                    {}
+mixVectorSortedIterator::mixVectorSortedIterator(const mixVectorSortedIterator &other) :
+data(other.data),curr(other.curr), end(other.end) {}

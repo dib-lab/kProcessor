@@ -696,10 +696,15 @@ public:
         curr=0;
         end=0;
     }
+
+    mixVectorSortedIterator(mixVectors *data, uint32_t curr, uint32_t anEnd);
     mixVectorSortedIterator(mixVectors* pdata,vector<uint32_t> scopeBegin={},vector<uint32_t> scopeEnd={});
+    mixVectorSortedIterator(const mixVectorSortedIterator& other);
+
     void next();
     pair<uint32_t, vector<uint32_t> > get();
     bool finished();
+    vector<mixVectorSortedIterator> split(unsigned chunkSize);
 
 };
 class prefixTrieIterator;
@@ -709,7 +714,6 @@ using lru_cache_t = typename caches::fixed_sized_cache<Key, Value, caches::LRUCa
 class prefixTrie: public queryColorColumn{
 private:
     lru_cache_t<uint64_t, vector<uint32_t>>* queryCache;
-    unordered_map<uint64_t ,vector<uint32_t > > nodesCache;
     deque<sdsl::int_vector<>*>  unCompressedEdges;
 public:
     typedef  vector<uint32_t> dataType;
@@ -749,7 +753,7 @@ public:
 
     void serialize(string filename);
     void deserialize(string filename);
-    void shorten(deque<uint32_t> & input,deque<uint32_t> & output);
+    void shorten(deque<uint32_t> & input,unordered_map<uint64_t ,vector<uint32_t > >& nodesCache,deque<uint32_t> & output);
    // void _shorten(vector<uint32_t> & input,vector<uint32_t> & output, vector<uint32_t> & remaining);
 
     uint64_t sizeInBytes();
