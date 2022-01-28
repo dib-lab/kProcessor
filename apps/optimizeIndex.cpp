@@ -23,6 +23,39 @@ int main(int argc, char *argv[]) {
     newColor->values=new prefixTrie(prevColor->values);
     KF->columns["color"]=newColor;
     KF->save(outputIndex);
+
+    auto correctCol=prevColor->values;
+    auto queryCol=prevColor->values;
+
+    const unsigned numColors=correctCol->numColors;
+#pragma omp parallel for
+    for(uint32_t i=1; i<numColors; i++)
+    {
+        auto correctColor=correctCol->getWithIndex(i);
+        auto newColor=queryCol->getWithIndex(i);
+        if(correctColor != newColor)
+        {
+            cerr<<"Not Matching Colors "<<i<<endl;
+            cerr<<"Correct ";
+            for(auto c:correctColor)
+            {
+                cerr<<c<<" ";
+            }
+            cerr<<endl;
+
+            cerr<<"Query ";
+            for(auto c:newColor)
+            {
+                cerr<<c<<" ";
+            }
+            cerr<<endl;
+           // break;
+
+        }
+
+
+    }
+
     return 0;
 //    string inputList = argv[1];
 //    string framePath = argv[2];
