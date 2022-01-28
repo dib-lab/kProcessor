@@ -28,13 +28,15 @@ int main(int argc, char *argv[]) {
     auto queryCol=prevColor->values;
 
     const unsigned numColors=correctCol->numColors;
-#pragma omp parallel for
+    bool error=false;
+#pragma omp parallel for shared(error)
     for(uint32_t i=1; i<numColors; i++)
     {
         auto correctColor=correctCol->getWithIndex(i);
         auto newColor=queryCol->getWithIndex(i);
         if(correctColor != newColor)
         {
+            error=true;
             cerr<<"Not Matching Colors "<<i<<endl;
             cerr<<"Correct ";
             for(auto c:correctColor)
@@ -55,8 +57,15 @@ int main(int argc, char *argv[]) {
 
 
     }
-
-    return 0;
+    if(error)
+    {
+        cerr<<"errors found"<<endl;
+        return-1;
+    }
+    else{
+        cerr<<"Prefix Trie is created succefully"<<endl;
+        return 0;
+    }
 //    string inputList = argv[1];
 //    string framePath = argv[2];
 //    int numThreads=atoi(argv[3]);
