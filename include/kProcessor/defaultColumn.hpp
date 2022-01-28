@@ -367,6 +367,9 @@ public:
     vectorBase* clone() override;
 
 
+    vector<uint32_t> splitIds(uint32_t numSamples);
+
+
 };
 
 class vectorOfVectorsIterator: public _vectorBaseIterator{
@@ -543,6 +546,7 @@ public:
 
     vectorBase *clone() override;
 
+    vector<uint32_t> splitIds(uint32_t numSamples);
 };
 
 class fixedSizeVectorIterator: public _vectorBaseIterator{

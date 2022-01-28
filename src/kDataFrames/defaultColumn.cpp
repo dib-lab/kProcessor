@@ -17,6 +17,7 @@
 #include <sdsl/util.hpp>
 #include "mum.h"
 #include <unistd.h>
+#include <omp.h>
 
 typedef std::chrono::high_resolution_clock::time_point TimeVar;
 
@@ -821,6 +822,20 @@ vectorBase *fixedSizeVector::clone() {
     return res;
 }
 
+vector<uint32_t> fixedSizeVector::splitIds(uint32_t numSamples) {
+    vector<uint32_t> res(numSamples,numeric_limits<uint32_t>::max());
+     int currSample=-1;
+     for(unsigned i=0; i<vec.size(); i += colorsize)
+     {
+         if(currSample < vec[i])
+         {
+             res[vec[i]]=i/colorsize;
+             currSample=vec[i];
+         }
+     }
+     return res;
+}
+
 
 vectorOfVectors::vectorOfVectors() {
     endIterator = new vectorBaseIterator(new vectorOfVectorsIterator(this));
@@ -921,6 +936,21 @@ void vectorOfVectors::sort(sdsl::int_vector<> &idsMap) {
     starts = vectype(tmpStarts);
 }
 
+vector<uint32_t> vectorOfVectors::splitIds(uint32_t numSamples) {
+    vector<uint32_t> res(numSamples,numeric_limits<uint32_t>::max());
+    auto it=starts.begin();
+    for(unsigned i=0;i<numSamples;i++)
+    {
+        it= lower_bound(it,starts.end(),i,
+                        [&](uint32_t lhs, uint32_t rhs) -> bool { return vecs[starts[lhs]] < rhs; });
+        if(vecs[*it] == i)
+        {
+            res[i]=starts.begin()-it;
+        }
+    }
+    return res;
+}
+
 
 prefixTrie::prefixTrie(insertColorColumn *col)
 {
@@ -981,10 +1011,12 @@ inline void growTree(sdsl::bit_vector* tree,uint32_t minimumSize)
     uint32_t currSize=tree->size();
     if(minimumSize<currSize)
         return;
+
     while(currSize < minimumSize)
     {
         currSize*=2;
     }
+    cerr<<"Grow tree to "<<currSize<<endl;
     tree->resize(currSize);
 }
 inline void growEdges(sdsl::int_vector<>* tree,uint32_t minimumSize)
@@ -996,6 +1028,7 @@ inline void growEdges(sdsl::int_vector<>* tree,uint32_t minimumSize)
     {
         currSize*=2;
     }
+    cerr<<"Grow Edges to "<<currSize<<endl;
     tree->resize(currSize);
 }
 void prefixTrie::loadFromQueryColorColumn(mixVectors  *col) {
@@ -1043,6 +1076,9 @@ void prefixTrie::loadFromQueryColorColumn(mixVectors  *col) {
     totalSize= 0;
 
     unsigned prevSize=2;
+    unsigned maxSize=1024;
+    omp_set_num_threads(4);
+    cout<<"threads "<<omp_get_num_threads()<<endl;
 
     for(unsigned currTree=0; currTree<noSamples ;currTree++)
     {
@@ -1062,8 +1098,8 @@ void prefixTrie::loadFromQueryColorColumn(mixVectors  *col) {
         {
             delete unCompressedEdges[currTree];
             delete tree[currTree];
-            tree[currTree]=new sdsl::bit_vector(prevSize*2);
-            unCompressedEdges[currTree]=new sdsl::int_vector<>(prevSize);
+            tree[currTree]=new sdsl::bit_vector(maxSize*2);
+            unCompressedEdges[currTree]=new sdsl::int_vector<>(maxSize);
 
 
             auto treeIT=tree[currTree]->begin();
@@ -1074,7 +1110,7 @@ void prefixTrie::loadFromQueryColorColumn(mixVectors  *col) {
 
             delete sortedIterator;
             unsigned const nChunks=workChunks.size();
-#pragma omp parallel for ordered firstprivate(tmpEdgesTop , tmpTreeTop, localRank, currPrefix, rankMap,pastNodes ,nodesCache,toBAdded,shortened ,currTree,localTree,localEdges) shared(globalRank,treeIT,unCompressedEdgesIT,workChunks)
+#pragma omp parallel for ordered num_threads(8) firstprivate(tmpEdgesTop , tmpTreeTop, localRank, currPrefix, rankMap,pastNodes ,nodesCache,toBAdded,shortened ,currTree,localTree,localEdges,printChunk,tmpSize) shared(globalRank,treeIT,unCompressedEdgesIT,workChunks,processedColors,maxSize)
             for(unsigned w=0;w<nChunks;w++)
             {
                 tmpEdgesTop = 0;
@@ -1199,6 +1235,7 @@ void prefixTrie::loadFromQueryColorColumn(mixVectors  *col) {
                 //merge
                 #pragma omp ordered
                 {
+
                     if(treeIT==tree[currTree]->begin())//first batch
                     {
                         growTree(tree[currTree],tmpTreeTop);
@@ -1216,27 +1253,29 @@ void prefixTrie::loadFromQueryColorColumn(mixVectors  *col) {
                         globalRank+=localRank;
                     }
                     else{
-                        sdsl::bp_support_sada<> bpSupport(tree[currTree]);
-                        unsigned leftPos=treeIT-tree[currTree]->begin()-1;
-                        unsigned rightPos=0;
-//                        cout<<(*tree[currTree])[leftPos]<<"-"<<localTree[rightPos]<<endl;
-                        while(rightPos< localEdges.size()&&(*tree[currTree])[leftPos]==0 && localTree[rightPos] ==1)
-                        {
-                            unsigned nodeID=bpSupport.find_open(leftPos);
-                            unsigned edgeIndex = bpSupport.rank(nodeID) - 1;
-                            unsigned nodeLeft= (*unCompressedEdges[currTree])[edgeIndex];
-                            unsigned nodeRight=localEdges[rightPos];
-//                            cout<<(*tree[currTree])[leftPos]<<"-"<<localTree[rightPos]<<endl;
-//                            cout<<nodeLeft<<"-"<<nodeRight<<endl;
-                            if(nodeLeft!=nodeRight)
-                                break;
+//                        sdsl::bp_support_sada<> bpSupport(tree[currTree]);
+//                        unsigned leftPos=treeIT-tree[currTree]->begin()-1;
+//                        unsigned rightPos=0;
+////                        cout<<(*tree[currTree])[leftPos]<<"-"<<localTree[rightPos]<<endl;
+//                        while(rightPos< localEdges.size()&&(*tree[currTree])[leftPos]==0 && localTree[rightPos] ==1)
+//                        {
+//                            unsigned nodeID=bpSupport.find_open(leftPos);
+//                            unsigned edgeIndex = bpSupport.rank(nodeID) - 1;
+//                            unsigned nodeLeft= (*unCompressedEdges[currTree])[edgeIndex];
+//                            unsigned nodeRight=localEdges[rightPos];
+////                            cout<<(*tree[currTree])[leftPos]<<"-"<<localTree[rightPos]<<endl;
+////                            cout<<nodeLeft<<"-"<<nodeRight<<endl;
+//                            if(nodeLeft!=nodeRight)
+//                                break;
+//
+//                            leftPos--;
+//                            rightPos++;
+//                        }
+//                        if(rightPos==0)
+//                            cout<<currTreeID<<" right "<<localEdges[rightPos]<<endl;
 
-                            leftPos--;
-                            rightPos++;
-                        }
-                        if(rightPos==0)
-                            cout<<currTreeID<<" right "<<localEdges[rightPos]<<endl;
-
+                        unsigned leftPos=treeIT-tree[currTree]->begin()-2;
+                        unsigned rightPos=1;
                        // treeIT-=rightPos;//delete the closing
                         treeIT=tree[currTree]->begin()+ leftPos+1;
                         unsigned prevSize=treeIT-tree[currTree]->begin();
@@ -1304,15 +1343,20 @@ void prefixTrie::loadFromQueryColorColumn(mixVectors  *col) {
                     processedColors+=numColorsToProcess;
                     if(processedColors%printChunk==0)
                         cout<<"Processed "<<processedColors<<" / "<<numColors<<endl;
+
+
                 }
 
 
 
+
             }
+
             unCompressedEdges[currTree]->resize(unCompressedEdgesIT-unCompressedEdges[currTree]->begin());
             sdsl::util::bit_compress(*unCompressedEdges[currTree]);
             tree[currTree]->resize(treeIT-tree[currTree]->begin());
             bp_tree[currTree]=new sdsl::bp_support_sada<>(tree[currTree]);
+            maxSize=max((uint32_t)unCompressedEdges[currTree]->size(),maxSize);
         }
         else{
             // no colors start with this sample
@@ -2236,3 +2280,4 @@ mixVectorSortedIterator::mixVectorSortedIterator(mixVectors *data, uint32_t curr
                                                                                                     {}
 mixVectorSortedIterator::mixVectorSortedIterator(const mixVectorSortedIterator &other) :
 data(other.data),curr(other.curr), end(other.end) {}
+
