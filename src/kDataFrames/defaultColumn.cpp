@@ -671,6 +671,8 @@ void mixVectors::createSortedIndex(int numThreads) {
 
     TimeVar t1=timeNow();
 
+    TimeVar t2=timeNow();
+
     sortedColorsIndex.resize(numColors);
 
     vector<vector<uint32_t>> splittedids(colors.size());
@@ -690,6 +692,10 @@ void mixVectors::createSortedIndex(int numThreads) {
 
         outputStart[i]=currStart;
     }
+
+    cout<<"Time to prepare for create sorted index:"<<duration(timeNow()-t2)<<" ms"<<endl;
+
+#pragma omp parallel for num_threads(numThreads) schedule(dynamic) shared(sortedColorsIndex)
     for(int currSample=0;currSample<noSamples;currSample++){
         auto compare = [](tuple<vector<uint32_t>, uint32_t, vectorBaseIterator *, vectorBaseIterator *> lhs,
                 tuple<vector<uint32_t>, uint32_t, vectorBaseIterator *, vectorBaseIterator *> rhs) {
@@ -1152,7 +1158,7 @@ void prefixTrie::loadFromQueryColorColumn(mixVectors  *col,int numThreads) {
 
     const unsigned chunkSize=1000;
   //  uint64_t tmpSize = max((uint32_t)(col->numIntegers() / 20),(uint32_t)10);
-    uint64_t tmpSize = chunkSize*5;
+    uint64_t tmpSize = chunkSize*20;
     vector<sdsl::int_vector<>*> ChunkslocalEdges(1000);
     vector<sdsl::bit_vector*> ChunkslocalTree(1000);
     vector<uint32_t> treeTops(1000,0);
