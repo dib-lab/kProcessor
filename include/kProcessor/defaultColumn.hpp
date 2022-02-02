@@ -298,11 +298,16 @@ class vectorBase{
 
     ///Returns an iterator at the beginning of the vectorBaseIterator.
     virtual vectorBaseIterator begin()=0;
+    ///Returns an iterator at specific item.
+    virtual vectorBaseIterator begin(uint32_t index)=0;
     ///Returns an iterator at the end of the vectorBaseIterator.
     virtual vectorBaseIterator end(){
         return *endIterator;
     }
     virtual vectorBase* clone()=0;
+
+    virtual vector<uint32_t> splitIds(uint32_t numSamples)=0;
+
 
 };
 
@@ -363,11 +368,12 @@ public:
     }
     void sort(sdsl::int_vector<>& idsMap);
     vectorBaseIterator begin() override ;
+    vectorBaseIterator begin(uint32_t index) override ;
     vectorBaseIterator end();
     vectorBase* clone() override;
 
 
-    vector<uint32_t> splitIds(uint32_t numSamples);
+    vector<uint32_t> splitIds(uint32_t numSamples)override;
 
 
 };
@@ -381,6 +387,17 @@ public:
         origin=o;
         vecsIt=o->vecs.begin();
         startsIt=o->starts.begin();
+    }
+    vectorOfVectorsIterator(vectorOfVectors* o,unsigned index){
+        origin=o;
+        if(index>o->starts.size()|| o->starts.size()==0){
+            startsIt=o->starts.end();
+            vecsIt=o->vecs.end();
+        }
+        else{
+            startsIt=o->starts.begin()+index;
+            vecsIt=o->vecs.begin()+(*startsIt);
+        }
     }
 
     _vectorBaseIterator& operator ++ (int){
@@ -474,12 +491,20 @@ public:
     vectorBaseIterator begin(){
         return vectorBaseIterator();
     }
+    vectorBaseIterator begin(uint32_t index){
+        return vectorBaseIterator();
+    }
     double sizeInMB(){
         return 0.0;
     }
 
     vectorBase *clone() override {
         return new constantVector(noColors);
+    }
+
+
+    vector<uint32_t> splitIds(uint32_t numSamples){
+        return vector<uint32_t>();
     }
 
 
@@ -542,6 +567,7 @@ public:
         return sdsl::size_in_mega_bytes(vec);
     }
     vectorBaseIterator begin();
+    vectorBaseIterator begin(uint32_t index) override;
     vectorBaseIterator end();
 
     vectorBase *clone() override;
@@ -556,6 +582,10 @@ public:
     fixedSizeVectorIterator(fixedSizeVector* o){
         origin=o;
         it=o->vec.begin();
+    }
+    fixedSizeVectorIterator(fixedSizeVector* o ,unsigned index ){
+        origin=o;
+        it=o->vec.begin()+ (index*origin->colorsize);
     }
 
     _vectorBaseIterator& operator ++ (int){
@@ -660,8 +690,8 @@ public:
 
     void serialize(string filename);
     void deserialize(string filename);
-    void sortColors();
-    void createSortedIndex();
+    void sortColors(int numThreads=1);
+    void createSortedIndex(int numThreads=1);
 
 //    void optimize2();
 //    void optimize3(insertColorColumn* col);
@@ -734,11 +764,11 @@ public:
         queryCache= new lru_cache_t<uint64_t, vector<uint32_t>>(1);
         totalSize=0;
     }
-    prefixTrie(insertColorColumn* col);
-    prefixTrie(mixVectors* col);
+    prefixTrie(insertColorColumn* col,int numThreads=1);
+    prefixTrie(mixVectors* col,int numThreads=1);
 
     void initializeTrees(mixVectors* col);
-    void loadFromQueryColorColumn(mixVectors* col);
+    void loadFromQueryColorColumn(mixVectors* col,int numThreads=1);
     ~prefixTrie(){
         for(auto t:tree)
             delete t;

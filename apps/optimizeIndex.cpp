@@ -20,7 +20,7 @@ int main(int argc, char *argv[]) {
     auto prevColor=(deduplicatedColumn< mixVectors>*)KF->columns["color"];
     auto newColor=new deduplicatedColumn<prefixTrie>();
     newColor->index=prevColor->index;
-    newColor->values=new prefixTrie(prevColor->values);
+    newColor->values=new prefixTrie(prevColor->values,nThreads);
     KF->columns["color"]=newColor;
     KF->save(outputIndex);
 

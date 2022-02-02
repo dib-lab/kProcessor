@@ -492,19 +492,20 @@ mixVectors::mixVectors(insertColorColumn *col) {
 
 }
 
-void mixVectors::sortColors() {
+void mixVectors::sortColors(int numThreads) {
     if(sorted)
         return;
 
+    cout<<"Started sorting"<<endl;
     TimeVar t1=timeNow();
 
     unsigned N=colors.size();
-#pragma omp parallel for
+#pragma omp parallel for num_threads(numThreads)
     for (unsigned int i = 0; i < N; i++)
         colors[i]->sort(idsMap);
 
     sorted=true;
-    cout<<"Time to sort :"<<duration(timeNow()-t1)<<" ms"<<endl;
+    cout<<"Time to sort with "<<numThreads<< " threads :"<<duration(timeNow()-t1)<<" ms"<<endl;
 }
 
 
@@ -663,72 +664,105 @@ Column *mixVectors::clone() {
     return res;
 }
 
-void mixVectors::createSortedIndex() {
+void mixVectors::createSortedIndex(int numThreads) {
     if(!sortedColorsIndex.empty())
         return;
-    sortColors();
+    sortColors(numThreads);
 
     TimeVar t1=timeNow();
 
     sortedColorsIndex.resize(numColors);
-    auto compare = [](tuple<vector<uint32_t>, uint32_t, vectorBaseIterator *, vectorBaseIterator *> lhs,
-            tuple<vector<uint32_t>, uint32_t, vectorBaseIterator *, vectorBaseIterator *> rhs) {
-        if (std::get<0>(lhs)[0] < std::get<0>(rhs)[0])
-            return true;
-        else if (std::get<0>(lhs)[0] > std::get<0>(rhs)[0])
-            return false;
 
+    vector<vector<uint32_t>> splittedids(colors.size());
+    for(unsigned i=0;i<colors.size();i++)
+    {
+        splittedids[i]=colors[i]->splitIds(noSamples);
+    }
+    vector<uint32_t> outputStart(noSamples,0);
+    uint32_t currStart=0;
+    for(int i=0;i<noSamples;i++)
+    {
+        currStart=0;
+        for(unsigned j=0;j< splittedids.size();j++)
+        {
+            currStart+=splittedids[j][i];
+        }
 
-        for (unsigned int i = 1; i < std::get<0>(lhs).size() && i < std::get<0>(rhs).size(); i++)
-            if (std::get<0>(lhs)[i] > std::get<0>(rhs)[i])
+        outputStart[i]=currStart;
+    }
+    for(int currSample=0;currSample<noSamples;currSample++){
+        auto compare = [](tuple<vector<uint32_t>, uint32_t, vectorBaseIterator *, vectorBaseIterator *> lhs,
+                tuple<vector<uint32_t>, uint32_t, vectorBaseIterator *, vectorBaseIterator *> rhs) {
+            if (std::get<0>(lhs)[0] < std::get<0>(rhs)[0])
                 return true;
-            else if (std::get<0>(lhs)[i] < std::get<0>(rhs)[i])
+            else if (std::get<0>(lhs)[0] > std::get<0>(rhs)[0])
                 return false;
-            return std::get<0>(lhs).size() > std::get<0>(rhs).size();
-    };
-    priority_queue<tuple<vector<uint32_t>, uint32_t, vectorBaseIterator *, vectorBaseIterator *>, vector<tuple<vector<uint32_t>, uint32_t, vectorBaseIterator *, vectorBaseIterator *> >, decltype(compare)> nextColor(
-            compare);
-    unsigned vecIndex=0;
-    for (auto c:colors) {
-        vectorBaseIterator *it = new vectorBaseIterator(c->begin());
-        vectorBaseIterator *itEnd = new vectorBaseIterator(c->end());
-        if (*it != *itEnd) {
-            vector<uint32_t> arr = **it;
-            if (!arr.empty())
-                nextColor.push(make_tuple(arr, vecIndex, it, itEnd));
+
+
+            for (unsigned int i = 1; i < std::get<0>(lhs).size() && i < std::get<0>(rhs).size(); i++)
+                if (std::get<0>(lhs)[i] > std::get<0>(rhs)[i])
+                    return true;
+                else if (std::get<0>(lhs)[i] < std::get<0>(rhs)[i])
+                    return false;
+                return std::get<0>(lhs).size() > std::get<0>(rhs).size();
+        };
+        priority_queue<tuple<vector<uint32_t>, uint32_t, vectorBaseIterator *, vectorBaseIterator *>, vector<tuple<vector<uint32_t>, uint32_t, vectorBaseIterator *, vectorBaseIterator *> >, decltype(compare)> nextColor(
+                compare);
+        unsigned vecIndex=0;
+        for (unsigned j=0;j<colors.size();j++) {
+            auto c=colors[j];
+            uint32_t start=splittedids[j][currSample];
+            vectorBaseIterator *it;
+            vectorBaseIterator *itEnd;
+            it= new vectorBaseIterator(c->begin(start));
+            if(currSample==0)
+            {
+                itEnd = new vectorBaseIterator(c->end());
+            }
+            else{
+                uint32_t end=splittedids[j][currSample-1];
+                itEnd=new vectorBaseIterator(c->begin(end));
+            }
+
+
+            if (*it != *itEnd) {
+                vector<uint32_t> arr = **it;
+                if (!arr.empty())
+                    nextColor.push(make_tuple(arr, vecIndex, it, itEnd));
+                else{
+                    delete it;
+                    delete itEnd;
+                }
+            }
             else{
                 delete it;
                 delete itEnd;
             }
-        }
-        else{
-            delete it;
-            delete itEnd;
-        }
-        vecIndex++;
+            vecIndex++;
 
-    }
-    unsigned currColor=0;
-    while (!nextColor.empty()) {
-        auto colorTuple = nextColor.top();
-        nextColor.pop();
-        vecIndex=std::get<1>(colorTuple);
-        auto currIterator=std::get<2>(colorTuple);
-        auto endIterator=std::get<3>(colorTuple);
+        }
+        unsigned currColor=outputStart[currSample];
+        while (!nextColor.empty()) {
+            auto colorTuple = nextColor.top();
+            nextColor.pop();
+            vecIndex=std::get<1>(colorTuple);
+            auto currIterator=std::get<2>(colorTuple);
+            auto endIterator=std::get<3>(colorTuple);
 
-        sortedColorsIndex[currColor]=make_pair(vecIndex, currIterator->getLocalID());
-        currColor++;
-        currIterator->next();
-        if (*currIterator != *endIterator) {
-            std::get<0>(colorTuple) = **currIterator;
-            nextColor.push(colorTuple);
-        } else {
-            delete currIterator;
-            delete endIterator;
+            sortedColorsIndex[currColor]=make_pair(vecIndex, currIterator->getLocalID());
+            currColor++;
+            currIterator->next();
+            if (*currIterator != *endIterator) {
+                std::get<0>(colorTuple) = **currIterator;
+                nextColor.push(colorTuple);
+            } else {
+                delete currIterator;
+                delete endIterator;
+            }
         }
     }
 
-    cout<<"Time to create sorted index:"<<duration(timeNow()-t1)<<" ms"<<endl;
+    cout<<"Time to create sorted index with "<< numThreads<<" threads :"<<duration(timeNow()-t1)<<" ms"<<endl;
 }
 
 
@@ -749,6 +783,10 @@ fixedSizeVector::fixedSizeVector(uint32_t beginId, uint32_t colorsize)
 
 vectorBaseIterator fixedSizeVector::begin() {
     return vectorBaseIterator(new fixedSizeVectorIterator(this));
+}
+
+vectorBaseIterator fixedSizeVector::begin(uint32_t index) {
+    return vectorBaseIterator(new fixedSizeVectorIterator(this,index));
 }
 
 vectorBaseIterator fixedSizeVector::end() {
@@ -823,18 +861,34 @@ vectorBase *fixedSizeVector::clone() {
 }
 
 vector<uint32_t> fixedSizeVector::splitIds(uint32_t numSamples) {
-    vector<uint32_t> res(numSamples,numeric_limits<uint32_t>::max());
-     int currSample=-1;
-     for(unsigned i=0; i<vec.size(); i += colorsize)
+    vector<uint32_t> res(numSamples,0);
+     int currSample=numSamples;
+     unsigned index=0;
+     for(int i=numSamples-1;i>=0;i--)
      {
-         if(currSample < vec[i])
-         {
-             res[vec[i]]=i/colorsize;
-             currSample=vec[i];
-         }
+         while(vec[index]>i && index < vec.size())
+             index+=colorsize;
+
+         res[i]=index/colorsize;
+
+         //        it= lower_bound(it,starts.end(),i,
+         //                        [&](uint32_t lhs, uint32_t rhs) -> bool {
+         //            cout<<lhs<<" "<<vecs[lhs]<<" "<<rhs<<endl;
+         //            return vecs[lhs] < rhs; });
+         //  cout<<*it<<" "<<vecs.size()<<endl;
+
      }
+//     for(unsigned i=0; i<vec.size(); i += colorsize)
+//     {
+//         if(currSample < vec[i])
+//         {
+//             res[vec[i]]=i/colorsize;
+//             currSample=vec[i];
+//         }
+//     }
      return res;
 }
+
 
 
 vectorOfVectors::vectorOfVectors() {
@@ -861,7 +915,9 @@ vectorBase* vectorOfVectors::clone(){
 vectorBaseIterator vectorOfVectors::begin() {
     return vectorBaseIterator(new vectorOfVectorsIterator(this));
 }
-
+vectorBaseIterator vectorOfVectors::begin(uint32_t index) {
+    return vectorBaseIterator(new vectorOfVectorsIterator(this,index));
+}
 vectorBaseIterator vectorOfVectors::end() {
     ((vectorOfVectorsIterator *) endIterator->iterator)->vecsIt = vecs.end();
     ((vectorOfVectorsIterator *) endIterator->iterator)->startsIt = starts.end();
@@ -937,33 +993,78 @@ void vectorOfVectors::sort(sdsl::int_vector<> &idsMap) {
 }
 
 vector<uint32_t> vectorOfVectors::splitIds(uint32_t numSamples) {
-    vector<uint32_t> res(numSamples,numeric_limits<uint32_t>::max());
-    auto it=starts.begin();
-    for(unsigned i=0;i<numSamples;i++)
+    vector<uint32_t> res(numSamples,0);
+
+    if(starts.size()==0 || vecs.size() ==0 )
+        return res;
+
+//    cout<<*it<<" "<<vecs.size()<<endl;
+//    unsigned newLine=0;
+//    for(auto i=vecs.begin();i!=vecs.end();i++)
+//    {
+//        if(newLine >25){
+//            cout<<endl;
+//            newLine=0;
+//        }
+//        newLine++;
+//        cout<<*i<<" ";
+//    }
+    auto it=begin();
+    auto endit=end();
+
+    auto vectorsIT=vecs.begin();
+    auto startsIT=starts.begin();
+
+    unsigned localID=0;
+    for(int i=numSamples-1;i>=0;i--)
     {
-        it= lower_bound(it,starts.end(),i,
-                        [&](uint32_t lhs, uint32_t rhs) -> bool { return vecs[starts[lhs]] < rhs; });
-        if(vecs[*it] == i)
+        while(vectorsIT!=vecs.end() && *vectorsIT >i)
         {
-            res[i]=starts.begin()-it;
+            localID++;
+            uint32_t end=vecs.size();
+            if((startsIT+1)!=starts.end())
+                end=*(startsIT+1);
+            int diff=end-*startsIT;
+            startsIT++;
+            vectorsIT+=diff;
         }
+//        auto color=*it;
+//        while(color[0]>i && it!=end())
+//        {
+//            it++;
+//            color=*it;
+//        }
+        //res[i]=it.getLocalID();
+        res[i]==localID;
+//        it= lower_bound(it,starts.end(),i,
+//                        [&](uint32_t lhs, uint32_t rhs) -> bool {
+//            cout<<lhs<<" "<<vecs[lhs]<<" "<<rhs<<endl;
+//            return vecs[lhs] < rhs; });
+      //  cout<<*it<<" "<<vecs.size()<<endl;
+
     }
+
+
+
+
     return res;
 }
 
 
-prefixTrie::prefixTrie(insertColorColumn *col)
+
+
+prefixTrie::prefixTrie(insertColorColumn *col,int numThreads)
 {
     totalSize=0;
     queryCache=nullptr;
     mixVectors* qq= new mixVectors(col);
-    loadFromQueryColorColumn(qq);
+    loadFromQueryColorColumn(qq,numThreads);
     delete qq;
 }
-prefixTrie::prefixTrie(mixVectors *col) {
+prefixTrie::prefixTrie(mixVectors *col,int numThreads) {
     totalSize=0;
     queryCache=nullptr;
-    loadFromQueryColorColumn(col);
+    loadFromQueryColorColumn(col,numThreads);
 
 }
 void prefixTrie::initializeTrees(mixVectors *col) {
@@ -1031,15 +1132,16 @@ inline void growEdges(sdsl::int_vector<>* tree,uint32_t minimumSize)
     cerr<<"Grow Edges to "<<currSize<<endl;
     tree->resize(currSize);
 }
-void prefixTrie::loadFromQueryColorColumn(mixVectors  *col) {
+void prefixTrie::loadFromQueryColorColumn(mixVectors  *col,int numThreads) {
 
     TimeVar globalTime=timeNow();
     initializeTrees(col);
-    col->createSortedIndex();
+    col->createSortedIndex(numThreads);
     col->explainSize();
+
     sdsl::int_vector<32> invIdsMap(col->idsMap.size()+1);
     unsigned N=col->idsMap.size();
-#pragma omp parallel for
+#pragma omp parallel for num_threads(numThreads)
     for (unsigned int i = 0; i < N; i++) {
         invIdsMap[col->idsMap[i]] = i;
     }
@@ -1048,7 +1150,7 @@ void prefixTrie::loadFromQueryColorColumn(mixVectors  *col) {
 
 
 
-    const unsigned chunkSize=10000;
+    const unsigned chunkSize=1000;
   //  uint64_t tmpSize = max((uint32_t)(col->numIntegers() / 20),(uint32_t)10);
     uint64_t tmpSize = chunkSize*5;
     vector<sdsl::int_vector<>*> ChunkslocalEdges(1000);
@@ -1090,7 +1192,7 @@ void prefixTrie::loadFromQueryColorColumn(mixVectors  *col) {
 
     totalSize= 0;
 
-
+    TimeVar tBuildTrees=timeNow();
 
     for(unsigned currTree=0; currTree<noSamples ;currTree++)
     {
@@ -1128,7 +1230,7 @@ void prefixTrie::loadFromQueryColorColumn(mixVectors  *col) {
                 }
 
             }
-#pragma omp parallel for num_threads(8)  firstprivate(tmpEdgesTop , tmpTreeTop, localRank, currPrefix, rankMap,pastNodes ,nodesCache,toBAdded,shortened ,currTree,localTree,localEdges,printChunk) shared(workChunks,processedColors, ChunkslocalTree,ChunkslocalEdges,chunksRanks, treeTops, edgesTops)
+#pragma omp parallel for num_threads(numThreads) schedule(dynamic) firstprivate(tmpEdgesTop , tmpTreeTop, localRank, currPrefix, rankMap,pastNodes ,nodesCache,toBAdded,shortened ,currTree,localTree,localEdges,printChunk) shared(workChunks,processedColors, ChunkslocalTree,ChunkslocalEdges,chunksRanks, treeTops, edgesTops)
             for(unsigned w=0;w<nChunks;w++)
             {
 
@@ -1318,6 +1420,8 @@ void prefixTrie::loadFromQueryColorColumn(mixVectors  *col) {
         //                        cout<<"Processed "<<processedColors<<" / "<<numColors<<endl;
 
     }
+    cout<<"Time to build the trees :"<<duration(timeNow()-tBuildTrees)<<" ms"<<endl;
+
 
     unordered_map<uint32_t,uint32_t> nodesCount;
     for(auto e:unCompressedEdges)
