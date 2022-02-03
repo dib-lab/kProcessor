@@ -21,7 +21,7 @@
 
 typedef std::chrono::high_resolution_clock::time_point TimeVar;
 
-#define duration(a) std::chrono::duration_cast<std::chrono::milliseconds>(a).count()
+#define duration(a) std::chrono::duration_cast<std::chrono::seconds>(a).count()
 #define timeNow() std::chrono::high_resolution_clock::now()
 
 
@@ -505,7 +505,7 @@ void mixVectors::sortColors(int numThreads) {
         colors[i]->sort(idsMap);
 
     sorted=true;
-    cout<<"Time to sort with "<<numThreads<< " threads :"<<duration(timeNow()-t1)<<" ms"<<endl;
+    cout<<"Time to sort with "<<numThreads<< " threads :"<<duration(timeNow()-t1)<<" s"<<endl;
 }
 
 
@@ -693,7 +693,7 @@ void mixVectors::createSortedIndex(int numThreads) {
         outputStart[i]=currStart;
     }
 
-    cout<<"Time to prepare for create sorted index:"<<duration(timeNow()-t2)<<" ms"<<endl;
+    cout<<"Time to prepare for create sorted index:"<<duration(timeNow()-t2)<<" s"<<endl;
 
 #pragma omp parallel for num_threads(numThreads) schedule(dynamic) shared(sortedColorsIndex)
     for(int currSample=0;currSample<noSamples;currSample++){
@@ -768,7 +768,7 @@ void mixVectors::createSortedIndex(int numThreads) {
         }
     }
 
-    cout<<"Time to create sorted index with "<< numThreads<<" threads :"<<duration(timeNow()-t1)<<" ms"<<endl;
+    cout<<"Time to create sorted index with "<< numThreads<<" threads :"<<duration(timeNow()-t1)<<" s"<<endl;
 }
 
 
@@ -1156,20 +1156,19 @@ void prefixTrie::loadFromQueryColorColumn(mixVectors  *col,int numThreads) {
 
 
 
-    const unsigned chunkSize=1000;
+    const unsigned chunkSize=10000;
   //  uint64_t tmpSize = max((uint32_t)(col->numIntegers() / 20),(uint32_t)10);
     uint64_t tmpSize = chunkSize*20;
-    vector<sdsl::int_vector<>*> ChunkslocalEdges(1000);
-    vector<sdsl::bit_vector*> ChunkslocalTree(1000);
-    vector<uint32_t> treeTops(1000,0);
-    vector<uint32_t> edgesTops(1000,0);
-    vector<unordered_map<uint64_t,uint64_t>> chunksRanks(1000);
+    vector<sdsl::int_vector<>*> ChunkslocalEdges(10000);
+    vector<sdsl::bit_vector*> ChunkslocalTree(10000);
+    vector<uint32_t> treeTops(10000,0);
+    vector<uint32_t> edgesTops(10000,0);
+    vector<unordered_map<uint64_t,uint64_t>> chunksRanks(10000);
     for(unsigned i=0 ; i< ChunkslocalEdges.size(); i++)
     {
         ChunkslocalTree[i]=new sdsl::bit_vector(2*tmpSize);
         ChunkslocalEdges[i]=new sdsl::int_vector<>(tmpSize);
     }
-
     uint64_t tmpEdgesTop = 0;
     uint64_t tmpTreeTop = 0;
 
@@ -1218,8 +1217,8 @@ void prefixTrie::loadFromQueryColorColumn(mixVectors  *col,int numThreads) {
         {
             vector<mixVectorSortedIterator> workChunks=sortedIterator->split(chunkSize);
             delete sortedIterator;
-            unsigned const nChunks=workChunks.size();
-            if(nChunks < ChunkslocalEdges.size())
+            unsigned nChunks=workChunks.size();
+            if(nChunks > ChunkslocalEdges.size())
             {
                 unsigned oldSize=ChunkslocalEdges.size();
 
@@ -1233,6 +1232,7 @@ void prefixTrie::loadFromQueryColorColumn(mixVectors  *col,int numThreads) {
                 {
                     ChunkslocalTree[i]=new sdsl::bit_vector(2*tmpSize);
                     ChunkslocalEdges[i]=new sdsl::int_vector<>(tmpSize);
+		    
                 }
 
             }
@@ -1388,7 +1388,7 @@ void prefixTrie::loadFromQueryColorColumn(mixVectors  *col,int numThreads) {
                         }
                         globalRank += (chunkTreeEndIT -chunkTreeIT);
                     }
-
+		    delete bp_tree[currTree];
                     bp_tree[currTree]=new sdsl::bp_support_sada<>(tree[currTree]);
                 }
 #pragma omp section
@@ -1419,15 +1419,20 @@ void prefixTrie::loadFromQueryColorColumn(mixVectors  *col,int numThreads) {
 
         starts[currTree]=totalSize;
         totalSize+=tree[currTree]->size();
-        cout<<"Time index tree number "<<currTreeID<<" of size "<< tree[currTree]->size() <<":"<<duration(timeNow()-t1)<<" ms"<<endl;
+        cout<<"Time index tree number "<<currTreeID<<" of size "<< tree[currTree]->size() <<":"<<duration(timeNow()-t1)<<" s"<<endl;
 
         //                    processedColors+=numColorsToProcess;
         //                    if(processedColors%printChunk==0)
         //                        cout<<"Processed "<<processedColors<<" / "<<numColors<<endl;
 
     }
-    cout<<"Time to build the trees :"<<duration(timeNow()-tBuildTrees)<<" ms"<<endl;
+    cout<<"Time to build the trees :"<<duration(timeNow()-tBuildTrees)<<" s"<<endl;
 
+    for(unsigned i=0 ; i< ChunkslocalEdges.size(); i++)
+    {
+        delete ChunkslocalEdges[i];
+        delete ChunkslocalTree[i];
+    }
 
     unordered_map<uint32_t,uint32_t> nodesCount;
     for(auto e:unCompressedEdges)
@@ -1475,7 +1480,7 @@ void prefixTrie::loadFromQueryColorColumn(mixVectors  *col,int numThreads) {
 //    }
 //    cout << "Possible saving " << edgesSum << endl;
     explainSize();
-    cout<<"Time to create prefix trie(total) :"<<duration(timeNow()-globalTime)<<" ms"<<endl;
+    cout<<"Time to create prefix trie(total) :"<<duration(timeNow()-globalTime)<<" s"<<endl;
 
 }
 
