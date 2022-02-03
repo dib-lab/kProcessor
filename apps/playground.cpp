@@ -17,7 +17,14 @@ using namespace std;
 
 
 int main(int argc, char *argv[]){
-
+    string indexFileName=argv[1];
+    auto newColor=new prefixTrie();
+    newColor->deserialize(indexFileName);
+    cout<<"Number of colors "<<newColor->size()<<endl;
+    for(unsigned i=0;i<newColor->edges.size();i++)
+    {
+        cout<<"tree = "<<i<<" ,# integers = "<<newColor->edges[i]->size()<<" ,size = "<<sdsl::size_in_mega_bytes(*(newColor->edges[i]))<<" mb"<<endl;
+    }
 //    string indexFileName=argv[1];
 //    string tmpFolder=argv[2];
 //    int nThreads=atoi(argv[3]);
