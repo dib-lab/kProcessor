@@ -51,6 +51,7 @@ int main(int argc, char *argv[]) {
                 nodesCount[i]++;
         }
         sdsl::int_vector<> translateEdges (nodesCount.size());
+
         uint32_t uniqueNodeID = 0;
         unordered_map<uint32_t, uint32_t> reverse;
         for (auto n:nodesCount) {
@@ -67,12 +68,12 @@ int main(int argc, char *argv[]) {
             for (auto n:*unCompressedEdges[j])
                 newVec[index++] = reverse[n];
 
-            sdsl::enc_vector<> encVector(newVec);
-            sdsl::vlc_vector<> vlcVector(newVec);
-            sdsl::dac_vector<> dacVector(newVec);
-            encSize+=sdsl::size_in_mega_bytes(encVector);
-            vlcSize+=sdsl::size_in_mega_bytes(vlcVector);
-            dacSize+=sdsl::size_in_mega_bytes(dacVector);
+//            sdsl::enc_vector<> encVector(newVec);
+//            sdsl::vlc_vector<> vlcVector(newVec);
+//            sdsl::dac_vector<> dacVector(newVec);
+//            encSize+=sdsl::size_in_mega_bytes(encVector);
+//            vlcSize+=sdsl::size_in_mega_bytes(vlcVector);
+//            dacSize+=sdsl::size_in_mega_bytes(dacVector);
 
             sdsl::util::bit_compress(newVec);
             bitCompress+=sdsl::size_in_mega_bytes(newVec);
