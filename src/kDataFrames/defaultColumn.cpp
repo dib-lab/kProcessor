@@ -1615,6 +1615,7 @@ void prefixTrie::explainSize() {
     double bpSize = 0;
     double eSize = 0;
     uint64_t numE = 0;
+    double translateSize=sdsl::size_in_mega_bytes(translateEdges);
     for (auto t:tree) {
         treeSize += sdsl::size_in_mega_bytes(*t);
         sdsl::rrr_vector<> cvector(*t);
@@ -1636,9 +1637,11 @@ void prefixTrie::explainSize() {
 
     cout << "edges = " << eSize << "MB\n";
     cout << "edges # Integers= " << numE << "\n";
+    cout << "translate= " << translateSize << "MB\n";
+
     double total = eSize + sdsl::size_in_mega_bytes(idsMap)
                    + bpSize +
-                   treeSize;
+                   treeSize+translateSize;
     cout << "Total = " << total << "MB" << endl;
 
 

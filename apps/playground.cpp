@@ -13,18 +13,90 @@
 #include <cereal/types/memory.hpp>
 #include <cereal/archives/binary.hpp>
 #include <omp.h>
+
 using namespace std;
 
 
-int main(int argc, char *argv[]){
-    string indexFileName=argv[1];
-    auto newColor=new prefixTrie();
+int main(int argc, char *argv[]) {
+    string indexFileName = argv[1];
+    unsigned chunkSize = atoi(argv[2]);
+    auto newColor = new prefixTrie();
     newColor->deserialize(indexFileName);
-    cout<<"Number of colors "<<newColor->size()<<endl;
-    for(unsigned i=0;i<newColor->edges.size();i++)
-    {
-        cout<<"tree = "<<i<<" ,# integers = "<<newColor->edges[i]->size()<<" ,size = "<<sdsl::size_in_mega_bytes(*(newColor->edges[i]))<<" mb"<<endl;
+    cout << "Number of colors " << newColor->size() << endl;
+    newColor->explainSize();
+
+    deque<sdsl::int_vector<> *> unCompressedEdges(newColor->noSamples);
+    for (unsigned i = 0; i < newColor->edges.size(); i++) {
+        unCompressedEdges[i] = new sdsl::int_vector<>(newColor->edges[i]->size());
+        for (unsigned j = 0; j < newColor->edges[i]->size(); j++) {
+            (*(unCompressedEdges[i]))[j] = newColor->translateEdges[(*(newColor->edges[i]))[j]];
+        }
     }
+    double encSize = 0;
+    double vlcSize = 0;
+    double dacSize = 0;
+    double bitCompress = 0;
+    double translateSize =0;
+
+
+    unsigned start = 0;
+
+    while (start < newColor->noSamples) {
+        uint32_t end = min((uint32_t)(start + chunkSize), (uint32_t)newColor->noSamples);
+
+
+        unordered_map<uint32_t, uint32_t> nodesCount;
+        for (unsigned j=start;j<end;j++) {
+            for (auto i: *unCompressedEdges[j])
+                nodesCount[i]++;
+        }
+        sdsl::int_vector<> translateEdges (nodesCount.size());
+        uint32_t uniqueNodeID = 0;
+        unordered_map<uint32_t, uint32_t> reverse;
+        for (auto n:nodesCount) {
+            translateEdges[uniqueNodeID] = n.first;
+            reverse[n.first] = uniqueNodeID;
+            uniqueNodeID++;
+        }
+
+        translateSize+=sdsl::size_in_mega_bytes(translateEdges);
+        double unCompressedSize = 0.0;
+        for (unsigned j=start;j<end;j++) {
+            sdsl::int_vector<> newVec(unCompressedEdges[j]->size());
+            uint32_t index = 0;
+            for (auto n:*unCompressedEdges[j])
+                newVec[index++] = reverse[n];
+
+            sdsl::enc_vector<> encVector(newVec);
+            sdsl::vlc_vector<> vlcVector(newVec);
+            sdsl::dac_vector<> dacVector(newVec);
+            encSize+=sdsl::size_in_mega_bytes(encVector);
+            vlcSize+=sdsl::size_in_mega_bytes(vlcVector);
+            dacSize+=sdsl::size_in_mega_bytes(dacVector);
+
+            sdsl::util::bit_compress(newVec);
+            bitCompress+=sdsl::size_in_mega_bytes(newVec);
+        }
+        start += chunkSize;
+    }
+
+
+//
+
+//
+//
+//        cout<<"tree = "<<i<<
+//        " ,enc size="<<sdsl::size_in_mega_bytes(encVector)<<
+//        " ,vlc size="<<sdsl::size_in_mega_bytes(vlcVector)<<
+//        " ,dac size="<<sdsl::size_in_mega_bytes(dacVector)<<
+//        endl;
+    //    cout<<"tree = "<<i<<" ,# integers = "<<newColor->edges[i]->size()<<" ,size = "<<sdsl::size_in_mega_bytes(*(newColor->edges[i]))<<" mb"<<endl;
+
+    cout << "Total enc = " << encSize << endl;
+    cout << "Total vlc = " << vlcSize << endl;
+    cout << "Total dac = " << dacSize << endl;
+    cout << "Total bit compress = " << bitCompress <<endl;
+    cout << "Total translate = " << translateSize <<endl;
 //    string indexFileName=argv[1];
 //    string tmpFolder=argv[2];
 //    int nThreads=atoi(argv[3]);
