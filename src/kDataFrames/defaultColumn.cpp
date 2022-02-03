@@ -1306,8 +1306,17 @@ void prefixTrie::loadFromQueryColorColumn(mixVectors  *col,int numThreads) {
 
 
                     shortened.clear();
-                    shorten(toBAdded,nodesCache, shortened);
-
+                    if(toBAdded.size()>3)
+                    {
+                        shorten(toBAdded,nodesCache, shortened);
+                    }
+                    else{
+                        shortened=toBAdded;
+                        for(auto s:shortened)
+                        {
+                            nodesCache[s]={s};
+                        }
+                    }
 //                    if(firstColor)
 //                    {
 //                        shortened=toBAdded;
