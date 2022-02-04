@@ -15,12 +15,13 @@ int main(int argc, char *argv[]) {
     string inputIndex=argv[1];
     string outputIndex=argv[2];
     int nThreads=atoi(argv[3]);
+    int minCompress=atoi(argv[4]);
     omp_set_num_threads(nThreads);
     kDataFrame* KF=kDataFrame::load(inputIndex);
     auto prevColor=(deduplicatedColumn< mixVectors>*)KF->columns["color"];
     auto newColor=new deduplicatedColumn<prefixTrie>();
     newColor->index=prevColor->index;
-    newColor->values=new prefixTrie(prevColor->values,nThreads);
+    newColor->values=new prefixTrie(prevColor->values,nThreads,minCompress);
     KF->columns["color"]=newColor;
     KF->save(outputIndex);
 

@@ -764,11 +764,11 @@ public:
         queryCache= new lru_cache_t<uint64_t, vector<uint32_t>>(1);
         totalSize=0;
     }
-    prefixTrie(insertColorColumn* col,int numThreads=1);
-    prefixTrie(mixVectors* col,int numThreads=1);
+    prefixTrie(insertColorColumn* col,int numThreads=1,int minimumCompress =5);
+    prefixTrie(mixVectors* col,int numThreads=1,int minimumCompress =5);
 
     void initializeTrees(mixVectors* col);
-    void loadFromQueryColorColumn(mixVectors* col,int numThreads=1);
+    void loadFromQueryColorColumn(mixVectors* col,int numThreads=1,int minimumCompress =5);
     ~prefixTrie(){
         for(auto t:tree)
             delete t;

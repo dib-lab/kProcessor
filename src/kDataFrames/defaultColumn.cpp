@@ -1059,18 +1059,18 @@ vector<uint32_t> vectorOfVectors::splitIds(uint32_t numSamples) {
 
 
 
-prefixTrie::prefixTrie(insertColorColumn *col,int numThreads)
+prefixTrie::prefixTrie(insertColorColumn *col,int numThreads,int minimumCompress)
 {
     totalSize=0;
     queryCache=nullptr;
     mixVectors* qq= new mixVectors(col);
-    loadFromQueryColorColumn(qq,numThreads);
+    loadFromQueryColorColumn(qq,numThreads,minimumCompress);
     delete qq;
 }
-prefixTrie::prefixTrie(mixVectors *col,int numThreads) {
+prefixTrie::prefixTrie(mixVectors *col,int numThreads,int minimumCompress) {
     totalSize=0;
     queryCache=nullptr;
-    loadFromQueryColorColumn(col,numThreads);
+    loadFromQueryColorColumn(col,numThreads,minimumCompress);
 
 }
 void prefixTrie::initializeTrees(mixVectors *col) {
@@ -1138,7 +1138,7 @@ inline void growEdges(sdsl::int_vector<>* tree,uint32_t minimumSize)
     cerr<<"Grow Edges to "<<currSize<<endl;
     tree->resize(currSize);
 }
-void prefixTrie::loadFromQueryColorColumn(mixVectors  *col,int numThreads) {
+void prefixTrie::loadFromQueryColorColumn(mixVectors  *col,int numThreads,int minimumCompress) {
 
     TimeVar globalTime=timeNow();
     initializeTrees(col);
@@ -1236,7 +1236,7 @@ void prefixTrie::loadFromQueryColorColumn(mixVectors  *col,int numThreads) {
                 }
 
             }
-#pragma omp parallel for num_threads(numThreads) schedule(dynamic) firstprivate(tmpEdgesTop , tmpTreeTop, localRank, currPrefix, rankMap,pastNodes ,nodesCache,toBAdded,shortened ,currTree,localTree,localEdges,printChunk) shared(workChunks,processedColors, ChunkslocalTree,ChunkslocalEdges,chunksRanks, treeTops, edgesTops)
+#pragma omp parallel for num_threads(numThreads) schedule(dynamic) firstprivate(minimumCompress,tmpEdgesTop , tmpTreeTop, localRank, currPrefix, rankMap,pastNodes ,nodesCache,toBAdded,shortened ,currTree,localTree,localEdges,printChunk) shared(workChunks,processedColors, ChunkslocalTree,ChunkslocalEdges,chunksRanks, treeTops, edgesTops)
             for(unsigned w=0;w<nChunks;w++)
             {
 
@@ -1306,7 +1306,7 @@ void prefixTrie::loadFromQueryColorColumn(mixVectors  *col,int numThreads) {
 
 
                     shortened.clear();
-                    if(toBAdded.size()>3)
+                    if(toBAdded.size()>minimumCompress)
                     {
                         shorten(toBAdded,nodesCache, shortened);
                     }
