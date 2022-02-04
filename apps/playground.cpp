@@ -52,17 +52,51 @@ int main(int argc, char *argv[]) {
     newColor->explainSize();
 
     deque<sdsl::int_vector<> *> unCompressedEdges(newColor->noSamples);
+    deque<sdsl::int_vector<> *> treeIndexes(newColor->noSamples);
     for (unsigned i = 0; i < newColor->edges.size(); i++) {
         unCompressedEdges[i] = new sdsl::int_vector<>(newColor->edges[i]->size());
+        treeIndexes[i] = new sdsl::int_vector<>(newColor->edges[i]->size());
         for (unsigned j = 0; j < newColor->edges[i]->size(); j++) {
-            (*(unCompressedEdges[i]))[j] = newColor->translateEdges[(*(newColor->edges[i]))[j]];
+            unsigned newNode = newColor->translateEdges[(*(newColor->edges[i]))[j]];
+            prefixTrieIterator it(newColor,newNode);
+            (*(unCompressedEdges[i]))[j] = it.currPos;
+            (*(treeIndexes[i]))[j] = it.treeIndex;
+
         }
     }
+
     double encSize = 0;
     double vlcSize = 0;
     double dacSize = 0;
     double bitCompress = 0;
     double translateSize = 0;
+
+
+
+    for(auto t:treeIndexes)
+    {
+        sdsl::enc_vector<> encVector(*t);
+        sdsl::vlc_vector<> vlcVector(*t);
+        sdsl::dac_vector<> dacVector(*t);
+        encSize += sdsl::size_in_mega_bytes(encVector);
+        vlcSize += sdsl::size_in_mega_bytes(vlcVector);
+        dacSize += sdsl::size_in_mega_bytes(dacVector);
+
+        sdsl::util::bit_compress(*t);
+        bitCompress += sdsl::size_in_mega_bytes(*t);
+    }
+
+    cout << "Total Tree enc = " << encSize << endl;
+    cout << "Total Tree vlc = " << vlcSize << endl;
+    cout << "Total Tree dac = " << dacSize << endl;
+    cout << "Total Tree bit compress = " << bitCompress << endl;
+
+
+    encSize = 0;
+    vlcSize = 0;
+    dacSize = 0;
+    bitCompress = 0;
+    translateSize = 0;
 
 
     unsigned start = 0;
