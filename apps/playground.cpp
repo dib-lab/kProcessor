@@ -17,6 +17,32 @@
 using namespace std;
 
 
+bool cmp(pair<uint32_t,uint32_t> &a,
+         pair<uint32_t,uint32_t> &b) {
+    return a.second > b.second;
+}
+
+// Function to sort the map according
+// to value in a (key-value) pairs
+vector<pair<uint32_t,uint32_t>> sortMap(unordered_map<uint32_t, uint32_t> &M) {
+
+    // Declare vector of pairs
+    vector<pair<uint32_t,uint32_t> > A;
+
+    // Copy key-value pair from Map
+    // to vector of pairs
+    for (auto &it : M) {
+        A.push_back(it);
+    }
+
+    // Sort using comparator function
+    sort(A.begin(), A.end(), cmp);
+
+
+
+    return A;
+}
+
 int main(int argc, char *argv[]) {
     string indexFileName = argv[1];
     unsigned chunkSize = atoi(argv[2]);
@@ -36,47 +62,48 @@ int main(int argc, char *argv[]) {
     double vlcSize = 0;
     double dacSize = 0;
     double bitCompress = 0;
-    double translateSize =0;
+    double translateSize = 0;
 
 
     unsigned start = 0;
 
     while (start < newColor->noSamples) {
-        uint32_t end = min((uint32_t)(start + chunkSize), (uint32_t)newColor->noSamples);
+        uint32_t end = min((uint32_t) (start + chunkSize), (uint32_t) newColor->noSamples);
 
 
         unordered_map<uint32_t, uint32_t> nodesCount;
-        for (unsigned j=start;j<end;j++) {
+        for (unsigned j = start; j < end; j++) {
             for (auto i: *unCompressedEdges[j])
                 nodesCount[i]++;
         }
-        sdsl::int_vector<> translateEdges (nodesCount.size());
+        sdsl::int_vector<> translateEdges(nodesCount.size());
 
+        auto sortedNodesCount=sortMap(nodesCount);
         uint32_t uniqueNodeID = 0;
         unordered_map<uint32_t, uint32_t> reverse;
-        for (auto n:nodesCount) {
+        for (auto n:sortedNodesCount) {
             translateEdges[uniqueNodeID] = n.first;
             reverse[n.first] = uniqueNodeID;
             uniqueNodeID++;
         }
 
-        translateSize+=sdsl::size_in_mega_bytes(translateEdges);
+        translateSize += sdsl::size_in_mega_bytes(translateEdges);
         double unCompressedSize = 0.0;
-        for (unsigned j=start;j<end;j++) {
+        for (unsigned j = start; j < end; j++) {
             sdsl::int_vector<> newVec(unCompressedEdges[j]->size());
             uint32_t index = 0;
             for (auto n:*unCompressedEdges[j])
                 newVec[index++] = reverse[n];
 
-//            sdsl::enc_vector<> encVector(newVec);
-//            sdsl::vlc_vector<> vlcVector(newVec);
-//            sdsl::dac_vector<> dacVector(newVec);
-//            encSize+=sdsl::size_in_mega_bytes(encVector);
-//            vlcSize+=sdsl::size_in_mega_bytes(vlcVector);
-//            dacSize+=sdsl::size_in_mega_bytes(dacVector);
+            sdsl::enc_vector<> encVector(newVec);
+            sdsl::vlc_vector<> vlcVector(newVec);
+            sdsl::dac_vector<> dacVector(newVec);
+            encSize += sdsl::size_in_mega_bytes(encVector);
+            vlcSize += sdsl::size_in_mega_bytes(vlcVector);
+            dacSize += sdsl::size_in_mega_bytes(dacVector);
 
             sdsl::util::bit_compress(newVec);
-            bitCompress+=sdsl::size_in_mega_bytes(newVec);
+            bitCompress += sdsl::size_in_mega_bytes(newVec);
         }
         start += chunkSize;
     }
@@ -96,8 +123,8 @@ int main(int argc, char *argv[]) {
     cout << "Total enc = " << encSize << endl;
     cout << "Total vlc = " << vlcSize << endl;
     cout << "Total dac = " << dacSize << endl;
-    cout << "Total bit compress = " << bitCompress <<endl;
-    cout << "Total translate = " << translateSize <<endl;
+    cout << "Total bit compress = " << bitCompress << endl;
+    cout << "Total translate = " << translateSize << endl;
 //    string indexFileName=argv[1];
 //    string tmpFolder=argv[2];
 //    int nThreads=atoi(argv[3]);
