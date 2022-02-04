@@ -41,10 +41,12 @@ include_directories("ThirdParty/mum-hash")
 include_directories("ThirdParty/Blight")
 include_directories("ThirdParty/KMC/kmc_api")
 include_directories("ThirdParty/caches/include")
+include_directories("ThirdParty/FastPFor/headers/")
 
 add_subdirectory(ThirdParty/MQF/)
 add_subdirectory(ThirdParty/sdsl-lite/)
 add_subdirectory(ThirdParty/kmerDecoder)
+add_subdirectory(ThirdParty/FastPFor/)
 
 
 
