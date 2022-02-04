@@ -19,3 +19,6 @@
 [submodule "ThirdParty/caches"]
 	path = ThirdParty/caches
 	url = https://github.com/vpetrigo/caches.git
+[submodule "ThirdParty/FastPFor"]
+	path = ThirdParty/FastPFor
+	url = https://github.com/lemire/FastPFor.git
