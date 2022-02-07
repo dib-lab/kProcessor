@@ -1801,10 +1801,10 @@ void prefixForest::serialize(string filename) {
     out.write((char *) (&(tmp)), sizeof(uint32_t));
     for(auto v: orderColorID)
         v->serialize(out);
-    tmp=ColorIDPointer.size();
+   // tmp=ColorIDPointer.size();
     out.write((char *) (&(tmp)), sizeof(uint32_t));
-    for(auto v: ColorIDPointer)
-        v->serialize(out);
+//    for(auto v: ColorIDPointer)
+//        v->serialize(out);
 
     out.close();
     ColorIDPointer->serialize(filename+".colors.mixvectors");
