@@ -48,83 +48,30 @@ int main(int argc, char *argv[]) {
     using namespace FastPForLib;
 
     // We pick a CODEC
-    IntegerCODEC &codec = *CODECFactory::getFromName("simdfastpfor256");
+    IntegerCODEC &codec = *CODECFactory::getFromName("simdfastpfor128");
     // could use others, e.g., "simdbinarypacking", "varintg8iu"
     ////////////
-    //
-    // create a container with some integers in it
-    //
-    // for this example, we will not assume that the
-    // integers are in sorted order
-    //
-    // (Note: You don't need to use a vector.)
-    //
-    size_t N = 10 * 1000;
-    std::vector<uint32_t> mydata(N);
-    for (uint32_t i = 0; i < N; i += 150)
-        mydata[i] = i;
-    //
-    // the vector mydata could contain anything, really
-    //
-    ///////////
-    //
-    // You need some "output" container. You are responsible
-    // for allocating enough memory.
-    //
-    std::vector<uint32_t> compressed_output(N + 1024);
-    // N+1024 should be plenty
-    //
-    //
-    size_t compressedsize = compressed_output.size();
-    codec.encodeArray(mydata.data(), mydata.size(), compressed_output.data(),
-                      compressedsize);
-    //
-    // if desired, shrink back the array:
-    compressed_output.resize(compressedsize);
-    compressed_output.shrink_to_fit();
-    // display compression rate:
-    std::cout << std::setprecision(3);
-    std::cout << "You are using "
-    << 32.0 * static_cast<double>(compressed_output.size()) /
-    static_cast<double>(mydata.size())
-    << " bits per integer. " << std::endl;
-    //
-    // You are done!... with the compression...
-    //
-    ///
-    // decompressing is also easy:
-    //
-    std::vector<uint32_t> mydataback(N);
-    size_t recoveredsize = mydataback.size();
-    //
-    codec.decodeArray(compressed_output.data(), compressed_output.size(),
-                      mydataback.data(), recoveredsize);
-    mydataback.resize(recoveredsize);
-    //
-    // That's it!
-    //
-    if (mydataback != mydata)
-        throw std::runtime_error("bug!");
-
 
     string indexFileName = argv[1];
-    unsigned chunkSize = atoi(argv[2]);
+    string outputPrefix=argv[2];
+    unsigned chunkSize = 1;
     auto newColor = new prefixTrie();
     newColor->deserialize(indexFileName);
     cout << "Number of colors " << newColor->size() << endl;
     newColor->explainSize();
 
     deque<sdsl::int_vector<> *> unCompressedEdges(newColor->noSamples);
-    deque<sdsl::int_vector<> *> treeIndexes(newColor->noSamples);
+ //   deque<sdsl::int_vector<> *> treeIndexes(newColor->noSamples);
     for (unsigned i = 0; i < newColor->edges.size(); i++) {
         unCompressedEdges[i] = new sdsl::int_vector<>(newColor->edges[i]->size());
-        treeIndexes[i] = new sdsl::int_vector<>(newColor->edges[i]->size());
+
+//        treeIndexes[i] = new sdsl::int_vector<>(newColor->edges[i]->size());
         for (unsigned j = 0; j < newColor->edges[i]->size(); j++) {
             unsigned newNode = newColor->translateEdges[(*(newColor->edges[i]))[j]];
-            prefixTrieIterator it(newColor,newNode);
-            (*(unCompressedEdges[i]))[j] = it.currPos;
-            (*(treeIndexes[i]))[j] = it.treeIndex;
-
+//            prefixTrieIterator it(newColor,newNode);
+            (*(unCompressedEdges[i]))[j] = newNode;
+//            (*(treeIndexes[i]))[j] = it.treeIndex;
+//
         }
     }
 
@@ -135,24 +82,24 @@ int main(int argc, char *argv[]) {
     double translateSize = 0;
 
 
-
-    for(auto t:treeIndexes)
-    {
-        sdsl::enc_vector<> encVector(*t);
-        sdsl::vlc_vector<> vlcVector(*t);
-        sdsl::dac_vector<> dacVector(*t);
-        encSize += sdsl::size_in_mega_bytes(encVector);
-        vlcSize += sdsl::size_in_mega_bytes(vlcVector);
-        dacSize += sdsl::size_in_mega_bytes(dacVector);
-
-        sdsl::util::bit_compress(*t);
-        bitCompress += sdsl::size_in_mega_bytes(*t);
-    }
-
-    cout << "Total Tree enc = " << encSize << endl;
-    cout << "Total Tree vlc = " << vlcSize << endl;
-    cout << "Total Tree dac = " << dacSize << endl;
-    cout << "Total Tree bit compress = " << bitCompress << endl;
+//
+//    for(auto t:treeIndexes)
+//    {
+//        sdsl::enc_vector<> encVector(*t);
+//        sdsl::vlc_vector<> vlcVector(*t);
+//        sdsl::dac_vector<> dacVector(*t);
+//        encSize += sdsl::size_in_mega_bytes(encVector);
+//        vlcSize += sdsl::size_in_mega_bytes(vlcVector);
+//        dacSize += sdsl::size_in_mega_bytes(dacVector);
+//
+//        sdsl::util::bit_compress(*t);
+//        bitCompress += sdsl::size_in_mega_bytes(*t);
+//    }
+//
+//    cout << "Total Tree enc = " << encSize << endl;
+//    cout << "Total Tree vlc = " << vlcSize << endl;
+//    cout << "Total Tree dac = " << dacSize << endl;
+//    cout << "Total Tree bit compress = " << bitCompress << endl;
 
 
     encSize = 0;
@@ -169,12 +116,20 @@ int main(int argc, char *argv[]) {
 
 
         unordered_map<uint32_t, uint32_t> nodesCount;
+        unordered_map<uint32_t, uint32_t> logNodeCount;
         for (unsigned j = start; j < end; j++) {
-            for (auto i: *unCompressedEdges[j])
+            for (auto i: *unCompressedEdges[j]){
                 nodesCount[i]++;
+                logNodeCount[(uint32_t)log((uint32_t)i)]++;
+            }
         }
+        string outputFilename=outputPrefix+"."+to_string(start)+".csv";
+        ofstream out(outputFilename);
+        for(auto i:logNodeCount)
+            out<<i.first<<","<<i.second<<"\n";
+        out.close();
         sdsl::int_vector<> translateEdges(nodesCount.size());
-
+        cout<<"Tree "<<start<<" Number of Distinct Items = "<<nodesCount.size()<<" Number of Items = "<<unCompressedEdges[start]->size()<<endl;
         auto sortedNodesCount=sortMap(nodesCount);
         uint32_t uniqueNodeID = 0;
         unordered_map<uint32_t, uint32_t> reverse;
@@ -188,38 +143,43 @@ int main(int argc, char *argv[]) {
         double unCompressedSize = 0.0;
 
         for (unsigned j = start; j < end; j++) {
-            std::vector<uint32_t> newVec(unCompressedEdges[j]->size());
+
             uint32_t index = 0;
-            for (auto n:*unCompressedEdges[j])
-                newVec[index++] = reverse[n];
-
-            std::vector<uint32_t> compressedVec(newVec.size()+1024);
-            size_t compressedsize = compressedVec.size();
-            codec.encodeArray(newVec.data(), newVec.size(), compressedVec.data(),
-                              compressedsize);
-            compressedVec.resize(compressedsize);
-            std::cout << std::setprecision(3);
-            std::cout << "You are using "
-            << 32.0 * static_cast<double>(compressedVec.size()) /
-            static_cast<double>(newVec.size())
-            << " bits per integer. " << std::endl;
-
-            pFORSize+=(compressedsize*4);
+            for(unsigned k=0;k<unCompressedEdges[j]->size();k++)
+                (*(unCompressedEdges[j]))[k]= reverse[(*(unCompressedEdges[j]))[k]];
 
 
-            sdsl::enc_vector<> encVector(newVec);
-            sdsl::vlc_vector<> vlcVector(newVec);
-            sdsl::dac_vector<> dacVector(newVec);
-            encSize += sdsl::size_in_mega_bytes(encVector);
-            vlcSize += sdsl::size_in_mega_bytes(vlcVector);
-            dacSize += sdsl::size_in_mega_bytes(dacVector);
 
 //            sdsl::util::bit_compress(newVec);
 //            bitCompress += sdsl::size_in_mega_bytes(newVec);
         }
         start += chunkSize;
     }
+    for (unsigned i = 0; i < newColor->edges.size(); i++) {
+        std::vector<uint32_t> newVec(unCompressedEdges[i]->size());
+        std::copy(unCompressedEdges[i]->begin(),unCompressedEdges[i]->end(),newVec.begin());
+        std::vector<uint32_t> compressedVec(unCompressedEdges[i]->size()+1024);
+        size_t compressedsize = compressedVec.size();
+        codec.encodeArray(newVec.data(), newVec.size(), compressedVec.data(),
+                          compressedsize);
+        compressedVec.resize(compressedsize);
+        std::cout << std::setprecision(3);
+        std::cout << "Tree "<<i<< " are using "
+        << 32.0 * static_cast<double>(compressedVec.size()) /
+        static_cast<double>(newVec.size())
+        << " bits per integer. " << std::endl;
 
+        pFORSize+=(compressedsize*4);
+
+
+//        sdsl::enc_vector<> encVector(*(unCompressedEdges[i]));
+//        sdsl::vlc_vector<> vlcVector(*(unCompressedEdges[i]));
+//        sdsl::dac_vector<> dacVector(*(unCompressedEdges[i]));
+//        encSize += sdsl::size_in_mega_bytes(encVector);
+//        vlcSize += sdsl::size_in_mega_bytes(vlcVector);
+//        dacSize += sdsl::size_in_mega_bytes(dacVector);
+
+    }
 
 //
 
@@ -238,7 +198,7 @@ int main(int argc, char *argv[]) {
     cout << "Total bit compress = " << bitCompress << endl;
     cout << "Total translate = " << translateSize << endl;
     cout << "Total pFor = " << (double)pFORSize/(1024.0*1024.0) << endl;
-    cout<<pFORSize<<endl;
+   // cout<<pFORSize<<endl;
 //    string indexFileName=argv[1];
 //    string tmpFolder=argv[2];
 //    int nThreads=atoi(argv[3]);
