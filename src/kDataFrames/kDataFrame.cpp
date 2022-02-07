@@ -74,8 +74,8 @@ kDataFrame * kDataFrame::load(string filePath) {
         res=kDataFramePHMAP::load(filePath);
     else if (fileExists(filePath+ ".bmqf"))
         res=kDataFrameBMQF::load(filePath);
-    else if (fileExists(filePath+ ".blight.gz"))
-        res=kDataFrameBlight::load(filePath);
+//    else if (fileExists(filePath+ ".blight.gz"))
+//        res=kDataFrameBlight::load(filePath);
     else
         throw std::runtime_error("Could not open kDataFrame file");
 
