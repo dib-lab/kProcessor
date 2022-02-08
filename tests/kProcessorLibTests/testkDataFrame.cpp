@@ -2491,29 +2491,29 @@ TEST_P(prefixColumnTest,optimizeAndCheck)
 
 
 }
-
-TEST_P(kDataFrameBlightTest, DISABLED_parsingTest)
-{
-    int kSize=get<0>(GetParam());
-    string fileName=get<1>(GetParam());
-    kDataFrame* kframe =new kDataFrameBlight(kSize,fileName);
-    int chunkSize=1000;
- // Mode 1 : kmers, KmerSize will be cloned from the kFrame
-    kmerDecoder *KD_KMERS = kmerDecoder::getInstance(fileName, chunkSize, KMERS, TwoBits_hasher, {{"kSize", kSize}});
-
-    while (!KD_KMERS->end()) {
-        KD_KMERS->next_chunk();
-        for (const auto &seq : *KD_KMERS->getKmers()) {
-            for (const auto &kmer : seq.second) {
-                ASSERT_TRUE(kframe->kmerExist(kmer.str));
-            }
-        }
-    }
-
-    delete KD_KMERS;
-    delete kframe;
-    kframe=nullptr;
-
-
-}
-
+//
+//TEST_P(kDataFrameBlightTest, DISABLED_parsingTest)
+//{
+//    int kSize=get<0>(GetParam());
+//    string fileName=get<1>(GetParam());
+//    kDataFrame* kframe =new kDataFrameBlight(kSize,fileName);
+//    int chunkSize=1000;
+// // Mode 1 : kmers, KmerSize will be cloned from the kFrame
+//    kmerDecoder *KD_KMERS = kmerDecoder::getInstance(fileName, chunkSize, KMERS, TwoBits_hasher, {{"kSize", kSize}});
+//
+//    while (!KD_KMERS->end()) {
+//        KD_KMERS->next_chunk();
+//        for (const auto &seq : *KD_KMERS->getKmers()) {
+//            for (const auto &kmer : seq.second) {
+//                ASSERT_TRUE(kframe->kmerExist(kmer.str));
+//            }
+//        }
+//    }
+//
+//    delete KD_KMERS;
+//    delete kframe;
+//    kframe=nullptr;
+//
+//
+//}
+//
