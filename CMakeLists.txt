@@ -117,10 +117,10 @@ file(GLOB kProcessorLibSrc
         ${CMAKE_CURRENT_SOURCE_DIR}/src/kDataFrames/kDataFrameBlight.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/kDataFrames/kDataFrameBMQF.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/kDataFrames/kDataFrame.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/kDataFrames/kDataFrameMAP.cpp
+#        ${CMAKE_CURRENT_SOURCE_DIR}/src/kDataFrames/kDataFrameMAP.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/kDataFrames/kDataFrameMQF.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/kDataFrames/kDataFramePHMAP.cpp
-
+#        ${CMAKE_CURRENT_SOURCE_DIR}/src/kDataFrames/kDataFramePHMAP.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/kDataFrames/kDataFrameSTL.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/Utils/utils.cpp
 
         ${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/KMC/kmc_api/*cpp

@@ -608,7 +608,7 @@ namespace kProcessor {
             uint32_t lastKmerID;
             #pragma omp atomic capture
             lastKmerID=lastID++;
-            kDataFramePHMAP::MapType* map=output->getMap();
+            kDataFramePHMAP::MAPType* map=output->getMap();
             vector<pair<Column*,Column*> > columns;
             kDataFrame* kf;
             string fileName;
