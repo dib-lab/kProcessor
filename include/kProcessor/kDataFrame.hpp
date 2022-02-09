@@ -22,7 +22,10 @@ class kDataFrameMAP;
 class kDataFramePHMAP;
 
 #define kDataFramePHMAP kDataFrameSTL<phmap::parallel_flat_hash_map<std::uint64_t,std::uint32_t,std::hash<uint64_t>,std::equal_to<uint64_t>,std::allocator<std::pair<const uint64_t, uint64_t>>,4,std::mutex>>
+#define kDataFramePHMAPIterator kDataFrameSTLIterator<phmap::parallel_flat_hash_map<std::uint64_t,std::uint32_t,std::hash<uint64_t>,std::equal_to<uint64_t>,std::allocator<std::pair<const uint64_t, uint64_t>>,4,std::mutex>>
 #define kDataFrameMAP kDataFrameSTL<std::map<std::uint64_t, std::uint64_t>>
+#define kDataFrameMAPIterator kDataFrameSTLIterator<std::map<std::uint64_t, std::uint64_t>>
+
 
 class kmerRow{
 public:

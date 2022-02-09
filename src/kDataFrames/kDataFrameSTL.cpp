@@ -185,9 +185,9 @@ kDataFrameSTL<MapType>::kDataFrameSTL(uint64_t ksize, vector<uint64_t> kmersHist
 //    hasher = new wrapperHasher<std::map<uint64_t, uint64_t>::hasher>(MAP.hash_function(), ksize);
 //    this->MAP = std::map<uint64_t, uint64_t>(1000);
     // this->hasher = (new IntegerHasher(ksize));
-    endIterator = new kDataFrameIterator(
-            (_kDataFrameIterator *) new kDataFrameSTLIterator(MAP.end(), this, kSize),
-            (kDataFrame *) this);
+//    endIterator = new kDataFrameIterator(
+//            (_kDataFrameIterator *) new kDataFrameSTLIterator<MapType>(MAP.end(), this, kSize),
+//            (kDataFrame *) this);
 }
 
 template<class MapType>
@@ -199,9 +199,9 @@ kDataFrameSTL<MapType>::kDataFrameSTL() {
     endIterator= nullptr;
     // hasher=new wrapperHasher<flat_hash_map<uint64_t,uint64_t>::hasher >(MAP.hash_function(),kSize);
     // this->hasher = (new IntegerHasher(23));
-    endIterator = new kDataFrameIterator(
-            (_kDataFrameIterator *) new kDataFrameSTLIterator(MAP.end(), this, kSize),
-            (kDataFrame *) this);
+//    endIterator = new kDataFrameIterator(
+//            (_kDataFrameIterator *) new kDataFrameSTLIterator<MapType>(MAP.end(), this, kSize),
+//            (kDataFrame *) this);
 }
 
 template<class MapType>
@@ -390,7 +390,7 @@ kDataFrame *kDataFramePHMAP::load(string filePath) {
     if (KMAP->endIterator != nullptr)
         delete KMAP->endIterator;
     KMAP->endIterator = new kDataFrameIterator(
-            (_kDataFrameIterator *) new kDataFrameSTLIterator(KMAP->MAP.end(), KMAP, kSize),
+            (_kDataFrameIterator *) new kDataFramePHMAPIterator(KMAP->MAP.end(), KMAP, kSize),
             (kDataFrame *) KMAP);
 
     return KMAP;
@@ -407,7 +407,7 @@ void kDataFrameSTL<MapType>::_reserve(uint64_t n) {
     if (endIterator != nullptr)
         delete endIterator;
     endIterator = new kDataFrameIterator(
-            (_kDataFrameIterator *) new kDataFrameSTLIterator(MAP.end(), this, kSize),
+            (_kDataFrameIterator *) new kDataFrameSTLIterator<MapType>(MAP.end(), this, kSize),
             (kDataFrame *) this);
 
 }
@@ -428,7 +428,7 @@ void kDataFrameMAP::_reserve(uint64_t n) {
     if (endIterator != nullptr)
         delete endIterator;
     endIterator = new kDataFrameIterator(
-            (_kDataFrameIterator *) new kDataFrameSTLIterator(MAP.end(), this, kSize),
+            (_kDataFrameIterator *) new kDataFrameMAPIterator(MAP.end(), this, kSize),
             (kDataFrame *) this);
 
 }
@@ -437,7 +437,7 @@ void kDataFrameMAP::_reserve(uint64_t n) {
 template<class MapType>
 kDataFrameIterator kDataFrameSTL<MapType>::begin() {
     return (kDataFrameIterator(
-            (_kDataFrameIterator *) new kDataFrameSTLIterator(MAP.begin(), this, kSize),
+            (_kDataFrameIterator *) new kDataFrameSTLIterator<MapType>(MAP.begin(), this, kSize),
             (kDataFrame *) this));
 }
 
@@ -450,14 +450,14 @@ kDataFrameIterator kDataFrameSTL<MapType>::end() {
 template<class MapType>
 kDataFrameIterator kDataFrameSTL<MapType>::find(const string &kmer) {
     return (kDataFrameIterator(
-            (_kDataFrameIterator *) new kDataFrameSTLIterator(MAP.find(KD->hash_kmer(kmer)), this, kSize),
+            (_kDataFrameIterator *) new kDataFrameSTLIterator<MapType>(MAP.find(KD->hash_kmer(kmer)), this, kSize),
             (kDataFrame *) this));
 }
 
 template<class MapType>
 kDataFrameIterator kDataFrameSTL<MapType>::find(uint64_t kmer) {
     return (kDataFrameIterator(
-            (_kDataFrameIterator *) new kDataFrameSTLIterator(MAP.find((kmer)), this, kSize),
+            (_kDataFrameIterator *) new kDataFrameSTLIterator<MapType>(MAP.find((kmer)), this, kSize),
             (kDataFrame *) this));
 }
 
@@ -477,7 +477,7 @@ kDataFrame *kDataFrameSTL<MapType>::clone() {
     }
     delete newOne->endIterator;
     newOne->endIterator = new kDataFrameIterator(
-            (_kDataFrameIterator *) new kDataFrameSTLIterator(newOne->MAP.end(), newOne, kSize),
+            (_kDataFrameIterator *) new kDataFrameSTLIterator<MapType>(newOne->MAP.end(), newOne, kSize),
             (kDataFrame *) newOne);
     return newOne;
 }
