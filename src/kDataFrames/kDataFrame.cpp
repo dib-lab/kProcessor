@@ -72,6 +72,8 @@ kDataFrame * kDataFrame::load(string filePath) {
         res=kDataFrameMAP::load(filePath);
     else if (fileExists(filePath + ".phmap"))
         res=kDataFramePHMAP::load(filePath);
+    else if (fileExists(filePath + ".btree"))
+        res=kDataFrameBtree::load(filePath);
     else if (fileExists(filePath+ ".bmqf"))
         res=kDataFrameBMQF::load(filePath);
     else if (fileExists(filePath+ ".blight.gz"))

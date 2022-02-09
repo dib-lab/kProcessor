@@ -8,28 +8,23 @@
 #include <cereal/archives/binary.hpp>
 
 template
-class kDataFrameSTLIterator<phmap::parallel_flat_hash_map<std::uint64_t,
-        std::uint32_t,
-        std::hash<uint64_t>,
-        std::equal_to<uint64_t>,
-        std::allocator<std::pair<const uint64_t, uint64_t>>,
-        4,
-        std::mutex>>;
+class kDataFramePHMAPIterator;
 
 template
-class kDataFrameSTL<phmap::parallel_flat_hash_map<std::uint64_t,
-        std::uint32_t,
-        std::hash<uint64_t>,
-        std::equal_to<uint64_t>,
-        std::allocator<std::pair<const uint64_t, uint64_t>>,
-        4,
-        std::mutex>>;
+class kDataFramePHMAP;
 
 template
 class kDataFrameMAP;
+template
+class kDataFrameMAPIterator;
 
 template
-class kDataFrameSTLIterator<std::map<std::uint64_t, std::uint64_t>>;
+class kDataFrameBtree;
+template
+class kDataFrameBtreeIterator;
+
+
+
 
 /*
  *****************************
@@ -314,6 +309,17 @@ float kDataFrameMAP::max_load_factor() {
     return 1.0;
 }
 
+template<>
+float kDataFrameBtree::load_factor() {
+    return 0.5;
+}
+
+template<>
+float kDataFrameBtree::max_load_factor() {
+    return 1.0;
+}
+
+
 template<class MapType>
 void kDataFrameSTL<MapType>::serialize(string filePath) {
 
@@ -396,6 +402,87 @@ kDataFrame *kDataFramePHMAP::load(string filePath) {
     return KMAP;
 }
 
+template<>
+void kDataFrameMAP::serialize(string filePath) {
+
+    ofstream file(filePath + ".extra");
+    file << kSize << endl;
+    file << this->KD->hash_mode << endl;
+    file.close();
+    std::ofstream os(filePath + ".map", std::ios::binary);
+    cereal::BinaryOutputArchive archive(os);
+    archive(this->MAP);
+
+
+}
+
+template<>
+kDataFrame *kDataFrameMAP::load(string filePath) {
+    // Load kSize
+    ifstream file(filePath + ".extra");
+    uint64_t kSize;
+    int hashing_mode;
+    file >> kSize;
+    file >> hashing_mode;
+
+
+    file.close();
+    // Initialize kDataFrameMAP
+    kDataFrameMAP *KMAP = new kDataFrameMAP(kSize);
+
+    // Load the hashMap into the kDataFrameMAP
+    std::ifstream os(filePath + ".map", std::ios::binary);
+    cereal::BinaryInputArchive iarchive(os);
+    iarchive(KMAP->MAP);
+    delete KMAP->endIterator;
+    KMAP->endIterator = new kDataFrameIterator(
+            (_kDataFrameIterator *) new kDataFrameMAPIterator(KMAP->MAP.end(), KMAP, kSize),
+            (kDataFrame *) KMAP);
+
+    return KMAP;
+}
+
+template<>
+void kDataFrameBtree::serialize(string filePath) {
+
+    ofstream file(filePath + ".extra");
+    file << kSize << endl;
+    file << this->KD->hash_mode << endl;
+    file.close();
+    std::ofstream os(filePath + ".btree", std::ios::binary);
+    cereal::BinaryOutputArchive archive(os);
+    archive(this->MAP);
+
+
+}
+
+template<>
+kDataFrame *kDataFrameBtree::load(string filePath) {
+    // Load kSize
+    ifstream file(filePath + ".extra");
+    uint64_t kSize;
+    int hashing_mode;
+    file >> kSize;
+    file >> hashing_mode;
+
+
+    file.close();
+    // Initialize kDataFrameMAP
+    kDataFrameBtree *KMAP = new kDataFrameBtree(kSize);
+
+    // Load the hashMap into the kDataFrameMAP
+    std::ifstream os(filePath + ".btree", std::ios::binary);
+    cereal::BinaryInputArchive iarchive(os);
+    iarchive(KMAP->MAP);
+    delete KMAP->endIterator;
+    KMAP->endIterator = new kDataFrameIterator(
+            (_kDataFrameIterator *) new kDataFrameBtreeIterator(KMAP->MAP.end(), KMAP, kSize),
+            (kDataFrame *) KMAP);
+
+    return KMAP;
+}
+
+
 template<class MapType>
 kDataFrame *kDataFrameSTL<MapType>::getTwin() {
     return ((kDataFrame *) new kDataFrameSTL(kSize, this->KD->hash_mode));
@@ -433,6 +520,16 @@ void kDataFrameMAP::_reserve(uint64_t n) {
 
 }
 
+template<>
+void kDataFrameBtree::_reserve(uint64_t n) {
+
+    if (endIterator != nullptr)
+        delete endIterator;
+    endIterator = new kDataFrameIterator(
+            (_kDataFrameIterator *) new kDataFrameBtreeIterator(MAP.end(), this, kSize),
+            (kDataFrame *) this);
+
+}
 
 template<class MapType>
 kDataFrameIterator kDataFrameSTL<MapType>::begin() {

@@ -229,6 +229,10 @@ kDataFrame* getFrame(tuple<string,int> input)
     {
         return new kDataFramePHMAP(kSize,NKmersTEST);
     }
+    else if(type=="Btree")
+    {
+        return new kDataFrameBtree(kSize,NKmersTEST);
+    }
     else if(type=="BMQF")
     {
         string fileName="tmp.kdataframeBMQF."+gen_random(8);
@@ -256,7 +260,7 @@ vector<kDataFrameBMQF*> BuildTestBufferedFrames()
 INSTANTIATE_TEST_SUITE_P(testFrames,
                         kDataFrameTest,
                          ::testing::Combine(
-                                 ::testing::Values("MAP","PHMAP"),
+                                 ::testing::Values("MAP","PHMAP","Btree"),
                                  ::testing::Values(21,31))
 );
 
@@ -269,7 +273,7 @@ vector<string> fastqFiles={"test.noN.fastq"};
 INSTANTIATE_TEST_SUITE_P(testcounting,
                          algorithmsTest,
                         ::testing::Combine(
-                                ::testing::Values("MAP","PHMAP"),
+                                ::testing::Values("MAP","PHMAP","Btree"),
                                 ::testing::Values(21,31),
                              ::testing::ValuesIn(fastqFiles)
                       ));
