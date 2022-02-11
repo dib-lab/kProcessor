@@ -19,3 +19,6 @@
 [submodule "ThirdParty/caches"]
 	path = ThirdParty/caches
 	url = https://github.com/vpetrigo/caches.git
+[submodule "ThirdParty/sshash"]
+	path = ThirdParty/sshash
+	url = https://github.com/jermp/sshash.git

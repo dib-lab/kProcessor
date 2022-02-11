@@ -286,7 +286,7 @@ INSTANTIATE_TEST_SUITE_P(testntCard,
 INSTANTIATE_TEST_SUITE_P(testcounting,
                          kDataFrameBlightTest,
                          ::testing::Combine(
-                                 ::testing::Values(31),
+                                 ::testing::Values(21,31),
                                  ::testing::ValuesIn(fastqFiles)
                                  ));
 
@@ -2494,7 +2494,7 @@ TEST_P(prefixColumnTest,optimizeAndCheck)
 
 }
 
-TEST_P(kDataFrameBlightTest, DISABLED_parsingTest)
+TEST_P(kDataFrameBlightTest, parsingTest)
 {
     int kSize=get<0>(GetParam());
     string fileName=get<1>(GetParam());

@@ -41,10 +41,12 @@ include_directories("ThirdParty/mum-hash")
 include_directories("ThirdParty/Blight")
 include_directories("ThirdParty/KMC/kmc_api")
 include_directories("ThirdParty/caches/include")
+include_directories("ThirdParty/sshash/include")
 
 add_subdirectory(ThirdParty/MQF/)
 add_subdirectory(ThirdParty/sdsl-lite/)
 add_subdirectory(ThirdParty/kmerDecoder)
+add_subdirectory(ThirdParty/sshash)
 
 
 
@@ -121,6 +123,7 @@ file(GLOB kProcessorLibSrc
         ${CMAKE_CURRENT_SOURCE_DIR}/src/kDataFrames/kDataFrameMQF.cpp
 #        ${CMAKE_CURRENT_SOURCE_DIR}/src/kDataFrames/kDataFramePHMAP.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/kDataFrames/kDataFrameSTL.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/kDataFrames/kDataFrame_sshash.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/Utils/utils.cpp
 
         ${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/KMC/kmc_api/*cpp
@@ -140,6 +143,7 @@ target_link_libraries (kProcessor ${blightLib})
 #set_property(TARGET sdsl PROPERTY POSITION_INDEPENDENT_CODE ON)
 target_link_libraries(kProcessor sdsl)
 target_link_libraries(kProcessor kmerDecoder)
+target_link_libraries(kProcessor z)# for sshash
 
 target_include_directories(${LIBRARY_NAME} PRIVATE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/${LIBRARY_NAME}>

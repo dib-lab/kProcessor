@@ -325,3 +325,4 @@ std::uint64_t kDataFrameIterator::getCount(){
     uint32_t o = iterator->getOrder();
     return origin->countColumn->get(o);
 }
+
