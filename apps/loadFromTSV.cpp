@@ -17,7 +17,8 @@ int main(int argc, char *argv[])
     cout<<"Expected number of slots "<<numSlots<<endl;
     uint64_t s=(numSlots);
     cout<<"S = "<<s<<endl;
-    kDataFrameBMQF frame(k,s,2,0,0,outPath);
+    kDataFrame* frame=kDataFrameFactory::createBMQF(k,outPath, (uint64_t)pow(2,s));
+    //kDataFrameBMQF frame(k,s,2,0,0,outPath);
     //kDataFrameMQF frame(k);
     cout<<"_reserve completed"<<endl;
     string kmer;
@@ -25,14 +26,14 @@ int main(int argc, char *argv[])
     uint64_t nKmers=0;
     while (cin>>kmer>>count)
     {
-        frame.setCount(kmer,count);
+        frame->setCount(kmer,count);
 	nKmers++;
 	if(nKmers%10000==0)
 	 cout<<nKmers<<endl;
     }
     cout<<"finished "<<nKmers<<endl;
     cout<<"serialize to  "<<outPath<<endl; 
-    frame.serialize(outPath);
+    frame->serialize(outPath);
     return 0;
 
 }

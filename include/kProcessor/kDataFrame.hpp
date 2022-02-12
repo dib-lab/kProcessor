@@ -1,17 +1,14 @@
 #ifndef _kDataFRAME_H_
 #define _kDataFRAME_H_
 
-#include "blight.h"
 #include <vector>
 
-#include "gqf.h"
 #include <iostream>
 #include <parallel_hashmap/phmap.h>
 #include <parallel_hashmap/btree.h>
 #include "kmerDecoder.hpp"
 #include <any>
-#include "bufferedMQF.h"
-#include "dictionary.hpp"
+//#include "dictionary.hpp"
 
 
 #include "defaultColumn.hpp"
@@ -21,8 +18,8 @@ using phmap::flat_hash_map;
 using namespace std;
 
 class kDataFrame;
-class kDataFrameMAP;
-class kDataFramePHMAP;
+class kDataFrameMQF;
+class kDataFrameBMQF;
 
 #define kDataFramePHMAP kDataFrameSTL<phmap::parallel_flat_hash_map<std::uint64_t,std::uint32_t,std::hash<uint64_t>,std::equal_to<uint64_t>,std::allocator<std::pair<const uint64_t, uint64_t>>,4,std::mutex>>
 #define kDataFramePHMAPIterator kDataFrameSTLIterator<phmap::parallel_flat_hash_map<std::uint64_t,std::uint32_t,std::hash<uint64_t>,std::equal_to<uint64_t>,std::allocator<std::pair<const uint64_t, uint64_t>>,4,std::mutex>>
@@ -254,27 +251,6 @@ public:
 };
 
 
-class kDataFrameMQFIterator:public _kDataFrameIterator{
-private:
-  QFi* qfi;
-  kmerDecoder * KD;
-  uint64_t order;
-public:
-  kDataFrameMQFIterator(QF*,std::uint64_t kSize,kmerDecoder* KD);
-  kDataFrameMQFIterator(QFi*,std::uint64_t kSize,kmerDecoder* KD);
-  kDataFrameMQFIterator(const kDataFrameMQFIterator&);
-  kDataFrameMQFIterator& operator ++ (int);
-  _kDataFrameIterator* clone();
-  std::uint64_t getHashedKmer();
-  string getKmer();
-  uint64_t getOrder();
-  std::uint64_t getCount();
-  bool setOrder(std::uint64_t count);
-  void endIterator();
-  bool operator ==(const _kDataFrameIterator& other);
-  bool operator !=(const _kDataFrameIterator& other);
-   ~kDataFrameMQFIterator();
-};
 
 class dbgIterator{
 public:
@@ -520,521 +496,8 @@ void kDataFrameIterator::setColumnValue(const string& colName, T value)
 }
 
 
-class kDataFrameMQF: public kDataFrame{
 
-private:
-  QF* mqf;
-  double falsePositiveRate;
-  std::uint64_t hashbits;
-  __uint128_t range;
-  static bool isEnough(vector<std::uint64_t> histogram,std::uint64_t noSlots,std::uint64_t fixedSizeCounter,std::uint64_t slotSize);
-  friend class kDataframeMQF;
-protected:
-  
-public:
-  kDataFrameMQF();
-  explicit kDataFrameMQF(std::uint64_t kSize);
-  kDataFrameMQF(std::uint64_t kSize, hashingModes hash_mode);
-  kDataFrameMQF(std::uint64_t ksize,uint8_t q,uint8_t fixedCounterSize,uint8_t tagSize
-    ,double falsePositiveRate);
 
-  kDataFrameMQF(std::uint64_t ksize, uint8_t q, hashingModes hash_mode);
-
-  kDataFrameMQF(QF* mqf,std::uint64_t ksize,double falsePositiveRate);
-  //count histogram is array where count of kmers repeated n times is found at index n. index 0 holds number of distinct kmers.
-  kDataFrameMQF(std::uint64_t ksize,vector<std::uint64_t> countHistogram,uint8_t tagSize
-    ,double falsePositiveRate);
-  kDataFrameMQF(std::uint64_t kSize,vector<std::uint64_t> kmersHistogram);
-  kDataFrameMQF(std::uint64_t kSize,uint64_t nKmers);
-  kDataFrameMQF(kDataFrame* frame);
-
-
-    kDataFrame *clone() override;
-
-    ~kDataFrameMQF(){
-    qf_destroy(mqf);
-    delete mqf;
-  }
-  void _reserve (std::uint64_t n);
-  void _reserve (vector<std::uint64_t> countHistogram);
-  kDataFrame* getTwin();
-
-  bool _insert(std::uint64_t kmer);
-  bool _insert(string kmer);
-
-
-  static std::uint64_t estimateMemory(std::uint64_t nslots,std::uint64_t slotSize,
-    std::uint64_t fcounter, std::uint64_t tagSize);
-
-
-  static void estimateParameters(vector<std::uint64_t> countHistogram,
-    std::uint64_t numHashBits,std::uint64_t tagSize,
-  std::uint64_t *res_noSlots,std::uint64_t *res_fixedSizeCounter, std::uint64_t *res_memory);
-
-
-  bool setOrder(const string &kmer, std::uint64_t count);
-  bool setOrder(std::uint64_t kmer, std::uint64_t count);
-  
-  uint32_t insert(const string &kmer);
-  uint32_t insert(std::uint64_t kmer) override;
-  std::uint64_t getkmerOrder(const string &kmer);
-  std::uint64_t getkmerOrder(std::uint64_t kmer);
-
-
-  bool erase(const string &kmer);
-  bool erase(std::uint64_t kmer);
-
-  std::uint64_t size();
-/// max_size function returns the estimated maximum number of kmers that the kDataframeMQF can hold.
-/*! The number of kmers is estimated as if all the kmers repeated 2^(fixed counter size)-1 times.*/
-  std::uint64_t max_size();
-  float load_factor();
-  float max_load_factor();
-
-
-  QF* getMQF(){
-    return mqf;
-  }
-
-  void serialize(string filePath);
-  static kDataFrame* load(string filePath);
-
-  kDataFrameIterator begin();
- // kDataFrameIterator end();
-  kDataFrameIterator find(const string &kmer);
-    kDataFrameIterator find(uint64_t kmer);
-
-    bool kmerExist(string kmerS);
-    bool kmerExist(uint64_t kmer);
-};
-
-
-
-
-// kDataFrameBMQF _____________________________
-
-class kDataFrameBMQF: public kDataFrame{
-
-private:
-  bufferedMQF* bufferedmqf;
-  double falsePositiveRate;
-  std::uint64_t hashbits;
-  __uint128_t range;
-  static bool isEnough(vector<std::uint64_t> histogram,std::uint64_t noSlots,std::uint64_t fixedSizeCounter,std::uint64_t slotSize);
-  friend class kDataframeBMQF;
-  string fileName;
-public:
-  kDataFrameBMQF();
-  kDataFrameBMQF(std::uint64_t kSize,string path);
-  kDataFrameBMQF(std::uint64_t kSize,uint64_t nKmers,string path);
-  kDataFrameBMQF(std::uint64_t ksize,uint8_t q,uint8_t fixedCounterSize,uint8_t tagSize,double falsePositiveRate,string path);
-  kDataFrameBMQF(bufferedMQF* bufferedmqf,std::uint64_t ksize,double falsePositiveRate);
-  //count histogram is array where count of kmers repeated n times is found at index n. index 0 holds number of distinct kmers.
-  kDataFrameBMQF(std::uint64_t ksize,vector<std::uint64_t> countHistogram,uint8_t tagSize
-    ,double falsePositiveRate);
-
-    kDataFrame *clone() override;
-
-    kDataFrameBMQF(kDataFrame* frame,string filename);
-
-  ~kDataFrameBMQF(){
-    delete bufferedmqf;
-  }
-  void _reserve (std::uint64_t n);
-  void _reserve (vector<std::uint64_t> countHistogram);
-
-  kDataFrame* getTwin();
-
-  static std::uint64_t estimateMemory(std::uint64_t nslots,std::uint64_t slotSize,
-    std::uint64_t fcounter, std::uint64_t tagSize);
-
-
-  static void estimateParameters(vector<std::uint64_t> countHistogram,
-    std::uint64_t numHashBits,std::uint64_t tagSize,
-  std::uint64_t *res_noSlots,std::uint64_t *res_fixedSizeCounter, std::uint64_t *res_memory);
-
-  bool _insert(std::uint64_t kmer);
-  bool _insert(const string& kmer);
-
-
-  uint32_t insert(const string &kmer) override;
-  uint32_t insert(std::uint64_t kmer) override;
-  bool setOrder(const string &kmer, std::uint64_t count);
-  bool setOrder(std::uint64_t kmer, std::uint64_t count);
-
-
-  bool setCount(const string &kmer, std::uint64_t N) override;
-  bool setCount(std::uint64_t kmer,std::uint64_t N) override;
-  
-
-
-
-  std::uint64_t getkmerOrder(const string &kmer);
-  std::uint64_t getkmerOrder(std::uint64_t kmer);
-
-
-  bool erase(const string &kmer);
-  bool erase(std::uint64_t kmer);
-
-  std::uint64_t size();
-/// max_size function returns the estimated maximum number of kmers that the kDataframeBMQF can hold.
-/*! The number of kmers is estimated as if all the kmers repeated 2^(fixed counter size)-1 times.*/
-  std::uint64_t max_size();
-  float load_factor();
-  float max_load_factor();
-
-
-  bufferedMQF* getBMQF(){
-    return bufferedmqf;
-  }
-
-  void serialize(string filePath);
-  static kDataFrame* load(string filePath);
-
-  kDataFrameIterator begin();
- // kDataFrameIterator end();
-  kDataFrameIterator find(const string &kmer);
-  kDataFrameIterator find(uint64_t kmer);
-  string getFilename();
-
-  void deleteMemoryBuffer();
-  bool kmerExist(string kmer);
-  bool kmerExist(uint64_t kmer);
-};
-
-
-class kDataFrameBMQFIterator:public _kDataFrameIterator{
-private:
-    bufferedMQFIterator* qfi;
-    kmerDecoder * KD;
-    bufferedMQF* mqf;
-public:
-    kDataFrameBMQFIterator(bufferedMQF*,std::uint64_t kSize,kmerDecoder* h);
-    kDataFrameBMQFIterator(const kDataFrameBMQFIterator&);
-    kDataFrameBMQFIterator(bufferedMQF*,bufferedMQFIterator* qfi,std::uint64_t kSize,kmerDecoder* KD);
-    kDataFrameBMQFIterator& operator ++ (int);
-    _kDataFrameIterator* clone();
-    std::uint64_t getHashedKmer();
-    string getKmer();
-    kDataFrame *getTwin();
-    uint64_t getOrder();
-    std::uint64_t getCount();
-    bool setOrder(std::uint64_t count);
-    void endIterator();
-    bool operator ==(const _kDataFrameIterator& other);
-    bool operator !=(const _kDataFrameIterator& other);
-    ~kDataFrameBMQFIterator();
-};
-
-
-//// kDataFrameMAPIterator
-//
-//class kDataFrameMAPIterator:public _kDataFrameIterator{
-//private:
-//    kDataFrameMAP* origin;
-//    kmerDecoder * KD;
-//public:
-//    std::map<std::uint64_t, std::uint64_t>::iterator iterator;
-//    kDataFrameMAPIterator(std::map<std::uint64_t, std::uint64_t>::iterator,kDataFrameMAP* origin,std::uint64_t kSize);
-//    kDataFrameMAPIterator(const kDataFrameMAPIterator&);
-//    kDataFrameMAPIterator& operator ++ (int);
-//    _kDataFrameIterator* clone();
-//    std::uint64_t getHashedKmer();
-//    string getKmer();
-//    uint64_t getOrder();
-//    std::uint64_t getCount();
-//    bool setOrder(std::uint64_t count);
-//    void endIterator();
-//    bool operator ==(const _kDataFrameIterator& other);
-//    bool operator !=(const _kDataFrameIterator& other);
-//    ~kDataFrameMAPIterator();
-//};
-//
-//// kDataFrameMAP _____________________________
-//
-//class kDataFrameMAP : public kDataFrame
-//{
-//private:
-//  std::map<std::uint64_t, std::uint64_t> MAP;
-//public:
-//  kDataFrameMAP();
-//  kDataFrameMAP(std::uint64_t ksize);
-//  kDataFrameMAP(std::uint64_t kSize,vector<std::uint64_t> kmersHistogram);
-//  kDataFrameMAP(std::uint64_t kSize,uint64_t nKmers);
-//
-//    kDataFrame *clone() override;
-//
-//    kDataFrame* getTwin();
-//  void _reserve (std::uint64_t n);
-//  void _reserve (vector<std::uint64_t> countHistogram);
-//
-//  bool kmerExist(string kmer);
-//  bool kmerExist(uint64_t kmer);
-//
-//  bool setOrder(const string &kmer, std::uint64_t count);
-//  bool setOrder(std::uint64_t kmer, std::uint64_t count);
-//  uint32_t insert(const string &kmer) override;
-//  uint32_t insert(std::uint64_t kmer) override;
-//  std::uint64_t getkmerOrder(const string &kmer) override;
-//  std::uint64_t getkmerOrder(std::uint64_t kmerS) override;
-//  bool erase(const string &kmer);
-//  bool erase(std::uint64_t kmer);
-//
-//  std::uint64_t size();
-//  std::uint64_t max_size();
-//  float load_factor();
-//  float max_load_factor();
-//  kDataFrameIterator begin();
-//  kDataFrameIterator end();
-//  kDataFrameIterator find(const string &kmer);
-//  kDataFrameIterator find(uint64_t kmer);
-//  std::uint64_t bucket(string kmer);
-//  void serialize(string filePath);
-//  static kDataFrame *load(string filePath);
-//
-//    ~kDataFrameMAP() {
-//        this->MAP.clear();
-//    }
-//};
-//
-//
-//// kDataFramePHMAPIterator
-//
-//class kDataFramePHMAPIterator : public _kDataFrameIterator {
-//private:
-//    kDataFramePHMAP *origin;
-//    kmerDecoder * KD;
-//public:
-//    typedef typename phmap::parallel_flat_hash_map<std::uint64_t,
-//    std::uint32_t,
-//    std::hash<uint64_t>,
-//    std::equal_to<uint64_t>,
-//    std::allocator<std::pair<const uint64_t, uint64_t>>,
-//    4,
-//    std::mutex>::iterator itType;
-//    itType iterator;
-//    kDataFramePHMAPIterator(itType, kDataFramePHMAP *origin, std::uint64_t kSize);
-//
-//    kDataFramePHMAPIterator(const kDataFramePHMAPIterator &);
-//
-//    kDataFramePHMAPIterator &operator++(int);
-//
-//    _kDataFrameIterator *clone();
-//
-//    std::uint64_t getHashedKmer();
-//
-//    string getKmer();
-//    uint64_t getOrder();
-//    std::uint64_t getCount();
-//
-//    bool setOrder(std::uint64_t count);
-//
-//    void endIterator();
-//
-//    bool operator==(const _kDataFrameIterator &other);
-//
-//    bool operator!=(const _kDataFrameIterator &other);
-//
-//    ~kDataFramePHMAPIterator();
-//};
-//
-//
-//// kDataFramePHMAP _____________________________
-//
-//class kDataFramePHMAP : public kDataFrame {
-//public:
-//    typedef  phmap::parallel_flat_hash_map<std::uint64_t,
-//    std::uint32_t,
-//    std::hash<uint64_t>,
-//    std::equal_to<uint64_t>,
-//    std::allocator<std::pair<const uint64_t, uint64_t>>,
-//    4,
-//    std::mutex> MapType;
-//private:
-//     MapType MAP;
-//public:
-//    kDataFramePHMAP();
-//
-//    explicit kDataFramePHMAP(uint64_t ksize);
-//    kDataFramePHMAP(std::uint64_t kSize,uint64_t nKmers);
-//    kDataFramePHMAP(readingModes RM, hashingModes hash_mode, map<string, int> params);
-//    kDataFramePHMAP(uint64_t ksize, hashingModes hash_mode);
-//    kDataFramePHMAP(uint64_t kSize,vector<uint64_t> kmersHistogram);
-//
-//
-//    kDataFrame *clone() override;
-//
-//
-//    kDataFrame *getTwin();
-//
-//    void _reserve(std::uint64_t n);
-//    void _reserve (vector<std::uint64_t> countHistogram);
-//
-//    bool kmerExist(string kmer);
-//    bool kmerExist(uint64_t kmer);
-//
-//    bool setOrder(const string &kmer, std::uint64_t count);
-//    bool setOrder(std::uint64_t kmer, std::uint64_t count);
-//
-//    uint32_t insert(const string &kmer) override;
-//    uint32_t insert(std::uint64_t kmer) override;
-//
-//    std::uint64_t getkmerOrder(const string &kmer);
-//    std::uint64_t getkmerOrder(std::uint64_t kmer);
-//
-//    bool erase(const string &kmer);
-//    bool erase(std::uint64_t kmer);
-//
-//    std::uint64_t size();
-//
-//    std::uint64_t max_size();
-//
-//    float load_factor();
-//
-//    float max_load_factor();
-//
-//    kDataFrameIterator begin();
-//
-//    kDataFrameIterator end();
-//    kDataFrameIterator find(const string &kmer);
-//    kDataFrameIterator find(uint64_t kmer);
-//
-//    std::uint64_t bucket(string kmer);
-//
-//    void serialize(string filePath);
-//
-//    static kDataFrame *load(string filePath);
-//
-//    ~kDataFramePHMAP() {
-//        this->MAP.clear();
-//    }
-//    MapType *getMap();
-//
-//
-//};
-
-
-
-class kDataFrameBlight;
-
-
-class kDataFrameBlightIterator : public _kDataFrameIterator {
-private:
-    kmer_Set_Light_iterator iterator;
-    kDataFrameBlight *origin;
-public:
-    kDataFrameBlightIterator(kmer_Set_Light_iterator it, kDataFrameBlight *origin, std::uint64_t kSize);
-
-    kDataFrameBlightIterator(const kDataFrameBlightIterator &);
-
-    kDataFrameBlightIterator &operator++(int);
-
-    _kDataFrameIterator *clone();
-
-    std::uint64_t getHashedKmer();
-
-    string getKmer();
-
-    uint64_t getOrder();
-    uint64_t getCount();
-
-    bool setOrder(uint64_t count);
-
-    void endIterator();
-
-    bool operator==(const _kDataFrameIterator &other);
-
-    bool operator!=(const _kDataFrameIterator &other);
-
-    ~kDataFrameBlightIterator();
-};
-
-
-// kDataFrameBlight _____________________________
-
-class kDataFrameBlight : public kDataFrame {
-private:
-    kmer_Set_Light* blight_index;
-
-public:
-    kDataFrameBlight();
-
-    kDataFrameBlight(uint64_t ksize)
-    {
-      blight_index=new kmer_Set_Light(ksize);
-      kSize=ksize;
-    }
-
-    kDataFrameBlight(std::uint64_t ksize,string input_fasta_file);
-    kDataFrame *getTwin();
-
-    void _reserve(std::uint64_t n);
-    void _reserve (vector<std::uint64_t> countHistogram);
-
-    bool kmerExist(string kmer);
-    bool kmerExist(uint64_t kmer);
-
-    bool setOrder(const string &kmer, std::uint64_t count);
-    bool setOrder(std::uint64_t kmer, std::uint64_t count);
-
-    uint32_t insert(const string &kmer) override;
-    uint32_t insert(std::uint64_t kmer) override;
-
-    std::uint64_t getkmerOrder(const string &kmer);
-    std::uint64_t getkmerOrder(std::uint64_t kmer);
-
-    bool erase(const string &kmer);
-    bool erase(std::uint64_t kmer);
-
-    std::uint64_t size();
-
-    std::uint64_t max_size();
-
-    float load_factor();
-
-    float max_load_factor();
-
-    kDataFrameIterator begin();
-
-    // kDataFrameIterator end();
-    kDataFrameIterator find(const string &kmer);
-    kDataFrameIterator find(uint64_t kmer);
-
-
-    void serialize(string filePath);
-
-    static kDataFrame *load(string filePath);
-
-    ~kDataFrameBlight() = default;
-
-    kDataFrame *clone() override;
-
-    template<typename T,typename Container>
-    T getKmerColumnValue(const string& columnName,string kmer);
-
-    template<typename T,typename Container>
-    void setKmerColumnValue(const string& columnName,string kmer, T value);
-
-
-
-
-
-
-};
-
-
-template<typename T,typename Container>
-T kDataFrameBlight::getKmerColumnValue(const string& columnName,string kmer)
-{
-    std::uint64_t kmerOrder=getkmerOrder(kmer);
-    return ((Container*)columns[columnName])->get(kmerOrder);
-}
-template<typename T,typename Container>
-void kDataFrameBlight::setKmerColumnValue(const string& columnName,string kmer,T value)
-{
-    std::uint64_t kmerOrder=getkmerOrder(kmer);
-    ((Container*)columns[columnName])->insert(value,kmerOrder);
-}
 
 
 
@@ -1182,124 +645,35 @@ kDataFrame * kDataFrameBtree::load(string filePath);
 class kDataFrame_sshash;
 
 
-class kDataFrame_sshashIterator : public _kDataFrameIterator {
-private:
-    sshash::dictionary::iterator iterator;
-    kDataFrame_sshash *origin;
-    std::pair<uint64_t, std::string> currKmer;
-    uint32_t kmerID;
+class kDataFrameFactory{
 public:
-    kDataFrame_sshashIterator();
-    kDataFrame_sshashIterator(uint32_t kmerID, kDataFrame_sshash *origin, std::uint64_t kSize);
+    static kDataFrame* loadMQF(string filePath);
+    static kDataFrame* createMQF(uint32_t kSize,uint32_t numKmers=10000);
+    static kDataFrame* createMQF(kDataFrame* kframe);
 
-    kDataFrame_sshashIterator(const kDataFrame_sshashIterator &);
-
-    kDataFrame_sshashIterator &operator++(int);
-
-    _kDataFrameIterator *clone();
-
-    std::uint64_t getHashedKmer();
-
-    string getKmer();
-
-    uint64_t getOrder();
-    uint64_t getCount();
-
-    bool setOrder(uint64_t count);
-
-    void endIterator();
-
-    bool operator==(const _kDataFrameIterator &other);
-
-    bool operator!=(const _kDataFrameIterator &other);
-
-    ~kDataFrame_sshashIterator();
-};
+    static kDataFrame* loadPHMAP(string filePath);
+    static kDataFrame* createPHMAP(uint32_t kSize,uint32_t numKmers=10000);
+    static kDataFrame* createPHMAP(uint64_t ksize, hashingModes hash_mode);
 
 
-// kDataFrame_sshash _____________________________
+    static kDataFrame* loadMAP(string filePath);
+    static kDataFrame* createMAP(uint32_t kSize,uint32_t numKmers=10000);
 
-class kDataFrame_sshash : public kDataFrame {
+    static kDataFrame* loadBtree(string filePath);
+    static kDataFrame* createBtree(uint32_t kSize,uint32_t numKmers=10000);
 
-
-public:
-    sshash::dictionary dict;
-    kDataFrame_sshash();
-
-    kDataFrame_sshash(uint64_t ksize)
-    {
-        kSize=ksize;
-    }
-
-    kDataFrame_sshash(std::uint64_t ksize,string input_fasta_file);
-    kDataFrame *getTwin();
-
-    void _reserve(std::uint64_t n);
-    void _reserve (vector<std::uint64_t> countHistogram);
-
-    bool kmerExist(string kmer);
-    bool kmerExist(uint64_t kmer);
-
-    bool setOrder(const string &kmer, std::uint64_t count);
-    bool setOrder(std::uint64_t kmer, std::uint64_t count);
-
-    uint32_t insert(const string &kmer) override;
-    uint32_t insert(std::uint64_t kmer) override;
-
-    std::uint64_t getkmerOrder(const string &kmer);
-    std::uint64_t getkmerOrder(std::uint64_t kmer);
-
-    bool erase(const string &kmer);
-    bool erase(std::uint64_t kmer);
-
-    std::uint64_t size();
-
-    std::uint64_t max_size();
-
-    float load_factor();
-
-    float max_load_factor();
-
-    kDataFrameIterator begin();
-
-    // kDataFrameIterator end();
-    kDataFrameIterator find(const string &kmer);
-    kDataFrameIterator find(uint64_t kmer);
+    static kDataFrame* loadBMQF(string filePath);
+    static kDataFrame* createBMQF(uint32_t kSize,string filePath,uint32_t numKmers=10000);
+    static kDataFrame* createBMQF(kDataFrame* kframe,string filePath);
 
 
-    void serialize(string filePath);
+    static kDataFrame* loadBlight(string filePath);
+    static kDataFrame* createBlight(uint32_t kSize,string filePath);
 
-    static kDataFrame *load(string filePath);
-
-    ~kDataFrame_sshash() = default;
-
-    kDataFrame *clone() override;
-
-    template<typename T,typename Container>
-    T getKmerColumnValue(const string& columnName,string kmer);
-
-    template<typename T,typename Container>
-    void setKmerColumnValue(const string& columnName,string kmer, T value);
-
-
-
-
-
+    static kDataFrame* loadSSHASH(string filePath);
+    static kDataFrame* createSSHASH(uint32_t kSize,string filePath);
 
 };
-
-template<typename T,typename Container>
-T kDataFrame_sshash::getKmerColumnValue(const string& columnName,string kmer)
-{
-    std::uint64_t kmerOrder=getkmerOrder(kmer);
-    return ((Container*)columns[columnName])->get(kmerOrder);
-}
-template<typename T,typename Container>
-void kDataFrame_sshash::setKmerColumnValue(const string& columnName,string kmer,T value)
-{
-    std::uint64_t kmerOrder=getkmerOrder(kmer);
-    ((Container*)columns[columnName])->insert(value,kmerOrder);
-}
 
 
 

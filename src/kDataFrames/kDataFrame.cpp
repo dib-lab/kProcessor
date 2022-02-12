@@ -67,17 +67,17 @@ void kDataFrame::save(string filePath)
 kDataFrame * kDataFrame::load(string filePath) {
     kDataFrame* res;
     if (fileExists(filePath + ".mqf"))
-        res=kDataFrameMQF::load(filePath);
+        res=kDataFrameFactory::loadMQF(filePath);
     else if (fileExists(filePath + ".map"))
-        res=kDataFrameMAP::load(filePath);
+        res=kDataFrameFactory::loadMAP(filePath);
     else if (fileExists(filePath + ".phmap"))
-        res=kDataFramePHMAP::load(filePath);
+        res=kDataFrameFactory::loadPHMAP(filePath);
     else if (fileExists(filePath + ".btree"))
-        res=kDataFrameBtree::load(filePath);
+        res=kDataFrameFactory::loadBtree(filePath);
     else if (fileExists(filePath+ ".bmqf"))
-        res=kDataFrameBMQF::load(filePath);
+        res=kDataFrameFactory::loadBMQF(filePath);
     else if (fileExists(filePath+ ".blight.gz"))
-        res=kDataFrameBlight::load(filePath);
+        res=kDataFrameFactory::loadBlight(filePath);
     else
         throw std::runtime_error("Could not open kDataFrame file");
 
@@ -321,7 +321,7 @@ bool kDataFrameIterator::setCount(std::uint64_t count){
     return origin->setCount(iterator->getHashedKmer(),count);
   }
 std::uint64_t kDataFrameIterator::getCount(){
-    
+
     uint32_t o = iterator->getOrder();
     return origin->countColumn->get(o);
 }

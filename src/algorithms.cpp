@@ -594,7 +594,7 @@ namespace kProcessor {
         kDataFrame* kf=kDataFrame::load(kdataframeFileNames[0]);
         uint64_t kSize=kf->ksize();
         delete kf;
-        kDataFramePHMAP* output=new kDataFramePHMAP(kSize,10000000);//this value should be estimated
+        kDataFramePHMAP* output=(kDataFramePHMAP*)kDataFrameFactory::createPHMAP(kSize,10000000);//this value should be estimated
         //kDataFrameMAP* output=new kDataFrameMAP(kSize);
         omp_set_num_threads(numThreads);
         cout<<"Number of threads = "<<omp_get_num_threads()<<endl;
@@ -717,59 +717,60 @@ namespace kProcessor {
 //        }
         return output;
     }
-    void indexMega(string filename,string tmpFolder, kDataFrame *frame) {
 
-        uint32_t chunkSize=1000;
-        uint32_t samplePerIndex=5000;
-        kmerDecoder *KD = kProcessor::initialize_kmerDecoder(filename, chunkSize, "kmers", {{"k_size", frame->ksize()}});
-        string kmer;
-        uint32_t readID = 0;
-        uint32_t kSize=KD->get_kSize();
-        vector<pair<std::string,std::vector<kmer_row>> > reads(chunkSize);
-        vector<kDataFrame*> toIndex(samplePerIndex);
-        deque<string> smallIndex;
-        bool moreWork=!KD->end();
-
-        while (moreWork) {
-
-            uint32_t j=0;
-            while(j<samplePerIndex && moreWork){
-                //make sure to check before next chunk when paralleize the code
-                KD->next_chunk();
-                moreWork=!KD->end();
-                uint32_t i=0;
-                for (const auto &seq : *KD->getKmers()) {
-                    reads[i++]=(seq);
-                }
-                for (const auto &seq : reads) {
-                    toIndex[j]=new kDataFrameMAP(kSize);
-                    for (const auto &kmer : seq.second) {
-                        toIndex[j]->insert(kmer.hash);
-                    }
-                    j++;
-                }
-            }
-            kDataFrame* KF = new kDataFramePHMAP(kSize,integer_hasher);
-            kProcessor::indexPriorityQueue(toIndex,"", KF);
-            for(auto k:toIndex)
-                delete k;
-            deduplicatedColumn<mixVectors>* currCol=(deduplicatedColumn< mixVectors >*)KF->columns["color"];
-            prefixTrie* newCol=new prefixTrie((mixVectors*) currCol->values);
-            //delete currCol->values;
-            //KF->columns["color"]=newCol;
-            string kfFile=tmpFolder+"tmpIndex."+ to_string(smallIndex.size());
-            KF->serialize(kfFile);
-            smallIndex.push_back(kfFile);
-            delete KF;
-
-            cout<<"Processed "<<chunkSize<<" Sequences"<<endl;
-
-
-        }
-        cout<<"Finished small indexes"<<endl;
-        delete KD;
-
-    }
+//    void indexMega(string filename,string tmpFolder, kDataFrame *frame) {
+//
+//        uint32_t chunkSize=1000;
+//        uint32_t samplePerIndex=5000;
+//        kmerDecoder *KD = kProcessor::initialize_kmerDecoder(filename, chunkSize, "kmers", {{"k_size", frame->ksize()}});
+//        string kmer;
+//        uint32_t readID = 0;
+//        uint32_t kSize=KD->get_kSize();
+//        vector<pair<std::string,std::vector<kmer_row>> > reads(chunkSize);
+//        vector<kDataFrame*> toIndex(samplePerIndex);
+//        deque<string> smallIndex;
+//        bool moreWork=!KD->end();
+//
+//        while (moreWork) {
+//
+//            uint32_t j=0;
+//            while(j<samplePerIndex && moreWork){
+//                //make sure to check before next chunk when paralleize the code
+//                KD->next_chunk();
+//                moreWork=!KD->end();
+//                uint32_t i=0;
+//                for (const auto &seq : *KD->getKmers()) {
+//                    reads[i++]=(seq);
+//                }
+//                for (const auto &seq : reads) {
+//                    toIndex[j]=new kDataFrameMAP(kSize);
+//                    for (const auto &kmer : seq.second) {
+//                        toIndex[j]->insert(kmer.hash);
+//                    }
+//                    j++;
+//                }
+//            }
+//            kDataFrame* KF = kDataFrameFactory::createPHMAP(kSize,integer_hasher);
+//            kProcessor::indexPriorityQueue(toIndex,"", KF);
+//            for(auto k:toIndex)
+//                delete k;
+//            deduplicatedColumn<mixVectors>* currCol=(deduplicatedColumn< mixVectors >*)KF->columns["color"];
+//            prefixTrie* newCol=new prefixTrie((mixVectors*) currCol->values);
+//            //delete currCol->values;
+//            //KF->columns["color"]=newCol;
+//            string kfFile=tmpFolder+"tmpIndex."+ to_string(smallIndex.size());
+//            KF->serialize(kfFile);
+//            smallIndex.push_back(kfFile);
+//            delete KF;
+//
+//            cout<<"Processed "<<chunkSize<<" Sequences"<<endl;
+//
+//
+//        }
+//        cout<<"Finished small indexes"<<endl;
+//        delete KD;
+//
+//    }
 
     void index(kmerDecoder *KD, string names_fileName, kDataFrame *frame) {
         if (KD->get_kSize() != (int) frame->ksize()) {

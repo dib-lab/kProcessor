@@ -33,24 +33,24 @@ int main(int argc, char *argv[])
 
     if(kdataframeType=="BMQF")
     {
-        kDataFrame* kframe2=new kDataFrameBMQF(src,outPath);
+        kDataFrame* kframe2=kDataFrameFactory::createBMQF(src,outPath);
         kframe2->save(outPath);
         return 0;
     }
 
     if(kdataframeType=="MQF")
     {
-        kDataFrame* kframe2=new kDataFrameMQF(src);
+        kDataFrame* kframe2=kDataFrameFactory::createMQF(src);
         kframe2->save(outPath);
         return 0;
     }
 
 
     kDataFrame* kframe;
-    if(kdataframeType=="PHMAP" || kdataframeType=="BMQF")
-        kframe=new kDataFramePHMAP();
+    if(kdataframeType=="PHMAP")
+        kframe=kDataFrameFactory::createPHMAP(src->ksize(),src->size());
     else if(kdataframeType=="MAP")
-        kframe=new kDataFrameMAP();
+        kframe=kDataFrameFactory::createMAP(src->ksize(),src->size());
 
     for(auto k:*src)
     {

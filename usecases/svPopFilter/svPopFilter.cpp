@@ -147,7 +147,7 @@ int main(int argc, char *argv[]){
     
     //    delete kframe;
     int chunkSize = 1000;
-    kDataFrame* svkmers = new kDataFramePHMAP(kSize);
+    kDataFrame* svkmers = kDataFrameFactory::createPHMAP(kSize);
     //kmerDecoder *KD_KMERS = svkmers->getkmerDecoder();
     kmerDecoder *KD_KMERS =kProcessor::initialize_kmerDecoder(contigsFileName, chunkSize, "kmers", {{"k_size", kSize}});
     KD_KMERS->setHashingMode(TwoBits_hasher,kSize);

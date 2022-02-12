@@ -203,7 +203,7 @@ vector<kDataFrame*> BuildTestFrames()
   vector<int> kSizes={21};
   for(auto k:kSizes)
   {
-   framesToBeTested.push_back(new kDataFrameMQF(k));
+   framesToBeTested.push_back(kDataFrameFactory::createMQF(k));
   }
   for(auto k:kSizes)
   {
@@ -219,43 +219,38 @@ kDataFrame* getFrame(tuple<string,int> input)
 
     if(type=="MQF")
     {
-        return new kDataFrameMQF(kSize,NKmersTEST);
+        return  kDataFrameFactory::createMQF(kSize,NKmersTEST);
     }
     else if(type=="MAP")
     {
-        return new kDataFrameMAP(kSize,NKmersTEST);
+        return kDataFrameFactory::createMAP(kSize,NKmersTEST);
     }
     else if(type=="PHMAP")
     {
-        return new kDataFramePHMAP(kSize,NKmersTEST);
+        return kDataFrameFactory::createPHMAP(kSize,NKmersTEST);
     }
     else if(type=="Btree")
     {
-        return new kDataFrameBtree(kSize,NKmersTEST);
-    }
-    else if(type=="BMQF")
-    {
-        string fileName="tmp.kdataframeBMQF."+gen_random(8);
-        return new kDataFrameBMQF((uint64_t)kSize,NKmersTEST,fileName);
+        return kDataFrameFactory::createBtree(kSize,NKmersTEST);
     }
     else{
         throw std::logic_error("Unknown kdataframe type");
     }
     return NULL;
 }
-
-vector<kDataFrameBMQF*> BuildTestBufferedFrames()
-{
-    vector<kDataFrameBMQF*> framesToBeTested;
-    vector<int> kSizes={21};
-    for(auto k:kSizes)
-    {
-        int randNum=rand();
-        string fileName="tmp"+to_string(randNum);
-        framesToBeTested.push_back(new kDataFrameBMQF((uint64_t)k,fileName));
-    }
-    return framesToBeTested;
-}
+//
+//vector<kDataFrameBMQF*> BuildTestBufferedFrames()
+//{
+//    vector<kDataFrameBMQF*> framesToBeTested;
+//    vector<int> kSizes={21};
+//    for(auto k:kSizes)
+//    {
+//        int randNum=rand();
+//        string fileName="tmp"+to_string(randNum);
+//        framesToBeTested.push_back(new kDataFrameBMQF((uint64_t)k,fileName));
+//    }
+//    return framesToBeTested;
+//}
 
 INSTANTIATE_TEST_SUITE_P(testFrames,
                         kDataFrameTest,
@@ -286,7 +281,7 @@ INSTANTIATE_TEST_SUITE_P(testntCard,
 INSTANTIATE_TEST_SUITE_P(testcounting,
                          kDataFrameBlightTest,
                          ::testing::Combine(
-                                 ::testing::Values(21,31),
+                                 ::testing::Values(21),
                                  ::testing::ValuesIn(fastqFiles)
                                  ));
 
@@ -305,7 +300,7 @@ void setFunctionsTest::SetUp()
             // Mode 1 : kmers, KmerSize will be cloned from the kFrame
             kProcessor::countKmersFromFile(frames[i], {{"mode", 1}}, setFunctionsTestInput[0][i], 1000);
         }
-        kDataFrameMAP* indexRes=new kDataFrameMAP(k);
+        kDataFrame* indexRes=kDataFrameFactory::createMAP(k);
         kProcessor::indexPriorityQueue(frames,"",indexRes);
 
         auto prevColor=(deduplicatedColumn< mixVectors>*)indexRes->columns["color"];
@@ -914,7 +909,7 @@ TEST_P(kDataFrameTest,convertTOMQF)
         it++;
     }
 
-    kframeMQF=new kDataFrameMQF(kframe);
+    kframeMQF=kDataFrameFactory::createMQF(kframe);
     delete kframe;
     kframe= nullptr;
 
@@ -985,7 +980,7 @@ TEST_P(kDataFrameTest,convertTOBMQF)
         it++;
     }
 
-    kDataFrameBMQF* kframeMQF=new kDataFrameBMQF(kframe,"tmp.bmqf."+ gen_random(10));
+    kDataFrame* kframeMQF=kDataFrameFactory::createBMQF(kframe,"tmp.bmqf."+ gen_random(10));
     delete kframe;
     kframe= nullptr;
     unsigned checkedKmers=0;
@@ -1452,7 +1447,7 @@ TEST_P(algorithmsTest,parsingTest)
   kProcessor::countKmersFromFile(kframe, {{"mode", 1}}, fileName, 1000); // Mode 1 : kmers, KmerSize will be cloned from the kFrame
 
   string db=fileName+"."+std::to_string(kSize);
-  kDataFrame* kmc= new kDataFrameMAP(kSize);
+  kDataFrame* kmc= kDataFrameFactory::createMAP(kSize);
   kProcessor::loadFromKMC(kmc,db);
 
   for(auto k:*kmc)
@@ -1843,7 +1838,7 @@ TEST_P(indexingTest,index)
   int chunkSize = 1000;
   int q = 25;
  // kDataFrame *KF = new kDataFrameMQF(25, q, integer_hasher);
-  KF = new kDataFramePHMAP(25,integer_hasher);
+  KF = kDataFrameFactory::createPHMAP(25,integer_hasher);
   kmerDecoder *KD_KMERS = kProcessor::initialize_kmerDecoder(filename, chunkSize, "kmers", {{"k_size", 25}});
   kProcessor::index(KD_KMERS, filename+".names", KF);
 
@@ -1894,7 +1889,7 @@ TEST_P(indexingTest,indexPriorityQSaveAndLoad)
 
     int q = 25;
     //kDataFrame *KF = new kDataFrameMQF(25, q, integer_hasher);
-    KF = new kDataFramePHMAP(25,integer_hasher);
+    KF = kDataFrameFactory::createPHMAP(25,integer_hasher);
     kmerDecoder *KD_KMERS = kProcessor::initialize_kmerDecoder(filename, chunkSize, "kmers", {{"k_size", 25}});
 
 
@@ -1902,7 +1897,7 @@ TEST_P(indexingTest,indexPriorityQSaveAndLoad)
     while (!KD_KMERS->end()) {
         KD_KMERS->next_chunk();
         for (const auto &seq : *KD_KMERS->getKmers()) {
-            kDataFrame* curr=new kDataFrameMAP(KD_KMERS->get_kSize());
+            kDataFrame* curr=kDataFrameFactory::createMAP(KD_KMERS->get_kSize());
             for (const auto &kmer : seq.second) {
                 curr->insert(kmer.hash);
             }
@@ -1942,7 +1937,7 @@ TEST_P(indexingTest,indexPriorityQ)
     int chunkSize = 1000;
     int q = 25;
 //    kDataFrame *KF = new kDataFrameMQF(25, q, integer_hasher);
-    KF = new kDataFramePHMAP(25);
+    KF = kDataFrameFactory::createPHMAP(25);
 
     kmerDecoder *KD_KMERS = kProcessor::initialize_kmerDecoder(filename, chunkSize, "kmers", {{"k_size", 25}});
 
@@ -1951,7 +1946,7 @@ TEST_P(indexingTest,indexPriorityQ)
     while (!KD_KMERS->end()) {
         KD_KMERS->next_chunk();
         for (const auto &seq : *KD_KMERS->getKmers()) {
-            kDataFrame* curr=new kDataFrameMAP(KD_KMERS->get_kSize());
+            kDataFrame* curr=kDataFrameFactory::createMAP(KD_KMERS->get_kSize());
             for (const auto &kmer : seq.second) {
                 curr->insert(kmer.hash);
             }
@@ -1988,8 +1983,7 @@ TEST_P(indexingTest,indexPriorityQAndOptimize)
     string filename=GetParam();
     int chunkSize = 1000;
     int q = 25;
-    //    kDataFrame *KF = new kDataFrameMQF(25, q, integer_hasher);
-    KF = new kDataFramePHMAP(25,integer_hasher);
+    KF = kDataFrameFactory::createPHMAP(25,integer_hasher);
 
     kmerDecoder *KD_KMERS = kProcessor::initialize_kmerDecoder(filename, chunkSize, "kmers", {{"k_size", 25}});
 
@@ -1998,7 +1992,7 @@ TEST_P(indexingTest,indexPriorityQAndOptimize)
     while (!KD_KMERS->end()) {
         KD_KMERS->next_chunk();
         for (const auto &seq : *KD_KMERS->getKmers()) {
-            kDataFrame* curr=new kDataFrameMAP(KD_KMERS->get_kSize());
+            kDataFrame* curr=kDataFrameFactory::createMAP(KD_KMERS->get_kSize());
             for (const auto &kmer : seq.second) {
                 curr->insert(kmer.hash);
             }
@@ -2113,7 +2107,7 @@ TEST_P(indexingTest,saveAndLoad)
 
 
     int q = 25;
-    KF = new kDataFramePHMAP(25, integer_hasher);
+    KF = kDataFrameFactory::createPHMAP(25, integer_hasher);
     kmerDecoder *KD_KMERS = kProcessor::initialize_kmerDecoder(filename, chunkSize, "kmers", {{"k_size", 25}});
     kProcessor::index(KD_KMERS, filename+".names", KF);
 
@@ -2498,7 +2492,7 @@ TEST_P(kDataFrameBlightTest, parsingTest)
 {
     int kSize=get<0>(GetParam());
     string fileName=get<1>(GetParam());
-    kDataFrame* kframe =new kDataFrameBlight(kSize,fileName);
+    kDataFrame* kframe =kDataFrameFactory::createSSHASH(kSize,fileName);
     int chunkSize=1000;
  // Mode 1 : kmers, KmerSize will be cloned from the kFrame
     kmerDecoder *KD_KMERS = kmerDecoder::getInstance(fileName, chunkSize, KMERS, TwoBits_hasher, {{"kSize", kSize}});

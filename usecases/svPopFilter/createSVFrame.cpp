@@ -135,7 +135,7 @@ int main(int argc, char *argv[]){
     namesFile.close();
 
     int chunkSize = 1000;
-    kDataFrame* svkmers = new kDataFramePHMAP(kSize, integer_hasher);
+    kDataFrame* svkmers = kDataFrameFactory::createPHMAP(kSize, integer_hasher);
     kmerDecoder *KD_KMERS = kProcessor::initialize_kmerDecoder(contigsFileName, chunkSize, "kmers", {{"k_size", kSize}});
     KD_KMERS->setHashingMode(TwoBits_hasher,kSize);
     kProcessor::index(KD_KMERS, contigsFileName+".names", svkmers);

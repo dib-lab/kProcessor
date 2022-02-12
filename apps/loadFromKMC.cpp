@@ -17,9 +17,9 @@ int main(int argc, char *argv[])
 
     kDataFrame* kframe;
     if(kdataframeType=="PHMAP" || kdataframeType=="BMQF")
-        kframe=new kDataFramePHMAP();
+        kframe=kDataFrameFactory::createPHMAP(21);
     else if(kdataframeType=="MAP")
-        kframe=new kDataFrameMAP();
+        kframe=kDataFrameFactory::createMAP(21);
 
     kProcessor::loadFromKMC(kframe,inputPath);
 
@@ -27,7 +27,7 @@ int main(int argc, char *argv[])
 
     if(kdataframeType=="BMQF")
     {
-        kDataFrame* kframe2=new kDataFrameBMQF(kframe,outPath);
+        kDataFrame* kframe2=kDataFrameFactory::createBMQF(kframe,outPath);
         kframe2->save(outPath);
         return 0;
     }

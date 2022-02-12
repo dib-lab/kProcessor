@@ -578,3 +578,32 @@ kDataFrame *kDataFrameSTL<MapType>::clone() {
             (kDataFrame *) newOne);
     return newOne;
 }
+
+
+kDataFrame *kDataFrameFactory::loadPHMAP(string filePath) {
+    return kDataFramePHMAP::load(filePath);
+}
+
+kDataFrame *kDataFrameFactory::createPHMAP(uint32_t kSize, uint32_t numKmers) {
+    return new kDataFramePHMAP(kSize,numKmers);
+}
+
+kDataFrame *kDataFrameFactory::createPHMAP(uint64_t ksize, hashingModes hash_mode) {
+    return new kDataFramePHMAP(ksize,hash_mode);
+}
+
+kDataFrame *kDataFrameFactory::loadMAP(string filePath) {
+    return kDataFrameMAP::load(filePath);
+}
+
+kDataFrame *kDataFrameFactory::createMAP(uint32_t kSize, uint32_t numKmers) {
+    return new kDataFrameMAP(kSize,numKmers);
+}
+
+kDataFrame *kDataFrameFactory::loadBtree(string filePath) {
+    return kDataFrameBtree::load(filePath);
+}
+
+kDataFrame *kDataFrameFactory::createBtree(uint32_t kSize, uint32_t numKmers) {
+    return new kDataFrameBtree(kSize,numKmers);
+}
