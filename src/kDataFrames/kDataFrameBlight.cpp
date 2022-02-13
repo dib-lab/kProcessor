@@ -118,10 +118,10 @@ kDataFrameBlight::kDataFrameBlight(uint64_t ksize,string input_fasta_file) {
     int subsampling_bits(0);
 
     blight_index=  new kmer_Set_Light(ksize, core_number, minimizer_size, file_number_exponent, subsampling_bits);
- //   string workingDirectory="./workdir"+ gen_randomBlight(10);
-    string workingDirectory="./workdir";
- //   string mkdirCommand="mkdir -p "+workingDirectory;
-//    system(mkdirCommand.c_str());
+    string workingDirectory="./workdir"+ gen_randomBlight(10)+"/";
+ //   string workingDirectory="./workdir/";
+    string mkdirCommand="mkdir -p "+workingDirectory;
+    system(mkdirCommand.c_str());
     blight_index->construct_index(input_fasta_file, workingDirectory);
 
     kmer_Set_Light_iterator it(blight_index);
@@ -130,6 +130,8 @@ kDataFrameBlight::kDataFrameBlight(uint64_t ksize,string input_fasta_file) {
     endIterator= new kDataFrameIterator(
             (_kDataFrameIterator *) new kDataFrameBlightIterator(it, this, kSize),
             (kDataFrame *) this);
+
+    KD= nullptr;
     // this->hasher = (new IntegerHasher(ksize));
 }
 
@@ -166,11 +168,11 @@ bool  kDataFrameBlight::setOrder(std::uint64_t kmer, std::uint64_t count){
 
 
 uint64_t kDataFrameBlight::getkmerOrder(const string &kmerS) {
-    return blight_index->get_hashes_query(kmerS)[0];
+    return blight_index->get_hashes_query(kmerS)[0]+1;
 }
 
 uint64_t kDataFrameBlight::getkmerOrder(uint64_t kmerS) {
-    return kmerS;
+    return kmerS+1;
 }
 
 

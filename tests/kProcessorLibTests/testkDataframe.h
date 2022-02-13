@@ -57,7 +57,7 @@ public:
     virtual void SetUp()
     {
         kframe=getFrame(GetParam());
-	kframe->addCountColumn();
+	    kframe->addCountColumn();
         kframeLoaded=nullptr;
         kframe2=nullptr;
         kframeMQF=nullptr;
@@ -128,7 +128,7 @@ public:
 
 class algorithmsTest : public ::testing::TestWithParam<tuple<string,int,string> >{
 };
-class kDataFrameBlightTest : public ::testing::TestWithParam<tuple<int,string> >{
+class kDataFrameBlightTest : public ::testing::TestWithParam<tuple<string,string> >{
 };
 class estimateTest : public ::testing::TestWithParam<string >{
 };

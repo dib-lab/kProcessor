@@ -52,6 +52,7 @@ public:
     {
         blight_index=new kmer_Set_Light(ksize);
         kSize=ksize;
+        KD= nullptr;
     }
 
     kDataFrameBlight(std::uint64_t ksize,string input_fasta_file);

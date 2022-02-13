@@ -1,10 +1,7 @@
 #include "kDataFrame.hpp"
 #include "Utils/kmer.h"
 #include <iostream>
-#include <fstream>
 #include <math.h>
-#include <limits>
-#include <sstream>
 #include "defaultColumn.hpp"
 
 using namespace std;
@@ -72,6 +69,8 @@ kDataFrame * kDataFrame::load(string filePath) {
         res=kDataFrameFactory::loadBMQF(filePath);
     else if (fileExists(filePath+ ".blight.gz"))
         res=kDataFrameFactory::loadBlight(filePath);
+    else if (fileExists(filePath+ ".sshash"))
+        res=kDataFrameFactory::loadSSHASH(filePath);
     else
         throw std::runtime_error("Could not open kDataFrame file");
 

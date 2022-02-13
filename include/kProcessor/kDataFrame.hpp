@@ -14,11 +14,6 @@ using namespace std;
 class kDataFrame;
 
 
-
-
-
-
-
 class _kDataFrameIterator{
 protected:
     std::uint64_t kSize;

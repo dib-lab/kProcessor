@@ -50,6 +50,7 @@ public:
     kDataFrame_sshash(uint64_t ksize)
     {
         kSize=ksize;
+        KD= nullptr;
     }
 
     kDataFrame_sshash(std::uint64_t ksize,string input_fasta_file);
