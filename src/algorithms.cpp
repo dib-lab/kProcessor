@@ -29,6 +29,8 @@ using phmap::flat_hash_map;
 
 namespace kProcessor {
 
+
+
     void dumpMQF(QF *MQF, int ksize, std::string outputFilename) {
         IntegerHasher Ihasher(BITMASK(2 * ksize));
         ofstream output(outputFilename.c_str());
@@ -161,7 +163,7 @@ namespace kProcessor {
             bool exists=false;
             for (auto i : kmersToKeep ) {
                 if (input[i] != nullptr) {
-                    return kmerRow("",input[i]->getHashedKmer(),1,0,nullptr);
+                    return kmerRow(input[i]->getHashedKmer(),1,0,nullptr);
                 }
             }
             return kmerRow();
@@ -169,33 +171,6 @@ namespace kProcessor {
         return res;
     }
 
-    kDataFrame *filter(kDataFrame *input, function<bool (kmerRow& i)> fn) {
-        kDataFrame *res = input->getTwin();
-        kDataFrameIterator it = input->begin();
-        while (it != input->end()) {
-            kmerRow k=it.getKmerRow();
-            if (fn(k))
-                res->insert(k.hashedKmer);
-            it++;
-        }
-        for(auto col: input->columns)
-        {
-            string newColName= col.first;
-            Column* column=col.second->getTwin();
-            column->resize(res->size());
-            res->addColumn(newColName, column);
-        }
-        for(auto kmer:*res)
-        {
-            for (auto col: input->columns) {
-                string newColName = col.first;
-                res->setKmerColumnValueFromOtherColumn(input,col.first, newColName,kmer.getHashedKmer());
-            }
-        }
-
-        return res;
-
-    }
     kDataFrame *filter(kDataFrame *input, function<bool (kDataFrameIterator& i)> fn) {
         kDataFrame *res = input->getTwin();
         unordered_map<string,Column*> columns;
@@ -229,14 +204,6 @@ namespace kProcessor {
 
     }
 
-    any aggregate(kDataFrame *input, any initial, function<any (kmerRow i, any v)> fn) {
-        kDataFrameIterator it = input->begin();
-        while (it != input->end()) {
-            initial = fn(it.getKmerRow(), initial);
-            it++;
-        }
-        return initial;
-    }
     any aggregate(kDataFrame *input, any initial, function<any (kDataFrameIterator& i, any v)> fn) {
         kDataFrameIterator it = input->begin();
         while (it != input->end()) {
@@ -454,7 +421,7 @@ namespace kProcessor {
                 }
             }
             if(existInAll)
-                return kmerRow("",input[0]->getHashedKmer(),1,0,nullptr);
+                return kmerRow(input[0]->getHashedKmer(),1,0,nullptr);
             return kmerRow();
         });
         return res;
@@ -474,7 +441,7 @@ namespace kProcessor {
                     }
                 }
                 if(!exist)
-                    return kmerRow("",input[0]->getHashedKmer(),1,0,nullptr);
+                    return kmerRow(input[0]->getHashedKmer(),1,0,nullptr);
             }
             return kmerRow();
         });

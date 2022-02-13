@@ -17,71 +17,7 @@ class kDataFrame;
 
 
 
-class kmerRow{
-public:
-  string kmer;
-  uint64_t hashedKmer;
-  uint64_t count;
-  uint64_t order;
-  kDataFrame * origin;
-  kmerRow(){
-    kmer="";
-    hashedKmer=0;
-    count=0;
-    order=0;
-    origin=nullptr;
-  }
-  kmerRow(string kmer,std::uint64_t hashedKmer,std::uint64_t count,std::uint64_t order,kDataFrame* o)
-  {
-    this->kmer=kmer;
-    this->hashedKmer=hashedKmer;
-    this->count=count;
-    this->order=order;
-    this->origin = o;
-  }
-  kmerRow(const kmerRow& other)
-  {
-    kmer=other.kmer;
-    hashedKmer=other.hashedKmer;
-    count=other.count;
-    origin = other.origin ;
-    order=0;
-  }
 
-  static kmerRow copy(const kmerRow& other)
-  {
-    return * (new kmerRow(other));
-  }
-
-  template<typename T,typename Container>
-  void getColumnValue(const string& colName, T& res);
-
-  template<typename T,typename Container>
-  void setColumnValue(const string& colName, T value);
-
-  bool operator==(kmerRow &other) const
-  {
-    return hashedKmer == other.hashedKmer;
-  }
-
-  bool operator < (kmerRow& other) const
-  {
-    return hashedKmer<other.hashedKmer;
-  }
-  bool operator > ( kmerRow& other) const
-  {
-    return hashedKmer>other.hashedKmer;
-  }
-  bool operator < (const kmerRow& other) const
-  {
-    return hashedKmer<other.hashedKmer;
-  }
-  bool operator > (const kmerRow& other) const
-  {
-    return hashedKmer>other.hashedKmer;
-  }
-
-};
 
 class _kDataFrameIterator{
 protected:
@@ -215,14 +151,7 @@ public:
   bool setOrder(std::uint64_t count){
     return iterator->setOrder(count);
   }
-  kmerRow getKmerRow(){
-    return kmerRow(iterator->getKmer(),
-                   iterator->getHashedKmer(),
-                   getCount(),
-                   iterator->getOrder(),
-                   origin
-                  );
-  }
+
   template<typename T,typename Container>
   void getColumnValue(const string& colName, T& res);
   template<typename T,typename Container>
@@ -274,7 +203,6 @@ public:
     uint64_t lastKmerOrder;
     unordered_map<string, Column*> columns;
     typedef kDataFrameIterator iterator;
-    typedef kmerRow value_type;
     kmerDecoder * KD;
   virtual string get_class_name(){ return class_name;}  // Temporary until resolving #17
   kDataFrame();
@@ -299,11 +227,8 @@ public:
 /// insert the hashed kmer one time in the kDataFrame, or increment the kmer count if it is already exists.
 /*! Returns bool value indicating whether the kmer is inserted or not*/
   virtual uint32_t insert(std::uint64_t kmer)=0;
-  /// insert the kmer in the kmer row time in the kDataFrame, or increment the kmer count with the count in the row if it is already exists.
-  /*! Returns bool value indicating whether the kmer is inserted or not*/
-  uint32_t insert(kmerRow k);
-  kDataFrame::iterator insert(kDataFrame::iterator& it,kmerRow k);
-/// set the kmer's count to N time in the kDataFrame
+
+ /// set the kmer's count to N time in the kDataFrame
 /*! Returns bool value indicating whether the kmer is inserted or not.
 The difference between setCount and insert is that setCount set the count to N no matter the previous kmer count was*/
   void addCountColumn();
@@ -456,17 +381,6 @@ void kDataFrame::setKmerColumnValueByOrder(const string& columnName,uint64_t kme
 
 
 
-template<typename T,typename Container>
-void kmerRow::getColumnValue(const string& colName, T& res)
-{
-    res= origin->getKmerColumnValueByOrder<T,Container>(colName, order);
-}
-
-template<typename T,typename Container>
-void kmerRow::setColumnValue(const string& colName, T value)
-{
-    origin->setKmerColumnValueByOrder<T,Container>(colName, order,value);
-}
 
 
 template<typename T,typename Container>
