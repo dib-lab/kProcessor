@@ -12,6 +12,7 @@
 #include "kmc_file.h"
 #include <omp.h>
 #include "mum.h"
+#include "kDataframes/kDataFrameSTL.hpp"
 
 #include <parallel_hashmap/btree.h>
 
@@ -821,7 +822,6 @@ namespace kProcessor {
             for (auto &_ : groupNameMap)
                 inv_groupNameMap[_.second] = _.first;
 
-        vector<kDataFrameMQF *> frames;
 //        int currIndex = 0;
         string kmer;
 //        uint64_t tagBits = 0;
