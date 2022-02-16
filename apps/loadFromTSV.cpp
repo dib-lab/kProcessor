@@ -18,8 +18,9 @@ int main(int argc, char *argv[])
     uint64_t s=log2(numSlots);
 
     cout<<"S = "<<s<<endl;
-    kDataFrame* frame=kDataFrameFactory::createBMQF(k,outPath, (uint64_t)pow(2,s));
-    //kDataFrameBMQF frame(k,s,2,0,0,outPath);
+  //  kDataFrame* frame=kDataFrameFactory::createBMQF(k,outPath, (uint64_t)pow(2,s));
+    kDataFrame* frame=kDataFrameFactory::createPHMAP(k, (uint64_t)pow(2,s));
+  //kDataFrameBMQF frame(k,s,2,0,0,outPath);
     //kDataFrameMQF frame(k);
     cout<<"_reserve completed"<<endl;
     string kmer;
@@ -33,8 +34,9 @@ int main(int argc, char *argv[])
 	 cout<<nKmers<<endl;
     }
     cout<<"finished "<<nKmers<<endl;
-    cout<<"serialize to  "<<outPath<<endl; 
-    frame->serialize(outPath);
+    cout<<"serialize to  "<<outPath<<endl;
+    kDataFrame* kframeMQF=kDataFrameFactory::createBMQF(frame,outPath);
+    kframeMQF->serialize(outPath);
     return 0;
 
 }
