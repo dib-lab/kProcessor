@@ -660,3 +660,12 @@ kDataFrame *kDataFrameFactory::createBMQF(kDataFrame *kframe,string filePath) {
     return new kDataFrameBMQF(kframe,filePath);
 }
 
+
+void kDataFrameUtility::deleteMemoryBufferBMQF(kDataFrame* frame){
+    if(dynamic_cast<kDataFrameBMQF*>(frame))
+    {
+        ((kDataFrameBMQF*)frame)->deleteMemoryBuffer();
+    }
+}
+
+

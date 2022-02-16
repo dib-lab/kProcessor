@@ -62,11 +62,9 @@ int main(int argc, char *argv[])
     {
         filenames.push_back(sample);
         frames.push_back(kDataFrame::load(sample));
-        if(dynamic_cast<kDataFrameBMQF*>(frames.back()))
-        {
-            ((kDataFrameBMQF*)frames.back())->deleteMemoryBuffer();
-        }
-	cerr<<"sample "<<sample<<" loaded"<<endl; 
+        kDataFrameUtility::deleteMemoryBufferBMQF(frames.back());
+
+    	cerr<<"sample "<<sample<<" loaded"<<endl;
     }
     uint64_t  kSize=frames[0]->getkSize();
     for(auto f:frames)

@@ -423,7 +423,10 @@ public:
 };
 
 
-
+class kDataFrameUtility {
+public:
+    static void deleteMemoryBufferBMQF(kDataFrame* frame);
+};
 
 
 #endif
