@@ -54,7 +54,7 @@ void differntialExpression(string genes_file,
 
      uint64_t kSize=kFrames.back()->getkSize();
      int chunkSize = 1000;
-     kDataFrame * genesFrame = new kDataFrameMAP(kSize);
+     kDataFrame * genesFrame = new kDataFrameFactory::createMAP(kSize);
      kmerDecoder * KMERS = kProcessor::initialize_kmerDecoder(genes_file, chunkSize, "kmers", {{"k_size", kSize}});
      kProcessor::index(KMERS, genes_file+".names", genesFrame);
      //   kProcessor::createColorColumn(genesFrame);
