@@ -20,6 +20,7 @@ int main(int argc, char *argv[])
     cout<<"S = "<<s<<endl;
   //  kDataFrame* frame=kDataFrameFactory::createBMQF(k,outPath, (uint64_t)pow(2,s));
     kDataFrame* frame=kDataFrameFactory::createPHMAP(k, (uint64_t)pow(2,s));
+    frame->addCountColumn();
   //kDataFrameBMQF frame(k,s,2,0,0,outPath);
     //kDataFrameMQF frame(k);
     cout<<"_reserve completed"<<endl;
