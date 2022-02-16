@@ -25,7 +25,7 @@ void differntialExpression(string genes_file,
     
 // //load kmers,count from kmc DB for sample and control
      for(const auto& filename:allSamples) {
-         kDataFrame* currentFrame=new kDataFrameMAP();
+         kDataFrame* currentFrame=kDataFrameFactory::createMAP(21);
          kProcessor::loadFromKMC(currentFrame,filename);
  	//        kProcessor::createCountColumn(currentFrame);
          cout<<"Load "<<filename<< " kmers: "<<currentFrame->size()<<endl;
@@ -54,7 +54,7 @@ void differntialExpression(string genes_file,
 
      uint64_t kSize=kFrames.back()->getkSize();
      int chunkSize = 1000;
-     kDataFrame * genesFrame = new kDataFrameFactory::createMAP(kSize);
+     kDataFrame * genesFrame = kDataFrameFactory::createMAP(kSize);
      kmerDecoder * KMERS = kProcessor::initialize_kmerDecoder(genes_file, chunkSize, "kmers", {{"k_size", kSize}});
      kProcessor::index(KMERS, genes_file+".names", genesFrame);
      //   kProcessor::createColorColumn(genesFrame);
