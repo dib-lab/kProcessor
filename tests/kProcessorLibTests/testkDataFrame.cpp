@@ -2554,7 +2554,6 @@ TEST_P(kDataFrameBlightTest,multiColumns)
     while(it!=kframe->end())
     {
         string kmer=it.getKmer();
-
         int randInt=rand()%1000000;
         double randDouble=(double)(rand()%1000000);
         bool randBool=rand()%2==0;
@@ -2736,7 +2735,7 @@ TEST_P(kDataFrameBlightTest,convertTOMQF)
 }
 
 
-TEST_P(kDataFrameBlightTest,DISABLED_saveAndLoadMultiColumns)
+TEST_P(kDataFrameBlightTest,saveAndLoadMultiColumns)
 {
     kDataFrame* kframe =getBCALMFrame(GetParam());
     string fileName=get<1>(GetParam());
@@ -2755,7 +2754,6 @@ TEST_P(kDataFrameBlightTest,DISABLED_saveAndLoadMultiColumns)
     while(it!=kframe->end())
     {
         string kmer=it.getKmer();
-
         int randInt=rand()%1000000;
         double randDouble=(double)(rand()%1000000);
         bool randBool=rand()%2==0;
@@ -2778,7 +2776,6 @@ TEST_P(kDataFrameBlightTest,DISABLED_saveAndLoadMultiColumns)
         int randInt=get<0>(simRow.second);
         double randDouble=get<1>(simRow.second);
         bool randBool=get<2>(simRow.second);
-
         int retInt=kframeLoaded->getKmerColumnValue<int, vectorColumn<int> >("intColumn",kmer);
         double retDouble=kframeLoaded->getKmerColumnValue<double, vectorColumn<double> >("doubleColumn",kmer);
         bool retBool=kframeLoaded->getKmerColumnValue<bool, vectorColumn<bool> >("boolColumn",kmer);

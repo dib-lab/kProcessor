@@ -140,7 +140,8 @@ void kDataFrame_sshash::setKmerColumnValue(const string& columnName,string kmer,
 
 kDataFrame_sshash::kDataFrame_sshash()
 {
-
+    KD= nullptr;
+    endIterator= nullptr;
 }
 
 kDataFrame_sshash::kDataFrame_sshash(uint64_t ksize,string input_fasta_file) {
@@ -155,9 +156,6 @@ kDataFrame_sshash::kDataFrame_sshash(uint64_t ksize,string input_fasta_file) {
     dict.build(input_fasta_file, build_config);
 
 
-
-    sshash::dictionary::iterator it=dict.at(dict.size()-1);
-    it.next();
 
     endIterator= new kDataFrameIterator(
             (_kDataFrameIterator *) new kDataFrame_sshashIterator(dict.size() ,this, kSize),
@@ -271,8 +269,6 @@ kDataFrame *kDataFrame_sshash::load(string filePath) {
 
 
 
-    sshash::dictionary::iterator it=KMAP->dict.at(KMAP->dict.size()-1);
-    it.next();
 
     KMAP->endIterator= new kDataFrameIterator(
             (_kDataFrameIterator *) new kDataFrame_sshashIterator(KMAP->dict.size() ,KMAP, kSize),
