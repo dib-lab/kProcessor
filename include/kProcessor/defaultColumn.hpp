@@ -749,6 +749,7 @@ class prefixTrie: public queryColorColumn{
 private:
     lru_cache_t<uint64_t, vector<uint32_t>>* queryCache;
     deque<sdsl::int_vector<>*>  unCompressedEdges;
+    bool underConstuction;
 public:
     typedef  vector<uint32_t> dataType;
     typedef  sdsl::int_vector<> vectype;
@@ -803,10 +804,10 @@ public:
     inline vector<uint32_t> decodeColor(uint64_t);
     inline uint32_t getNode(uint32_t treeIndex, uint32_t edgeIndex)
     {
-        if(unCompressedEdges.empty())
-            return translateEdges[(*edges[treeIndex])[edgeIndex]];
-        else
+        if(underConstuction)
             return (*unCompressedEdges[treeIndex])[edgeIndex];
+        else
+            return translateEdges[(*edges[treeIndex])[edgeIndex]];
     }
 
     Column *clone() override;

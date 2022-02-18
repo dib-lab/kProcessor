@@ -1141,6 +1141,7 @@ inline void growEdges(sdsl::int_vector<>* tree,uint32_t minimumSize)
 void prefixTrie::loadFromQueryColorColumn(mixVectors  *col,int numThreads,int minimumCompress) {
 
     TimeVar globalTime=timeNow();
+    underConstuction=true;
     initializeTrees(col);
     col->createSortedIndex(numThreads);
     col->explainSize();
@@ -1351,6 +1352,7 @@ void prefixTrie::loadFromQueryColorColumn(mixVectors  *col,int numThreads,int mi
                     //idsMap[invIdsMap[colorGlobalIndex]] = localRank - 1;
                     (*rankMap)[colorGlobalIndex]=localRank - 1;
 
+
                 }
                 // close the remaining opened brackets
                 for (unsigned int k = 0; k < pastNodes.size(); k++) {
@@ -1442,6 +1444,38 @@ void prefixTrie::loadFromQueryColorColumn(mixVectors  *col,int numThreads,int mi
         delete ChunkslocalEdges[i];
         delete ChunkslocalTree[i];
     }
+    unordered_map<uint64_t,uint64_t> revIDSMap;
+    revIDSMap.reserve(idsMap.size()*2);
+    for(unsigned i=0;i<idsMap.size();i++)
+    {
+        revIDSMap[idsMap[i]]=i;
+    }
+    uint64_t nextColor=idsMap.size();
+    vector<uint64_t> newColors;
+    newColors.reserve(idsMap.size());
+    for(auto e:unCompressedEdges)
+    {
+        for(unsigned i=0;i< e->size(); i++)
+        {
+            uint32_t currNode=(*e)[i];
+            if(currNode>=noSamples)
+            {
+                currNode-=noSamples;
+                auto it=revIDSMap.find(currNode);
+                if(it==revIDSMap.end())
+                {
+                    newColors.push_back(currNode);
+                    revIDSMap[currNode]=nextColor++;
+                    it=revIDSMap.find(currNode);
+                }
+                (*e)[i]=it->second;
+            }
+        }
+    }
+    uint32_t oldIdSize=idsMap.size();
+    idsMap.resize(idsMap.size()+newColors.size());
+    std::copy(newColors.begin(),newColors.end(),idsMap.begin()+oldIdSize);
+    // replace pointers with color ID
 
     unordered_map<uint32_t,uint32_t> nodesCount;
     for(auto e:unCompressedEdges)
@@ -1490,7 +1524,7 @@ void prefixTrie::loadFromQueryColorColumn(mixVectors  *col,int numThreads,int mi
 //    cout << "Possible saving " << edgesSum << endl;
     explainSize();
     cout<<"Time to create prefix trie(total) :"<<duration(timeNow()-globalTime)<<" s"<<endl;
-
+    underConstuction=false;
 }
 
 
@@ -1514,7 +1548,6 @@ inline vector<uint32_t> prefixTrie::decodeColor(uint64_t treeIndex){
     tmp.reserve(noSamples);
     queue<uint64_t> Q;
     Q.push(treeIndex);
-    // cout<<idsMap[index]<<" -> ";
     while (!Q.empty()) {
         prefixTrieIterator it(this,Q.front());
         Q.pop();
@@ -1523,7 +1556,14 @@ inline vector<uint32_t> prefixTrie::decodeColor(uint64_t treeIndex){
             if(it.isPortal())
             {
                 uint32_t newPointer=*it - noSamples;
-                auto t= decodeColor(newPointer);
+                vector<uint32_t> t;
+                if(underConstuction)
+                {
+                    t= decodeColor(newPointer);
+                }
+                else{
+                    t= decodeColor(idsMap[newPointer]);
+                }
                 tmp.insert(tmp.end(),t.begin(),t.end());
 //                if(queryCache->Cached(newPointer))
 //                {
@@ -1541,11 +1581,7 @@ inline vector<uint32_t> prefixTrie::decodeColor(uint64_t treeIndex){
 
         } while (it.go_parent());
     }
-    //cout<<endl;
     sort(tmp.begin(),tmp.end());
-    //vector<uint32_t> res(tmp.size());
-    //for (unsigned int i = 0; i < res.size(); i++)
-     //   res[i] = tmp[i];
 //    if(!queryCache->Cached(treeIndex) )
 //        queryCache->Put(treeIndex,res);
     return tmp;
@@ -1750,7 +1786,7 @@ void prefixTrie::shorten(deque<uint32_t> &input, unordered_map<uint64_t ,vector<
         output.push_back(firstNode);
         nodesCache[firstNode] = {(uint32_t)firstNode};
     } else {
-        uint64_t ptr = result + starts[treeIndex] + noSamples;
+        uint64_t ptr = result + starts[treeIndex] + noSamples;//should be changed
         output.push_back(ptr);
         nodesCache[ptr] = chosen;
     }
