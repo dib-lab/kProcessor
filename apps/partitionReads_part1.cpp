@@ -62,7 +62,7 @@ int main(int argc, char *argv[])
             {
                 if(kframe->kmerExist(kmer.hash)){
                     readFound=true;
-                    uint32_t p=kframe->getKmerColumnValue<uint32_t,vectorColumn<uint32_t>>(partionColName,kmer.str);
+                    uint32_t p=kframe->getKmerColumnValue<vectorColumn<uint32_t>>(partionColName,kmer.str);
                     if(p!=0)
                         paritions.insert(p);
                 }
@@ -71,7 +71,7 @@ int main(int argc, char *argv[])
             {
                 if(kframe->kmerExist(kmer.hash)){
                     readFound=true;
-                    uint32_t p=kframe->getKmerColumnValue<uint32_t,vectorColumn<uint32_t>>(partionColName,kmer.hash);
+                    uint32_t p=kframe->getKmerColumnValue<vectorColumn<uint32_t>>(partionColName,kmer.hash);
                     if(p!=0)
                         paritions.insert(p);
                 }
@@ -97,8 +97,8 @@ int main(int argc, char *argv[])
                     kProcessor::transformInPlace(kframe,[&](kDataFrameIterator& it)
                     {
                         uint32_t p;
-                        it.getColumnValue<uint32_t, vectorColumn<uint32_t> >(partionColName,p);
-                        it.setColumnValue<uint32_t, vectorColumn<uint32_t> >(partionColName,partitionsMap[p]);
+                        it.getColumnValue<vectorColumn<uint32_t> >(partionColName,p);
+                        it.setColumnValue<vectorColumn<uint32_t> >(partionColName,partitionsMap[p]);
 
                     });
                 }
@@ -107,13 +107,13 @@ int main(int argc, char *argv[])
                 for(auto kmer: fqChunk1->second)
                 {
                     if(kframe->kmerExist(kmer.hash)){
-                        kframe->setKmerColumnValue<uint32_t,vectorColumn<uint32_t>>(partionColName,kmer.hash,currPartiton);
+                        kframe->setKmerColumnValue<vectorColumn<uint32_t>>(partionColName,kmer.hash,currPartiton);
                     }
                 }
                 for(auto kmer: fqChunk2->second)
                 {
                     if(kframe->kmerExist(kmer.hash)){
-                        kframe->setKmerColumnValue<uint32_t,vectorColumn<uint32_t>>(partionColName,kmer.hash,currPartiton);
+                        kframe->setKmerColumnValue<vectorColumn<uint32_t>>(partionColName,kmer.hash,currPartiton);
                     }
                 }
 

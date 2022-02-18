@@ -34,7 +34,7 @@ void differntialExpression(string genes_file,
          any totalCountAny=kProcessor::aggregate(currentFrame,(uint64_t)0,  [countColName](kDataFrameIterator& it, any v) -> any {
                  uint32_t count0;
 
-                 it.getColumnValue<uint32_t,vectorColumn<uint32_t> >(countColName,count0);
+                 it.getColumnValue<vectorColumn<uint32_t> >(countColName,count0);
                  return (any)(any_cast<uint64_t>(v) + (uint64_t)count0);
          });
 
@@ -42,9 +42,9 @@ void differntialExpression(string genes_file,
          cout <<"Total count = "<<totalCount<<endl;
          kProcessor::transformInPlace(currentFrame,  [=](kDataFrameIterator& it) -> void {
              uint32_t count0;
-             it.getColumnValue<uint32_t,vectorColumn<uint32_t> >(countColName,count0);
+             it.getColumnValue<vectorColumn<uint32_t> >(countColName,count0);
              double normalized = (double)count0*(100000000.0) / totalCount;
-             it.setColumnValue<uint32_t,vectorColumn<uint32_t> >(countColName,(uint32_t)normalized);
+             it.setColumnValue<vectorColumn<uint32_t> >(countColName,(uint32_t)normalized);
          });
          cout<<currentFrame->size()<<endl;
          kFrames.push_back(currentFrame);
@@ -72,7 +72,7 @@ void differntialExpression(string genes_file,
      res=kProcessor::filter(res,[=](kDataFrameIterator& r) -> bool {
          for(unsigned i=0; i < allDatasets ;i++ ){
              uint32_t count;
-             r.getColumnValue<uint32_t,vectorColumn<uint32_t> >("count"+ to_string(i),count);
+             r.getColumnValue<vectorColumn<uint32_t> >("count"+ to_string(i),count);
              if(count>0)
                  return true;
          }
@@ -88,7 +88,7 @@ void differntialExpression(string genes_file,
          {
              uint32_t count;
              string colName = "count"+to_string(i);
-             it.getColumnValue<uint32_t,vectorColumn<uint32_t> >(colName,count);
+             it.getColumnValue<vectorColumn<uint32_t> >(colName,count);
              sampleSum+=count;
          }
          uint32_t controlSum=0;
@@ -96,13 +96,13 @@ void differntialExpression(string genes_file,
          {
              uint32_t count;
              string colName = "count"+to_string(i);
-             it.getColumnValue<uint32_t,vectorColumn<uint32_t> >(colName,count);
+             it.getColumnValue<vectorColumn<uint32_t> >(colName,count);
              controlSum+=count;
          }
          double sampleAVG= (double)sampleSum / (double)nSamples;
          double controlAVG= (double)controlSum / (double)nControl;
          double foldChange= sampleAVG / controlAVG;
-         it.setColumnValue<double,vectorColumn<double> >(foldChangeColName,foldChange);
+         it.setColumnValue<vectorColumn<double> >(foldChangeColName,foldChange);
 
      });
 
@@ -111,9 +111,9 @@ void differntialExpression(string genes_file,
      any genesGatherAny=kProcessor::aggregate(res,foldChangeByGene,  [=](kDataFrameIterator& it, any v) -> any {
          auto dict=any_cast<unordered_map<string ,vector<double>>*>(v);
          double foldChange;
-         it.getColumnValue<double,vectorColumn<double> >(foldChangeColName,foldChange);
+         it.getColumnValue<vectorColumn<double> >(foldChangeColName,foldChange);
          vector<string> color;
-         it.getColumnValue<vector<string> ,deduplicatedColumn<StringColorColumn>>(colorColumn,color);
+         it.getColumnValue<deduplicatedColumn<StringColorColumn>>(colorColumn,color);
          for(auto c: color)
          {
              (*dict)[c].push_back(foldChange);

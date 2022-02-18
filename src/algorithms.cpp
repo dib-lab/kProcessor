@@ -1010,7 +1010,7 @@ namespace kProcessor {
             }
 
             output->insert(kmerS);
-            output->setKmerColumnValue<vector<uint32_t> , deduplicatedColumn< insertColorColumn>>("i",kmerS, colorVec);
+            output->setKmerColumnValue<deduplicatedColumn< insertColorColumn>>("i",kmerS, colorVec);
 
             // auto res=output->getKmerDefaultColumnValue<vector<uint32_t >, insertColorColumn>(currHash);
             // //	cout<<res.size()<<endl;

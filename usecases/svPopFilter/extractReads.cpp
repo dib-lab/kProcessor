@@ -138,7 +138,7 @@ int main(int argc, char *argv[]){
 	      //  cout<<k.str<<"\t"<<svkmers->kmerExist(k.str)<<"\t"<< kframe->kmerExist(k.str)<<endl;
                 if(svkmers->kmerExist(k.hash))
                 {
-                    vector<string> colors=svkmers->getKmerColumnValue<vector<string> ,deduplicatedColumn<StringColorColumn>>("color",k.hash);
+                    vector<string> colors=svkmers->getKmerColumnValue<deduplicatedColumn<StringColorColumn>>("color",k.hash);
                     for(auto c:colors)
                     {
                         uint32_t i=variantToId[c];

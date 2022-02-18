@@ -147,10 +147,10 @@ public:
     return iterator->setOrder(count);
   }
 
-  template<typename T,typename Container>
-  void getColumnValue(const string& colName, T& res);
-  template<typename T,typename Container>
-  void setColumnValue(const string& colName, T value);
+  template<typename Container>
+  void getColumnValue(const string& colName, typename Container::dataType & res);
+  template<typename Container>
+  void setColumnValue(const string& colName, typename Container::dataType value);
 
 
   void setKmerColumnValueFromOtherColumn(kDataFrame* input, string inputColName, string outputColName);
@@ -297,25 +297,25 @@ The difference between setCount and insert is that setCount set the count to N n
 
   void addColumn(string columnName, Column*);
   void removeColumn(string columnName);
-  template<typename T,typename Container>
-  T getKmerColumnValue(const string& columnName,string kmer);
+  template<typename Container>
+  typename Container::dataType getKmerColumnValue(const string& columnName,string kmer);
 
-  template<typename T,typename Container>
-  void setKmerColumnValue(const string& columnName,string kmer, T value);
-
-
-  template<typename T,typename Container>
-  T getKmerColumnValue(const string& columnName,uint64_t kmer);
-
-  template<typename T,typename Container>
-  void setKmerColumnValue(const string& columnName,uint64_t kmer, T value);
+  template<typename Container>
+  void setKmerColumnValue(const string& columnName,string kmer, typename Container::dataType value);
 
 
-  template<typename T,typename Container>
-  T getKmerColumnValueByOrder(const string& columnName,uint64_t kmerOrder);
+  template<typename Container>
+  typename Container::dataType getKmerColumnValue(const string& columnName,uint64_t kmer);
 
-  template<typename T,typename Container>
-  void setKmerColumnValueByOrder(const string& columnName,uint64_t kmerOrder, T value);
+  template<typename Container>
+  void setKmerColumnValue(const string& columnName,uint64_t kmer, typename Container::dataType value);
+
+
+  template<typename Container>
+  typename Container::dataType getKmerColumnValueByOrder(const string& columnName,uint64_t kmerOrder);
+
+  template<typename Container>
+  void setKmerColumnValueByOrder(const string& columnName,uint64_t kmerOrder, typename Container::dataType value);
 
 
 
@@ -328,16 +328,16 @@ The difference between setCount and insert is that setCount set the count to N n
 
 };
 
-template<typename T,typename Container>
-T kDataFrame::getKmerColumnValue(const string& columnName,string kmer)
+template<typename Container>
+typename Container::dataType kDataFrame::getKmerColumnValue(const string& columnName,string kmer)
 {
     std::uint64_t kmerOrder=getkmerOrder(kmer);
     if(kmerOrder==0)
         throw std::logic_error("kmer not found!");
     return ((Container*)columns[columnName])->get(kmerOrder);
 }
-template<typename T,typename Container>
-void kDataFrame::setKmerColumnValue(const string& columnName,string kmer,T value)
+template<typename Container>
+void kDataFrame::setKmerColumnValue(const string& columnName,string kmer,typename Container::dataType value)
 {
     std::uint64_t kmerOrder=getkmerOrder(kmer);
     if(kmerOrder==0)
@@ -346,16 +346,16 @@ void kDataFrame::setKmerColumnValue(const string& columnName,string kmer,T value
 }
 
 
-template<typename T,typename Container>
-T kDataFrame::getKmerColumnValue(const string& columnName,uint64_t kmer)
+template<typename Container>
+typename Container::dataType kDataFrame::getKmerColumnValue(const string& columnName,uint64_t kmer)
 {
     std::uint64_t kmerOrder=getkmerOrder(kmer);
     if(kmerOrder==0)
         throw std::logic_error("kmer not found!");
     return ((Container*)columns[columnName])->get(kmerOrder);
 }
-template<typename T,typename Container>
-void kDataFrame::setKmerColumnValue(const string& columnName,uint64_t kmer,T value)
+template<typename Container>
+void kDataFrame::setKmerColumnValue(const string& columnName,uint64_t kmer,typename Container::dataType value)
 {
     std::uint64_t kmerOrder=getkmerOrder(kmer);
     if(kmerOrder==0)
@@ -363,13 +363,13 @@ void kDataFrame::setKmerColumnValue(const string& columnName,uint64_t kmer,T val
     ((Container*)columns[columnName])->insert(value,kmerOrder);
 }
 
-template<typename T,typename Container>
-T kDataFrame::getKmerColumnValueByOrder(const string& columnName,uint64_t kmerOrder)
+template<typename Container>
+typename Container::dataType kDataFrame::getKmerColumnValueByOrder(const string& columnName,uint64_t kmerOrder)
 {
     return ((Container*)columns[columnName])->get(kmerOrder);
 }
-template<typename T,typename Container>
-void kDataFrame::setKmerColumnValueByOrder(const string& columnName,uint64_t kmerOrder,T value)
+template<typename Container>
+void kDataFrame::setKmerColumnValueByOrder(const string& columnName,uint64_t kmerOrder,typename Container::dataType value)
 {
     ((Container*)columns[columnName])->insert(value,kmerOrder);
 }
@@ -378,16 +378,16 @@ void kDataFrame::setKmerColumnValueByOrder(const string& columnName,uint64_t kme
 
 
 
-template<typename T,typename Container>
-void kDataFrameIterator::getColumnValue(const string& colName, T& res)
+template<typename Container>
+void kDataFrameIterator::getColumnValue(const string& colName, typename Container::dataType& res)
 {
-    res= origin->getKmerColumnValueByOrder<T,Container>(colName, iterator->getOrder());
+    res= origin->getKmerColumnValueByOrder<Container>(colName, iterator->getOrder());
 }
 
-template<typename T,typename Container>
-void kDataFrameIterator::setColumnValue(const string& colName, T value)
+template<typename Container>
+void kDataFrameIterator::setColumnValue(const string& colName, typename Container::dataType value)
 {
-    origin->setKmerColumnValueByOrder<T,Container>(colName, iterator->getOrder(),value);
+    origin->setKmerColumnValueByOrder<Container>(colName, iterator->getOrder(),value);
 }
 
 

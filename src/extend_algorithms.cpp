@@ -31,9 +31,9 @@ namespace kProcessor {
 
         kf = kProcessor::transform(kf, [=, & column_name, & totalCount](kDataFrameIterator& it) -> void {
             uint32_t count0;
-            it.getColumnValue<uint32_t, vectorColumn<uint32_t> >(column_name, count0);
+            it.getColumnValue< vectorColumn<uint32_t> >(column_name, count0);
             double normalized = (double) count0 * (100000000.0) / totalCount;
-            it.setColumnValue<uint32_t, vectorColumn<uint32_t> >(column_name, (uint32_t) normalized);
+            it.setColumnValue<vectorColumn<uint32_t> >(column_name, (uint32_t) normalized);
         });
 
         return kf;

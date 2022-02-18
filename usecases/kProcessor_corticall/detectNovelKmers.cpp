@@ -111,21 +111,21 @@ int main(int argc, char *argv[]){
     {
         //detect novel Kmers
         vector<uint32_t> color;
-        it.getColumnValue<vector<uint32_t >, deduplicatedColumn<prefixTrie> >("color",color);
+        it.getColumnValue<deduplicatedColumn<prefixTrie> >("color",color);
         bool hasSample=std::binary_search(color.begin(),color.end(),sampleID);
         bool hasParent=false;
         for(auto p: parentsID)
             hasParent |= std::binary_search(color.begin(),color.end(),p);
         bool isNovel=hasSample && !hasParent;
-        it.setColumnValue<bool,vectorColumn<bool>>(novelColumnName,isNovel );
+        it.setColumnValue<vectorColumn<bool>>(novelColumnName,isNovel );
         if(!isNovel) return;
 
         // filter low cov
         uint32_t count;
-        it.getColumnValue<uint32_t,vectorColumn<uint32_t >>(novelColumnName,count);
+        it.getColumnValue<vectorColumn<uint32_t >>(novelColumnName,count);
         bool highCov =  count>=6;
         isNovel&= highCov;
-        it.setColumnValue<bool,vectorColumn<bool>>(novelColumnName,isNovel );
+        it.setColumnValue<vectorColumn<bool>>(novelColumnName,isNovel );
         if(!isNovel) return;
 
 
@@ -138,7 +138,7 @@ int main(int argc, char *argv[]){
             sharedKmer|= !(isParent || isSibling);
         }
         isNovel &= !sharedKmer;
-        it.setColumnValue<bool,vectorColumn<bool>>(novelColumnName,isNovel );
+        it.setColumnValue<vectorColumn<bool>>(novelColumnName,isNovel );
         if(!isNovel) return;
 
 
@@ -149,7 +149,7 @@ int main(int argc, char *argv[]){
     auto kframe2=kProcessor::filter(kframe,[&](kDataFrameIterator& k)
     {
         bool isNovel;
-        k.getColumnValue<bool,vectorColumn<bool>>(novelColumnName,isNovel);
+        k.getColumnValue<vectorColumn<bool>>(novelColumnName,isNovel);
         return isNovel;
     });
     cout<<"Number of Novel Kmers Found = "<<kframe2->size() <<endl;
