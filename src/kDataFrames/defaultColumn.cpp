@@ -1647,6 +1647,8 @@ void prefixTrie::explainSize() {
     cout << "edges = " << eSize << "MB\n";
     cout << "edges # Integers= " << numE << "\n";
     cout << "translate= " << translateSize << "MB\n";
+    cout << "translate= " << translateEdges.size() << "ints\n";
+
 
     double total = eSize + sdsl::size_in_mega_bytes(idsMap)
                    + bpSize +
