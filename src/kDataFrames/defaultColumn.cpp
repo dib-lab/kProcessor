@@ -285,25 +285,25 @@ uint32_t StringColorColumn::insertAndGetIndex(vector<string> item) {
 
 }
 vector<string> StringColorColumn::getWithIndex(uint32_t index) {
-    vector<string> res(colors[index].size());
-    for (unsigned int i = 0; i < colors[index].size(); i++)
-        res[i] = namesMap[colors[index][i]];
+    vector<uint32_t> c=colors->getWithIndex(index);
+    vector<string> res(c.size());
+    for (unsigned int i = 0; i < c.size(); i++)
+        res[i] = namesMap[c[i]];
     return res;
 
 }
 
 vector<string> StringColorColumn::get(uint32_t index) {
-    vector<string> res(colors[index].size());
-    for (unsigned int i = 0; i < colors[index].size(); i++)
-        res[i] = namesMap[colors[index][i]];
+    vector<uint32_t> c=colors->getWithIndex(index);
+    vector<string> res(c.size());
+    for (unsigned int i = 0; i < c.size(); i++)
+        res[i] = namesMap[c[i]];
     return res;
 }
 
 void StringColorColumn::serialize(string filename) {
-    std::ofstream os(filename + ".colors", std::ios::binary);
-    cereal::BinaryOutputArchive archive(os);
-    archive(colors);
-    os.close();
+
+    colors->serialize(filename + ".colors");
 
     ofstream namesMapOut(filename + ".namesMap");
     namesMapOut << namesMap.size() << endl;
@@ -315,9 +315,7 @@ void StringColorColumn::serialize(string filename) {
 
 
 void StringColorColumn::deserialize(string filename) {
-    std::ifstream os(filename + ".colors", std::ios::binary);
-    cereal::BinaryInputArchive iarchive(os);
-    iarchive(colors);
+    colors->deserialize(filename+ ".colors");
 
     ifstream namesMapIn(filename + ".namesMap");
     uint64_t size;
@@ -347,6 +345,11 @@ Column *StringColorColumn::clone() {
     res->colors=colors;
     res->namesMap=namesMap;
     return res;
+}
+
+StringColorColumn::StringColorColumn(flat_hash_map<uint64_t, std::vector<uint32_t>>* colorsIN, uint32_t noSamples, uint32_t num_vectors,
+                                     uint32_t vector_size) {
+    colors=new mixVectors(*colorsIN,noSamples,num_vectors,vector_size);
 }
 
 bool inExactColorIndex::hasColorID(vector<uint32_t> &v) {
@@ -431,12 +434,97 @@ vector<uint32_t> mixVectors::getWithIndex(uint32_t index) {
     }
     return res;
 }
-mixVectors::mixVectors(vector<vector<uint32_t> > colorsInput,uint32_t noSamples) {
+mixVectors::mixVectors(flat_hash_map<uint64_t, std::vector<uint32_t>>& colorsInput,uint32_t noSamples,uint32_t num_vectors,uint32_t vector_size) {
     colors.push_back(new vectorOfVectors(0, 1));
     numColors=colorsInput.size();
     this->noSamples=noSamples;
-    uint32_t colorId = 1;
+    // sort colors by size
+    colorsInput[0]=vector<uint32_t>();
+    vector<uint32_t> ids(colorsInput.size());
+    for(unsigned i=0;i<colorsInput.size();i++)
+        ids[i]=i;
+
+    sort(ids.begin(), ids.end(),
+         [&](const uint32_t & a, const uint32_t & b) -> bool
+         {
+             return colorsInput[a].size() < colorsInput[b].size();
+         });
+
+    uint32_t newcolorID = 1;
     idsMap = sdsl::int_vector<>(numColors + 1);
+
+    auto colorIT=ids.begin();
+    vector<uint32_t> tmpVec;
+    tmpVec.reserve(vector_size);
+    for(uint32_t currSize=1; currSize<num_vectors-1; currSize++)
+    {
+
+
+        bool moreWork=false;
+        if(colorsInput[*colorIT].size()==currSize)
+            moreWork=true;
+        while(moreWork)
+        {
+            fixedSizeVector* f =new fixedSizeVector(newcolorID,currSize);
+            colors.push_back(f);
+            tmpVec.clear();
+            while(tmpVec.size()< vector_size-currSize-1)
+            {
+                for(auto c: colorsInput[*colorIT])
+                    tmpVec.push_back(c);
+                idsMap[*colorIT]=newcolorID;
+                colorIT++;
+                newcolorID++;
+                if(colorsInput[*colorIT].size()!=currSize)
+                {
+                    moreWork= false;
+                    break;
+                }
+            }
+            f->vec=fixedSizeVector::vectype(tmpVec.size());
+            std::copy(tmpVec.begin(),tmpVec.end(),f->vec.begin());
+            sdsl::util::bit_compress(f->vec);
+        }
+
+    }
+    bool moreWork=false;
+    if(colorIT!=ids.end())
+    {
+        moreWork= true;
+    }
+    vector<uint32_t> tmpStarts;
+    tmpStarts.reserve(vector_size/noSamples);
+    while(moreWork)
+    {
+
+        vectorOfVectors* v=new vectorOfVectors(newcolorID);
+        colors.push_back(v);
+        tmpVec.clear();
+        while(tmpVec.size()< vector_size-num_vectors-2)
+        {
+            tmpStarts.push_back(tmpVec.size());
+            for(auto c: colorsInput[*colorIT])
+                tmpVec.push_back(c);
+            idsMap[*colorIT]=newcolorID;
+            colorIT++;
+            newcolorID++;
+            numColors++;
+            if(colorIT==ids.end())
+            {
+                moreWork= false;
+                break;
+            }
+        }
+
+        sdsl::int_vector<> tmpSDSL(tmpVec.size());
+        std::copy(tmpVec.begin(),tmpVec.end(),tmpSDSL.begin());
+        v->vecs=vectorOfVectors::vectype(tmpSDSL);
+
+        tmpSDSL.resize(tmpStarts.size());
+        std::copy(tmpStarts.begin(),tmpStarts.end(),tmpSDSL.begin());
+        v->starts=vectorOfVectors::vectype(tmpSDSL);
+
+    }
     //vecto
 
 }

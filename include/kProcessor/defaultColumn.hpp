@@ -623,7 +623,7 @@ public:
     }
     mixVectors(insertColorColumn* col);
 
-    mixVectors(vector<vector<uint32_t> > colors,uint32_t noSamples);
+    mixVectors(flat_hash_map<uint64_t, std::vector<uint32_t>>& colors,uint32_t noSamples,uint32_t num_vectors=20,uint32_t vector_size=1000000);
 
     ~mixVectors(){
         for(auto v:colors)
@@ -792,15 +792,18 @@ public:
 class StringColorColumn: public Column{
 public:
     typedef vector<string> dataType;
-    vector<vector<uint32_t > > colors;
+    queryColorColumn* colors;
     flat_hash_map<uint32_t,string> namesMap;
 
     StringColorColumn(){
-        colors.push_back(vector<uint32_t > ());
+        colors=new mixVectors();
     }
-
+    StringColorColumn(flat_hash_map<uint64_t, std::vector<uint32_t>>* colors,
+                      uint32_t noSamples,
+                      uint32_t num_vectors=20,
+                      uint32_t vector_size=1000000);
     ~StringColorColumn(){
-
+        delete colors;
     }
 
     vector<string > getWithIndex(uint32_t index);
@@ -817,7 +820,7 @@ public:
     Column* getTwin();
     void resize(uint32_t size);
     uint32_t size(){
-        return colors.size();
+        return colors->size();
     }
 
     Column *clone() override;

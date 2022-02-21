@@ -904,15 +904,9 @@ namespace kProcessor {
                 }
             }
         }
-        colors->values = new StringColorColumn();
 
-        colors->values->colors = vector<vector<uint32_t> >(legend->size());
-        colors->values->colors.push_back(vector<uint32_t>());
-        for (auto it : *legend) {
-            colors->values->colors[it.first] = it.second;
-        }
+        colors->values = new StringColorColumn(legend,groupCounter.size());
         delete legend;
-
         for (auto & iit : namesMap) {
             uint32_t sampleID = groupNameMap[iit.second];
             colors->values->namesMap[sampleID] = iit.second;
