@@ -9,6 +9,45 @@
 using namespace std;
 
 
+// Function to find mean.
+float Mean(const vector<uint32_t>& arr)
+{
+    float sum = 0;
+    for (auto a:arr)
+        sum = sum + a;
+    return sum / (float)arr.size();
+}
+
+// Function to find standard
+// deviation of given array.
+float standardDeviation(const vector<uint32_t>& arr, float mean)
+{
+    float sum = 0;
+    for (auto a:arr)
+        sum = sum + (a - mean) *
+                    (a - mean);
+
+    return sqrt(sum / (float)(arr.size() - 1));
+}
+
+// Function to find t-test of
+// two set of statistical data.
+float tTest(const vector<uint32_t>& arr1,
+            const vector<uint32_t>& arr2)
+{
+    float mean1 = Mean(arr1);
+    float mean2 = Mean(arr2);
+    float sd1 = standardDeviation(arr1, mean1);
+    float sd2 = standardDeviation(arr2, mean2);
+
+    // Formula to find t-test
+    // of two set of data.
+    float t_test = (mean1 - mean2) / sqrt((sd1 * sd1)
+                                          / (float)arr1.size() + (sd2 * sd2) / (float)arr2.size());
+    return t_test;
+}
+
+
 void differntialExpression(string genes_file,
     vector<string> samplesInput,
     vector<string> controlInput,
@@ -25,11 +64,8 @@ void differntialExpression(string genes_file,
     
 // //load kmers,count from kmc DB for sample and control
      for(const auto& filename:allSamples) {
-         kDataFrame* currentFrame=kDataFrameFactory::createMAP(21);
-         kProcessor::loadFromKMC(currentFrame,filename);
- 	//        kProcessor::createCountColumn(currentFrame);
+         kDataFrame* currentFrame=kDataFrame::load(filename);
          cout<<"Load "<<filename<< " kmers: "<<currentFrame->size()<<endl;
-
          const string countColName="count";
          any totalCountAny=kProcessor::aggregate(currentFrame,(uint64_t)0,  [countColName](kDataFrameIterator& it, any v) -> any {
                  uint32_t count0;
@@ -46,7 +82,6 @@ void differntialExpression(string genes_file,
              double normalized = (double)count0*(100000000.0) / totalCount;
              it.setColumnValue<vectorColumn<uint32_t> >(countColName,(uint32_t)normalized);
          });
-         cout<<currentFrame->size()<<endl;
          kFrames.push_back(currentFrame);
     }
 
@@ -54,22 +89,22 @@ void differntialExpression(string genes_file,
 
      uint64_t kSize=kFrames.back()->getkSize();
      int chunkSize = 1000;
-     kDataFrame * genesFrame = kDataFrameFactory::createMAP(kSize);
-     kmerDecoder * KMERS = kProcessor::initialize_kmerDecoder(genes_file, chunkSize, "kmers", {{"k_size", kSize}});
+     kDataFrame * genesFrame = kDataFrameFactory::createBtree(kSize);
+     kmerDecoder * KMERS = new Kmers(genes_file, chunkSize, kSize,genesFrame->KD->hash_mode);
      kProcessor::index(KMERS, genes_file+".names", genesFrame);
+
      //   kProcessor::createColorColumn(genesFrame);
      kFrames.push_back(genesFrame);
      requiredIndices={kFrames.size()-1};
      string colorColumn="color"+to_string(kFrames.size()-1);
      cout<<"Load "<<genes_file<< " kmers: "<<kFrames.back()->size()<<endl;
-     cout<<"Load "<<genes_file<< " kmers: "<<genesFrame->size()<<endl;
-
-
-     cout<<"Load "<<genes_file<< " kmers: "<<genesFrame->size()<<endl;
      kDataFrame* res= kProcessor::innerJoin(kFrames, requiredIndices);
 
      cout<<"Joined "<<res->size()<<" kmers"<<endl;
-     res=kProcessor::filter(res,[=](kDataFrameIterator& r) -> bool {
+
+
+
+     res=kProcessor::filter(res,[&](kDataFrameIterator& r) -> bool {
          for(unsigned i=0; i < allDatasets ;i++ ){
              uint32_t count;
              r.getColumnValue<vectorColumn<uint32_t> >("count"+ to_string(i),count);
@@ -78,55 +113,63 @@ void differntialExpression(string genes_file,
          }
          return false;
      });
-     const string foldChangeColName="foldChange";
-     res->addColumn(foldChangeColName,new vectorColumn<double >(res->size()));
+     cout<<"Filtered "<<res->size()<<endl;
+     const string ttestColName="t-test";
+     res->addColumn(ttestColName, new vectorColumn<float>(res->size()));
 
-     kProcessor::transformInPlace(res,  [=](kDataFrameIterator& it) -> void {
+
+     vector<uint32_t> samplesCounts;
+     vector<uint32_t> controlCounts;
+     samplesCounts.reserve(samplesInput.size());
+     controlCounts.reserve(controlInput.size());
+     // calculate pvalues for kmers
+     kProcessor::transformInPlace(res,  [&](kDataFrameIterator& it) -> void {
+         samplesCounts.clear();
+         controlCounts.clear();
          unsigned i=0;
-         uint32_t sampleSum=0;
          for(;i < nSamples ; i++)
          {
              uint32_t count;
              string colName = "count"+to_string(i);
              it.getColumnValue<vectorColumn<uint32_t> >(colName,count);
-             sampleSum+=count;
+             samplesCounts.push_back(count);
          }
-         uint32_t controlSum=0;
+
          for(;i < allDatasets ; i++)
          {
              uint32_t count;
              string colName = "count"+to_string(i);
              it.getColumnValue<vectorColumn<uint32_t> >(colName,count);
-             controlSum+=count;
+             controlCounts.push_back(count);
          }
-         double sampleAVG= (double)sampleSum / (double)nSamples;
-         double controlAVG= (double)controlSum / (double)nControl;
-         double foldChange= sampleAVG / controlAVG;
-         it.setColumnValue<vectorColumn<double> >(foldChangeColName,foldChange);
+
+
+         float ttest= tTest(samplesCounts,controlCounts);
+         it.setColumnValue<vectorColumn<float> >(ttestColName, ttest);
 
      });
 
      // if we calculate average we dont need to save all the kmers
-     auto foldChangeByGene=new unordered_map<string ,vector<double> >();
-     any genesGatherAny=kProcessor::aggregate(res,foldChangeByGene,  [=](kDataFrameIterator& it, any v) -> any {
-         auto dict=any_cast<unordered_map<string ,vector<double>>*>(v);
-         double foldChange;
-         it.getColumnValue<vectorColumn<double> >(foldChangeColName,foldChange);
+     auto ttestByGene=new unordered_map<string ,vector<float> >();
+     any genesGatherAny=kProcessor::aggregate(res, ttestByGene, [=](kDataFrameIterator& it, any v) -> any {
+         auto dict=any_cast<unordered_map<string ,vector<float>>*>(v);
+         float ttest;
+         it.getColumnValue<vectorColumn<float> >(ttestColName, ttest);
          vector<string> color;
          it.getColumnValue<deduplicatedColumn<StringColorColumn>>(colorColumn,color);
          for(auto c: color)
          {
-             (*dict)[c].push_back(foldChange);
+             (*dict)[c].push_back(ttest);
          }
          return (any)(dict);
      });
      ofstream output(outputFilename.c_str());
 
-     for(auto k:*foldChangeByGene)
+     for(auto k:*ttestByGene)
      {
          if(!k.second.empty()) {
              sort(k.second.begin(), k.second.end());
-             double median = k.second[k.second.size() / 2];
+             float median = k.second[k.second.size() / 2];
              output<<k.first<<"\t"<<median<<"\n";
          }
 
@@ -140,6 +183,8 @@ void differntialExpression(string genes_file,
 int main(int argc, char *argv[]){
     CLI::App app;
     string genes_file;
+    string samplesFileLst;
+    string controlFileLst;
     vector<string> samples;
     vector<string> control;
     string outputFilename;
@@ -147,9 +192,9 @@ int main(int argc, char *argv[]){
 
     app.add_option("-g,--genes_file", genes_file,
                    "Genes File fasta")->required();
-    app.add_option("-s,--sample_file", samples,
+    app.add_option("-s,--sample_file", samplesFileLst,
                    "Sample KMC db ")->required();
-    app.add_option("-c,--control", control,
+    app.add_option("-c,--control", controlFileLst,
                    "Control KMC db")->required();
 
     app.add_option("-o,--output", outputFilename,
@@ -157,6 +202,21 @@ int main(int argc, char *argv[]){
 
 
     CLI11_PARSE(app, argc, argv);
+
+    string fileName;
+
+    ifstream samplesInput(samplesFileLst);
+    while(samplesInput >> fileName)
+        samples.push_back(fileName);
+
+    samplesInput.close();
+
+    ifstream controlInput(controlFileLst);
+    while(controlInput >> fileName)
+        control.push_back(fileName);
+
+    controlInput.close();
+
     differntialExpression(genes_file,samples,control,outputFilename);
     return 0;
 }

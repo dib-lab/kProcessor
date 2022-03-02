@@ -26,6 +26,9 @@ class vectorColumn<bool>;
 template
 class vectorColumn<double>;
 
+template
+class vectorColumn<float>;
+
 
 template
 class vectorColumn<uint32_t>;

@@ -6,29 +6,35 @@ transpictome=list(filter(lambda x:x.library=="transpictome",pep.samples))[0].fil
 
 
 def getFastq(name):
-    return list(filter(lambda x:x.library==name,pep.samples))[0].file
+    return list(filter(lambda x:x.sample_name==name,pep.samples))[0].file
+
+samplesKDataframe=list(filter(lambda x:x.library=="sample",pep.samples))
+samplesKDataframe=["kDataframe."+x.sample_name+".map" for x in samplesKDataframe]
+controlKDataframe=list(filter(lambda x:x.library=="control",pep.samples))
+controlKDataframe=["kDataframe."+x.sample_name+".map" for x in controlKDataframe]
 
 
 rule all:
-    input: "kDifferntialExpression.medianChange.lst"
+    input: "kDifferntialExpression.median_ttest.lst"
 
 rule kDifferntialExpression:
     input:
-         sample="sample.kmc_pre",
-         control="control.kmc_pre",
+         sample=samplesKDataframe,
+         control=controlKDataframe,
          transpictome=transpictome
-    output: "kDifferntialExpression.medianChange.lst"
+    output: "kDifferntialExpression.median_ttest.lst"
     log: "kDifferntialExpression.log"
     shell:
        	"""
+        echo {input.sample} | sed -e 's/.map//g'|tr -s ' ' $'\n' > sample
+        echo {input.control} | sed -e 's/.map//g'|tr -s ' ' $'\n' > control   	
 	./kDifferntialExpression -g {input.transpictome} -s sample -c control -o {output} &> {log}
         """
 
 rule kmc:
     input: lambda wildcards: getFastq(f"{wildcards.experiment}"),         
     output:
-         pre="{experiment}.kmc_pre",
-         suf="{experiment}.kmc_suf",
+         kDataframe="kDataframe.{experiment}.map",
          time="{experiment}.kmc.time"
     conda:
          "env.yaml"
@@ -38,5 +44,6 @@ rule kmc:
        	"""
 	echo {input} |tr -s ' ' $'\n' > {wildcards.experiment}.lst
 	/usr/bin/time -v -o {output.time} kmc -ci1 -t{threads} -k{kSize} -m2  @{wildcards.experiment}.lst {wildcards.experiment}  ./ &> {log}
+	../../apps/loadFromKMC {wildcards.experiment} MAP kDataframe.{wildcards.experiment} 
         """
 
