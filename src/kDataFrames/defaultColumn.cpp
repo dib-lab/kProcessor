@@ -1307,29 +1307,9 @@ void prefixTrie::loadFromQueryColorColumn(mixVectors  *col,int numThreads,int mi
 
 
                     shortened.clear();
-                    if(toBAdded.size()>minimumCompress)
-                    {
-                        shorten(toBAdded,nodesCache, shortened);
-                    }
-                    else{
-                        shortened=toBAdded;
-                        for(auto s:shortened)
-                        {
-                            nodesCache[s]={s};
-                        }
-                    }
-//                    if(firstColor)
-//                    {
-//                        shortened=toBAdded;
-//                        firstColor=false;
-//                        for(auto s:shortened)
-//                        {
-//                            nodesCache[s]={s};
-//                        }
-//                    }
-//                    else{
-//                        shorten(toBAdded,nodesCache, shortened);
-//                    }
+
+                    shorten(toBAdded,nodesCache,minimumCompress, shortened);
+
                     uint32_t outputSize=0;
                     for(auto s:shortened)
                         outputSize+=nodesCache[s].size();
@@ -1695,10 +1675,14 @@ void prefixTrie::explainSize() {
 }
 
 
-void prefixTrie::shorten(deque<uint32_t> &input, unordered_map<uint64_t ,vector<uint32_t > >& nodesCache,deque<uint32_t> &output) {
-    if (input.size() == 1) {
-        output.push_back(input[0]);
-        nodesCache[input[0]] = {input[0]};
+void prefixTrie::shorten(deque<uint32_t> &input, unordered_map<uint64_t ,vector<uint32_t > >& nodesCache,int minimumShorten,deque<uint32_t> &output) {
+    if (input.size() < minimumShorten) {
+        for(auto i:input)
+        {
+            output.push_back(i);
+            nodesCache[i]={i};
+
+        }
         return;
     }
 
@@ -1710,7 +1694,7 @@ void prefixTrie::shorten(deque<uint32_t> &input, unordered_map<uint64_t ,vector<
         nodesCache[input[0]] = {input[0]};
         input.erase(input.begin());
         if (!input.empty())
-            shorten(input, nodesCache,output);
+            shorten(input, nodesCache,minimumShorten,output);
         return;
     }
 
@@ -1792,7 +1776,7 @@ void prefixTrie::shorten(deque<uint32_t> &input, unordered_map<uint64_t ,vector<
     }
 
     if (!input.empty()) {
-        shorten(input, nodesCache,output);
+        shorten(input, nodesCache,minimumShorten,output);
     }
 
 }

@@ -788,7 +788,7 @@ public:
 
     void serialize(string filename);
     void deserialize(string filename);
-    void shorten(deque<uint32_t> & input,unordered_map<uint64_t ,vector<uint32_t > >& nodesCache,deque<uint32_t> & output);
+    void shorten(deque<uint32_t> & input,unordered_map<uint64_t ,vector<uint32_t > >& nodesCache,int minimumShorten,deque<uint32_t> & output);
    // void _shorten(vector<uint32_t> & input,vector<uint32_t> & output, vector<uint32_t> & remaining);
 
     uint64_t sizeInBytes();
