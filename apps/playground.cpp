@@ -171,6 +171,25 @@ int main(int argc, char *argv[]) {
 
         pFORSize+=(compressedsize*4);
 
+        uint32_t startIndex=0;
+        uint32_t VECTOR_SIZE=1000000;
+        uint32_t EndIndex=startIndex+VECTOR_SIZE;
+        EndIndex=min(EndIndex,(uint32_t)unCompressedEdges[i]->size());
+
+        while(startIndex< unCompressedEdges[i]->size())
+        {
+            EndIndex=startIndex+VECTOR_SIZE;
+            EndIndex=min(EndIndex,(uint32_t)unCompressedEdges[i]->size());
+            sdsl::int_vector<> tmpVec(EndIndex-startIndex);
+            std::copy(unCompressedEdges[i]->begin()+startIndex,unCompressedEdges[i]->begin()+EndIndex,tmpVec.begin());
+            sdsl::enc_vector<> encVector(tmpVec);
+            sdsl::vlc_vector<> vlcVector(tmpVec);
+            sdsl::dac_vector<> dacVector(tmpVec);
+            encSize += sdsl::size_in_mega_bytes(encVector);
+            vlcSize += sdsl::size_in_mega_bytes(vlcVector);
+            dacSize += sdsl::size_in_mega_bytes(dacVector);
+            startIndex+=VECTOR_SIZE;
+        }
 
 //        sdsl::enc_vector<> encVector(*(unCompressedEdges[i]));
 //        sdsl::vlc_vector<> vlcVector(*(unCompressedEdges[i]));
