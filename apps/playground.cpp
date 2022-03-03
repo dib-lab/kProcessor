@@ -211,9 +211,9 @@ int main(int argc, char *argv[]) {
 //        endl;
     //    cout<<"tree = "<<i<<" ,# integers = "<<newColor->edges[i]->size()<<" ,size = "<<sdsl::size_in_mega_bytes(*(newColor->edges[i]))<<" mb"<<endl;
 
-    cout << "Total enc = " << encSize << endl;
-    cout << "Total vlc = " << vlcSize << endl;
-    cout << "Total dac = " << dacSize << endl;
+    cout << "Total enc = " << (uint64_t)encSize << " MB"<<endl;
+    cout << "Total vlc = " << (uint64_t)vlcSize << " MB" << endl;
+    cout << "Total dac = " << (uint64_t)dacSize << " MB" << endl;
     cout << "Total bit compress = " << bitCompress << endl;
     cout << "Total translate = " << translateSize << endl;
     cout << "Total pFor = " << (double)pFORSize/(1024.0*1024.0) << endl;
