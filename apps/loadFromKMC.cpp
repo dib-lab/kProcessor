@@ -20,6 +20,8 @@ int main(int argc, char *argv[])
         kframe=kDataFrameFactory::createPHMAP(21);
     else if(kdataframeType=="MAP")
         kframe=kDataFrameFactory::createMAP(21);
+    else if(kdataframeType=="BTREE")
+        kframe=kDataFrameFactory::createBtree(21);
 
     kProcessor::loadFromKMC(kframe,inputPath);
 
