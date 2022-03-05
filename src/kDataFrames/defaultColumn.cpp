@@ -2408,20 +2408,10 @@ mixVectorSortedIterator::mixVectorSortedIterator(const mixVectorSortedIterator &
 data(other.data),curr(other.curr), end(other.end) {}
 
 uint64_t mixVectors::theoriticalMinSizeInBytes() {
-    unordered_map<uint32_t,uint32_t> freqs;
+    uint64_t result=0;
     for(auto c:colors)
-    {
-        c->calcFrequency(freqs);
-    }
-    uint64_t numIntegrs=numIntegers();
-    double  entropy=0;
-    for(auto integer:freqs)
-    {
-        double p=(double)integer.second/(double) numIntegrs;
-        entropy+= (p * log2(p));
-    }
-    entropy*=-1;
-    return (entropy* numIntegrs) /8.0;
+        result+=c->theoriticalMinSizeInBytes();
+    return result;
 }
 
 void vectorOfVectors::calcFrequency(unordered_map <uint32_t, uint32_t> &freq) {
@@ -2433,10 +2423,54 @@ void vectorOfVectors::calcFrequency(unordered_map <uint32_t, uint32_t> &freq) {
 
 
 }
+
+uint64_t theoriticalMinSizeInBytesHelper(unordered_map<uint32_t,uint32_t>& freqs) {
+    uint64_t numIntegers=0;
+    for(auto integer:freqs)
+    {
+        numIntegers+=integer.second;
+    }
+    double  entropy=0;
+    for(auto integer:freqs)
+    {
+        double p=(double)integer.second/(double) numIntegers;
+        entropy+= (p * log2(p));
+    }
+    entropy*=-1;
+    return (entropy* numIntegers) /8.0;
+}
+
+
+uint64_t vectorOfVectors::theoriticalMinSizeInBytes() {
+    unordered_map<uint32_t,uint32_t> freqs;
+    for(auto c:vecs)
+    {
+        freqs[c]++;
+    }
+    uint64_t res= theoriticalMinSizeInBytesHelper(freqs);
+    freqs.clear();
+    for(auto c:starts)
+    {
+        freqs[c]++;
+    }
+    res+= theoriticalMinSizeInBytesHelper(freqs);
+    return res;
+}
+
 void fixedSizeVector::calcFrequency(unordered_map <uint32_t, uint32_t> &freq) {
 
     for(auto i:vec)
         freq[i]++;
 
+
+}
+
+uint64_t fixedSizeVector::theoriticalMinSizeInBytes() {
+    unordered_map<uint32_t,uint32_t> freqs;
+    for(auto c:vec)
+    {
+        freqs[c]++;
+    }
+    return theoriticalMinSizeInBytesHelper(freqs);
 
 }

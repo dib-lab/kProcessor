@@ -311,6 +311,8 @@ class vectorBase{
 
     virtual void calcFrequency(unordered_map<uint32_t,uint32_t>& freq)=0;
 
+    virtual uint64_t theoriticalMinSizeInBytes()=0;
+
 
 };
 
@@ -378,6 +380,8 @@ public:
 
     vector<uint32_t> splitIds(uint32_t numSamples)override;
     void calcFrequency(unordered_map<uint32_t,uint32_t>& freq) override;
+
+    uint64_t theoriticalMinSizeInBytes()override;
 
 
 };
@@ -515,6 +519,8 @@ public:
         return vector<uint32_t>();
     }
 
+    uint64_t theoriticalMinSizeInBytes(){return 0;}
+
 
 };
 
@@ -584,6 +590,9 @@ public:
 
 
     void calcFrequency(unordered_map<uint32_t,uint32_t>& freq) override;
+
+
+    uint64_t theoriticalMinSizeInBytes()override;
 };
 
 class fixedSizeVectorIterator: public _vectorBaseIterator{
@@ -715,8 +724,8 @@ public:
             res+=colors[i]->size();
         return res;
     }
-    uint32_t numIntegers(){
-        uint32_t res=0;
+    uint64_t numIntegers(){
+        uint64_t res=0;
         for(unsigned int i=1;i<colors.size();i++)
             res+=colors[i]->numIntegers();
         return res;
