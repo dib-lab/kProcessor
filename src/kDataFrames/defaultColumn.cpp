@@ -650,7 +650,7 @@ void mixVectors::explainSize() {
         numIntegers += vec->numIntegers();
     }
     cout << "Arrays sizes = " << vMBBytes << "MB" << endl;
-    cout<< "bits per int = "<<fixed<<(vMBBytes*1024.0*1024.0)/(double)numIntegers<<endl;
+    cout<< "bits per int = "<<fixed<<(vMBBytes*1024.0*1024.0*8)/(double)numIntegers<<endl;
     cout << "Total = " << sizeInBytes() / (1024.0 * 1024.0) << "MB" << endl;
     cout << "Num Integers = " << numIntegers << endl;
     // cout<<"Ids Size = "<<sdsl::size_in_bytes(idsMap)/(1024.0*1024.0)<<"MB"<<endl;
