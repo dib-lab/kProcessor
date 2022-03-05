@@ -309,6 +309,9 @@ class vectorBase{
     virtual vector<uint32_t> splitIds(uint32_t numSamples)=0;
 
 
+    virtual void calcFrequency(unordered_map<uint32_t,uint32_t>& freq)=0;
+
+
 };
 
 class vectorOfVectors: public vectorBase{
@@ -374,6 +377,7 @@ public:
 
 
     vector<uint32_t> splitIds(uint32_t numSamples)override;
+    void calcFrequency(unordered_map<uint32_t,uint32_t>& freq) override;
 
 
 };
@@ -498,6 +502,10 @@ public:
         return 0.0;
     }
 
+    void calcFrequency(unordered_map<uint32_t,uint32_t>& freq){
+
+    }
+
     vectorBase *clone() override {
         return new constantVector(noColors);
     }
@@ -573,6 +581,9 @@ public:
     vectorBase *clone() override;
 
     vector<uint32_t> splitIds(uint32_t numSamples);
+
+
+    void calcFrequency(unordered_map<uint32_t,uint32_t>& freq) override;
 };
 
 class fixedSizeVectorIterator: public _vectorBaseIterator{
@@ -653,6 +664,7 @@ public:
     virtual Column* getTwin()=0;
 
     virtual void resize(uint32_t size)=0;
+    virtual uint64_t theoriticalMinSizeInBytes()=0;
 
 };
 class StringColorColumn;
@@ -711,6 +723,8 @@ public:
     }
     uint64_t sizeInBytes();
     void explainSize();
+
+    uint64_t theoriticalMinSizeInBytes() override;
 
     Column* getTwin();
 
@@ -811,6 +825,8 @@ public:
     }
 
     Column *clone() override;
+
+    uint64_t theoriticalMinSizeInBytes() override;
 };
 //class prefixForest: public queryColorColumn{
 //public:

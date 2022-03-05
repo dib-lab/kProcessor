@@ -640,6 +640,9 @@ void mixVectors::explainSize() {
     cout << "Query Column" << endl;
     uint64_t numIntegers = 0;
     cout << "Ids Size = " << sdsl::size_in_bytes(idsMap) / (1024.0 * 1024.0) << "MB" << endl;
+    sdsl::int_vector<32> ids2(idsMap.size());
+    std::copy(idsMap.begin(),idsMap.end(),ids2.begin());
+    cout << "Ids Size 32 bit = " << sdsl::size_in_mega_bytes(ids2)  << "MB" << endl;
     double vMBBytes = 0.0;
     for (auto vec:colors) {
         vMBBytes += vec->sizeInMB();
@@ -647,9 +650,11 @@ void mixVectors::explainSize() {
         numIntegers += vec->numIntegers();
     }
     cout << "Arrays sizes = " << vMBBytes << "MB" << endl;
+    cout<< "bits per int = "<<fixed<<(vMBBytes*1024.0*1024.0)/(double)numIntegers<<endl;
     cout << "Total = " << sizeInBytes() / (1024.0 * 1024.0) << "MB" << endl;
     cout << "Num Integers = " << numIntegers << endl;
     // cout<<"Ids Size = "<<sdsl::size_in_bytes(idsMap)/(1024.0*1024.0)<<"MB"<<endl;
+    cout<<"Theoritcal minimum size = "<<fixed<<theoriticalMinSizeInBytes()/ (1024.0 * 1024.0) << "MB" << endl;
 }
 
 Column *mixVectors::clone() {
@@ -1665,10 +1670,15 @@ void prefixTrie::explainSize() {
     cout << "translate= " << translateSize << "MB\n";
     cout << "translate= " << translateEdges.size() << "ints\n";
 
+    cout<< "graph size trees and edges= " << treeSize +eSize + bpSize+translateSize << "MB\n";
+    double therotical=theoriticalMinSizeInBytes()/ (1024.0 * 1024.0);
+    cout << "theortical min size for edges only= "  <<fixed<< therotical<< "MB" << endl;
+    cout << "theortical min size for graph= "  <<fixed<<therotical+ treeSize  + bpSize+translateSize +sdsl::size_in_mega_bytes(idsMap) +sdsl::size_in_mega_bytes(starts) << "MB" << endl;
+
 
     double total = eSize + sdsl::size_in_mega_bytes(idsMap)
                    + bpSize +
-                   treeSize+translateSize;
+                   treeSize+translateSize+sdsl::size_in_mega_bytes(starts);
     cout << "Total = " << total << "MB" << endl;
 
 
@@ -1871,7 +1881,25 @@ Column *prefixTrie::clone() {
     return res;
 }
 
-
+uint64_t prefixTrie::theoriticalMinSizeInBytes() {
+    unordered_map<uint32_t,uint32_t> freqs;
+    uint64_t numIntegrs=0;
+    for(auto c:edges)
+    {
+        for(auto i:*c)
+            freqs[i]++;
+        numIntegrs+=c->size();
+    }
+    double  entropy=0;
+    for(auto integer:freqs)
+    {
+        double p=(double)integer.second/(double) numIntegrs;
+        entropy+= (p * log2(p));
+    }
+    entropy*=-1;
+    return (entropy* (double)
+    numIntegrs) /8.0;
+}
 
 
 template<typename ColumnType,typename indexType>
@@ -2379,3 +2407,36 @@ mixVectorSortedIterator::mixVectorSortedIterator(mixVectors *data, uint32_t curr
 mixVectorSortedIterator::mixVectorSortedIterator(const mixVectorSortedIterator &other) :
 data(other.data),curr(other.curr), end(other.end) {}
 
+uint64_t mixVectors::theoriticalMinSizeInBytes() {
+    unordered_map<uint32_t,uint32_t> freqs;
+    for(auto c:colors)
+    {
+        c->calcFrequency(freqs);
+    }
+    uint64_t numIntegrs=numIntegers();
+    double  entropy=0;
+    for(auto integer:freqs)
+    {
+        double p=(double)integer.second/(double) numIntegrs;
+        entropy+= (p * log2(p));
+    }
+    entropy*=-1;
+    return (entropy* numIntegrs) /8.0;
+}
+
+void vectorOfVectors::calcFrequency(unordered_map <uint32_t, uint32_t> &freq) {
+
+    for(auto i:vecs)
+        freq[i]++;
+    for(auto i:starts)
+        freq[i]++;
+
+
+}
+void fixedSizeVector::calcFrequency(unordered_map <uint32_t, uint32_t> &freq) {
+
+    for(auto i:vec)
+        freq[i]++;
+
+
+}
