@@ -2414,6 +2414,12 @@ uint64_t mixVectors::theoriticalMinSizeInBytes() {
     for(auto c:colors)
         c->calcSizeFrequency(freqSize);
 
+    cout<<endl<<"Freq s"<<endl;
+    for(auto f:freqSize)
+    {
+        cout<<f.first<<"\t"<<f.second<<endl;
+    }
+
     double n=noSamples;
     for(auto element:freqSize)
     {
