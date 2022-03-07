@@ -638,6 +638,8 @@ uint64_t mixVectors::sizeInBytes() {
 
 void mixVectors::explainSize() {
     cout << "Query Column" << endl;
+    cout<< "Number of colors "<<size()<<endl;
+    cout<< "Number of samples "<<noSamples<<endl;
     uint64_t numIntegers = 0;
     cout << "Ids Size = " << sdsl::size_in_bytes(idsMap) / (1024.0 * 1024.0) << "MB" << endl;
     sdsl::int_vector<32> ids2(idsMap.size());
@@ -1149,7 +1151,6 @@ void prefixTrie::loadFromQueryColorColumn(mixVectors  *col,int numThreads,int mi
     underConstuction=true;
     initializeTrees(col);
     col->createSortedIndex(numThreads);
-    col->explainSize();
 
     sdsl::int_vector<32> invIdsMap(col->idsMap.size()+1);
     unsigned N=col->idsMap.size();
@@ -2409,9 +2410,19 @@ data(other.data),curr(other.curr), end(other.end) {}
 
 uint64_t mixVectors::theoriticalMinSizeInBytes() {
     uint64_t result=0;
+    unordered_map<uint32_t,uint32_t> freqSize;
     for(auto c:colors)
-        result+=c->theoriticalMinSizeInBytes();
-    return result;
+        c->calcSizeFrequency(freqSize);
+
+    double n=noSamples;
+    for(auto element:freqSize)
+    {
+        double k=element.first;
+        double entropy=k* log2(0.48* (n/k));
+        result+=(entropy*element.second);
+    }
+
+    return result/8;
 }
 
 void vectorOfVectors::calcFrequency(unordered_map <uint32_t, uint32_t> &freq) {
@@ -2421,6 +2432,17 @@ void vectorOfVectors::calcFrequency(unordered_map <uint32_t, uint32_t> &freq) {
     for(auto i:starts)
         freq[i]++;
 
+
+}
+
+void vectorOfVectors::calcSizeFrequency(unordered_map <uint32_t, uint32_t> &freq) {
+
+
+    for(unsigned i=1;i<starts.size();i++)
+    {
+        unsigned size=starts[i]-starts[i-1];
+        freq[size]++;
+    }
 
 }
 
@@ -2465,6 +2487,9 @@ void fixedSizeVector::calcFrequency(unordered_map <uint32_t, uint32_t> &freq) {
 
 }
 
+void fixedSizeVector::calcSizeFrequency(unordered_map <uint32_t, uint32_t> &freq) {
+    freq[colorsize]+=size();
+}
 uint64_t fixedSizeVector::theoriticalMinSizeInBytes() {
     unordered_map<uint32_t,uint32_t> freqs;
     for(auto c:vec)

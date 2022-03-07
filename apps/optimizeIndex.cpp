@@ -19,6 +19,7 @@ int main(int argc, char *argv[]) {
     omp_set_num_threads(nThreads);
     kDataFrame* KF=kDataFrame::load(inputIndex);
     auto prevColor=(deduplicatedColumn< mixVectors>*)KF->columns["color"];
+    prevColor->values->explainSize();
     auto newColor=new deduplicatedColumn<prefixTrie>();
     newColor->index=prevColor->index;
     newColor->values=new prefixTrie(prevColor->values,nThreads,minCompress);

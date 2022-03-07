@@ -309,6 +309,7 @@ class vectorBase{
     virtual vector<uint32_t> splitIds(uint32_t numSamples)=0;
 
 
+    virtual void calcSizeFrequency(unordered_map<uint32_t,uint32_t>& freq)=0;
     virtual void calcFrequency(unordered_map<uint32_t,uint32_t>& freq)=0;
 
     virtual uint64_t theoriticalMinSizeInBytes()=0;
@@ -380,6 +381,8 @@ public:
 
     vector<uint32_t> splitIds(uint32_t numSamples)override;
     void calcFrequency(unordered_map<uint32_t,uint32_t>& freq) override;
+
+    void calcSizeFrequency(unordered_map<uint32_t,uint32_t>& freq) override;
 
     uint64_t theoriticalMinSizeInBytes()override;
 
@@ -510,6 +513,9 @@ public:
 
     }
 
+    void calcSizeFrequency(unordered_map<uint32_t,uint32_t>& freq){
+
+    }
     vectorBase *clone() override {
         return new constantVector(noColors);
     }
@@ -591,6 +597,7 @@ public:
 
     void calcFrequency(unordered_map<uint32_t,uint32_t>& freq) override;
 
+    void calcSizeFrequency(unordered_map<uint32_t,uint32_t>& freq) override;
 
     uint64_t theoriticalMinSizeInBytes()override;
 };
