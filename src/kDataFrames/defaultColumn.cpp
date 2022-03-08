@@ -2408,16 +2408,46 @@ mixVectorSortedIterator::mixVectorSortedIterator(mixVectors *data, uint32_t curr
 mixVectorSortedIterator::mixVectorSortedIterator(const mixVectorSortedIterator &other) :
 data(other.data),curr(other.curr), end(other.end) {}
 
+double calcEntropy(uint64_t n,uint64_t k)
+{
+    double entropy = 0;
+    for (uint64_t i = 0; i < k; i++) {
+        entropy += log2(n - i);
+        entropy -= log2(i + 1);
+    }
+    return entropy;
+}
 uint64_t mixVectors::theoriticalMinSizeInBytes() {
     uint64_t result=0;
     unordered_map<uint32_t,uint32_t> freqSize;
-    for(auto c:colors)
+    unordered_map<uint32_t,uint32_t> tmp2;
+    for(auto c:colors) {
         c->calcSizeFrequency(freqSize);
+        c->calcFrequency(tmp2);
 
-    cout<<endl<<"Freq s"<<endl;
+    }
+    cout<<endl;
+    double TotalSize=0;
+    uint64_t k2=0;
     for(auto f:freqSize)
     {
-        cout<<f.first<<"\t"<<f.second<<endl;
+        uint64_t n=noSamples;
+        uint64_t k=f.first;
+        k2+=k*f.second;
+        TotalSize+=(calcEntropy(n,k)*f.second)/8.0;
+    }
+    cout<<"Theoritical Size 1 = "<<fixed<<TotalSize/(1024.0*1024.0)<<endl;
+    {
+        uint64_t n=noSamples*numColors;
+        uint64_t k=0;
+        for(auto t:tmp2)
+        {
+            k+=t.first*t.second;
+        }
+        cout<<n<<" "<<k<<" "<<k2<<endl;
+        double TotalSize2= calcEntropy(n,k2) /(8.0*1024*1024);
+        cout<<"Theoritical Size 2 = "<<fixed<<TotalSize2<<endl;
+
     }
 
     double n=noSamples;
@@ -2433,10 +2463,7 @@ uint64_t mixVectors::theoriticalMinSizeInBytes() {
 
 void vectorOfVectors::calcFrequency(unordered_map <uint32_t, uint32_t> &freq) {
 
-    for(auto i:vecs)
-        freq[i]++;
-    for(auto i:starts)
-        freq[i]++;
+    freq[vecs.size()]++;
 
 
 }
@@ -2487,8 +2514,7 @@ uint64_t vectorOfVectors::theoriticalMinSizeInBytes() {
 
 void fixedSizeVector::calcFrequency(unordered_map <uint32_t, uint32_t> &freq) {
 
-    for(auto i:vec)
-        freq[i]++;
+    freq[vec.size()]++;
 
 
 }
