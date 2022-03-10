@@ -8,7 +8,7 @@ class kDataFrame_sshash;
 
 class kDataFrame_sshashIterator : public _kDataFrameIterator {
 private:
-    sshash::dictionary::iterator iterator;
+    sshash::dictionary::iterator* iterator;
     kDataFrame_sshash *origin;
     std::pair<uint64_t, std::string> currKmer;
     uint32_t kmerID;

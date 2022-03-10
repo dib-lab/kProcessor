@@ -15,16 +15,18 @@ kDataFrame_sshashIterator::kDataFrame_sshashIterator(uint32_t kmerID, kDataFrame
 
     this->origin = origin;
     this->kmerID= kmerID;
+
+    iterator=new sshash::dictionary::iterator(&origin->dict);
     if(kmerID==origin->dict.size())
     {
 
-        iterator = origin->dict.at(kmerID-1);
-        iterator.next();
+        *iterator = origin->dict.at(kmerID-1);
+        iterator->next();
     }
     else{
 
-        iterator = origin->dict.at(kmerID);
-        currKmer=iterator.next();
+        *iterator = origin->dict.at(kmerID);
+        currKmer=iterator->next();
     }
 }
 
@@ -34,16 +36,17 @@ kDataFrame_sshashIterator::kDataFrame_sshashIterator(const kDataFrame_sshashIter
 
     this->origin = other.origin;
     kmerID= other.kmerID;
+    iterator=new sshash::dictionary::iterator(&origin->dict);
     if(kmerID==origin->dict.size())
     {
 
-        iterator = origin->dict.at(kmerID-1);
-        iterator.next();
+        *iterator = origin->dict.at(kmerID-1);
+        iterator->next();
     }
     else{
 
-        iterator = origin->dict.at(kmerID);
-        currKmer=iterator.next();
+        *iterator = origin->dict.at(kmerID);
+        currKmer=iterator->next();
     }
 }
 
@@ -52,8 +55,8 @@ _kDataFrameIterator *kDataFrame_sshashIterator::clone() {
 }
 
 kDataFrame_sshashIterator &kDataFrame_sshashIterator::operator++(int) {
-    if(iterator.has_next())
-        currKmer=iterator.next();
+    if(iterator->has_next())
+        currKmer=iterator->next();
     kmerID++;
     return *this;
 }
@@ -82,8 +85,8 @@ bool kDataFrame_sshashIterator::setOrder(uint64_t count) {
 }
 
 void kDataFrame_sshashIterator::endIterator() {
-    iterator=origin->dict.at(origin->dict.size()-1);
-    iterator.next();
+    *iterator=origin->dict.at(origin->dict.size()-1);
+    iterator->next();
     kmerID=origin->dict.size();
 }
 
