@@ -1,12 +1,6 @@
 name: Ubuntu
 
-on:
-  push:
-    branches:
-      - master
-  pull_request:
-    branches:
-      - master
+on: [push, pull_request]
 
 env:
   CTEST_OUTPUT_ON_FAILURE: 1
@@ -29,7 +23,7 @@ jobs:
       #   run: cmake -Stest -Bbuild -DENABLE_TEST_COVERAGE=1 -DCMAKE_BUILD_TYPE=Debug
 
       - name: configure
-        run: cmake -Bbuild
+        run: cmake -Bbuild -DBUILD_ALL=1
 
       - name: build
         run: cmake --build build -j4
