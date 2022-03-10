@@ -101,7 +101,7 @@ bool kDataFrame_sshashIterator::operator!=(const _kDataFrameIterator &other) {
 }
 
 kDataFrame_sshashIterator::~kDataFrame_sshashIterator() {
-
+    delete iterator;
 }
 string gen_random_sshash(const int len) {
     srand (time(NULL));
