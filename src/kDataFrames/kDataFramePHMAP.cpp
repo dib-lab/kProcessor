@@ -217,7 +217,7 @@ void kDataFramePHMAP::save(string filePath) {
     filePath += ".phmap";
     {   
         phmap::BinaryOutputArchive ar_out(filePath.c_str());
-        this->MAP.dump(ar_out);
+        this->MAP.phmap_dump(ar_out);
     }
     
 }
@@ -246,7 +246,7 @@ kDataFrame *kDataFramePHMAP::load(string filePath) {
     kDataFramePHMAP *KMAP = new kDataFramePHMAP(slicing_mode, hash_mode, kmerDecoder_params);
     {
         phmap::BinaryInputArchive ar_in(filePath.c_str());
-        KMAP->MAP.load(ar_in);
+        KMAP->MAP.phmap_load(ar_in);
     }
 
     return KMAP;
