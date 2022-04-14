@@ -26,8 +26,10 @@ int main(int argc, char *argv[]) {
     KF->columns["color"]=newColor;
     KF->save(outputIndex);
 
+   // return 0;
     auto correctCol=prevColor->values;
-    auto queryCol=prevColor->values;
+    auto queryCol=newColor->values;
+
 
     const unsigned numColors=correctCol->numColors;
     bool error=false;
@@ -38,21 +40,22 @@ int main(int argc, char *argv[]) {
         auto newColor=queryCol->getWithIndex(i);
         if(correctColor != newColor)
         {
-            error=true;
-            cerr<<"Not Matching Colors "<<i<<endl;
-            cerr<<"Correct ";
-            for(auto c:correctColor)
+#pragma omp critical
             {
-                cerr<<c<<" ";
-            }
-            cerr<<endl;
+                error = true;
+                cerr << "Not Matching Colors " << i << endl;
+                cerr << "Correct ";
+                for (auto c: correctColor) {
+                    cerr << c << " ";
+                }
+                cerr << endl;
 
-            cerr<<"Query ";
-            for(auto c:newColor)
-            {
-                cerr<<c<<" ";
+                cerr << "Query ";
+                for (auto c: newColor) {
+                    cerr << c << " ";
+                }
+                cerr << endl;
             }
-            cerr<<endl;
            // break;
 
         }
