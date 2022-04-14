@@ -717,7 +717,7 @@ void mixVectors::createSortedIndex(int numThreads) {
                     return true;
                 else if (std::get<0>(lhs)[i] < std::get<0>(rhs)[i])
                     return false;
-                return std::get<0>(lhs).size() > std::get<0>(rhs).size();
+            return std::get<0>(lhs).size() > std::get<0>(rhs).size();
         };
         priority_queue<tuple<vector<uint32_t>, uint32_t, vectorBaseIterator *, vectorBaseIterator *>, vector<tuple<vector<uint32_t>, uint32_t, vectorBaseIterator *, vectorBaseIterator *> >, decltype(compare)> nextColor(
                 compare);
@@ -1257,6 +1257,8 @@ void prefixTrie::loadFromQueryColorColumn(mixVectors  *col,int numThreads,int mi
                 rankMap->clear();
                 pastNodes.clear();
                 nodesCache.clear();
+                vector<uint32_t> debugColor={2, 28, 42};
+                vector<uint32_t> debugColor2={2, 28, 42, 42};
                 mixVectorSortedIterator currIterator=workChunks[w];
                 unsigned numColorsToProcess=currIterator.end-currIterator.curr;
                 bool firstColor=true;
@@ -1264,6 +1266,9 @@ void prefixTrie::loadFromQueryColorColumn(mixVectors  *col,int numThreads,int mi
                     pair<uint32_t,vector<uint32_t> > tmp=currIterator.get();
                     uint32_t colorGlobalIndex=tmp.first;
                     vector<uint32_t> currColor=tmp.second;
+
+                    if(currColor == debugColor || currColor ==debugColor2)
+                        cout <<"Here"<<endl;
                     unsigned int i = 0;
                     for (; i < currPrefix.size() && i < currColor.size(); i++) {
                         if (currPrefix[i] != currColor[i])
@@ -1430,38 +1435,48 @@ void prefixTrie::loadFromQueryColorColumn(mixVectors  *col,int numThreads,int mi
         delete ChunkslocalEdges[i];
         delete ChunkslocalTree[i];
     }
-    unordered_map<uint64_t,uint64_t> revIDSMap;
-    revIDSMap.reserve(idsMap.size()*2);
-    for(unsigned i=0;i<idsMap.size();i++)
-    {
-        revIDSMap[idsMap[i]]=i;
-    }
-    uint64_t nextColor=idsMap.size();
-    vector<uint64_t> newColors;
-    newColors.reserve(idsMap.size());
-    for(auto e:unCompressedEdges)
-    {
-        for(unsigned i=0;i< e->size(); i++)
-        {
-            uint32_t currNode=(*e)[i];
-            if(currNode>=noSamples)
-            {
-                currNode-=noSamples;
-                auto it=revIDSMap.find(currNode);
-                if(it==revIDSMap.end())
-                {
-                    newColors.push_back(currNode);
-                    revIDSMap[currNode]=nextColor++;
-                    it=revIDSMap.find(currNode);
-                }
-                (*e)[i]=it->second;
-            }
-        }
-    }
-    uint32_t oldIdSize=idsMap.size();
-    idsMap.resize(idsMap.size()+newColors.size());
-    std::copy(newColors.begin(),newColors.end(),idsMap.begin()+oldIdSize);
-    // replace pointers with color ID
+
+
+//    calcComplexColorsFreqs();
+//    calcComplexColorsSortOrder();
+//    filterComplexColors();
+//    transformToMixVectors();
+
+
+//    unordered_map<uint64_t,uint64_t> revIDSMap;
+//    revIDSMap.reserve(idsMap.size()*2);
+//    for(unsigned i=0;i<idsMap.size();i++)
+//    {
+//        revIDSMap[idsMap[i]]=i;
+//    }
+//    uint64_t nextColor=idsMap.size();
+//    vector<uint64_t> newColors;
+//    newColors.reserve(idsMap.size());
+//    for(auto e:unCompressedEdges)
+//    {
+//        for(unsigned i=0;i< e->size(); i++)
+//        {
+//            uint32_t currNode=(*e)[i];
+//            if(currNode>=noSamples)
+//            {
+//                currNode-=noSamples;
+//                auto it=revIDSMap.find(currNode);
+//                if(it==revIDSMap.end())
+//                {
+//                    newColors.push_back(currNode);
+//                    revIDSMap[currNode]=nextColor++;
+//                    it=revIDSMap.find(currNode);
+//                }
+//                (*e)[i]=it->second;
+//            }
+//        }
+//    }
+//    uint32_t oldIdSize=idsMap.size();
+//    idsMap.resize(idsMap.size()+newColors.size());
+//    std::copy(newColors.begin(),newColors.end(),idsMap.begin()+oldIdSize);
+//    // replace pointers with color ID
+
+
 
     unordered_map<uint32_t,uint32_t> nodesCount;
     for(auto e:unCompressedEdges)
@@ -1513,7 +1528,144 @@ void prefixTrie::loadFromQueryColorColumn(mixVectors  *col,int numThreads,int mi
     underConstuction=false;
 }
 
+void prefixTrie::calcComplexColorsFreqs() {
 
+    for(auto e:unCompressedEdges)
+    {
+        for(auto node : *e)
+        {
+            if(node >= noSamples)//complex color
+            {
+                auto it=complexColors.find(node);
+                if(it == complexColors.end()) {
+                    uint32_t newPointer = node - noSamples;
+                    auto t = decodeColor(newPointer);
+                    complexColors[node]= make_pair(t.size(),1);
+                }
+                else{
+                    it->second.second++;
+                }
+            }
+        }
+    }
+
+}
+
+void prefixTrie::calcComplexColorsSortOrder()  {
+    complexColorSortOrder.resize(complexColors.size());
+    unsigned i=0;
+    for(auto it: complexColors)
+        complexColorSortOrder[i++]=it.first;
+    sort(complexColorSortOrder.begin(), complexColorSortOrder.end(),
+         [&](const uint32_t & a, const uint32_t & b) -> bool
+         {
+        // DSF described in dint paper
+            auto ap = complexColors[a];
+            auto bp = complexColors[b];
+            if(ap.second > bp.second)
+             return true;
+            else if(ap.second < bp.second)
+                return false;
+            else
+                return ap.first > bp.first;
+         });
+
+    unordered_map<uint32_t ,uint32_t> histo;
+    float cc=0;
+    float all=(float)complexColors.size();
+
+
+
+
+}
+
+
+void prefixTrie::filterComplexColors()   {
+    int threshold=200;
+    int colorI=noSamples;
+    for(auto it: complexColorSortOrder)
+    {
+
+
+        if(complexColors[it].second > threshold) {
+            chosenComplexColors[it] = complexColors[it];
+            chosenComplexColors[it].first=colorI++;
+        }
+    }
+    cout<<"All complex colors"<<complexColorSortOrder.size()<<endl;
+    cout<<"Chosen "<<chosenComplexColors.size()<<endl;
+
+}
+void prefixTrie::transformToMixVectors() {
+    insertColorColumn col(noSamples,"tmp.");
+    unsigned allSimple=0;
+    unsigned hasComplex=0;
+    for(auto treeIndex:idsMap)
+    {
+        vector<uint32_t> tmp;
+        auto tmp2= decodeColor(treeIndex);
+        bool error=false;
+        for(unsigned i=1;i<tmp2.size();i++)
+            if(tmp2[i]==tmp2[i-1]) {
+                error = true;
+                break;
+            }
+        if(error) {
+            for (auto t: tmp2)
+                cout << t << " ";
+            cout << endl;
+        }
+        if(treeIndex == 1680068)
+        {
+
+        }
+        tmp.reserve(noSamples);
+        queue<uint64_t> Q;
+        Q.push(treeIndex);
+        while (!Q.empty()) {
+            prefixTrieIterator it(this,Q.front());
+            Q.pop();
+            do
+            {
+                if(it.isPortal() )
+                {
+                    if(chosenComplexColors.find(*it) == chosenComplexColors.end()) {
+                        uint32_t newPointer = *it - noSamples;
+                        vector<uint32_t> t;
+                        t = decodeColor(newPointer);
+                        tmp.insert(tmp.end(), t.begin(), t.end());
+                    }
+                    else{
+                        tmp.push_back(chosenComplexColors[*it].first);
+                    }
+                }
+                else
+                {
+                    tmp.push_back(*it);
+                }
+            } while (it.go_parent());
+        }
+        sort(tmp.begin(),tmp.end());
+        bool complex=false;
+        for(auto t:tmp)
+        {
+            if(t>=noSamples) {
+                hasComplex++;
+                complex=true;
+                break;
+            }
+        }
+        if(!complex)
+            allSimple++;
+        col.insertAndGetIndex(tmp);
+    }
+
+    cout<<"all "<<idsMap.size()<<endl;
+    cout<<"all simple "<<allSimple<<endl;
+    cout<<"has complex "<<hasComplex<<endl;
+    mixVectors mix(&col);
+    mix.explainSize();
+}
 
 uint32_t prefixTrie::insertAndGetIndex(vector<uint32_t> &item) {
     throw std::logic_error("insertAndGetIndex is not supported in mixVectors");
@@ -1548,7 +1700,8 @@ inline vector<uint32_t> prefixTrie::decodeColor(uint64_t treeIndex){
                     t= decodeColor(newPointer);
                 }
                 else{
-                    t= decodeColor(idsMap[newPointer]);
+                   // t= decodeColor(idsMap[newPointer]);
+                    t= decodeColor(newPointer);
                 }
                 tmp.insert(tmp.end(),t.begin(),t.end());
 //                if(queryCache->Cached(newPointer))
@@ -1901,6 +2054,7 @@ uint64_t prefixTrie::theoriticalMinSizeInBytes() {
     return (entropy* (double)
     numIntegrs) /8.0;
 }
+
 
 
 template<typename ColumnType,typename indexType>

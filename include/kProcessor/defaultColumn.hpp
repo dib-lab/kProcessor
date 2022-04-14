@@ -780,6 +780,10 @@ private:
     lru_cache_t<uint64_t, vector<uint32_t>>* queryCache;
     deque<sdsl::int_vector<>*>  unCompressedEdges;
     bool underConstuction;
+    unordered_map<uint32_t,pair<uint32_t,uint32_t>> complexColors;
+    vector<uint32_t> complexColorSortOrder;
+    unordered_map<uint32_t,pair<uint32_t,uint32_t>> chosenComplexColors;
+
 public:
     typedef  vector<uint32_t> dataType;
     typedef  sdsl::int_vector<> vectype;
@@ -799,7 +803,12 @@ public:
     prefixTrie(mixVectors* col,int numThreads=1,int minimumCompress =5);
 
     void initializeTrees(mixVectors* col);
+
     void loadFromQueryColorColumn(mixVectors* col,int numThreads=1,int minimumCompress =5);
+    void calcComplexColorsFreqs();
+    void calcComplexColorsSortOrder();
+    void filterComplexColors();
+    void transformToMixVectors();
     ~prefixTrie(){
         for(auto t:tree)
             delete t;
