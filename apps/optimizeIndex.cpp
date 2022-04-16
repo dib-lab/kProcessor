@@ -26,22 +26,32 @@ int main(int argc, char *argv[]) {
     KF->columns["color"]=newColor;
     KF->save(outputIndex);
 
-   // return 0;
+
     auto correctCol=prevColor->values;
     auto queryCol=newColor->values;
 
 
     const unsigned numColors=correctCol->numColors;
     bool error=false;
-#pragma omp parallel for shared(error)
+    unsigned numCorrect=0;
+    unsigned numWrong=0;
+
+#pragma omp parallel for shared(error,numWrong)
     for(uint32_t i=1; i<numColors; i++)
     {
+
         auto correctColor=correctCol->getWithIndex(i);
+
         auto newColor=queryCol->getWithIndex(i);
-        if(correctColor != newColor)
+      //  continue;
+        if(correctColor != newColor  )
         {
+            numWrong++;
+
 #pragma omp critical
+            if(numWrong<100)
             {
+                numWrong++;
                 error = true;
                 cerr << "Not Matching Colors " << i << endl;
                 cerr << "Correct ";
@@ -50,8 +60,9 @@ int main(int argc, char *argv[]) {
                 }
                 cerr << endl;
 
-                cerr << "Query ";
+                cerr << "  Query ";
                 for (auto c: newColor) {
+
                     cerr << c << " ";
                 }
                 cerr << endl;
@@ -64,7 +75,8 @@ int main(int argc, char *argv[]) {
     }
     if(error)
     {
-        cerr<<"errors found"<<endl;
+        cerr<<"errors found "<<numWrong<<endl;
+        cerr<<"correct "<<numColors-numWrong<<endl;
         return-1;
     }
     else{
