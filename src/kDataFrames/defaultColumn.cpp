@@ -687,7 +687,7 @@ void mixVectors::createSortedIndex(int numThreads) {
     {
         splittedids[i]=colors[i]->splitIds(noSamples);
     }
-    vector<uint32_t> outputStart(noSamples,0);
+    vector<uint32_t> outputOffset(noSamples, 0);
     uint32_t currStart=0;
     for(int i=0;i<noSamples;i++)
     {
@@ -697,7 +697,7 @@ void mixVectors::createSortedIndex(int numThreads) {
             currStart+=splittedids[j][i];
         }
 
-        outputStart[i]=currStart;
+        outputOffset[i]=currStart;
     }
 
     cout<<"Time to prepare for create sorted index:"<<duration(timeNow()-t2)<<" s"<<endl;
@@ -754,7 +754,7 @@ void mixVectors::createSortedIndex(int numThreads) {
             vecIndex++;
 
         }
-        unsigned currColor=outputStart[currSample];
+        unsigned currColor=outputOffset[currSample];
         while (!nextColor.empty()) {
             auto colorTuple = nextColor.top();
             nextColor.pop();
@@ -1031,7 +1031,8 @@ vector<uint32_t> vectorOfVectors::splitIds(uint32_t numSamples) {
     unsigned localID=0;
     for(int i=numSamples-1;i>=0;i--)
     {
-        while(vectorsIT!=vecs.end() && *vectorsIT >i)
+       // uint32_t currSample=;
+        while(vectorsIT!=vecs.end() && (uint32_t)(*vectorsIT) >i)
         {
             localID++;
             uint32_t end=vecs.size();
@@ -1041,6 +1042,8 @@ vector<uint32_t> vectorOfVectors::splitIds(uint32_t numSamples) {
             startsIT++;
             vectorsIT+=diff;
         }
+        res[i]=localID;
+
 //        auto color=*it;
 //        while(color[0]>i && it!=end())
 //        {
@@ -1048,7 +1051,6 @@ vector<uint32_t> vectorOfVectors::splitIds(uint32_t numSamples) {
 //            color=*it;
 //        }
         //res[i]=it.getLocalID();
-        res[i]==localID;
 //        it= lower_bound(it,starts.end(),i,
 //                        [&](uint32_t lhs, uint32_t rhs) -> bool {
 //            cout<<lhs<<" "<<vecs[lhs]<<" "<<rhs<<endl;
@@ -1257,8 +1259,6 @@ void prefixTrie::loadFromQueryColorColumn(mixVectors  *col,int numThreads,int mi
                 rankMap->clear();
                 pastNodes.clear();
                 nodesCache.clear();
-                vector<uint32_t> debugColor={2, 28, 42};
-                vector<uint32_t> debugColor2={2, 28, 42, 42};
                 mixVectorSortedIterator currIterator=workChunks[w];
                 unsigned numColorsToProcess=currIterator.end-currIterator.curr;
                 bool firstColor=true;
@@ -1267,8 +1267,7 @@ void prefixTrie::loadFromQueryColorColumn(mixVectors  *col,int numThreads,int mi
                     uint32_t colorGlobalIndex=tmp.first;
                     vector<uint32_t> currColor=tmp.second;
 
-                    if(currColor == debugColor || currColor ==debugColor2)
-                        cout <<"Here"<<endl;
+
                     unsigned int i = 0;
                     for (; i < currPrefix.size() && i < currColor.size(); i++) {
                         if (currPrefix[i] != currColor[i])
@@ -1384,13 +1383,20 @@ void prefixTrie::loadFromQueryColorColumn(mixVectors  *col,int numThreads,int mi
                             chunkTreeEndIT--;
 
                         treeIT=std::copy(chunkTreeIT, chunkTreeEndIT, treeIT);
-
-                        for(auto r: chunksRanks[w]){
-                            idsMap[invIdsMap[r.first]] = globalRank+r.second;
+                        if(w==0) {
+                            for (auto r: chunksRanks[w]) {
+                                idsMap[invIdsMap[r.first]] = globalRank + r.second;
+                            }
+                        }
+                        else
+                        {
+                            for (auto r: chunksRanks[w]) {
+                                idsMap[invIdsMap[r.first]] = globalRank + r.second -1;
+                            }
                         }
                         globalRank += (chunkTreeEndIT -chunkTreeIT);
                     }
-		    delete bp_tree[currTree];
+		            delete bp_tree[currTree];
                     bp_tree[currTree]=new sdsl::bp_support_sada<>(tree[currTree]);
                 }
 #pragma omp section
@@ -2519,7 +2525,7 @@ mixVectorSortedIterator::mixVectorSortedIterator(mixVectors *pdata, vector<uint3
     }
     if(!scopeEnd.empty())
     {
-        endIT= lower_bound(startIt,pdata->sortedColorsIndex.end(),scopeEnd,compare);
+        endIT= lower_bound(pdata->sortedColorsIndex.begin(),pdata->sortedColorsIndex.end(),scopeEnd,compare);
     }
     curr=startIt-data->sortedColorsIndex.begin();
     end=endIT-data->sortedColorsIndex.begin();
