@@ -1115,11 +1115,11 @@ void prefixTrie::initializeTrees(mixVectors *col) {
 inline void setTreeValue(sdsl::bit_vector* tree,uint32_t index, bool value)
 {
     (*tree)[index] = value;
-//    if (index +1  == tree->size()) {
+    if (index +1  == tree->size()) {
 //        cerr << "Tmp bp_tree of size " << tree->size() << "(" << sdsl::size_in_mega_bytes(*tree)
 //        << "MB) is full! size will doubled" << endl;
-//        tree->resize(tree->size() * 2);
-//    }
+        tree->resize(tree->size() * 2);
+    }
 }
 inline void growTree(sdsl::bit_vector* tree,uint32_t minimumSize)
 {
@@ -1144,7 +1144,7 @@ inline void growEdges(sdsl::int_vector<>* tree,uint32_t minimumSize)
     {
         currSize*=2;
     }
-  //  cerr<<"Grow Edges to "<<currSize<<endl;
+    cerr<<"Grow Edges to "<<currSize<<endl;
     tree->resize(currSize);
 }
 void prefixTrie::loadFromQueryColorColumn(mixVectors  *col,int numThreads,int minimumCompress) {
@@ -1333,11 +1333,11 @@ void prefixTrie::loadFromQueryColorColumn(mixVectors  *col,int numThreads,int mi
 
                         setTreeValue(localTree,tmpTreeTop++,true);
                         (*localEdges)[tmpEdgesTop++] = sample;
-//                        if (tmpEdgesTop == localEdges->size()) {
-//                            cerr << "Tmp edges of size (" << sdsl::size_in_mega_bytes(*localEdges) << "MB) is full! size will doubled"
-//                            << endl;
-//                            localEdges->resize(localEdges->size() * 2);
-//                        }
+                        if (tmpEdgesTop == localEdges->size()) {
+                           // cerr << "Tmp edges of size (" << sdsl::size_in_mega_bytes(*localEdges) << "MB) is full! size will doubled"
+                           // << endl;
+                            localEdges->resize(localEdges->size() * 2);
+                        }
                     }
                     //idsMap[invIdsMap[colorGlobalIndex]] = localRank - 1;
                     (*rankMap)[colorGlobalIndex]=localRank - 1;
