@@ -1751,7 +1751,7 @@ void deduplicatedColumn<prefixTrie,phmap::flat_hash_map<uint32_t,uint32_t> >::se
     string containerFilename = filename + ".container";
 
     phmap::BinaryOutputArchive ar_out(indexFilename.c_str());
-    index.dump(ar_out);
+    index.phmap_dump(ar_out);
 
     values->serialize(containerFilename);
 }
@@ -1763,7 +1763,7 @@ void deduplicatedColumn<prefixTrie,phmap::flat_hash_map<uint32_t,uint32_t> >::de
     string containerFilename = filename + ".container";
 
     phmap::BinaryInputArchive ar_in(indexFilename.c_str());
-    index.load(ar_in);
+    index.phmap_load(ar_in);
 
 
     values = new prefixTrie();

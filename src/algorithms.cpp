@@ -637,11 +637,14 @@ namespace kProcessor {
 //                            }
 //                            ,lastKmerID);
 //                    }
-                    map->try_emplace_l(kmerHash,
-                                       [&order](uint32_t& v) {
-                        order=v;
-                        }
-                        ,lastKmerID);
+                    
+                    // TODO investigate more #98
+                    // help: https://github.com/greg7mdp/parallel-hashmap/blob/9c5601db3c01e9d39da31189816fdfc58c99f8d5/tests/parallel_hash_map_test.cc#L43
+                    // help: https://github.com/greg7mdp/parallel-hashmap/issues/75
+                    map->try_emplace_l(kmerHash, [](auto &) {} ,lastKmerID);
+
+                    // map->emplace(kmerHash, order);
+
                     if(order==lastKmerID)
                     {
 #pragma omp atomic capture
