@@ -638,12 +638,7 @@ namespace kProcessor {
 //                            ,lastKmerID);
 //                    }
                     
-                    // TODO investigate more #98
-                    // help: https://github.com/greg7mdp/parallel-hashmap/blob/9c5601db3c01e9d39da31189816fdfc58c99f8d5/tests/parallel_hash_map_test.cc#L43
-                    // help: https://github.com/greg7mdp/parallel-hashmap/issues/75
-                    map->try_emplace_l(kmerHash, [](auto &) {} ,lastKmerID);
-
-                    // map->emplace(kmerHash, order);
+                    map->try_emplace_l(kmerHash, [&order](auto& v) {order=v.second;} ,lastKmerID);
 
                     if(order==lastKmerID)
                     {
