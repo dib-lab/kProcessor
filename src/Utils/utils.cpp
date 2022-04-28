@@ -2,6 +2,8 @@
 #include <string>
 #include <gqf.h>
 #include <sys/stat.h>
+#include <stdexcept>
+#include <exception>
 #include <vector>
 #include <limits>
 #include <math.h>

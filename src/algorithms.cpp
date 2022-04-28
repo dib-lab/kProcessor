@@ -637,11 +637,9 @@ namespace kProcessor {
 //                            }
 //                            ,lastKmerID);
 //                    }
-                    map->try_emplace_l(kmerHash,
-                                       [&order](uint32_t& v) {
-                        order=v;
-                        }
-                        ,lastKmerID);
+                    
+                    map->try_emplace_l(kmerHash, [&order](auto& v) {order=v.second;} ,lastKmerID);
+
                     if(order==lastKmerID)
                     {
 #pragma omp atomic capture
