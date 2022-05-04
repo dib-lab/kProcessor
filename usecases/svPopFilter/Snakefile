@@ -51,7 +51,7 @@ framesToBeJoined+= expand(outFolder+"kProcessor/{sample}.kframe.bmqf.bmqf",sampl
 
 rule all:
     input:
-        expand(outFolder+"kProcessor/reads/variants.output.{experiment}",experiment=short.keys());
+        expand(outFolder+"kProcessor/reads/variants.output.{experiment}",experiment=short.keys())
 #         outFolder+"kProcessor/cdbg.phmap",
 #         outFolder+"kProcessor/variants.phmap",
 
@@ -211,15 +211,15 @@ rule extractReads:
         read2=lambda wildcards: getFile(short,f"{wildcards.experiment}")[1]
     output:
         out=outFolder+"kProcessor/reads/variants.output.{experiment}",
-        time=outFolder+"kProcessor/variants.extractReads.time"
+        time=outFolder+"kProcessor/variants.extractReads.{experiment}.time"
     params:
         inputPrefix=outFolder+ "kProcessor/variants"
-    log: outFolder+"kProcessor/variants.extractReads.log"
+    log: outFolder+"kProcessor/variants.extractReads.{experiment}.log"
     conda: "env.yaml"
     shell:
         """
         mkdir -p {tmpFolder}$$/
-       /usr/bin/time -v -o {output.time} ./extractReads -k {kSize} -s {params.inputPrefix}  -r {input.read1}:{input.read2}  -o {output.out} -t {tmpFolder}$$/ > {output.out} 2> {log}
+       /usr/bin/time -v -o {output.time} ./extractReads -k {kSize} -s {params.inputPrefix}  -r {input.read1}:{input.read2}  -o {output.out} -t {tmpFolder}$$/ -p  0.3  > {output.out} 2> {log}
         rm -rf {tmpFolder}$$/
      """
 
