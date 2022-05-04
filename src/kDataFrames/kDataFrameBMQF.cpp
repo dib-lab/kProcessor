@@ -330,7 +330,7 @@ uint32_t kDataFrameBMQF::insert(const string &kmer){
 bool kDataFrameBMQF::_insert(const string &kmer){
     if(load_factor()>0.85){
         // ERROR FLAG: _reserve(bufferedmqf->memoryBuffer->metadata->nslots)
-        reserve(bufferedmqf->disk->metadata->nslots);
+        reserve(bufferedmqf->disk->metadata->nslots*2);
     }
     uint64_t hash= KD->hash_kmer(kmer) % bufferedmqf->disk->metadata->range;
     try{
@@ -404,7 +404,7 @@ uint32_t kDataFrameBMQF::insert(uint64_t hash){
 bool kDataFrameBMQF::_insert(uint64_t hash){
     if(load_factor()>0.85){
         // ERROR FLAG: _reserve(bufferedmqf->memoryBuffer->metadata->nslots)
-        reserve(bufferedmqf->disk->metadata->nslots);
+        reserve(bufferedmqf->disk->metadata->nslots*2);
     }
     try{
         bufferedMQF_insert(bufferedmqf,hash,1,false,false);
