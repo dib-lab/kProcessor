@@ -16,8 +16,8 @@ jobs:
         with:
           submodules: recursive
 
-      - name: install boost
-        run: sudo apt-get install libboost-all-dev
+      - name: install dependecies
+        run: sudo apt-get install g++-9 swig cmake python3-dev zlib1g-dev libghc-bzlib-dev python3-distutils libboost-all-dev
 
       # - name: configure
       #   run: cmake -Stest -Bbuild -DENABLE_TEST_COVERAGE=1 -DCMAKE_BUILD_TYPE=Debug
