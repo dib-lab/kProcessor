@@ -1443,10 +1443,10 @@ void prefixTrie::loadFromQueryColorColumn(mixVectors  *col,int numThreads,int mi
     }
 
 
-//    calcComplexColorsFreqs();
-//    calcComplexColorsSortOrder();
-//    filterComplexColors();
-//    transformToMixVectors();
+    calcComplexColorsFreqs();
+    calcComplexColorsSortOrder();
+    filterComplexColors();
+    transformToMixVectors();
 
 
 //    unordered_map<uint64_t,uint64_t> revIDSMap;
@@ -1565,15 +1565,18 @@ void prefixTrie::calcComplexColorsSortOrder()  {
     sort(complexColorSortOrder.begin(), complexColorSortOrder.end(),
          [&](const uint32_t & a, const uint32_t & b) -> bool
          {
-        // DSF described in dint paper
             auto ap = complexColors[a];
             auto bp = complexColors[b];
-            if(ap.second > bp.second)
-             return true;
-            else if(ap.second < bp.second)
-                return false;
-            else
-                return ap.first > bp.first;
+             // DSF described in dint paper
+
+//            if(ap.second > bp.second)
+//             return true;
+//            else if(ap.second < bp.second)
+//                return false;
+//            else
+//                return ap.first > bp.first;
+
+            return (ap.first*ap.second) > (bp.first*bp.second);
          });
 
     unordered_map<uint32_t ,uint32_t> histo;
@@ -1587,13 +1590,14 @@ void prefixTrie::calcComplexColorsSortOrder()  {
 
 
 void prefixTrie::filterComplexColors()   {
-    int threshold=200;
+    int threshold=10;
     int colorI=noSamples;
     for(auto it: complexColorSortOrder)
     {
 
 
         if(complexColors[it].second > threshold) {
+            cout<<complexColors[it].first<<" "<<complexColors[it].second<<endl;
             chosenComplexColors[it] = complexColors[it];
             chosenComplexColors[it].first=colorI++;
         }
@@ -1609,22 +1613,7 @@ void prefixTrie::transformToMixVectors() {
     for(auto treeIndex:idsMap)
     {
         vector<uint32_t> tmp;
-        auto tmp2= decodeColor(treeIndex);
-        bool error=false;
-        for(unsigned i=1;i<tmp2.size();i++)
-            if(tmp2[i]==tmp2[i-1]) {
-                error = true;
-                break;
-            }
-        if(error) {
-            for (auto t: tmp2)
-                cout << t << " ";
-            cout << endl;
-        }
-        if(treeIndex == 1680068)
-        {
 
-        }
         tmp.reserve(noSamples);
         queue<uint64_t> Q;
         Q.push(treeIndex);
