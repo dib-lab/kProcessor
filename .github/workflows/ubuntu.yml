@@ -21,6 +21,14 @@ jobs:
         with:
           version: latest
           platform: x64
+      - name: Setup cmake
+        uses: jwlawson/actions-setup-cmake@v1.12
+        with:   
+         cmake-version: 'latest'
+      - name: Use cmake
+        run: cmake --version
+      - name: Use g++
+        run: g++ --version  
       - name: install dependecies
         run: sudo apt-get install  swig cmake python3-dev zlib1g-dev libghc-bzlib-dev python3-distutils libboost-all-dev
 
@@ -31,7 +39,7 @@ jobs:
         run: cmake -Bbuild -DBUILD_ALL=1
 
       - name: build
-        run: cmake --build build -j4
+        run: cmake --build build -j1
 
       # - name: test
       #   run: |
