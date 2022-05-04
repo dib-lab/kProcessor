@@ -40,6 +40,9 @@ jobs:
 
       - name: build
         run: cmake --build build -j1
+        
+      - name: test
+        run: cd build/tests/kProcessorLibTests/ && ./testKprocessorLib
 
       # - name: test
       #   run: |
