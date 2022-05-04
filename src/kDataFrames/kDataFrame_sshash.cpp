@@ -1,6 +1,7 @@
 #include "kDataframes/kDataFrameSSHash.hpp"
 #include <iostream>
 #include "builder/build.cpp"
+#include "lookup.cpp"
 
 
 /*
