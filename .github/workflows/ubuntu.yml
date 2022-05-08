@@ -28,7 +28,7 @@ jobs:
       - name: Use cmake
         run: cmake --version
       - name: Use g++
-        run: g++ --version  
+        run: g++ --version  && git status
       - name: install dependecies
         run: sudo apt-get install  swig cmake python3-dev zlib1g-dev libghc-bzlib-dev python3-distutils libboost-all-dev
 
