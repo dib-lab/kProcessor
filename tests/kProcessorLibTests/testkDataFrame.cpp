@@ -404,10 +404,8 @@ TEST_P(kDataFrameTest,insertNTimes)
     EXPECT_EQ(kframe->empty(), true);
 
     int insertedKmers=0;
-    cout<<"Before loop"<<endl;
     for(auto k:*kmers)
     {
-        cout<<"In loop"<<endl;
         kframe->setCount(k.first,k.second);
         if(kframe->load_factor()>=kframe->max_load_factor()*0.8)
         {
@@ -415,11 +413,9 @@ TEST_P(kDataFrameTest,insertNTimes)
         }
         insertedKmers++;
     }
-    cout<<"after loop"<<endl;
     int checkedKmers=0;
     for(auto k:*kmers)
     {
-        cout<<"in loop2"<<endl;
         int c=kframe->getCount(k.first);
         EXPECT_GE(c,k.second);
         if(checkedKmers==insertedKmers)
@@ -428,7 +424,6 @@ TEST_P(kDataFrameTest,insertNTimes)
         }
         checkedKmers++;
     }
-    cout<<"after loop2"<<endl;
     delete kframe;
     kframe= nullptr;
 }

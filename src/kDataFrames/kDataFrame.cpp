@@ -173,6 +173,8 @@ bool kDataFrame::setCount(const string &kmer, std::uint64_t N)
         order=this->getkmerOrder(kmer);
     }
     countColumn->insert(N,order);
+
+    return true;
 }
 bool kDataFrame::setCount(std::uint64_t kmer,std::uint64_t N)
 {
@@ -183,6 +185,7 @@ bool kDataFrame::setCount(std::uint64_t kmer,std::uint64_t N)
         order=this->getkmerOrder(kmer);
     }
     countColumn->insert(N,order);
+    return true;
 }
 std::uint64_t kDataFrame::getCount(const string &kmer)
 {
