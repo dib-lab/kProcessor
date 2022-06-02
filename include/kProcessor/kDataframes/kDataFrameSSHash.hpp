@@ -53,7 +53,7 @@ public:
         KD= nullptr;
     }
 
-    kDataFrame_sshash(std::uint64_t ksize,string input_fasta_file);
+    kDataFrame_sshash(std::uint64_t ksize,string input_fasta_file,std::uint64_t minimizer=9);
     kDataFrame *getTwin();
 
     void _reserve(std::uint64_t n);

@@ -148,14 +148,16 @@ kDataFrame_sshash::kDataFrame_sshash()
     endIterator= nullptr;
 }
 
-kDataFrame_sshash::kDataFrame_sshash(uint64_t ksize,string input_fasta_file) {
+kDataFrame_sshash::kDataFrame_sshash(uint64_t ksize,string input_fasta_file,std::uint64_t minimizer) {
     this->class_name = "sshash"; // Temporary until resolving #17
     this->kSize = ksize;
 
 
     sshash::build_configuration build_config;
     build_config.k = ksize;
-    build_config.m = 10;
+    build_config.m = minimizer;
+    build_config.c=7;
+    build_config.l=6;
     build_config.canonical_parsing=true;
     dict.build(input_fasta_file, build_config);
 
