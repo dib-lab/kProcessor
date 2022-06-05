@@ -75,7 +75,7 @@ namespace kProcessor {
 
         auto foldChangeByGene = unordered_map<string, vector<double>>();
 
-        auto foldChangeByGene = new unordered_map<string, vector<double> >();
+        // auto foldChangeByGene = new unordered_map<string, vector<double> >();
 //        any genesGatherAny = kProcessor::aggregate(res, foldChangeByGene, [=](kmerRow it, any v) -> any {
 //            auto dict = any_cast<unordered_map<string, vector<double>> *>(v);
 //            double foldChange;

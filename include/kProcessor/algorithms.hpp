@@ -169,7 +169,7 @@ namespace kProcessor {
 
 /// Perform indexing to a sequences file with predefined kmers decoding mode, returns a colored kDataframe.
     void index(kmerDecoder *KD, string names_fileName, kDataFrame *frame);
-    void indexMega(string fastaFileName, string tmpFolder, kDataFrame *frame);
+    // void indexMega(string fastaFileName, string tmpFolder, kDataFrame *frame);
 
 /// Index function without needing the kmerDecoder
     void
@@ -228,11 +228,11 @@ namespace kProcessor {
 
 
     // Extended functions
-    uint64_t aggregate_count(kDataFrame* kf, const string& countColName);
-    void transform_normalize(kDataFrame* kf, const string& countColName, uint64_t totalCount);
-    kDataFrame* filter_zeroCounts(kDataFrame* res, uint32_t allDatasets);
-    void transform_foldchange(kDataFrame* res, uint32_t nSamples, uint32_t nControl, uint32_t allDatasets, const string& foldChangeColName);
-    unordered_map<string, vector<double>> aggregate_foldChangeByGene(kDataFrame* res, const string foldChangeColName, const string colorColumnName);
+    // uint64_t aggregate_count(kDataFrame* kf, const string& countColName);
+    // void transform_normalize(kDataFrame* kf, const string& countColName, uint64_t totalCount);
+    // kDataFrame* filter_zeroCounts(kDataFrame* res, uint32_t allDatasets);
+    // void transform_foldchange(kDataFrame* res, uint32_t nSamples, uint32_t nControl, uint32_t allDatasets, const string& foldChangeColName);
+    // unordered_map<string, vector<double>> aggregate_foldChangeByGene(kDataFrame* res, const string foldChangeColName, const string colorColumnName);
 
     /*
      * Exact same behavior as innerJoin with two modifications: input kDataframes are not required to be sorted, and multithreaded implementation is provided.
