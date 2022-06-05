@@ -41,10 +41,12 @@ include_directories("ThirdParty/mum-hash")
 include_directories("ThirdParty/Blight")
 include_directories("ThirdParty/KMC/kmc_api")
 include_directories("ThirdParty/caches/include")
+include_directories("ThirdParty/sshash/include")
 
 add_subdirectory(ThirdParty/MQF/)
 add_subdirectory(ThirdParty/sdsl-lite/)
 add_subdirectory(ThirdParty/kmerDecoder)
+#add_subdirectory(ThirdParty/sshash)
 
 
 
@@ -53,10 +55,10 @@ add_subdirectory(ThirdParty/kmerDecoder)
 
 set (CMAKE_CXX_FLAGS_PROFILE "${CMAKE_CXX_FLAGS} -Wall -Wextra -std=c++17 -fPIC  -W -Wall -pedantic -O0 -g -lprofiler")
 
-set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -std=c++17 -fPIC  -W -Wall -pedantic  -O3 -Ofast")
-set (CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS} -Wall -Wextra -std=c++17 -fPIC  -W -Wall -pedantic -O0 -g ")
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -std=c++17 -fPIC   -pedantic  -O3 -Ofast -march=native -mbmi2 -msse4.2")
+set (CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS} -Wall -Wextra -std=c++17 -fPIC  -W -Wall -pedantic -O0 -g -march=native")
 
-set (CMAKE_CXX_FLAGS_RELEASE  "${CMAKE_CXX_FLAGS} -Wall -Wextra -std=c++17 -fPIC  -W -Wall -pedantic -O3 -Ofast")
+set (CMAKE_CXX_FLAGS_RELEASE  "${CMAKE_CXX_FLAGS}  -w -std=c++17 -fPIC   -pedantic -O3 -Ofast -march=native")
 
 set (CMAKE_EXE_LINKER_FLAGS_DEBUG "${CMAKE_EXE_LINKER_FLAGS_DEBUG}")
 set (CMAKE_EXE_LINKER_FLAGS_PROFILE "${CMAKE_EXE_LINKER_FLAGS_DEBUG} -lprofiler")
@@ -111,14 +113,14 @@ set(LIBRARY_NAME
 
 file(GLOB kProcessorLibSrc
         ${CMAKE_CURRENT_SOURCE_DIR}/src/algorithms.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/dbgUtils.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/extend_algorithms.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/kDataFrames/defaultColumn.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/kDataFrames/kDataFrameBMQF.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/kDataFrames/kDataFrame.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/kDataFrames/kDataFrameMAP.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/kDataFrames/kDataFrameMQF.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/kDataFrames/kDataFramePHMAP.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/kDataFrames/kDataFrameBlight.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/kDataFrames/kDataFrameSTL.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/kDataFrames/kDataFrame_sshash.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/Utils/utils.cpp
 
         ${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/KMC/kmc_api/*cpp
@@ -126,8 +128,7 @@ file(GLOB kProcessorLibSrc
         )
 
 add_library(${LIBRARY_NAME} STATIC
-    ${kProcessorLibSrc}
-    )
+    ${kProcessorLibSrc})
 
 
 target_link_libraries(kProcessor MQF)
@@ -139,6 +140,7 @@ target_link_libraries (kProcessor ${blightLib})
 #set_property(TARGET sdsl PROPERTY POSITION_INDEPENDENT_CODE ON)
 target_link_libraries(kProcessor sdsl)
 target_link_libraries(kProcessor kmerDecoder)
+#target_link_libraries(kProcessor z)# for sshash
 
 target_include_directories(${LIBRARY_NAME} PRIVATE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/${LIBRARY_NAME}>
@@ -171,6 +173,8 @@ endif()
 
 if(BUILD_USECASES)
     add_subdirectory(usecases/kDifferentialExpression/)
+    add_subdirectory(usecases/kProcessor_corticall/)
+    add_subdirectory(usecases/svPopFilter/)
 endif()
 
 #### Building Documentation with Doxygen

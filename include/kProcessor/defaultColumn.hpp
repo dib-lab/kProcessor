@@ -124,7 +124,7 @@ public:
     insertColorColumn(){
         colorsTop=vector<uint32_t>(NUM_VECTORS);
         vecCount=vector<uint32_t>(NUM_VECTORS);
-        for(int i=0;i<NUM_VECTORS;i++) {
+        for(unsigned i=0;i<NUM_VECTORS;i++) {
             colors.push_back(sdsl::int_vector<>(VECTOR_SIZE));
             colorsTop[i]=0;
             vecCount[i]=0;
@@ -138,7 +138,7 @@ public:
         colorsTop=vector<uint32_t>(NUM_VECTORS);
         vecCount=vector<uint32_t>(NUM_VECTORS);
         this->noSamples=noSamples;
-        for(int i=0;i<NUM_VECTORS;i++) {
+        for(unsigned i=0;i<NUM_VECTORS;i++) {
             colors.push_back(sdsl::int_vector<>(VECTOR_SIZE));
             colorsTop[i]=0;
             vecCount[i]=0;
@@ -623,7 +623,7 @@ public:
     }
     mixVectors(insertColorColumn* col);
 
-    mixVectors(vector<vector<uint32_t> > colors,uint32_t noSamples);
+    mixVectors(flat_hash_map<uint64_t, std::vector<uint32_t>>& colors,uint32_t noSamples,uint32_t num_vectors=20,uint32_t vector_size=1000000);
 
     ~mixVectors(){
         for(auto v:colors)
@@ -743,17 +743,16 @@ public:
     typedef  sdsl::int_vector<> vectype;
     deque<prefixTrie*> trees;
     deque<vectype*>  orderColorID;
-    deque<vectype*>  ColorIDPointer;
+    mixVectors*  ColorIDPointer;
+
     uint32_t orderVecSize;
-    uint32_t colorVecSize;
 
     prefixForest()
     {
     }
-    prefixForest(uint32_t orderVecSize, uint32_t colorVecSize)
+    prefixForest(uint32_t orderVecSize)
     {
         this->orderVecSize=orderVecSize;
-        this->colorVecSize=colorVecSize;
     }
 
     ~prefixForest(){
@@ -761,8 +760,8 @@ public:
             delete t;
         for(auto b:orderColorID)
             delete b;
-        for(auto b:ColorIDPointer)
-            delete b;
+        delete ColorIDPointer;
+
 
     }
 
@@ -793,15 +792,18 @@ public:
 class StringColorColumn: public Column{
 public:
     typedef vector<string> dataType;
-    vector<vector<uint32_t > > colors;
+    queryColorColumn* colors;
     flat_hash_map<uint32_t,string> namesMap;
 
     StringColorColumn(){
-        colors.push_back(vector<uint32_t > ());
+        colors=new mixVectors();
     }
-
+    StringColorColumn(flat_hash_map<uint64_t, std::vector<uint32_t>>* colors,
+                      uint32_t noSamples,
+                      uint32_t num_vectors=20,
+                      uint32_t vector_size=1000000);
     ~StringColorColumn(){
-
+        delete colors;
     }
 
     vector<string > getWithIndex(uint32_t index);
@@ -818,7 +820,7 @@ public:
     Column* getTwin();
     void resize(uint32_t size);
     uint32_t size(){
-        return colors.size();
+        return colors->size();
     }
 
     Column *clone() override;
@@ -843,8 +845,8 @@ public:
     prefixTrieIterator(prefixTrie* origin, uint32_t pos){
         this->origin=origin;
         finished=false;
-        if(pos>=origin->totalSize)
-            throw std::out_of_range("tree of size "+to_string(origin->totalSize)+ " doesnt have the pos "+ to_string(origin->totalSize));
+        if(pos > origin->totalSize)
+            throw std::out_of_range("tree of size "+to_string(origin->totalSize)+ " doesnt have the pos "+ to_string(pos));
         teleport(pos);
     }
     prefixTrieIterator& operator= (const prefixTrieIterator& other){

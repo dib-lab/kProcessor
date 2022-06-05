@@ -15,9 +15,13 @@ int main(int argc, char *argv[])
     string outPath=argv[3];
     //    numSlots=(double)numSlots*1.4;
     cout<<"Expected number of slots "<<numSlots<<endl;
-    uint64_t s=(numSlots);
+    uint64_t s=log2(numSlots);
+
     cout<<"S = "<<s<<endl;
-    kDataFrameBMQF frame(k,s,2,0,0,outPath);
+  //  kDataFrame* frame=kDataFrameFactory::createBMQF(k,outPath, (uint64_t)pow(2,s));
+    kDataFrame* frame=kDataFrameFactory::createPHMAP(k, (uint64_t)pow(2,s));
+    frame->addCountColumn();
+  //kDataFrameBMQF frame(k,s,2,0,0,outPath);
     //kDataFrameMQF frame(k);
     cout<<"_reserve completed"<<endl;
     string kmer;
@@ -25,14 +29,15 @@ int main(int argc, char *argv[])
     uint64_t nKmers=0;
     while (cin>>kmer>>count)
     {
-        frame.setCount(kmer,count);
+        frame->setCount(kmer,count);
 	nKmers++;
 	if(nKmers%10000==0)
 	 cout<<nKmers<<endl;
     }
     cout<<"finished "<<nKmers<<endl;
-    cout<<"serialize to  "<<outPath<<endl; 
-    frame.serialize(outPath);
+    cout<<"serialize to  "<<outPath<<endl;
+    kDataFrame* kframeMQF=kDataFrameFactory::createBMQF(frame,outPath);
+    kframeMQF->serialize(outPath);
     return 0;
 
 }

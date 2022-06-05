@@ -75,18 +75,18 @@ int main(int argc, char *argv[])
             {
                 vector<uint32_t> colorsCorrect;
 
-                k.getColumnValue<vector<uint32_t >, deduplicatedColumn<prefixTrie,phmap::btree_map<uint32_t,uint32_t>> >(sampleColor,colorsCorrect);
+                k.getColumnValue<deduplicatedColumn<prefixTrie,phmap::btree_map<uint32_t,uint32_t>> >(sampleColor,colorsCorrect);
 
                 vector<uint32_t> colorsQuered=
-                        output->getKmerColumnValue<vector<uint32_t >, deduplicatedColumn<prefixTrie,phmap::btree_map<uint32_t,uint32_t>> >(colorColumnName,k.getHashedKmer());
+                        output->getKmerColumnValue<deduplicatedColumn<prefixTrie,phmap::btree_map<uint32_t,uint32_t>> >(colorColumnName,k.getHashedKmer());
                 if(colorsQuered!=colorsCorrect)
                 {
                     vector<uint32_t> colorsCorrect;
 
-                    k.getColumnValue<vector<uint32_t >, deduplicatedColumn< prefixTrie,phmap::btree_map<uint32_t,uint32_t>> >(sampleColor,colorsCorrect);
+                    k.getColumnValue<deduplicatedColumn< prefixTrie,phmap::btree_map<uint32_t,uint32_t>> >(sampleColor,colorsCorrect);
 
                     vector<uint32_t> colorsQuered=
-                            output->getKmerColumnValue<vector<uint32_t >, deduplicatedColumn< prefixTrie,phmap::btree_map<uint32_t,uint32_t>> >(colorColumnName,k.getHashedKmer());
+                            output->getKmerColumnValue<deduplicatedColumn< prefixTrie,phmap::btree_map<uint32_t,uint32_t>> >(colorColumnName,k.getHashedKmer());
                     cout<<"Error Found at sample "<<sample<< " at kmer "<<k.getKmer()<<endl;
                     cout<<"Expected color is ";
                     for(auto c:colorsCorrect)

@@ -1,7 +1,23 @@
-#include "kDataFrame.hpp"
+#include "kDataframes/kDataFrameBlight.hpp"
 #include <iostream>
 #include <fstream>
 #include "Utils/kmer.h"
+
+
+
+template<typename T,typename Container>
+T kDataFrameBlight::getKmerColumnValue(const string& columnName,string kmer)
+{
+    std::uint64_t kmerOrder=getkmerOrder(kmer);
+    return ((Container*)columns[columnName])->get(kmerOrder);
+}
+template<typename T,typename Container>
+void kDataFrameBlight::setKmerColumnValue(const string& columnName,string kmer,T value)
+{
+    std::uint64_t kmerOrder=getkmerOrder(kmer);
+    ((Container*)columns[columnName])->insert(value,kmerOrder);
+}
+
 
 
 /*
@@ -102,7 +118,10 @@ kDataFrameBlight::kDataFrameBlight(uint64_t ksize,string input_fasta_file) {
     int subsampling_bits(0);
 
     blight_index=  new kmer_Set_Light(ksize, core_number, minimizer_size, file_number_exponent, subsampling_bits);
-    string workingDirectory="./";
+    string workingDirectory="./workdir"+ gen_randomBlight(10)+"/";
+ //   string workingDirectory="./workdir/";
+    string mkdirCommand="mkdir -p "+workingDirectory;
+    system(mkdirCommand.c_str());
     blight_index->construct_index(input_fasta_file, workingDirectory);
 
     kmer_Set_Light_iterator it(blight_index);
@@ -111,6 +130,8 @@ kDataFrameBlight::kDataFrameBlight(uint64_t ksize,string input_fasta_file) {
     endIterator= new kDataFrameIterator(
             (_kDataFrameIterator *) new kDataFrameBlightIterator(it, this, kSize),
             (kDataFrame *) this);
+
+    KD= nullptr;
     // this->hasher = (new IntegerHasher(ksize));
 }
 
@@ -136,14 +157,22 @@ uint32_t kDataFrameBlight::insert(uint64_t kmer) {
     return true;
 }
 
+bool  kDataFrameBlight::setOrder(const string &kmer, std::uint64_t count){
+    throw logic_error("kDataFrameBlight is static. Insertion is not allowed");
+    return true;
+}
+bool  kDataFrameBlight::setOrder(std::uint64_t kmer, std::uint64_t count){
+    throw logic_error("kDataFrameBlight is static. Insertion is not allowed");
+    return true;
+}
 
 
 uint64_t kDataFrameBlight::getkmerOrder(const string &kmerS) {
-    return blight_index->get_hashes_query(kmerS)[0];
+    return blight_index->get_hashes_query(kmerS)[0]+1;
 }
 
 uint64_t kDataFrameBlight::getkmerOrder(uint64_t kmerS) {
-    return kmerS;
+    return kmerS+1;
 }
 
 
@@ -255,5 +284,13 @@ kDataFrameIterator kDataFrameBlight::find(uint64_t kmer) {
 
 kDataFrame *kDataFrameBlight::clone() {
     throw logic_error("not implemented yet");
+}
+
+kDataFrame *kDataFrameFactory::loadBlight(string filePath) {
+    return kDataFrameBlight::load(filePath);
+}
+
+kDataFrame *kDataFrameFactory::createBlight(uint32_t kSize, string filePath) {
+    return new kDataFrameBlight(kSize,filePath);
 }
 

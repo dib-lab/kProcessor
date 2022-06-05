@@ -1,0 +1,5 @@
+sample_name,file
+UCD1.2,/home/mshokrof/sv/cattle-sv/datasets/references/ARS-UCD1.2_Btau5.0.1Y.fa
+variants,/home/mshokrof/sv/cattle-sv/correctVariant.vcf
+SRR6691727,/home/mshokrof/sv/cattle-sv/datasets/Brahman_Angus/SRR6691727_1.fastq.gz
+SRR6691727,/home/mshokrof/sv/cattle-sv/datasets/Brahman_Angus/SRR6691727_2.fastq.gz

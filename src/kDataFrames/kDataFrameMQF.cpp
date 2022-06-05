@@ -1,10 +1,10 @@
-#include "kDataFrame.hpp"
+#include "kDataframes/kDataFrameMQF.hpp"
 #include "Utils/kmer.h"
 #include <iostream>
-#include <fstream>
 #include <math.h>
 #include <limits>
-#include <sstream>
+
+
 
 
 /*
@@ -352,7 +352,6 @@ void kDataFrameMQF::_reserve(uint64_t n) {
     QF *old = mqf;
     mqf = new QF();
     uint64_t q = (uint64_t) ceil(log2((double) n));
-    // std::cerr << "[DEBUG] Q: " << q << std::endl;
     qf_init(mqf, (1ULL << q), hashbits, 0, 1, 32, true, "", 2038074761);
     if (old != NULL) {
         qf_migrate(old, mqf);
@@ -545,7 +544,7 @@ uint32_t kDataFrameMQF::insert(uint64_t kmer) {
 
 bool kDataFrameMQF::_insert(uint64_t kmer) {
     if (load_factor() > 0.8)
-        reserve(mqf->metadata->nslots);
+        reserve(mqf->metadata->nslots*2);
     uint64_t hash = kmer % mqf->metadata->range;
     // cout << "Inserting kmer: " << kmer << ", Hash: " << hash << endl;
     try {
@@ -559,7 +558,7 @@ bool kDataFrameMQF::_insert(uint64_t kmer) {
 }
 bool kDataFrameMQF::_insert(string kmer) {
     if (load_factor() > 0.8)
-        reserve(mqf->metadata->nslots);
+        reserve(mqf->metadata->nslots*2);
     uint64_t hash = KD->hash_kmer(kmer) % mqf->metadata->range;
     // cout << "Inserting kmer: " << kmer << ", Hash: " << hash << endl;
     try {
@@ -655,4 +654,18 @@ bool kDataFrameMQF::kmerExist(string kmerS) {
 bool kDataFrameMQF::kmerExist(uint64_t kmer) {
     uint64_t hash = kmer % mqf->metadata->range;
     return qf_count_key(mqf, hash)>0;
+}
+
+
+
+kDataFrame *kDataFrameFactory::loadMQF(string filePath) {
+    return kDataFrameMQF::load(filePath);
+}
+
+kDataFrame *kDataFrameFactory::createMQF(uint32_t kSize, uint32_t numKmers) {
+    return new kDataFrameMQF(kSize,numKmers);
+}
+
+kDataFrame *kDataFrameFactory::createMQF(kDataFrame *kframe) {
+    return new kDataFrameMQF(kframe);
 }

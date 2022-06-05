@@ -51,13 +51,13 @@ public:
     kDataFrame* kframe;
     kDataFrame* kframeLoaded;
     kDataFrame* kframe2;
-    kDataFrameMQF* kframeMQF;
+    kDataFrame* kframeMQF;
     unordered_map<string,int>* kmers;
     string fileName;
     virtual void SetUp()
     {
         kframe=getFrame(GetParam());
-	kframe->addCountColumn();
+	    kframe->addCountColumn();
         kframeLoaded=nullptr;
         kframe2=nullptr;
         kframeMQF=nullptr;
@@ -92,14 +92,16 @@ public:
 
 class kDataFrameBufferedTest : public ::testing::TestWithParam<int >{
 public:
-    kDataFrameBMQF* kframe;
-    kDataFrameBMQF* kframeLoaded;
+    kDataFrame* kframe;
+    kDataFrame* kframeLoaded;
+    string fileName;
 
     virtual void SetUp()
     {
-        kframe=(kDataFrameBMQF*)getFrame(make_tuple("BMQF",GetParam()));
-	kframe->addCountColumn();
-	kframeLoaded=nullptr;
+        fileName="tmp.kdataframeBMQF."+gen_random(8);
+        kframe=kDataFrameFactory::createBMQF((uint64_t)GetParam(),fileName,NKmersTEST);
+    	kframe->addCountColumn();
+	    kframeLoaded=nullptr;
     }
     static void SetUpTestSuite()
     {
@@ -110,11 +112,11 @@ public:
     {
 
         if(kframe!= nullptr) {
-            deleteFiles(kframe->getFilename());
+            deleteFiles(fileName);
             delete kframe;
         }
         if(kframeLoaded!= nullptr) {
-            deleteFiles(kframeLoaded->getFilename());
+        //    deleteFiles(kframeLoaded->getFilename());
             delete kframeLoaded;
         }
     }
@@ -126,7 +128,7 @@ public:
 
 class algorithmsTest : public ::testing::TestWithParam<tuple<string,int,string> >{
 };
-class kDataFrameBlightTest : public ::testing::TestWithParam<tuple<int,string> >{
+class kDataFrameBlightTest : public ::testing::TestWithParam<tuple<string,string> >{
 };
 class estimateTest : public ::testing::TestWithParam<string >{
 };

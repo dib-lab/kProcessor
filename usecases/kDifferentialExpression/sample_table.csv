@@ -1,4 +1,8 @@
 sample_name,library
 ERCC92,transpictome
-HBR,sample
-UHR,control
+HBR_REP1,sample
+HBR_REP2,sample
+HBR_REP3,sample
+UHR_REP1,control
+UHR_REP2,control
+UHR_REP3,control

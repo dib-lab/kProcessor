@@ -1,0 +1,212 @@
+pepfile: "project_config.yaml"
+configfile: "config.yaml"
+
+kSize=config["kSize"]
+outFolder=config["outFolder"]
+tmpFolder=config["tmpFolder"]
+
+references=list(filter(lambda x:x.library=="parent_reference",pep.samples))
+references=[(x.sample_name,x.file[0]) for x in references]
+references=dict(references)
+
+
+progny_short=list(filter(lambda x:x.library=="progny_short",pep.samples))
+progny_short=[(x.sample_name,x.file) for x in progny_short]
+progny_short=dict(progny_short)
+dbgs=list(references.keys())+list(progny_short.keys())
+
+sampleParents={}
+
+for s in list(filter(lambda x:x.library=="progny_short",pep.samples)):
+    parents=s.parent.split("x")
+    sampleParents[s.sample_name]=[]
+    for p in parents:
+    	sampleParents[s.sample_name].append(outFolder+"corticall/"+(s.sample_name+"."+p)+".ref.ctp.gz")
+
+
+def getFile(dict,name):
+    return dict[name]
+
+import os,math
+
+def getFQSizeInGB(name):
+    files=progny_short[name]
+    res=0
+    for f in files:
+    	res+=os.path.getsize(f)
+    return int(math.ceil(float(res)/(1024.0*1024.0*1024.0)))
+
+def getFileSizeInGB(file):
+    res = os.path.getsize(file)
+    return int(math.ceil(float(res)/(1024.0*1024.0*1024.0)))
+
+
+framesToBeJoined = expand(outFolder+"kProcessor/{sample}.kframe.cleaned.phmap",sample=progny_short.keys())
+framesToBeJoined+= expand(outFolder+"kProcessor/{sample}.kframe.phmap",sample=references.keys())
+print(framesToBeJoined)
+
+rule all:
+    input:
+         expand(outFolder+"corticall/{sample}.contigs.fa",sample=progny_short.keys()),
+
+#        expand(outFolder+"corticall/{sample}.ctx",sample=dbgs),
+#        expand(outFolder+"corticall/{sample}.cleaned.edgesInfered.popped.ctx",sample=progny_short.keys()),
+#        expand(outFolder+"corticall/{sampleParents}.ref.ctp.gz", sample=sampleParent),
+#        expand(outFolder+"corticall/{sample}.se.ctp.gz",sample=progny_short.keys()),
+
+
+rule buildParentDBG:
+    input:  lambda wildcards: getFile(references,f"{wildcards.sample}")
+    output:
+        ctx=outFolder+"corticall/{sample}.ctx",
+        time=outFolder+"corticall/{sample}.build.time"
+    log: outFolder+"corticall/{sample}.build.log"
+    conda: "env.yaml"
+    shell:
+       	"""
+	       /usr/bin/time -v -o {output.time} mccortex {kSize} build -k {kSize} -t 1 --sample {wildcards.sample} -S -m 4G -n 100M  -1 {input} {output.ctx} &> {log}
+        """
+
+rule buildPrognyDBG:
+    input:  lambda wildcards: getFile(progny_short,f"{wildcards.sample}")
+    output:
+        ctx=outFolder+"corticall/{sample}.ctx",
+        time=outFolder+"corticall/{sample}.build.time"
+    log: outFolder+"corticall/{sample}.build.log"
+    conda: "env.yaml"
+    resources: mem_gb= lambda wildcards: getFQSizeInGB(f"{wildcards.sample}") * 8
+    shell:
+       	"""
+	       /usr/bin/time -v -o {output.time} mccortex {kSize} build -k {kSize} -t 3 --sample {wildcards.sample} -S -m {resources.mem_gb}G  -2 {input[0]}:{input[1]} {output.ctx} &> {log}
+        """
+
+rule cleanPrognyDBG:
+    input:  outFolder+"corticall/{sample}.ctx"
+    output:
+        ctx=outFolder+"corticall/{sample}.cleaned.ctx",
+        covg_after=outFolder+"corticall/{sample}.cleaned.covg_after",
+        covg_before=outFolder+"corticall/{sample}.cleaned.covg_before",
+        len_after=outFolder+"corticall/{sample}.cleaned.len_after",
+        len_before=outFolder+"corticall/{sample}.cleaned.len_before",
+        time=outFolder+"corticall/{sample}.clean.time"
+    log: outFolder+"corticall/{sample}.clean.log"
+    conda: "env.yaml"
+    resources: mem_gb= lambda wildcards: getFileSizeInGB(outFolder+f"corticall/{wildcards.sample}.ctx") * 4
+    shell:
+       	"""
+	       /usr/bin/time -v -o {output.time} mccortex {kSize} clean -t 1  -m {resources.mem_gb}G -o {output.ctx} -S  -c {output.covg_before} -C {output.covg_after} -l {output.len_before} -L {output.len_after} {input} &> {log}
+        """
+
+
+rule inferEdgesPrognyDBG:
+    input:  outFolder+"corticall/{sample}.cleaned.ctx"
+    output:
+        ctx=outFolder+"corticall/{sample}.cleaned.edgesInfered.ctx",
+        time=outFolder+"corticall/{sample}.inferedges.time"
+    log: outFolder+"corticall/{sample}.inferedges.log"
+    conda: "env.yaml"
+    shell:
+       	"""
+	       /usr/bin/time -v -o {output.time} mccortex {kSize} inferedges -m 4G -o {output.ctx} {input} &> {log}
+        """
+
+
+rule popBubblesPrognyDBG:
+    input:  outFolder+"corticall/{sample}.cleaned.edgesInfered.ctx"
+    output:
+        ctx=outFolder+"corticall/{sample}.cleaned.edgesInfered.popped.ctx",
+        time=outFolder+"corticall/{sample}.popBubbles.time"
+    log: outFolder+"corticall/{sample}.popBubbles.log"
+    conda: "env.yaml"
+    resources: mem_gb= lambda wildcards: getFileSizeInGB(outFolder+f"corticall/{wildcards.sample}.cleaned.edgesInfered.ctx") * 2
+    shell:
+       	"""
+	       /usr/bin/time -v -o {output.time} mccortex {kSize} popbubbles  -m {resources.mem_gb}G -o {output.ctx}  {input} &> {log}
+        """
+
+
+rule threadSEProgny:
+    input:
+        ctx=outFolder+"corticall/{sample}.cleaned.edgesInfered.popped.ctx",
+        reads=lambda wildcards: getFile(progny_short,f"{wildcards.sample}")
+    output:
+        ctp=outFolder+"corticall/{sample}.se.ctp.gz",
+        time=outFolder+"corticall/{sample}.threadSE.time"
+    log: outFolder+"corticall/{sample}.threadSE.log"
+    conda: "env.yaml"
+    resources: mem_gb= lambda wildcards: getFileSizeInGB(outFolder+f"corticall/{wildcards.sample}.cleaned.edgesInfered.popped.ctx") * 8
+    shell:
+       	"""
+       	# arguments meaining:
+       	# -W Use two-way gap filling (liberal)
+       	# -E Skip extra check after gap bridging
+	       /usr/bin/time -v -o {output.time} mccortex {kSize} thread  -t1 -W -E -m {resources.mem_gb}G -o {output.ctp} -1 {input.reads[0]} -1 {input.reads[1]} {input.ctx} &> {log}
+        """
+
+rule threadPEProgny:
+    input:
+        ctx=outFolder+"corticall/{sample}.cleaned.edgesInfered.popped.ctx",
+        SE_CTP=outFolder+"corticall/{sample}.se.ctp.gz",
+        reads=lambda wildcards: getFile(progny_short,f"{wildcards.sample}")
+    output:
+        ctp=outFolder+"corticall/{sample}.pe.ctp.gz",
+        time=outFolder+"corticall/{sample}.threadPE.time"
+    log: outFolder+"corticall/{sample}.threadPE.log"
+    conda: "env.yaml"
+    resources: mem_gb= lambda wildcards: getFileSizeInGB(outFolder+f"corticall/{wildcards.sample}.cleaned.edgesInfered.popped.ctx") * 8
+    shell:
+       	"""
+       	# arguments meaining:
+       	# -W Use two-way gap filling (liberal)
+       	# -E Skip extra check after gap bridging
+       	            mkdir -p {tmpFolder}$$/
+                    /usr/bin/time -v -o {output.time} mccortex {kSize} thread -m {resources.mem_gb}G -t 1 -W -E -2 {input.reads[0]}:{input.reads[1]} -p {input.SE_CTP} -o {tmpFolder}$$/pe.ctp.gz {input.ctx}
+                    mccortex {kSize} links -T {tmpFolder}$$/link.stats.txt -L 1000 {tmpFolder}$$/pe.ctp.gz
+                    LINK_THRESH=$(grep 'suggested_cutoff=' {tmpFolder}$$/link.stats.txt | grep -oE '[0-9,]+$')
+                    mccortex {kSize} links --clean $LINK_THRESH --out {output.ctp} {tmpFolder}$$/pe.ctp.gz
+                    rm -rf {tmpFolder}$$/
+        """
+
+
+
+rule threadParentRef:
+    input:
+        ctx=outFolder+"corticall/{sample}.cleaned.edgesInfered.popped.ctx",
+        ref= lambda wildcards: getFile(references,f"{wildcards.ref}")
+    output:
+        ctp=outFolder+"corticall/{sample}.{ref}.ref.ctp.gz",
+        time=outFolder+"corticall/{sample}.{ref}.threadParent.time"
+    log: outFolder+"corticall/{sample}.{ref}.threadParent.log"
+    conda: "env.yaml"
+    resources: mem_gb= lambda wildcards: getFileSizeInGB(outFolder+f"corticall/{wildcards.sample}.cleaned.edgesInfered.popped.ctx") * 8
+    shell:
+       	"""
+       	# arguments meaining:
+       	# -W Use two-way gap filling (liberal)
+       	# -E Skip extra check after gap bridging
+	       /usr/bin/time -v -o {output.time} mccortex {kSize} thread  -t1 -W -E -m {resources.mem_gb}G -o {output.ctp} -1 {input.ref}  {input.ctx} &> {log}
+        """
+
+
+rule contigs:
+    input:
+        ctx=outFolder+"corticall/{sample}.cleaned.edgesInfered.ctx",
+        ctpSE=outFolder+"corticall/{sample}.se.ctp.gz",
+        ctpPE=outFolder+"corticall/{sample}.pe.ctp.gz",
+        ctpRef= lambda wildcards: getFile(sampleParents,f"{wildcards.sample}")
+    output:
+        contigs=outFolder+"corticall/{sample}.contigs.fa",
+        time=outFolder+"corticall/{sample}.contigs.time"
+    log: outFolder+"corticall/{sample}.contigs.log"
+    conda: "env.yaml"
+    shell:
+       	"""
+       	# arguments meaining:
+       	# -M  Do not use the missing information check
+       	# -G Genome size in bases
+        mkdir -p {tmpFolder}$$/
+	    /usr/bin/time -v -o {output.time} mccortex {kSize} contigs  -t1 -m 4G -G 23332839 -M -o {tmpFolder}$$/contigs.fa -p {input.ctpRef[0]} -p {input.ctpRef[1]} -p {input.ctpSE} -p {input.ctpPE} {input.ctx} &> {log}
+	    cd-hit-est -T 0 -M 4000 -c 0.95 -i {tmpFolder}$$/contigs.fa -o {output.contigs}
+	    rm -rf {tmpFolder}$$/
+        """
+

@@ -1,0 +1,850 @@
+==> finalIndex.phmap.multiColumn.color0.out <==
+IDS map size = 50.4691 MB
+Bit Compressed IDS map size = 19.7145 MB
+Maximum value = 6615080
+Maximum log = 22.6573
+Delta = 1 size= 65230231total = 233808793
+Order enc = 147.074
+values vlc = 414.632
+Order vlc = 1024.4
+values enc = 1351.59
+Winner: order(enc) values(vlc) size = 561.706 MB
+order(enc) values(vlc) : 561.706 MB
+Mix:btree_map<uint32_t,uint32_t> -  bit compressed values : 1465 MB
+Mix:btree_map<uint32_t,uint32_t> -  enc values : 1675.35 MB
+btree_map<uint32_t,uint32_t> : 1783 MB
+order(vlc) values(enc) : 2375.99 MB
+
+==> finalIndex.phmap.multiColumn.color10.out <==
+IDS map size = 16.4594 MB
+Bit Compressed IDS map size = 5.91512 MB
+Maximum value = 2157371
+Maximum log = 21.0408
+Delta = 2 size= 13448096total = 75398420
+Order enc = 54.8169
+values vlc = 132.316
+Order vlc = 324.166
+values enc = 422.124
+Winner: order(enc) values(vlc) size = 187.133 MB
+order(enc) values(vlc) : 187.133 MB
+Mix:btree_map<uint32_t,uint32_t> -  bit compressed values : 507.913 MB
+Mix:btree_map<uint32_t,uint32_t> -  enc values : 549.708 MB
+btree_map<uint32_t,uint32_t> : 575 MB
+order(vlc) values(enc) : 746.29 MB
+
+==> finalIndex.phmap.multiColumn.color11.out <==
+IDS map size = 17.9011 MB
+Bit Compressed IDS map size = 6.43323 MB
+Maximum value = 2346335
+Maximum log = 21.162
+Delta = 1 size= 21397673total = 63472230
+Order enc = 44.7037
+values vlc = 110.94
+Order vlc = 272.086
+values enc = 354.348
+Winner: order(enc) values(vlc) size = 155.644 MB
+order(enc) values(vlc) : 155.644 MB
+Mix:btree_map<uint32_t,uint32_t> -  bit compressed values : 377.121 MB
+Mix:btree_map<uint32_t,uint32_t> -  enc values : 441.389 MB
+btree_map<uint32_t,uint32_t> : 484 MB
+order(vlc) values(enc) : 626.434 MB
+
+==> finalIndex.phmap.multiColumn.color12.out <==
+IDS map size = 39.1751 MB
+Bit Compressed IDS map size = 15.3028 MB
+Maximum value = 5134757
+Maximum log = 22.2919
+Delta = 16 size= 11331529total = 49600061
+Order enc = 42.0688
+values vlc = 108.291
+Order vlc = 212.142
+values enc = 295.871
+Winner: order(enc) values(vlc) size = 150.359 MB
+order(enc) values(vlc) : 150.359 MB
+Mix:btree_map<uint32_t,uint32_t> -  bit compressed values : 323.035 MB
+Mix:btree_map<uint32_t,uint32_t> -  enc values : 359.962 MB
+btree_map<uint32_t,uint32_t> : 378 MB
+order(vlc) values(enc) : 508.013 MB
+
+==> finalIndex.phmap.multiColumn.color13.out <==
+IDS map size = 42.2934 MB
+Bit Compressed IDS map size = 15.86 MB
+Maximum value = 5543478
+Maximum log = 22.4024
+Delta = 2 size= 14769052total = 75629697
+Order enc = 52.7115
+values vlc = 158.135
+Order vlc = 323.267
+values enc = 443.564
+Winner: order(enc) values(vlc) size = 210.846 MB
+order(enc) values(vlc) : 210.846 MB
+Mix:btree_map<uint32_t,uint32_t> -  bit compressed values : 504.824 MB
+Mix:btree_map<uint32_t,uint32_t> -  enc values : 545.845 MB
+btree_map<uint32_t,uint32_t> : 577 MB
+order(vlc) values(enc) : 766.831 MB
+
+==> finalIndex.phmap.multiColumn.color14.out <==
+IDS map size = 44.6151 MB
+Bit Compressed IDS map size = 16.7307 MB
+Maximum value = 5847793
+Maximum log = 22.4795
+Delta = 8 size= 17536659total = 65126279
+Order enc = 50.6983
+values vlc = 118.385
+Order vlc = 278.386
+values enc = 376.052
+Winner: order(enc) values(vlc) size = 169.083 MB
+order(enc) values(vlc) : 169.083 MB
+Mix:btree_map<uint32_t,uint32_t> -  bit compressed values : 411.162 MB
+Mix:btree_map<uint32_t,uint32_t> -  enc values : 464.967 MB
+btree_map<uint32_t,uint32_t> : 496 MB
+order(vlc) values(enc) : 654.438 MB
+
+==> finalIndex.phmap.multiColumn.color15.out <==
+IDS map size = 20.7755 MB
+Bit Compressed IDS map size = 7.46619 MB
+Maximum value = 2723079
+Maximum log = 21.3768
+Delta = 3 size= 15245861total = 67218794
+Order enc = 50.7331
+values vlc = 116.348
+Order vlc = 288.024
+values enc = 375.588
+Winner: order(enc) values(vlc) size = 167.081 MB
+order(enc) values(vlc) : 167.081 MB
+Mix:btree_map<uint32_t,uint32_t> -  bit compressed values : 436.506 MB
+Mix:btree_map<uint32_t,uint32_t> -  enc values : 480.008 MB
+btree_map<uint32_t,uint32_t> : 512 MB
+order(vlc) values(enc) : 663.613 MB
+
+==> finalIndex.phmap.multiColumn.color16.out <==
+IDS map size = 39.0739 MB
+Bit Compressed IDS map size = 14.6527 MB
+Maximum value = 5121489
+Maximum log = 22.2881
+Delta = 16 size= 21956204total = 48342834
+Order enc = 45.9643
+values vlc = 96.058
+Order vlc = 210.904
+values enc = 284.003
+Winner: order(enc) values(vlc) size = 142.022 MB
+order(enc) values(vlc) : 142.022 MB
+Mix:btree_map<uint32_t,uint32_t> -  bit compressed values : 261.514 MB
+Mix:btree_map<uint32_t,uint32_t> -  enc values : 328.162 MB
+btree_map<uint32_t,uint32_t> : 368 MB
+order(vlc) values(enc) : 494.906 MB
+
+==> finalIndex.phmap.multiColumn.color17.out <==
+IDS map size = 43.7694 MB
+Bit Compressed IDS map size = 16.4135 MB
+Maximum value = 5736942
+Maximum log = 22.4519
+Delta = 16 size= 19944672total = 75397480
+Order enc = 59.3614
+values vlc = 154.259
+Order vlc = 328.235
+values enc = 439.841
+Winner: order(enc) values(vlc) size = 213.62 MB
+order(enc) values(vlc) : 213.62 MB
+Mix:btree_map<uint32_t,uint32_t> -  bit compressed values : 477.756 MB
+Mix:btree_map<uint32_t,uint32_t> -  enc values : 536.02 MB
+btree_map<uint32_t,uint32_t> : 575 MB
+order(vlc) values(enc) : 768.076 MB
+
+==> finalIndex.phmap.multiColumn.color18.out <==
+IDS map size = 37.6446 MB
+Bit Compressed IDS map size = 14.7049 MB
+Maximum value = 4934155
+Maximum log = 22.2344
+Delta = 16 size= 10444901total = 53267704
+Order enc = 43.8516
+values vlc = 117.541
+Order vlc = 229.112
+values enc = 312.393
+Winner: order(enc) values(vlc) size = 161.392 MB
+order(enc) values(vlc) : 161.392 MB
+Mix:btree_map<uint32_t,uint32_t> -  bit compressed values : 355.35 MB
+Mix:btree_map<uint32_t,uint32_t> -  enc values : 388.88 MB
+btree_map<uint32_t,uint32_t> : 406 MB
+order(vlc) values(enc) : 541.505 MB
+
+==> finalIndex.phmap.multiColumn.color19.out <==
+IDS map size = 33.322 MB
+Bit Compressed IDS map size = 12.4958 MB
+Maximum value = 4367583
+Maximum log = 22.0584
+Delta = 6 size= 20895047total = 90244986
+Order enc = 63.8702
+values vlc = 169.307
+Order vlc = 390.617
+values enc = 513.539
+Winner: order(enc) values(vlc) size = 233.177 MB
+order(enc) values(vlc) : 233.177 MB
+Mix:btree_map<uint32_t,uint32_t> -  bit compressed values : 586.388 MB
+Mix:btree_map<uint32_t,uint32_t> -  enc values : 642.43 MB
+btree_map<uint32_t,uint32_t> : 688 MB
+order(vlc) values(enc) : 904.156 MB
+
+==> finalIndex.phmap.multiColumn.color1.out <==
+IDS map size = 42.4905 MB
+Bit Compressed IDS map size = 16.5978 MB
+Maximum value = 5569309
+Maximum log = 22.4091
+Delta = 1 size= 28179558total = 118530359
+Order enc = 73.1528
+values vlc = 234.065
+Order vlc = 509.146
+values enc = 688.652
+Winner: order(enc) values(vlc) size = 307.218 MB
+order(enc) values(vlc) : 307.218 MB
+Mix:btree_map<uint32_t,uint32_t> -  bit compressed values : 766.585 MB
+Mix:btree_map<uint32_t,uint32_t> -  enc values : 854.947 MB
+btree_map<uint32_t,uint32_t> : 904 MB
+order(vlc) values(enc) : 1197.8 MB
+
+==> finalIndex.phmap.multiColumn.color20.out <==
+IDS map size = 17.2294 MB
+Bit Compressed IDS map size = 6.19182 MB
+Maximum value = 2258288
+Maximum log = 21.1068
+Delta = 16 size= 19330650total = 84803114
+Order enc = 69.8966
+values vlc = 130.743
+Order vlc = 370.868
+values enc = 467.397
+Winner: order(enc) values(vlc) size = 200.64 MB
+order(enc) values(vlc) : 200.64 MB
+Mix:btree_map<uint32_t,uint32_t> -  bit compressed values : 550.212 MB
+Mix:btree_map<uint32_t,uint32_t> -  enc values : 601.285 MB
+btree_map<uint32_t,uint32_t> : 646 MB
+order(vlc) values(enc) : 838.265 MB
+
+==> finalIndex.phmap.multiColumn.color21.out <==
+IDS map size = 4.90559 MB
+Bit Compressed IDS map size = 1.60966 MB
+Maximum value = 642983
+Maximum log = 19.2944
+Delta = 16 size= 19555224total = 61976411
+Order enc = 54.8647
+values vlc = 99.4607
+Order vlc = 269.509
+values enc = 339.529
+Winner: order(enc) values(vlc) size = 154.325 MB
+order(enc) values(vlc) : 154.325 MB
+Mix:btree_map<uint32_t,uint32_t> -  bit compressed values : 370.271 MB
+Mix:btree_map<uint32_t,uint32_t> -  enc values : 428.825 MB
+btree_map<uint32_t,uint32_t> : 472 MB
+order(vlc) values(enc) : 609.038 MB
+
+==> finalIndex.phmap.multiColumn.color22.out <==
+IDS map size = 37.9653 MB
+Bit Compressed IDS map size = 14.237 MB
+Maximum value = 4976190
+Maximum log = 22.2466
+Delta = 10 size= 12288726total = 73094344
+Order enc = 55.4077
+values vlc = 137.012
+Order vlc = 316.183
+values enc = 422.432
+Winner: order(enc) values(vlc) size = 192.42 MB
+order(enc) values(vlc) : 192.42 MB
+Mix:btree_map<uint32_t,uint32_t> -  bit compressed values : 497.603 MB
+Mix:btree_map<uint32_t,uint32_t> -  enc values : 530.017 MB
+btree_map<uint32_t,uint32_t> : 557 MB
+order(vlc) values(enc) : 738.615 MB
+
+==> finalIndex.phmap.multiColumn.color23.out <==
+IDS map size = 47.4991 MB
+Bit Compressed IDS map size = 18.5544 MB
+Maximum value = 6225802
+Maximum log = 22.5698
+Delta = 16 size= 9728925total = 42505553
+Order enc = 36.4701
+values vlc = 89.9963
+Order vlc = 183.16
+values enc = 249.13
+Winner: order(enc) values(vlc) size = 126.466 MB
+order(enc) values(vlc) : 126.466 MB
+Mix:btree_map<uint32_t,uint32_t> -  bit compressed values : 276.741 MB
+Mix:btree_map<uint32_t,uint32_t> -  enc values : 307.477 MB
+btree_map<uint32_t,uint32_t> : 324 MB
+order(vlc) values(enc) : 432.289 MB
+
+==> finalIndex.phmap.multiColumn.color24.out <==
+IDS map size = 24.4222 MB
+Bit Compressed IDS map size = 8.77673 MB
+Maximum value = 3201062
+Maximum log = 21.6101
+Delta = 1 size= 9940835total = 55292500
+Order enc = 44.8051
+values vlc = 117.29
+Order vlc = 237.885
+values enc = 323.572
+Winner: order(enc) values(vlc) size = 162.095 MB
+order(enc) values(vlc) : 162.095 MB
+Mix:btree_map<uint32_t,uint32_t> -  bit compressed values : 372.077 MB
+Mix:btree_map<uint32_t,uint32_t> -  enc values : 404.953 MB
+btree_map<uint32_t,uint32_t> : 421 MB
+order(vlc) values(enc) : 561.457 MB
+
+==> finalIndex.phmap.multiColumn.color25.out <==
+IDS map size = 3.73287 MB
+Bit Compressed IDS map size = 1.22486 MB
+Maximum value = 489273
+Maximum log = 18.9003
+Delta = 4 size= 9405832total = 58283346
+Order enc = 49.1736
+values vlc = 85.6654
+Order vlc = 254.209
+values enc = 316.419
+Winner: order(enc) values(vlc) size = 134.839 MB
+order(enc) values(vlc) : 134.839 MB
+Mix:btree_map<uint32_t,uint32_t> -  bit compressed values : 394.21 MB
+Mix:btree_map<uint32_t,uint32_t> -  enc values : 425.742 MB
+btree_map<uint32_t,uint32_t> : 444 MB
+order(vlc) values(enc) : 570.628 MB
+
+==> finalIndex.phmap.multiColumn.color26.out <==
+IDS map size = 22.1172 MB
+Bit Compressed IDS map size = 8.29398 MB
+Maximum value = 2898949
+Maximum log = 21.4671
+Delta = 1 size= 11663436total = 54045526
+Order enc = 43.3327
+values vlc = 84.8925
+Order vlc = 234.077
+values enc = 308.702
+Winner: order(enc) values(vlc) size = 128.225 MB
+order(enc) values(vlc) : 128.225 MB
+Mix:btree_map<uint32_t,uint32_t> -  bit compressed values : 353.938 MB
+Mix:btree_map<uint32_t,uint32_t> -  enc values : 389.503 MB
+btree_map<uint32_t,uint32_t> : 412 MB
+order(vlc) values(enc) : 542.779 MB
+
+==> finalIndex.phmap.multiColumn.color27.out <==
+IDS map size = 15.4926 MB
+Bit Compressed IDS map size = 5.56767 MB
+Maximum value = 2030645
+Maximum log = 20.9535
+Delta = 16 size= 8147167total = 46120722
+Order enc = 40.0276
+values vlc = 82.4118
+Order vlc = 198.89
+values enc = 262.618
+Winner: order(enc) values(vlc) size = 122.439 MB
+order(enc) values(vlc) : 122.439 MB
+Mix:btree_map<uint32_t,uint32_t> -  bit compressed values : 310.111 MB
+Mix:btree_map<uint32_t,uint32_t> -  enc values : 336.109 MB
+btree_map<uint32_t,uint32_t> : 351 MB
+order(vlc) values(enc) : 461.508 MB
+
+==> finalIndex.phmap.multiColumn.color28.out <==
+IDS map size = 18.8707 MB
+Bit Compressed IDS map size = 6.78166 MB
+Maximum value = 2473416
+Maximum log = 21.2381
+Delta = 8 size= 10593906total = 50255642
+Order enc = 46.3131
+values vlc = 82.6176
+Order vlc = 218.508
+values enc = 279.945
+Winner: order(enc) values(vlc) size = 128.931 MB
+order(enc) values(vlc) : 128.931 MB
+Mix:btree_map<uint32_t,uint32_t> -  bit compressed values : 330.379 MB
+Mix:btree_map<uint32_t,uint32_t> -  enc values : 360.55 MB
+btree_map<uint32_t,uint32_t> : 383 MB
+order(vlc) values(enc) : 498.453 MB
+
+==> finalIndex.phmap.multiColumn.color29.out <==
+IDS map size = 22.0441 MB
+Bit Compressed IDS map size = 7.92209 MB
+Maximum value = 2889356
+Maximum log = 21.4623
+Delta = 16 size= 7978761total = 48450236
+Order enc = 41.3161
+values vlc = 90.5268
+Order vlc = 209.486
+values enc = 276.408
+Winner: order(enc) values(vlc) size = 131.843 MB
+order(enc) values(vlc) : 131.843 MB
+Mix:btree_map<uint32_t,uint32_t> -  bit compressed values : 329.698 MB
+Mix:btree_map<uint32_t,uint32_t> -  enc values : 354.818 MB
+btree_map<uint32_t,uint32_t> : 369 MB
+order(vlc) values(enc) : 485.894 MB
+
+==> finalIndex.phmap.multiColumn.color2.out <==
+IDS map size = 21.53 MB
+Bit Compressed IDS map size = 7.73735 MB
+Maximum value = 2821977
+Maximum log = 21.4283
+Delta = 1 size= 17545761total = 73183531
+Order enc = 50.9068
+values vlc = 145.323
+Order vlc = 311.992
+values enc = 420.542
+Winner: order(enc) values(vlc) size = 196.23 MB
+order(enc) values(vlc) : 196.23 MB
+Mix:btree_map<uint32_t,uint32_t> -  bit compressed values : 470.498 MB
+Mix:btree_map<uint32_t,uint32_t> -  enc values : 526.258 MB
+btree_map<uint32_t,uint32_t> : 558 MB
+order(vlc) values(enc) : 732.534 MB
+
+==> finalIndex.phmap.multiColumn.color30.out <==
+IDS map size = 10.1326 MB
+Bit Compressed IDS map size = 3.48311 MB
+Maximum value = 1328104
+Maximum log = 20.3409
+Delta = 16 size= 142608936total = 205204608
+Order enc = 207.729
+values vlc = 267.335
+Order vlc = 952.559
+values enc = 1438.45
+Winner: order(enc) values(vlc) size = 475.063 MB
+order(enc) values(vlc) : 475.063 MB
+Mix:btree_map<uint32_t,uint32_t> -  bit compressed values : 834.574 MB
+btree_map<uint32_t,uint32_t> : 1565 MB
+Mix:btree_map<uint32_t,uint32_t> -  enc values : 1565.7 MB
+order(vlc) values(enc) : 2391.01 MB
+
+==> finalIndex.phmap.multiColumn.color31.out <==
+IDS map size = 67.879 MB
+Bit Compressed IDS map size = 27.5759 MB
+Maximum value = 8897039
+Maximum log = 23.0849
+Delta = 16 size= 9471293total = 40406119
+Order enc = 36.5808
+values vlc = 90.1383
+Order vlc = 174.318
+values enc = 243.112
+Winner: order(enc) values(vlc) size = 126.719 MB
+order(enc) values(vlc) : 126.719 MB
+Mix:btree_map<uint32_t,uint32_t> -  bit compressed values : 263.112 MB
+Mix:btree_map<uint32_t,uint32_t> -  enc values : 293.016 MB
+btree_map<uint32_t,uint32_t> : 308 MB
+order(vlc) values(enc) : 417.43 MB
+
+==> finalIndex.phmap.multiColumn.color32.out <==
+IDS map size = 35.9587 MB
+Bit Compressed IDS map size = 13.4845 MB
+Maximum value = 4713178
+Maximum log = 22.1683
+Delta = 16 size= 6075107total = 25394981
+Order enc = 25.5958
+values vlc = 59.1584
+Order vlc = 109.677
+values enc = 152.663
+Winner: order(enc) values(vlc) size = 84.7541 MB
+order(enc) values(vlc) : 84.7541 MB
+Mix:btree_map<uint32_t,uint32_t> -  bit compressed values : 164.056 MB
+Mix:btree_map<uint32_t,uint32_t> -  enc values : 184.361 MB
+btree_map<uint32_t,uint32_t> : 193 MB
+order(vlc) values(enc) : 262.34 MB
+
+==> finalIndex.phmap.multiColumn.color33.out <==
+IDS map size = 3.01977 MB
+Bit Compressed IDS map size = 0.990868 MB
+Maximum value = 395805
+Maximum log = 18.5944
+Delta = 16 size= 9014960total = 22368137
+Order enc = 25.5375
+values vlc = 28.8891
+Order vlc = 98.3397
+values enc = 124.335
+Winner: order(enc) values(vlc) size = 54.4267 MB
+order(enc) values(vlc) : 54.4267 MB
+Mix:btree_map<uint32_t,uint32_t> -  bit compressed values : 122.295 MB
+Mix:btree_map<uint32_t,uint32_t> -  enc values : 152.103 MB
+btree_map<uint32_t,uint32_t> : 170 MB
+order(vlc) values(enc) : 222.675 MB
+
+==> finalIndex.phmap.multiColumn.color34.out <==
+IDS map size = 21.8193 MB
+Bit Compressed IDS map size = 8.18224 MB
+Maximum value = 2859895
+Maximum log = 21.4475
+Delta = 16 size= 7561242total = 22942680
+Order enc = 25.0692
+values vlc = 38.267
+Order vlc = 100.57
+values enc = 131.491
+Winner: order(enc) values(vlc) size = 63.3361 MB
+order(enc) values(vlc) : 63.3361 MB
+Mix:btree_map<uint32_t,uint32_t> -  bit compressed values : 137.181 MB
+Mix:btree_map<uint32_t,uint32_t> -  enc values : 159.098 MB
+btree_map<uint32_t,uint32_t> : 175 MB
+order(vlc) values(enc) : 232.061 MB
+
+==> finalIndex.phmap.multiColumn.color35.out <==
+IDS map size = 3.42083 MB
+Bit Compressed IDS map size = 1.12247 MB
+Maximum value = 448373
+Maximum log = 18.7743
+Delta = 16 size= 12964430total = 42466368
+Order enc = 42.2074
+values vlc = 63.9729
+Order vlc = 186.16
+values enc = 248.277
+Winner: order(enc) values(vlc) size = 106.18 MB
+order(enc) values(vlc) : 106.18 MB
+Mix:btree_map<uint32_t,uint32_t> -  bit compressed values : 254.446 MB
+Mix:btree_map<uint32_t,uint32_t> -  enc values : 307.473 MB
+btree_map<uint32_t,uint32_t> : 323 MB
+order(vlc) values(enc) : 434.437 MB
+
+==> finalIndex.phmap.multiColumn.color36.out <==
+IDS map size = 9.22578 MB
+Bit Compressed IDS map size = 3.17137 MB
+Maximum value = 1209240
+Maximum log = 20.2057
+Delta = 16 size= 209235335total = 344425494
+Order enc = 324.914
+values vlc = 435.311
+Order vlc = 1615.14
+values enc = 1858.29
+Winner: order(enc) values(vlc) size = 760.225 MB
+order(enc) values(vlc) : 760.225 MB
+Mix:btree_map<uint32_t,uint32_t> -  bit compressed values : 1555.22 MB
+Mix:btree_map<uint32_t,uint32_t> -  enc values : 2143.33 MB
+btree_map<uint32_t,uint32_t> : 2627 MB
+order(vlc) values(enc) : 3473.43 MB
+
+==> finalIndex.phmap.multiColumn.color37.out <==
+IDS map size = 18.4102 MB
+Bit Compressed IDS map size = 6.61619 MB
+Maximum value = 2413065
+Maximum log = 21.2024
+Delta = 16 size= 174630538total = 457093302
+Order enc = 373.694
+values vlc = 555.033
+Order vlc = 2134.16
+values enc = 2479.09
+Winner: order(enc) values(vlc) size = 928.727 MB
+order(enc) values(vlc) : 928.727 MB
+Mix:btree_map<uint32_t,uint32_t> -  bit compressed values : 2613.01 MB
+Mix:btree_map<uint32_t,uint32_t> -  enc values : 3103.42 MB
+btree_map<uint32_t,uint32_t> : 3487 MB
+order(vlc) values(enc) : 4613.25 MB
+
+==> finalIndex.phmap.multiColumn.color38.out <==
+IDS map size = 154.403 MB
+Bit Compressed IDS map size = 65.1389 MB
+Maximum value = 20237944
+Maximum log = 24.2706
+Delta = 16 size= 177543673total = 332834963
+Order enc = 304.556
+values vlc = 545.715
+Order vlc = 1555.31
+values enc = 1836.58
+Winner: order(enc) values(vlc) size = 850.271 MB
+order(enc) values(vlc) : 850.271 MB
+Mix:btree_map<uint32_t,uint32_t> -  bit compressed values : 1713.9 MB
+Mix:btree_map<uint32_t,uint32_t> -  enc values : 2110.63 MB
+btree_map<uint32_t,uint32_t> : 2539 MB
+order(vlc) values(enc) : 3391.89 MB
+
+==> finalIndex.phmap.multiColumn.color39.out <==
+IDS map size = 160.311 MB
+Bit Compressed IDS map size = 67.6311 MB
+Maximum value = 21012258
+Maximum log = 24.3247
+Delta = 16 size= 137361475total = 355113555
+Order enc = 308.914
+values vlc = 581.943
+Order vlc = 1671.95
+values enc = 1958.16
+Winner: order(enc) values(vlc) size = 890.857 MB
+order(enc) values(vlc) : 890.857 MB
+Mix:btree_map<uint32_t,uint32_t> -  bit compressed values : 2070.69 MB
+Mix:btree_map<uint32_t,uint32_t> -  enc values : 2370.19 MB
+btree_map<uint32_t,uint32_t> : 2709 MB
+order(vlc) values(enc) : 3630.11 MB
+
+==> finalIndex.phmap.multiColumn.color3.out <==
+IDS map size = 16.243 MB
+Bit Compressed IDS map size = 5.83735 MB
+Maximum value = 2129005
+Maximum log = 21.0217
+Delta = 16 size= 26043940total = 133132982
+Order enc = 97.3602
+values vlc = 212.793
+Order vlc = 580.264
+values enc = 732.456
+Winner: order(enc) values(vlc) size = 310.153 MB
+order(enc) values(vlc) : 310.153 MB
+Mix:btree_map<uint32_t,uint32_t> -  bit compressed values : 885.328 MB
+Mix:btree_map<uint32_t,uint32_t> -  enc values : 955.292 MB
+btree_map<uint32_t,uint32_t> : 1015 MB
+order(vlc) values(enc) : 1312.72 MB
+
+==> finalIndex.phmap.multiColumn.color40.out <==
+IDS map size = 161.649 MB
+Bit Compressed IDS map size = 68.1956 MB
+Maximum value = 21187643
+Maximum log = 24.3367
+Delta = 16 size= 140708576total = 350269181
+Order enc = 304.741
+values vlc = 575.953
+Order vlc = 1634.07
+values enc = 1935.39
+Winner: order(enc) values(vlc) size = 880.694 MB
+order(enc) values(vlc) : 880.694 MB
+Mix:btree_map<uint32_t,uint32_t> -  bit compressed values : 2018.16 MB
+Mix:btree_map<uint32_t,uint32_t> -  enc values : 2326.17 MB
+btree_map<uint32_t,uint32_t> : 2672 MB
+order(vlc) values(enc) : 3569.46 MB
+
+==> finalIndex.phmap.multiColumn.color41.out <==
+IDS map size = 31.1668 MB
+Bit Compressed IDS map size = 11.6876 MB
+Maximum value = 4085096
+Maximum log = 21.9619
+Delta = 16 size= 165468591total = 428181393
+Order enc = 362.787
+values vlc = 578.314
+Order vlc = 2007.6
+values enc = 2314.57
+Winner: order(enc) values(vlc) size = 941.1 MB
+order(enc) values(vlc) : 941.1 MB
+Mix:btree_map<uint32_t,uint32_t> -  bit compressed values : 2438.3 MB
+Mix:btree_map<uint32_t,uint32_t> -  enc values : 2881.87 MB
+btree_map<uint32_t,uint32_t> : 3266 MB
+order(vlc) values(enc) : 4322.16 MB
+
+==> finalIndex.phmap.multiColumn.color42.out <==
+IDS map size = 3.92007 MB
+Bit Compressed IDS map size = 1.28629 MB
+Maximum value = 513810
+Maximum log = 18.9709
+Delta = 16 size= 159695006total = 445877795
+Order enc = 376.32
+values vlc = 489.495
+Order vlc = 2098.78
+values enc = 2368.2
+Winner: order(enc) values(vlc) size = 865.815 MB
+order(enc) values(vlc) : 865.815 MB
+Mix:btree_map<uint32_t,uint32_t> -  bit compressed values : 2545.11 MB
+Mix:btree_map<uint32_t,uint32_t> -  enc values : 3035.19 MB
+btree_map<uint32_t,uint32_t> : 3401 MB
+order(vlc) values(enc) : 4466.98 MB
+
+==> finalIndex.phmap.multiColumn.color43.out <==
+IDS map size = 19.9098 MB
+Bit Compressed IDS map size = 7.15509 MB
+Maximum value = 2609613
+Maximum log = 21.3154
+Delta = 16 size= 182522019total = 295928369
+Order enc = 281.459
+values vlc = 389.174
+Order vlc = 1384.12
+values enc = 1578.96
+Winner: order(enc) values(vlc) size = 670.633 MB
+order(enc) values(vlc) : 670.633 MB
+Mix:btree_map<uint32_t,uint32_t> -  bit compressed values : 1343.9 MB
+Mix:btree_map<uint32_t,uint32_t> -  enc values : 1817.29 MB
+btree_map<uint32_t,uint32_t> : 2257 MB
+order(vlc) values(enc) : 2963.08 MB
+
+==> finalIndex.phmap.multiColumn.color44.out <==
+IDS map size = 2.24216 MB
+Bit Compressed IDS map size = 0.700684 MB
+Maximum value = 293883
+Maximum log = 18.1649
+Delta = 16 size= 26876207total = 63793408
+Order enc = 63.4705
+values vlc = 78.2616
+Order vlc = 283.936
+values enc = 335.791
+Winner: order(enc) values(vlc) size = 141.732 MB
+order(enc) values(vlc) : 141.732 MB
+Mix:btree_map<uint32_t,uint32_t> -  bit compressed values : 342.53 MB
+Mix:btree_map<uint32_t,uint32_t> -  enc values : 421.618 MB
+btree_map<uint32_t,uint32_t> : 486 MB
+order(vlc) values(enc) : 619.727 MB
+
+==> finalIndex.phmap.multiColumn.color45.out <==
+IDS map size = 1.72411 MB
+Bit Compressed IDS map size = 0.538795 MB
+Maximum value = 225981
+Maximum log = 17.7858
+Delta = 16 size= 14104980total = 15648149
+Order enc = 18.3377
+values vlc = 18.5764
+Order vlc = 71.0317
+values enc = 81.3871
+Winner: order(enc) values(vlc) size = 36.9141 MB
+order(enc) values(vlc) : 36.9141 MB
+Mix:btree_map<uint32_t,uint32_t> -  bit compressed values : 42.0395 MB
+Mix:btree_map<uint32_t,uint32_t> -  enc values : 84.7486 MB
+btree_map<uint32_t,uint32_t> : 119 MB
+order(vlc) values(enc) : 152.419 MB
+
+==> finalIndex.phmap.multiColumn.color46.out <==
+IDS map size = 1.25211 MB
+Bit Compressed IDS map size = 0.391296 MB
+Maximum value = 164115
+Maximum log = 17.3243
+Delta = 16 size= 14569915total = 39433804
+Order enc = 40.7447
+values vlc = 43.3542
+Order vlc = 175.014
+values enc = 210.99
+Winner: order(enc) values(vlc) size = 84.099 MB
+order(enc) values(vlc) : 84.099 MB
+Mix:btree_map<uint32_t,uint32_t> -  bit compressed values : 220.96 MB
+Mix:btree_map<uint32_t,uint32_t> -  enc values : 269.466 MB
+btree_map<uint32_t,uint32_t> : 300 MB
+order(vlc) values(enc) : 386.004 MB
+
+==> finalIndex.phmap.multiColumn.color47.out <==
+IDS map size = 1.12598 MB
+Bit Compressed IDS map size = 0.351875 MB
+Maximum value = 147582
+Maximum log = 17.1712
+Delta = 16 size= 6923890total = 11284599
+Order enc = 13.5432
+values vlc = 12.6974
+Order vlc = 50.717
+values enc = 59.2558
+Winner: order(enc) values(vlc) size = 26.2406 MB
+order(enc) values(vlc) : 26.2406 MB
+Mix:btree_map<uint32_t,uint32_t> -  bit compressed values : 48.1266 MB
+Mix:btree_map<uint32_t,uint32_t> -  enc values : 68.8213 MB
+btree_map<uint32_t,uint32_t> : 86 MB
+order(vlc) values(enc) : 109.973 MB
+
+==> finalIndex.phmap.multiColumn.color48.out <==
+IDS map size = 0.724495 MB
+Bit Compressed IDS map size = 0.215096 MB
+Maximum value = 94959
+Maximum log = 16.535
+Delta = 16 size= 3395516total = 6401401
+Order enc = 8.36235
+values vlc = 7.10311
+Order vlc = 29.005
+values enc = 33.1447
+Winner: order(enc) values(vlc) size = 15.4655 MB
+order(enc) values(vlc) : 15.4655 MB
+Mix:btree_map<uint32_t,uint32_t> -  bit compressed values : 29.8143 MB
+Mix:btree_map<uint32_t,uint32_t> -  enc values : 40.3228 MB
+btree_map<uint32_t,uint32_t> : 48 MB
+order(vlc) values(enc) : 62.1497 MB
+
+==> finalIndex.phmap.multiColumn.color49.out <==
+IDS map size = 0.204659 MB
+Bit Compressed IDS map size = 0.0543747 MB
+Maximum value = 26823
+Maximum log = 14.7112
+Delta = 16 size= 1422687total = 3336349
+Order enc = 4.85902
+values vlc = 3.40973
+Order vlc = 14.993
+values enc = 17.5157
+Winner: order(enc) values(vlc) size = 8.26875 MB
+order(enc) values(vlc) : 8.26875 MB
+Mix:btree_map<uint32_t,uint16_t> -  bit compressed values : 13.494 MB
+Mix:btree_map<uint32_t,uint16_t> -  enc values : 18.3182 MB
+btree_map<uint32_t,uint16_t> : 19.0907 MB
+btree_map<uint32_t,uint32_t> : 25 MB
+order(vlc) values(enc) : 32.5087 MB
+
+==> finalIndex.phmap.multiColumn.color4.out <==
+IDS map size = 25.3508 MB
+Bit Compressed IDS map size = 9.11047 MB
+Maximum value = 3322784
+Maximum log = 21.664
+Delta = 16 size= 10879265total = 49390870
+Order enc = 40.5807
+values vlc = 103.295
+Order vlc = 210.636
+values enc = 287.53
+Winner: order(enc) values(vlc) size = 143.876 MB
+order(enc) values(vlc) : 143.876 MB
+Mix:btree_map<uint32_t,uint32_t> -  bit compressed values : 322.352 MB
+Mix:btree_map<uint32_t,uint32_t> -  enc values : 358.185 MB
+btree_map<uint32_t,uint32_t> : 376 MB
+order(vlc) values(enc) : 498.166 MB
+
+==> finalIndex.phmap.multiColumn.color5.out <==
+IDS map size = 24.7854 MB
+Bit Compressed IDS map size = 9.29455 MB
+Maximum value = 3248675
+Maximum log = 21.6314
+Delta = 1 size= 17687091total = 51188716
+Order enc = 38.6003
+values vlc = 103.403
+Order vlc = 220.56
+values enc = 298.243
+Winner: order(enc) values(vlc) size = 142.003 MB
+order(enc) values(vlc) : 142.003 MB
+Mix:btree_map<uint32_t,uint32_t> -  bit compressed values : 301.983 MB
+Mix:btree_map<uint32_t,uint32_t> -  enc values : 360.599 MB
+btree_map<uint32_t,uint32_t> : 390 MB
+order(vlc) values(enc) : 518.803 MB
+
+==> finalIndex.phmap.multiColumn.color6.out <==
+IDS map size = 39.3626 MB
+Bit Compressed IDS map size = 15.376 MB
+Maximum value = 5159330
+Maximum log = 22.2988
+Delta = 1 size= 11806454total = 66556375
+Order enc = 50.0033
+values vlc = 138.951
+Order vlc = 284.492
+values enc = 387.923
+Winner: order(enc) values(vlc) size = 188.954 MB
+order(enc) values(vlc) : 188.954 MB
+Mix:btree_map<uint32_t,uint32_t> -  bit compressed values : 450.08 MB
+Mix:btree_map<uint32_t,uint32_t> -  enc values : 488.176 MB
+btree_map<uint32_t,uint32_t> : 507 MB
+order(vlc) values(enc) : 672.414 MB
+
+==> finalIndex.phmap.multiColumn.color7.out <==
+IDS map size = 41.9986 MB
+Bit Compressed IDS map size = 16.4057 MB
+Maximum value = 5504844
+Maximum log = 22.3923
+Delta = 16 size= 14721221total = 50392984
+Order enc = 44.3895
+values vlc = 114.046
+Order vlc = 215.472
+values enc = 297.908
+Winner: order(enc) values(vlc) size = 158.436 MB
+order(enc) values(vlc) : 158.436 MB
+Mix:btree_map<uint32_t,uint32_t> -  bit compressed values : 312.517 MB
+Mix:btree_map<uint32_t,uint32_t> -  enc values : 360.087 MB
+btree_map<uint32_t,uint32_t> : 384 MB
+order(vlc) values(enc) : 513.38 MB
+
+==> finalIndex.phmap.multiColumn.color8.out <==
+IDS map size = 39.0454 MB
+Bit Compressed IDS map size = 15.2521 MB
+Maximum value = 5117755
+Maximum log = 22.2871
+Delta = 16 size= 36131251total = 36554499
+Order enc = 40.7425
+values vlc = 84.6534
+Order vlc = 158.419
+values enc = 216.713
+Winner: Mix:btree_map<uint32_t,uint32_t> -  bit compressed values size = 102.294 MB
+Mix:btree_map<uint32_t,uint32_t> -  bit compressed values : 102.294 MB
+order(enc) values(vlc) : 125.396 MB
+Mix:btree_map<uint32_t,uint32_t> -  enc values : 217.405 MB
+btree_map<uint32_t,uint32_t> : 278 MB
+order(vlc) values(enc) : 375.132 MB
+
+==> finalIndex.phmap.multiColumn.color9.out <==
+IDS map size = 42.8076 MB
+Bit Compressed IDS map size = 16.7217 MB
+Maximum value = 5610871
+Maximum log = 22.4198
+Delta = 1 size= 14440320total = 60775335
+Order enc = 46.3951
+values vlc = 139.021
+Order vlc = 259.866
+values enc = 359.012
+Winner: order(enc) values(vlc) size = 185.416 MB
+order(enc) values(vlc) : 185.416 MB
+Mix:btree_map<uint32_t,uint32_t> -  bit compressed values : 393.101 MB
+Mix:btree_map<uint32_t,uint32_t> -  enc values : 439.77 MB
+btree_map<uint32_t,uint32_t> : 463 MB
+order(vlc) values(enc) : 618.878 MB

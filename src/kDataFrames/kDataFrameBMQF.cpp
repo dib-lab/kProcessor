@@ -1,4 +1,4 @@
-#include "kDataFrame.hpp"
+#include "kDataframes/kDataFrameBMQF.hpp"
 #include "Utils/kmer.h"
 #include <iostream>
 #include <fstream>
@@ -6,6 +6,8 @@
 #include <limits>
 #include <sstream>
 #include <cstdlib>
+
+
 
 
 kDataFrameBMQF::kDataFrameBMQF():kDataFrame(){
@@ -169,7 +171,7 @@ void kDataFrameBMQF::_reserve(vector<uint64_t> countHistogram) {
     uint64_t nSlots;
     uint64_t fixedCounterSize;
     uint64_t memory;
-    kDataFrameMQF::estimateParameters(countHistogram, 2 * getkSize(), 0,
+    estimateParameters(countHistogram, 2 * getkSize(), 0,
                                       &nSlots, &fixedCounterSize, &memory);
 //    std::cerr << "[DEBUG] Q: " << q << std::endl;
     int randNum=rand();
@@ -328,11 +330,11 @@ uint32_t kDataFrameBMQF::insert(const string &kmer){
 bool kDataFrameBMQF::_insert(const string &kmer){
     if(load_factor()>0.85){
         // ERROR FLAG: _reserve(bufferedmqf->memoryBuffer->metadata->nslots)
-        reserve(bufferedmqf->disk->metadata->nslots);
+        reserve(bufferedmqf->disk->metadata->nslots*2);
     }
     uint64_t hash= KD->hash_kmer(kmer) % bufferedmqf->disk->metadata->range;
     try{
-        bufferedMQF_insert(bufferedmqf,hash,lastKmerOrder++,false,false);
+        bufferedMQF_insert(bufferedmqf,hash,1,false,false);
     }
     catch(overflow_error & e)
     {
@@ -402,10 +404,10 @@ uint32_t kDataFrameBMQF::insert(uint64_t hash){
 bool kDataFrameBMQF::_insert(uint64_t hash){
     if(load_factor()>0.85){
         // ERROR FLAG: _reserve(bufferedmqf->memoryBuffer->metadata->nslots)
-        reserve(bufferedmqf->disk->metadata->nslots);
+        reserve(bufferedmqf->disk->metadata->nslots*2);
     }
     try{
-        bufferedMQF_insert(bufferedmqf,hash,lastKmerOrder++,false,false);
+        bufferedMQF_insert(bufferedmqf,hash,1,false,false);
     }
     catch(overflow_error & e)
     {
@@ -644,3 +646,26 @@ bool kDataFrameBMQF::kmerExist(uint64_t kmer) {
 kDataFrame *kDataFrameBMQF::clone() {
     throw logic_error("not implemented yet");
 }
+
+
+kDataFrame *kDataFrameFactory::loadBMQF(string filePath) {
+    return kDataFrameBMQF::load(filePath);
+}
+
+kDataFrame *kDataFrameFactory::createBMQF(uint32_t kSize,string filePath, uint32_t numKmers) {
+    return new kDataFrameBMQF(kSize,numKmers,filePath);
+}
+
+kDataFrame *kDataFrameFactory::createBMQF(kDataFrame *kframe,string filePath) {
+    return new kDataFrameBMQF(kframe,filePath);
+}
+
+
+void kDataFrameUtility::deleteMemoryBufferBMQF(kDataFrame* frame){
+    if(dynamic_cast<kDataFrameBMQF*>(frame))
+    {
+        ((kDataFrameBMQF*)frame)->deleteMemoryBuffer();
+    }
+}
+
+

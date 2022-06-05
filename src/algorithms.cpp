@@ -12,6 +12,7 @@
 #include "kmc_file.h"
 #include <omp.h>
 #include "mum.h"
+#include "kDataframes/kDataFrameSTL.hpp"
 
 #include <parallel_hashmap/btree.h>
 
@@ -27,6 +28,8 @@ using phmap::flat_hash_map;
 
 
 namespace kProcessor {
+
+
 
     void dumpMQF(QF *MQF, int ksize, std::string outputFilename) {
         IntegerHasher Ihasher(BITMASK(2 * ksize));
@@ -160,7 +163,7 @@ namespace kProcessor {
             bool exists=false;
             for (auto i : kmersToKeep ) {
                 if (input[i] != nullptr) {
-                    return kmerRow("",input[i]->getHashedKmer(),1,0,nullptr);
+                    return kmerRow(input[i]->getHashedKmer(),1,0,nullptr);
                 }
             }
             return kmerRow();
@@ -168,33 +171,6 @@ namespace kProcessor {
         return res;
     }
 
-    kDataFrame *filter(kDataFrame *input, function<bool (kmerRow& i)> fn) {
-        kDataFrame *res = input->getTwin();
-        kDataFrameIterator it = input->begin();
-        while (it != input->end()) {
-            kmerRow k=it.getKmerRow();
-            if (fn(k))
-                res->insert(k.hashedKmer);
-            it++;
-        }
-        for(auto col: input->columns)
-        {
-            string newColName= col.first;
-            Column* column=col.second->getTwin();
-            column->resize(res->size());
-            res->addColumn(newColName, column);
-        }
-        for(auto kmer:*res)
-        {
-            for (auto col: input->columns) {
-                string newColName = col.first;
-                res->setKmerColumnValueFromOtherColumn(input,col.first, newColName,kmer.getHashedKmer());
-            }
-        }
-
-        return res;
-
-    }
     kDataFrame *filter(kDataFrame *input, function<bool (kDataFrameIterator& i)> fn) {
         kDataFrame *res = input->getTwin();
         unordered_map<string,Column*> columns;
@@ -228,14 +204,6 @@ namespace kProcessor {
 
     }
 
-    any aggregate(kDataFrame *input, any initial, function<any (kmerRow i, any v)> fn) {
-        kDataFrameIterator it = input->begin();
-        while (it != input->end()) {
-            initial = fn(it.getKmerRow(), initial);
-            it++;
-        }
-        return initial;
-    }
     any aggregate(kDataFrame *input, any initial, function<any (kDataFrameIterator& i, any v)> fn) {
         kDataFrameIterator it = input->begin();
         while (it != input->end()) {
@@ -428,7 +396,7 @@ namespace kProcessor {
         }
         for(auto col: columns)
         {
-            col.second->resize(res->size());
+            col.second->resize(res->size()+1);
             res->addColumn(col.first,col.second);
         }
 
@@ -453,7 +421,7 @@ namespace kProcessor {
                 }
             }
             if(existInAll)
-                return kmerRow("",input[0]->getHashedKmer(),1,0,nullptr);
+                return kmerRow(input[0]->getHashedKmer(),1,0,nullptr);
             return kmerRow();
         });
         return res;
@@ -473,7 +441,7 @@ namespace kProcessor {
                     }
                 }
                 if(!exist)
-                    return kmerRow("",input[0]->getHashedKmer(),1,0,nullptr);
+                    return kmerRow(input[0]->getHashedKmer(),1,0,nullptr);
             }
             return kmerRow();
         });
@@ -594,7 +562,7 @@ namespace kProcessor {
         kDataFrame* kf=kDataFrame::load(kdataframeFileNames[0]);
         uint64_t kSize=kf->ksize();
         delete kf;
-        kDataFramePHMAP* output=new kDataFramePHMAP(kSize,10000000);//this value should be estimated
+        kDataFramePHMAP* output=(kDataFramePHMAP*)kDataFrameFactory::createPHMAP(kSize,10000000);//this value should be estimated
         //kDataFrameMAP* output=new kDataFrameMAP(kSize);
         omp_set_num_threads(numThreads);
         cout<<"Number of threads = "<<omp_get_num_threads()<<endl;
@@ -608,7 +576,7 @@ namespace kProcessor {
             uint32_t lastKmerID;
             #pragma omp atomic capture
             lastKmerID=lastID++;
-            kDataFramePHMAP::MapType* map=output->getMap();
+            kDataFramePHMAP::MAPType* map=output->getMap();
             vector<pair<Column*,Column*> > columns;
             kDataFrame* kf;
             string fileName;
@@ -669,11 +637,9 @@ namespace kProcessor {
 //                            }
 //                            ,lastKmerID);
 //                    }
-                    map->try_emplace_l(kmerHash,
-                                       [&order](uint32_t& v) {
-                        order=v;
-                        }
-                        ,lastKmerID);
+                    
+                    map->try_emplace_l(kmerHash, [&order](auto& v) {order=v.second;} ,lastKmerID);
+
                     if(order==lastKmerID)
                     {
 #pragma omp atomic capture
@@ -717,59 +683,60 @@ namespace kProcessor {
 //        }
         return output;
     }
-    void indexMega(string filename,string tmpFolder, kDataFrame *frame) {
 
-        uint32_t chunkSize=1000;
-        uint32_t samplePerIndex=5000;
-        kmerDecoder *KD = kProcessor::initialize_kmerDecoder(filename, chunkSize, "kmers", {{"k_size", frame->ksize()}});
-        string kmer;
-        uint32_t readID = 0;
-        uint32_t kSize=KD->get_kSize();
-        vector<pair<std::string,std::vector<kmer_row>> > reads(chunkSize);
-        vector<kDataFrame*> toIndex(samplePerIndex);
-        deque<string> smallIndex;
-        bool moreWork=!KD->end();
-
-        while (moreWork) {
-
-            uint32_t j=0;
-            while(j<samplePerIndex && moreWork){
-                //make sure to check before next chunk when paralleize the code
-                KD->next_chunk();
-                moreWork=!KD->end();
-                uint32_t i=0;
-                for (const auto &seq : *KD->getKmers()) {
-                    reads[i++]=(seq);
-                }
-                for (const auto &seq : reads) {
-                    toIndex[j]=new kDataFrameMAP(kSize);
-                    for (const auto &kmer : seq.second) {
-                        toIndex[j]->insert(kmer.hash);
-                    }
-                    j++;
-                }
-            }
-            kDataFrame* KF = new kDataFramePHMAP(kSize,integer_hasher);
-            kProcessor::indexPriorityQueue(toIndex,"", KF);
-            for(auto k:toIndex)
-                delete k;
-            deduplicatedColumn<mixVectors>* currCol=(deduplicatedColumn< mixVectors >*)KF->columns["color"];
-            prefixTrie* newCol=new prefixTrie((mixVectors*) currCol->values);
-            //delete currCol->values;
-            //KF->columns["color"]=newCol;
-            string kfFile=tmpFolder+"tmpIndex."+ to_string(smallIndex.size());
-            KF->serialize(kfFile);
-            smallIndex.push_back(kfFile);
-            delete KF;
-
-            cout<<"Processed "<<chunkSize<<" Sequences"<<endl;
-
-
-        }
-        cout<<"Finished small indexes"<<endl;
-        delete KD;
-
-    }
+//    void indexMega(string filename,string tmpFolder, kDataFrame *frame) {
+//
+//        uint32_t chunkSize=1000;
+//        uint32_t samplePerIndex=5000;
+//        kmerDecoder *KD = kProcessor::initialize_kmerDecoder(filename, chunkSize, "kmers", {{"k_size", frame->ksize()}});
+//        string kmer;
+//        uint32_t readID = 0;
+//        uint32_t kSize=KD->get_kSize();
+//        vector<pair<std::string,std::vector<kmer_row>> > reads(chunkSize);
+//        vector<kDataFrame*> toIndex(samplePerIndex);
+//        deque<string> smallIndex;
+//        bool moreWork=!KD->end();
+//
+//        while (moreWork) {
+//
+//            uint32_t j=0;
+//            while(j<samplePerIndex && moreWork){
+//                //make sure to check before next chunk when paralleize the code
+//                KD->next_chunk();
+//                moreWork=!KD->end();
+//                uint32_t i=0;
+//                for (const auto &seq : *KD->getKmers()) {
+//                    reads[i++]=(seq);
+//                }
+//                for (const auto &seq : reads) {
+//                    toIndex[j]=new kDataFrameMAP(kSize);
+//                    for (const auto &kmer : seq.second) {
+//                        toIndex[j]->insert(kmer.hash);
+//                    }
+//                    j++;
+//                }
+//            }
+//            kDataFrame* KF = kDataFrameFactory::createPHMAP(kSize,integer_hasher);
+//            kProcessor::indexPriorityQueue(toIndex,"", KF);
+//            for(auto k:toIndex)
+//                delete k;
+//            deduplicatedColumn<mixVectors>* currCol=(deduplicatedColumn< mixVectors >*)KF->columns["color"];
+//            prefixTrie* newCol=new prefixTrie((mixVectors*) currCol->values);
+//            //delete currCol->values;
+//            //KF->columns["color"]=newCol;
+//            string kfFile=tmpFolder+"tmpIndex."+ to_string(smallIndex.size());
+//            KF->serialize(kfFile);
+//            smallIndex.push_back(kfFile);
+//            delete KF;
+//
+//            cout<<"Processed "<<chunkSize<<" Sequences"<<endl;
+//
+//
+//        }
+//        cout<<"Finished small indexes"<<endl;
+//        delete KD;
+//
+//    }
 
     void index(kmerDecoder *KD, string names_fileName, kDataFrame *frame) {
         if (KD->get_kSize() != (int) frame->ksize()) {
@@ -820,7 +787,6 @@ namespace kProcessor {
             for (auto &_ : groupNameMap)
                 inv_groupNameMap[_.second] = _.first;
 
-        vector<kDataFrameMQF *> frames;
 //        int currIndex = 0;
         string kmer;
 //        uint64_t tagBits = 0;
@@ -936,15 +902,9 @@ namespace kProcessor {
                 }
             }
         }
-        colors->values = new StringColorColumn();
 
-        colors->values->colors = vector<vector<uint32_t> >(legend->size());
-        colors->values->colors.push_back(vector<uint32_t>());
-        for (auto it : *legend) {
-            colors->values->colors[it.first] = it.second;
-        }
+        colors->values = new StringColorColumn(legend,groupCounter.size());
         delete legend;
-
         for (auto & iit : namesMap) {
             uint32_t sampleID = groupNameMap[iit.second];
             colors->values->namesMap[sampleID] = iit.second;
@@ -1034,15 +994,15 @@ namespace kProcessor {
                     delete get<3>(colorTuple);
                 }
             }
-
-            uint64_t prevColor = output->getkmerOrder(currHash);
+            string kmerS=input[0]->KD->ihash_kmer(currHash);
+            uint64_t prevColor = output->getkmerOrder(kmerS);
             if (prevColor != 0) {
                 cout << "Error in Indexing detected at kmer " << currHash << endl;
                 cout << "should be empty vector and found  " << endl;
             }
-            
-            output->insert(currHash);
-            output->setKmerColumnValue<vector<uint32_t> , deduplicatedColumn< insertColorColumn>>("i",currHash, colorVec);
+
+            output->insert(kmerS);
+            output->setKmerColumnValue<deduplicatedColumn< insertColorColumn>>("i",kmerS, colorVec);
 
             // auto res=output->getKmerDefaultColumnValue<vector<uint32_t >, insertColorColumn>(currHash);
             // //	cout<<res.size()<<endl;
@@ -1072,7 +1032,7 @@ namespace kProcessor {
         output->addColumn("color",colorColumn);
     }
 
-    void createPrefixForest(kDataFrame* index, string tmpFolder){
+    void createPrefixForest(kDataFrame* index, string tmpFolder,uint32_t num_vectors,uint32_t vector_size){
         unsigned i=0;
         vector<deduplicatedColumn<prefixTrie,phmap::btree_map<uint32_t,uint32_t>>* > trees;
         auto it=index->columns.find("color"+to_string(i));
@@ -1091,14 +1051,15 @@ namespace kProcessor {
         const uint32_t colorsVecSize= noColumns *10000;
         const uint32_t ordersVecSize=noColumns *10000;
 
-        sdsl::int_vector<> colors(colorsVecSize);
-        uint32_t colorsTop=noColumns;
-        uint32_t colorsVecID=0;
+        //sdsl::int_vector<> colors(colorsVecSize);
+        //uint32_t colorsTop=noColumns;
+        //uint32_t colorsVecID=0;
         sdsl::int_vector<> orders(ordersVecSize);
         uint32_t ordersVecID=0;
         uint32_t orderRange=index->lastKmerOrder;
         ofstream orderFile(tmpFolder+"orders");
-        ofstream colorsFile(tmpFolder+"colors");
+        auto colors=new insertColorColumn(noColumns, tmpFolder,num_vectors,vector_size);
+        //ofstream colorsFile(tmpFolder+"colors");
         vector<uint32_t> currColor(noColumns);
         uint32_t lastColorID=1;
         cerr<<"Num of kmers "<<orderRange<<endl;
@@ -1115,54 +1076,29 @@ namespace kProcessor {
                 tmp.serialize(orderFile);
                 ordersVecID++;
             }
+            currColor.clear();
             for(unsigned j=0; j<trees.size(); j++ )
             {
                 auto it = trees[j]->index.find(i);
                 currColor[j]=0;
-                if(it!=trees[j]->index.end())
-                    currColor[j]=it->second;
-            }
-            uint64_t hash=mum_hash(currColor.data(), currColor.size() * 4, 4495203915657755407);
-            auto it=invColor.find(hash);
-            uint32_t currColorID;
-            if(it==invColor.end())
-            {
-                currColorID=lastColorID++;
-                invColor[hash]=currColorID;
-                colorHistogram[currColorID]=1;
-                for(unsigned j=0;j<noColumns;j++)
-                    colors[colorsTop++]=currColor[j];
-                if(colorsTop==colorsVecSize)
-                {
-                    colorsTop=0;
-                    sdsl::int_vector<> tmp=colors;
-                    sdsl::util::bit_compress(tmp);
-                    tmp.serialize(colorsFile);
-                    colorsVecID++;
+                if(it!=trees[j]->index.end()){
+                    currColor.push_back(j);
+                    currColor.push_back(it->second);
                 }
-                if(lastColorID%100000==0)
-                    cerr<<"Colors "<<lastColorID<<endl;
             }
-            else{
-                currColorID=it->second;
-                colorHistogram[it->second]++;
-            }
-            orders[i % ordersVecSize]=currColorID;
+            orders[i % ordersVecSize]=colors->insertAndGetIndex(currColor);
+
 
         }
-        ofstream hist("hist");
-        for(auto h:colorHistogram)
-            hist<<h.first<<"it"<<h.second<<endl;
+        cerr<<"step one finsihed"<<endl;
+//        ofstream hist("hist");
+//        for(auto h:colorHistogram)
+//            hist<<h.first<<"\t"<<h.second<<endl;
         sdsl::util::bit_compress(orders);
         orders.serialize(orderFile);
         ordersVecID++;
-        sdsl::util::bit_compress(colors);
-        colors.serialize(colorsFile);
-        colorsVecID++;
-        cerr<<"Final Colors created "<<lastColorID<<endl;
 
         orderFile.close();
-        colorsFile.close();
 
 
 
@@ -1171,16 +1107,15 @@ namespace kProcessor {
         forest->numColors=invColor.size();
         invColor.clear();
 
-        forest->colorVecSize=colorsVecSize;
         forest->orderVecSize=ordersVecSize;
         forest->trees=deque<prefixTrie*>(trees.size());
         for(unsigned i=0;i<trees.size();i++){
-            forest->trees[i]=(prefixTrie*)trees[i]->values->clone();
+            forest->trees[i]=(prefixTrie*)(trees[i]->values->clone());
    //         delete trees[i];
         }
+        cerr<<"Copying trees is finished"<<endl;
 
         ifstream orderInputFile(tmpFolder+"orders");
-        ifstream colorsInputFile(tmpFolder+"colors");
 
         forest->orderColorID.resize(ordersVecID);
         for(unsigned i=0;i<ordersVecID;i++)
@@ -1188,13 +1123,12 @@ namespace kProcessor {
             forest->orderColorID[i]=new prefixForest::vectype ();
             forest->orderColorID[i]->load(orderInputFile);
         }
+        cerr<<"Orders is loaded"<<endl;
 
-        forest->ColorIDPointer.resize(colorsVecID);
-        for(unsigned i=0;i<colorsVecID;i++)
-        {
-            forest->ColorIDPointer[i]=new prefixForest::vectype ();
-            forest->ColorIDPointer[i]->load(colorsInputFile);
-        }
+        forest->ColorIDPointer=new mixVectors(colors);
+        prefixTrie* ptmp= new prefixTrie(forest->ColorIDPointer);
+        ptmp->explainSize();
+        cerr<<"colors is loaded"<<endl;
 
         forest->explainSize();
 //        for(unsigned  i=0; i< noColumns;i++)

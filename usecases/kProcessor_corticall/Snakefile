@@ -1,0 +1,244 @@
+pepfile: "project_config.yaml"
+configfile: "config.yaml"
+
+kSize=config["kSize"]
+outFolder=config["outFolder"]
+tmpFolder=config["tmpFolder"]
+
+references=list(filter(lambda x:x.library=="parent_reference",pep.samples))
+references=[(x.sample_name,x.file[0]) for x in references]
+references=dict(references)
+
+
+progny_short=list(filter(lambda x:x.library=="progny_short",pep.samples))
+progny_short=[(x.sample_name,x.file) for x in progny_short]
+progny_short=dict(progny_short)
+dbgs=list(references.keys())+list(progny_short.keys())
+
+sampleParents={}
+sampleParentsNames={}
+
+for s in list(filter(lambda x:x.library=="progny_short",pep.samples)):
+    parents=s.parent.split("x")
+    sampleParentsNames[s.sample_name]=parents
+    sampleParents[s.sample_name]=[]
+    for p in parents:
+    	sampleParents[s.sample_name].append(outFolder+"corticall/"+(s.sample_name+"."+p)+".ref.ctp.gz")
+
+def getFile(dict,name):
+    return dict[name]
+
+import os,math
+
+def getFQSizeInGB(name):
+    files=progny_short[name]
+    res=0
+    for f in files:
+    	res+=os.path.getsize(f)
+    return int(math.ceil(float(res)/(1024.0*1024.0*1024.0)))
+
+def getFileSizeInGB(file):
+    res = os.path.getsize(file)
+    return int(math.ceil(float(res)/(1024.0*1024.0*1024.0)))
+
+
+framesToBeJoined = expand(outFolder+"kProcessor/{sample}.kframe.cleaned.bmqf.bmqf",sample=progny_short.keys())
+framesToBeJoined+= expand(outFolder+"kProcessor/{sample}.kframe.bmqf.bmqf",sample=references.keys())
+
+
+
+framesToBeJoinedPhmap = expand(outFolder+"kProcessor/{sample}.kframe.cleaned.phmap",sample=progny_short.keys())
+framesToBeJoinedPhmap += expand(outFolder+"kProcessor/{sample}.kframe.phmap",sample=references.keys())
+
+
+rule all:
+    input:
+         expand(outFolder+"kProcessor/{sample}.kframe.phmap",sample=dbgs),
+         outFolder+"kProcessor/cdbg.joined.phmap",
+         expand(outFolder+"kProcessor/{sample}.novelkmers.phmap",sample=progny_short.keys())
+
+ #        expand(outFolder+"kProcessor/{sample}.kframe.bmqf.bmqf",sample=progny_short.keys)
+#        expand(outFolder+"kmc/{sample}.kmc_pre",sample=dbgs),
+#        expand(outFolder+"bcalm/{sample}.unitigs.fa",sample=progny_short.keys()),
+#        expand(outFolder+"kProcessor/{sample}.kframe.cleaned.phmap",sample=progny_short.keys()),
+
+rule kmcParent:
+    input:  lambda wildcards: getFile(references,f"{wildcards.sample}")
+    output:
+         pre=outFolder+"kmc/{sample}.kmc_pre",
+         suf=outFolder+"kmc/{sample}.kmc_suf",
+         time=outFolder+"kmc/{sample}.kmc.time"
+    threads: 4
+    log: outFolder+"kmc/{sample}.kmc.log"
+    shell:
+       	"""
+	mkdir -p {tmpFolder}$$/
+	/usr/bin/time -v -o {output.time} KMC/bin/kmc -ci1 -t{threads} -k{kSize} -m4 -fm {input} {outFolder}kmc/{wildcards.sample}  {tmpFolder}$$/ &> {log}
+        rm -rf {tmpFolder}$$/
+	"""
+
+
+rule kmcProgny:
+    input: lambda wildcards: getFile(progny_short,f"{wildcards.experiment}")
+    output:
+         pre=outFolder+"kmc/{experiment}.kmc_pre",
+         suf=outFolder+"kmc/{experiment}.kmc_suf",
+         time=outFolder+"kmc/{experiment}.kmc.time"
+    conda:
+         "env.yaml"
+    threads: 4
+    log: outFolder+"kmc/{experiment}.kmc.log"
+    shell:
+       	"""
+	    mkdir -p {tmpFolder}$$/
+    	    echo {input} |tr -s ' ' $'\n' > {wildcards.experiment}.lst
+	        /usr/bin/time -v -o {output.time} KMC/bin/kmc -ci1 -cs1000000  -hp  -t{threads} -k{kSize} -m4  @{wildcards.experiment}.lst {outFolder}kmc/{wildcards.experiment}  {tmpFolder}$$/ &> {log}
+		rm -rf {tmpFolder}$$/
+	     #   rm {wildcards.experiment}.lst
+        """
+
+rule buildPrognyDBGKprocessor:
+    input:  kmc= outFolder+"kmc/{sample}.kmc_pre"
+    output:
+        ctx=outFolder+"kProcessor/{sample}.kframe.phmap",
+        time=outFolder+"kProcessor/{sample}.kprocessor.build.time"
+    log: outFolder+"kProcessor/{sample}.kprocessor.build.log"
+    conda: "env.yaml"
+    shell:
+       	"""
+	       /usr/bin/time -v -o {output.time} ../../apps/loadFromKMC {outFolder}kmc/{wildcards.sample} PHMAP {outFolder}kProcessor/{wildcards.sample}.kframe  &> {log}
+        """
+#
+# rule buildPrognyDBGKprocessorBMQF:
+#     input:  kmc= outFolder+"kmc/{sample}.kmc_pre"
+#     output:
+#         ctx=outFolder+"kProcessor/{sample}.kframe.bmqf.bmqf",
+#         time=outFolder+"kProcessor/{sample}.kprocessor.buildbmqf.time"
+#     log: outFolder+"kProcessor/{sample}.kprocessor.buildbmqf.log"
+#     conda: "env.yaml"
+#     shell:
+#        	"""
+#        	mkdir -p {tmpFolder}$$/
+# 	    /usr/bin/time -v -o {output.time} ../../apps/loadFromKMC {outFolder}kmc/{wildcards.sample} BMQF {tmpFolder}$$/{wildcards.sample}.kframe.bmqf  &> {log}
+#         mv {tmpFolder}$$/{wildcards.sample}.kframe.bmqf* {outFolder}kProcessor/
+#         rm -rf {tmpFolder}$$/
+#         """
+
+
+rule convertKframeToBMQF:
+    input:  kframe= outFolder+"kProcessor/{sample}.phmap"
+    output:
+        kframe=outFolder+"kProcessor/{sample}.bmqf.bmqf",
+        time=outFolder+"kProcessor/{sample}.kprocessor.covert.bmqf.time"
+    params:
+        inputPrefix = outFolder+"kProcessor/{sample}",
+        outputPrefix= "{sample}.bmqf"
+    log: outFolder+"kProcessor/{sample}.kprocessor.convert.bmqf.log"
+    conda: "env.yaml"
+    shell:
+       	"""
+       	mkdir -p {tmpFolder}$$/
+	    /usr/bin/time -v -o {output.time} ../../apps/convert  -i {params.inputPrefix} -t BMQF -o {tmpFolder}$$/{params.outputPrefix}  &> {log}
+        mv {tmpFolder}$$/{params.outputPrefix}* {outFolder}kProcessor/
+        rm -rf {tmpFolder}$$/
+        """
+
+
+rule bcalmProgny:
+    input: lambda wildcards: getFile(progny_short,f"{wildcards.experiment}")
+    output:
+         unitigs=outFolder+"bcalm/{experiment}.unitigs.fa",
+         time=outFolder+"bcalm/{experiment}.bcalm.time"
+    conda:
+         "env.yaml"
+    threads: 4
+    log: outFolder+"bcalm/{experiment}.bcalm.log"
+    shell:
+       	"""
+    	    echo {input} |tr -s ' ' $'\n' > {wildcards.experiment}.lst
+    	    /usr/bin/time -v -o {output.time} bcalm -nb-cores {threads} -in {wildcards.experiment}.lst -kmer-size {kSize} -abundance-min 1 -out {outFolder}bcalm/{wildcards.experiment} &> {log}
+        """
+
+
+rule cleanPrognyDBGKprocessor:
+    input:
+        kframe=outFolder+"kProcessor/{sample}.kframe.phmap",
+        unitigs=outFolder+"bcalm/{sample}.unitigs.fa"
+    params:
+        kframeINPrefix=outFolder+"kProcessor/{sample}.kframe",
+        kframeOUTPrefix=outFolder+"kProcessor/{sample}.kframe.cleaned"
+    output:
+        kframe=outFolder+"kProcessor/{sample}.kframe.cleaned.phmap",
+        time=outFolder+"kProcessor/{sample}.kprocessor.clean.time"
+    log: outFolder+"kProcessor/{sample}.kprocessor.clean.log"
+    conda: "env.yaml"
+    shell:
+       	"""
+	       /usr/bin/time -v -o {output.time} ./cleanDBG -k  {params.kframeINPrefix} -u {input.unitigs} -o {params.kframeOUTPrefix}  &> {log}
+        """
+
+rule index:
+    input:
+         frames= framesToBeJoined
+    output:
+         index=outFolder+"kProcessor/cdbg.phmap",
+         lst=outFolder+"kProcessor/cdbg.inputLst",
+	 time=outFolder+"kProcessor/cdbg.kprocessor.indexing.time"
+    params:
+         prefix=outFolder+"kProcessor/cdbg"
+    log: outFolder+"kProcessor/cdbg.log"
+    shell:
+        """
+                mkdir -p {tmpFolder}$$/
+                MYTMP="{tmpFolder}$$/"
+                echo {input.frames} | tr -s ' ' $'\n'| sed -e 's/.bmqf$//' > {output.lst}
+                numSamples=$(wc -l {output.lst}  |cut -f1 -d' ')
+                paste -d '/' <(yes "$MYTMP" |head -n $numSamples) <(parallel --gnu -k basename {{}} < {output.lst}) >  $MYTMP/inputlst
+                parallel --gnu -j 5 --tmpdir $MYTMP  "cp {{}}.bmqf {{}}.bmqf.bufferedMem.metadata {{}}.bmqf.ondisk.metadata {{}}.extra   $MYTMP" :::: {output.lst}
+                /usr/bin/time -o {output.time} -v  ../../apps/index -i  $MYTMP/inputlst    -t {tmpFolder}$$/ -o {params.prefix} -n 20 -s 100000000  -p   &> {log}
+	        	rm -rf {tmpFolder}$$/
+        """
+
+
+rule JoinAll:
+    input:
+         frames= framesToBeJoinedPhmap,
+         index=outFolder+"kProcessor/cdbg.phmap"
+    output:
+         index=outFolder+"kProcessor/cdbg.joined.phmap",
+         lst=outFolder+"kProcessor/cdbg.joined.inputLst",
+	 time=outFolder+"kProcessor/cdbg.kprocessor.joining.time"
+    params:
+         prefix=outFolder+"kProcessor/cdbg.joined"
+    log: outFolder+"kProcessor/cdbg.joining.log"
+    shell:
+        """
+                mkdir -p {tmpFolder}$$/
+                echo {input.frames} {input.index} | tr -s ' ' $'\n'| sed -e 's/.phmap$//' > {output.lst}
+                /usr/bin/time -o {output.time} -v  ../../apps/mergeIndex  -n 8 -i  {output.lst}    -t {tmpFolder}$$/ -o {params.prefix}   &> {log}
+	        	rm -rf {tmpFolder}$$/
+        """
+
+rule detectNovelKmers:
+    input:
+         index=outFolder+"kProcessor/cdbg.joined.phmap",
+         lst=outFolder+"kProcessor/cdbg.joined.inputLst",
+         sample_table="sample_table.csv"
+    output:
+         kframe=outFolder+"kProcessor/{sample}.novelkmers.phmap",
+         time =outFolder+"kProcessor/{sample}.detectnovelkmers.time"
+    params:
+        outputPrefix=outFolder+"kProcessor/{sample}.novelkmers",
+        inputPrefix=outFolder+"kProcessor/cdbg.joined",
+        parents= lambda wildcards: getFile(sampleParentsNames,f"{wildcards.sample}")
+    log: outFolder+"kProcessor/{sample}.detectnovelkmers.log"
+    shell:
+        """
+                mkdir -p {tmpFolder}$$/
+
+                cat {input.lst} |parallel --gnu -k 'basename {{}}|cut -f1 -d'.' ' > {tmpFolder}$$/tmp.lst
+                cat {input.sample_table} |cut -f1,3 -d','| tr -s ',' $'\t' > {tmpFolder}$$/tmp2.lst
+                /usr/bin/time -o {output.time} -v  ./detectNovelKmers -k {params.inputPrefix} -l {tmpFolder}$$/tmp.lst -s {wildcards.sample} -p {params.parents[0]} -p {params.parents[1]} -t {tmpFolder}$$/tmp2.lst -o {params.outputPrefix} &> {log}
+            	rm -rf  {tmpFolder}$$/
+        """
+

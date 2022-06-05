@@ -1,10 +1,7 @@
 #include "kDataFrame.hpp"
 #include "Utils/kmer.h"
 #include <iostream>
-#include <fstream>
 #include <math.h>
-#include <limits>
-#include <sstream>
 #include "defaultColumn.hpp"
 
 using namespace std;
@@ -35,13 +32,7 @@ bool kDataFrame::empty() {
     return this->size() == 0;
 }
 
-uint32_t kDataFrame::insert(kmerRow k) {
-    return this->setCount(k.hashedKmer, k.count);
-}
-kDataFrame::iterator kDataFrame::insert(kDataFrame::iterator& it,kmerRow k){
-    insert(k);
-    return begin();
-}
+
 void kDataFrame::save(string filePath)
 {
     ofstream out(filePath+".multiColumn");
@@ -67,15 +58,19 @@ void kDataFrame::save(string filePath)
 kDataFrame * kDataFrame::load(string filePath) {
     kDataFrame* res;
     if (fileExists(filePath + ".mqf"))
-        res=kDataFrameMQF::load(filePath);
+        res=kDataFrameFactory::loadMQF(filePath);
     else if (fileExists(filePath + ".map"))
-        res=kDataFrameMAP::load(filePath);
+        res=kDataFrameFactory::loadMAP(filePath);
     else if (fileExists(filePath + ".phmap"))
-        res=kDataFramePHMAP::load(filePath);
+        res=kDataFrameFactory::loadPHMAP(filePath);
+    else if (fileExists(filePath + ".btree"))
+        res=kDataFrameFactory::loadBtree(filePath);
     else if (fileExists(filePath+ ".bmqf"))
-        res=kDataFrameBMQF::load(filePath);
+        res=kDataFrameFactory::loadBMQF(filePath);
     else if (fileExists(filePath+ ".blight.gz"))
-        res=kDataFrameBlight::load(filePath);
+        res=kDataFrameFactory::loadBlight(filePath);
+    else if (fileExists(filePath+ ".sshash"))
+        res=kDataFrameFactory::loadSSHASH(filePath);
     else
         throw std::runtime_error("Could not open kDataFrame file");
 
@@ -178,6 +173,8 @@ bool kDataFrame::setCount(const string &kmer, std::uint64_t N)
         order=this->getkmerOrder(kmer);
     }
     countColumn->insert(N,order);
+
+    return true;
 }
 bool kDataFrame::setCount(std::uint64_t kmer,std::uint64_t N)
 {
@@ -188,6 +185,7 @@ bool kDataFrame::setCount(std::uint64_t kmer,std::uint64_t N)
         order=this->getkmerOrder(kmer);
     }
     countColumn->insert(N,order);
+    return true;
 }
 std::uint64_t kDataFrame::getCount(const string &kmer)
 {
@@ -319,7 +317,8 @@ bool kDataFrameIterator::setCount(std::uint64_t count){
     return origin->setCount(iterator->getHashedKmer(),count);
   }
 std::uint64_t kDataFrameIterator::getCount(){
-    
+
     uint32_t o = iterator->getOrder();
     return origin->countColumn->get(o);
 }
+

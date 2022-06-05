@@ -62,11 +62,9 @@ int main(int argc, char *argv[])
     {
         filenames.push_back(sample);
         frames.push_back(kDataFrame::load(sample));
-        if(dynamic_cast<kDataFrameBMQF*>(frames.back()))
-        {
-            ((kDataFrameBMQF*)frames.back())->deleteMemoryBuffer();
-        }
-	cerr<<"sample "<<sample<<" loaded"<<endl; 
+        kDataFrameUtility::deleteMemoryBufferBMQF(frames.back());
+
+    	cerr<<"sample "<<sample<<" loaded"<<endl;
     }
     uint64_t  kSize=frames[0]->getkSize();
     for(auto f:frames)
@@ -78,9 +76,10 @@ int main(int argc, char *argv[])
         }
     }
 
-    kDataFrame* output= new kDataFramePHMAP(kSize);
+    kDataFrame* output= kDataFrameFactory::createPHMAP(kSize);
     kProcessor::indexPriorityQueue(frames,tmpFolder,output,num_vectors,vector_size);
     cout<<"Indexing Finished"<<endl;
+    cout<<"Final Number of Kmers = "<<output->size()<<endl;
     if(isPrefixTrie)
     {
         if(mapDeduplicate)

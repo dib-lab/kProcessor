@@ -1,12 +1,11 @@
 #include "testkDataframe.h"
 #include "Utils/kmer.h"
-#include <stdlib.h>
-#include <time.h>
-#include <stdint.h>
+#include <cstdlib>
+#include <ctime>
+#include <cstdint>
 #include <iostream>
 #include <vector>
 #include "algorithms.hpp"
-#include <iterator>
 #include <algorithm>
 #include <tuple>
 #include "defaultColumn.hpp"
@@ -203,7 +202,7 @@ vector<kDataFrame*> BuildTestFrames()
   vector<int> kSizes={21};
   for(auto k:kSizes)
   {
-   framesToBeTested.push_back(new kDataFrameMQF(k));
+   framesToBeTested.push_back(kDataFrameFactory::createMQF(k));
   }
   for(auto k:kSizes)
   {
@@ -211,6 +210,28 @@ vector<kDataFrame*> BuildTestFrames()
   }
   return framesToBeTested;
 }
+map<string,int> bcalmKsize={
+        {"test2.bcalm.k21.fasta.unitigs.fa",21},
+        {"test2.bcalm.k31.fasta.unitigs.fa",31}
+};
+kDataFrame* getBCALMFrame(tuple<string,string> input)
+{
+    string type=get<0>(input);
+    string fileName=get<1>(input);
+    uint64_t kSize=bcalmKsize[fileName];
+    if(type=="blight")
+    {
+        return kDataFrameFactory::createBlight(kSize,fileName);
+    }
+    else if(type == "sshash"){
+        return kDataFrameFactory::createSSHASH(kSize,fileName);
+    }
+    else{
+        throw std::logic_error("Unkwon bcalm frame");
+        return nullptr;
+    }
+}
+
 kDataFrame* getFrame(tuple<string,int> input)
 {
     string type=get<0>(input);
@@ -219,44 +240,43 @@ kDataFrame* getFrame(tuple<string,int> input)
 
     if(type=="MQF")
     {
-        return new kDataFrameMQF(kSize,NKmersTEST);
+        return  kDataFrameFactory::createMQF(kSize,NKmersTEST);
     }
     else if(type=="MAP")
     {
-        return new kDataFrameMAP(kSize,NKmersTEST);
+        return kDataFrameFactory::createMAP(kSize,NKmersTEST);
     }
     else if(type=="PHMAP")
     {
-        return new kDataFramePHMAP(kSize,NKmersTEST);
+        return kDataFrameFactory::createPHMAP(kSize,NKmersTEST);
     }
-    else if(type=="BMQF")
+    else if(type=="Btree")
     {
-        string fileName="tmp.kdataframeBMQF."+gen_random(8);
-        return new kDataFrameBMQF((uint64_t)kSize,NKmersTEST,fileName);
+        return kDataFrameFactory::createBtree(kSize,NKmersTEST);
     }
     else{
         throw std::logic_error("Unknown kdataframe type");
     }
     return NULL;
 }
-
-vector<kDataFrameBMQF*> BuildTestBufferedFrames()
-{
-    vector<kDataFrameBMQF*> framesToBeTested;
-    vector<int> kSizes={21};
-    for(auto k:kSizes)
-    {
-        int randNum=rand();
-        string fileName="tmp"+to_string(randNum);
-        framesToBeTested.push_back(new kDataFrameBMQF((uint64_t)k,fileName));
-    }
-    return framesToBeTested;
-}
+//
+//vector<kDataFrameBMQF*> BuildTestBufferedFrames()
+//{
+//    vector<kDataFrameBMQF*> framesToBeTested;
+//    vector<int> kSizes={21};
+//    for(auto k:kSizes)
+//    {
+//        int randNum=rand();
+//        string fileName="tmp"+to_string(randNum);
+//        framesToBeTested.push_back(new kDataFrameBMQF((uint64_t)k,fileName));
+//    }
+//    return framesToBeTested;
+//}
 
 INSTANTIATE_TEST_SUITE_P(testFrames,
                         kDataFrameTest,
                          ::testing::Combine(
-                                 ::testing::Values("MAP","PHMAP"),
+                                 ::testing::Values("MAP","PHMAP","Btree"),
                                  ::testing::Values(21,31))
 );
 
@@ -269,7 +289,7 @@ vector<string> fastqFiles={"test.noN.fastq"};
 INSTANTIATE_TEST_SUITE_P(testcounting,
                          algorithmsTest,
                         ::testing::Combine(
-                                ::testing::Values("MAP","PHMAP"),
+                                ::testing::Values("MAP","PHMAP","Btree"),
                                 ::testing::Values(21,31),
                              ::testing::ValuesIn(fastqFiles)
                       ));
@@ -282,9 +302,10 @@ INSTANTIATE_TEST_SUITE_P(testntCard,
 INSTANTIATE_TEST_SUITE_P(testcounting,
                          kDataFrameBlightTest,
                          ::testing::Combine(
-                                 ::testing::Values(31),
-                                 ::testing::ValuesIn(fastqFiles)
-                                 ));
+                                 ::testing::Values("sshash"),
+                                 ::testing::Values("test2.bcalm.k21.fasta.unitigs.fa",
+                                                   "test2.bcalm.k31.fasta.unitigs.fa")
+                         ));
 
 void setFunctionsTest::SetUp()
 {
@@ -301,7 +322,7 @@ void setFunctionsTest::SetUp()
             // Mode 1 : kmers, KmerSize will be cloned from the kFrame
             kProcessor::countKmersFromFile(frames[i], {{"mode", 1}}, setFunctionsTestInput[0][i], 1000);
         }
-        kDataFrameMAP* indexRes=new kDataFrameMAP(k);
+        kDataFrame* indexRes=kDataFrameFactory::createMAP(k);
         kProcessor::indexPriorityQueue(frames,"",indexRes);
 
         auto prevColor=(deduplicatedColumn< mixVectors>*)indexRes->columns["color"];
@@ -318,7 +339,7 @@ void setFunctionsTest::SetUp()
         indexRes->addColumn("double",new vectorColumn<double>(indexRes->size()));
         for(auto k:*indexRes)
         {
-            k.setColumnValue<double,vectorColumn<double> >("double",rand());
+            k.setColumnValue<vectorColumn<double> >("double",rand());
         }
         frames.push_back(indexRes);
         input_SET[specification]=frames;
@@ -543,9 +564,9 @@ TEST_P(kDataFrameTest,multiColumnsClone)
 
         simColumns[kmer]=make_tuple(randInt,randDouble,randBool);
 
-        kframe->setKmerColumnValue<int, vectorColumn<int> >("intColumn",kmer,randInt);
-        kframe->setKmerColumnValue<double, vectorColumn<double> >("doubleColumn",kmer,randDouble);
-        kframe->setKmerColumnValue<bool, vectorColumn<bool> >("boolColumn",kmer,randBool);
+        kframe->setKmerColumnValue< vectorColumn<int> >("intColumn",kmer,randInt);
+        kframe->setKmerColumnValue<vectorColumn<double> >("doubleColumn",kmer,randDouble);
+        kframe->setKmerColumnValue<vectorColumn<bool> >("boolColumn",kmer,randBool);
         it++;
     }
     kframe2=kframe->clone();
@@ -558,9 +579,9 @@ TEST_P(kDataFrameTest,multiColumnsClone)
         double randDouble=get<1>(simRow.second);
         bool randBool=get<2>(simRow.second);
 
-        int retInt=kframe2->getKmerColumnValue<int, vectorColumn<int> >("intColumn",kmer);
-        double retDouble=kframe2->getKmerColumnValue<double, vectorColumn<double> >("doubleColumn",kmer);
-        bool retBool=kframe2->getKmerColumnValue<bool, vectorColumn<bool>>("boolColumn",kmer);
+        int retInt=kframe2->getKmerColumnValue<vectorColumn<int> >("intColumn",kmer);
+        double retDouble=kframe2->getKmerColumnValue<vectorColumn<double> >("doubleColumn",kmer);
+        bool retBool=kframe2->getKmerColumnValue<vectorColumn<bool>>("boolColumn",kmer);
 
         ASSERT_EQ(randInt,retInt);
         ASSERT_EQ(randDouble,retDouble);
@@ -610,9 +631,9 @@ TEST_P(kDataFrameTest,multiColumns)
 
       simColumns[kmer]=make_tuple(randInt,randDouble,randBool);
 
-      kframe->setKmerColumnValue<int, vectorColumn<int> >("intColumn",kmer,randInt);
-      kframe->setKmerColumnValue<double, vectorColumn<double> >("doubleColumn",kmer,randDouble);
-      kframe->setKmerColumnValue<bool, vectorColumn<bool> >("boolColumn",kmer,randBool);
+      kframe->setKmerColumnValue< vectorColumn<int> >("intColumn",kmer,randInt);
+      kframe->setKmerColumnValue<vectorColumn<double> >("doubleColumn",kmer,randDouble);
+      kframe->setKmerColumnValue<vectorColumn<bool> >("boolColumn",kmer,randBool);
       it++;
     }
     for(auto simRow:simColumns)
@@ -622,9 +643,9 @@ TEST_P(kDataFrameTest,multiColumns)
       double randDouble=get<1>(simRow.second);
       bool randBool=get<2>(simRow.second);
 
-      int retInt=kframe->getKmerColumnValue<int, vectorColumn<int> >("intColumn",kmer);
-      double retDouble=kframe->getKmerColumnValue<double, vectorColumn<double> >("doubleColumn",kmer);
-      bool retBool=kframe->getKmerColumnValue<bool, vectorColumn<bool>>("boolColumn",kmer);
+      int retInt=kframe->getKmerColumnValue<vectorColumn<int> >("intColumn",kmer);
+      double retDouble=kframe->getKmerColumnValue<vectorColumn<double> >("doubleColumn",kmer);
+      bool retBool=kframe->getKmerColumnValue<vectorColumn<bool>>("boolColumn",kmer);
 
       ASSERT_EQ(randInt,retInt);
       ASSERT_EQ(randDouble,retDouble);
@@ -679,9 +700,9 @@ TEST_P(kDataFrameTest,multiColumnsRemoveKmers)
         }
         simColumns[kmer]=make_tuple(randInt,randDouble,randBool);
 
-        kframe->setKmerColumnValue<int, vectorColumn<int> >("intColumn",kmer,randInt);
-        kframe->setKmerColumnValue<double, vectorColumn<double> >("doubleColumn",kmer,randDouble);
-        kframe->setKmerColumnValue<bool, vectorColumn<bool> >("boolColumn",kmer,randBool);
+        kframe->setKmerColumnValue< vectorColumn<int> >("intColumn",kmer,randInt);
+        kframe->setKmerColumnValue<vectorColumn<double> >("doubleColumn",kmer,randDouble);
+        kframe->setKmerColumnValue<vectorColumn<bool> >("boolColumn",kmer,randBool);
         it++;
     }
     for(auto k:removeKmers)
@@ -704,9 +725,9 @@ TEST_P(kDataFrameTest,multiColumnsRemoveKmers)
         if(randInt%10==0)
         {
             try{
-                  retInt=kframe->getKmerColumnValue<int, vectorColumn<int> >("intColumn",kmer);
-                  retDouble=kframe->getKmerColumnValue<double, vectorColumn<double> >("doubleColumn",kmer);
-                  retBool=kframe->getKmerColumnValue<bool, vectorColumn<bool>>("boolColumn",kmer);
+                  retInt=kframe->getKmerColumnValue<vectorColumn<int> >("intColumn",kmer);
+                  retDouble=kframe->getKmerColumnValue<vectorColumn<double> >("doubleColumn",kmer);
+                  retBool=kframe->getKmerColumnValue<vectorColumn<bool>>("boolColumn",kmer);
 
             }
             catch(const std::exception & e)
@@ -715,9 +736,9 @@ TEST_P(kDataFrameTest,multiColumnsRemoveKmers)
             }
         }
         else{
-            retInt=kframe->getKmerColumnValue<int, vectorColumn<int> >("intColumn",kmer);
-            retDouble=kframe->getKmerColumnValue<double, vectorColumn<double> >("doubleColumn",kmer);
-            retBool=kframe->getKmerColumnValue<bool, vectorColumn<bool>>("boolColumn",kmer);
+            retInt=kframe->getKmerColumnValue<vectorColumn<int> >("intColumn",kmer);
+            retDouble=kframe->getKmerColumnValue<vectorColumn<double> >("doubleColumn",kmer);
+            retBool=kframe->getKmerColumnValue<vectorColumn<bool>>("boolColumn",kmer);
             ASSERT_EQ(randInt,retInt);
             ASSERT_EQ(randDouble,retDouble);
             ASSERT_EQ(randBool,retBool);
@@ -730,9 +751,9 @@ TEST_P(kDataFrameTest,multiColumnsRemoveKmers)
 
     for(auto k:removeKmers)
     {
-        retInt=kframe->getKmerColumnValue<int, vectorColumn<int> >("intColumn",k);
-        retDouble=kframe->getKmerColumnValue<double, vectorColumn<double> >("doubleColumn",k);
-        retBool=kframe->getKmerColumnValue<bool, vectorColumn<bool>>("boolColumn",k);
+        retInt=kframe->getKmerColumnValue<vectorColumn<int> >("intColumn",k);
+        retDouble=kframe->getKmerColumnValue<vectorColumn<double> >("doubleColumn",k);
+        retBool=kframe->getKmerColumnValue<vectorColumn<bool>>("boolColumn",k);
         ASSERT_EQ(0,retInt);
         ASSERT_EQ(0.0,retDouble);
         ASSERT_EQ(false,retBool);
@@ -741,9 +762,9 @@ TEST_P(kDataFrameTest,multiColumnsRemoveKmers)
         int randInt=get<0>(simColumns[k]);
         double randDouble=get<1>(simColumns[k]);
         bool randBool=get<2>(simColumns[k]);
-        kframe->setKmerColumnValue<int, vectorColumn<int> >("intColumn",k,randInt);
-        kframe->setKmerColumnValue<double, vectorColumn<double> >("doubleColumn",k,randDouble);
-        kframe->setKmerColumnValue<bool, vectorColumn<bool> >("boolColumn",k,randBool);
+        kframe->setKmerColumnValue< vectorColumn<int> >("intColumn",k,randInt);
+        kframe->setKmerColumnValue<vectorColumn<double> >("doubleColumn",k,randDouble);
+        kframe->setKmerColumnValue<vectorColumn<bool> >("boolColumn",k,randBool);
 
     }
 
@@ -756,9 +777,9 @@ TEST_P(kDataFrameTest,multiColumnsRemoveKmers)
         double randDouble=get<1>(simRow.second);
         bool randBool=get<2>(simRow.second);
 
-        retInt=kframe->getKmerColumnValue<int, vectorColumn<int> >("intColumn",kmer);
-        retDouble=kframe->getKmerColumnValue<double, vectorColumn<double> >("doubleColumn",kmer);
-        retBool=kframe->getKmerColumnValue<bool, vectorColumn<bool>>("boolColumn",kmer);
+        retInt=kframe->getKmerColumnValue<vectorColumn<int> >("intColumn",kmer);
+        retDouble=kframe->getKmerColumnValue<vectorColumn<double> >("doubleColumn",kmer);
+        retBool=kframe->getKmerColumnValue<vectorColumn<bool>>("boolColumn",kmer);
 
         ASSERT_EQ(randInt,retInt);
         ASSERT_EQ(randDouble,retDouble);
@@ -809,9 +830,9 @@ TEST_P(kDataFrameTest,multiColumnsDefaultValue)
         simColumns[kmer]=make_tuple(randInt,randDouble,randBool);
 
         if(randInt%3==0){
-            kframe->setKmerColumnValue<int, vectorColumn<int> >("intColumn",kmer,randInt);
-            kframe->setKmerColumnValue<double, vectorColumn<double> >("doubleColumn",kmer,randDouble);
-            kframe->setKmerColumnValue<bool, vectorColumn<bool> >("boolColumn",kmer,randBool);
+            kframe->setKmerColumnValue< vectorColumn<int> >("intColumn",kmer,randInt);
+            kframe->setKmerColumnValue<vectorColumn<double> >("doubleColumn",kmer,randDouble);
+            kframe->setKmerColumnValue<vectorColumn<bool> >("boolColumn",kmer,randBool);
         }
         it++;
     }
@@ -833,9 +854,9 @@ TEST_P(kDataFrameTest,multiColumnsDefaultValue)
            // cout<<kmer<<endl;
         }
 
-        int retInt=kframe->getKmerColumnValue<int, vectorColumn<int> >("intColumn",kmer);
-        double retDouble=kframe->getKmerColumnValue<double, vectorColumn<double> >("doubleColumn",kmer);
-        bool retBool=kframe->getKmerColumnValue<bool, vectorColumn<bool>>("boolColumn",kmer);
+        int retInt=kframe->getKmerColumnValue<vectorColumn<int> >("intColumn",kmer);
+        double retDouble=kframe->getKmerColumnValue<vectorColumn<double> >("doubleColumn",kmer);
+        bool retBool=kframe->getKmerColumnValue<vectorColumn<bool>>("boolColumn",kmer);
 
         ASSERT_EQ(randInt,retInt);
         ASSERT_EQ(randDouble,retDouble);
@@ -856,7 +877,7 @@ TEST_P(kDataFrameTest,multiColumnsMissingKmer)
     kframe->addColumn("intColumn",new vectorColumn<int>(kframe->size()));
     string kmer=kmers->begin()->first;
     try{
-        kframe->setKmerColumnValue<int, vectorColumn<int> >("intColumn",kmer,10);
+        kframe->setKmerColumnValue< vectorColumn<int> >("intColumn",kmer,10);
         FAIL();
     }
     catch(std::logic_error const & err) {
@@ -904,13 +925,13 @@ TEST_P(kDataFrameTest,convertTOMQF)
 
         simColumns[kmer]=make_tuple(randInt,randDouble,randBool);
 
-        kframe->setKmerColumnValue<int, vectorColumn<int> >("intColumn",kmer,randInt);
-        kframe->setKmerColumnValue<double, vectorColumn<double> >("doubleColumn",kmer,randDouble);
-        kframe->setKmerColumnValue<bool, vectorColumn<bool> >("boolColumn",kmer,randBool);
+        kframe->setKmerColumnValue< vectorColumn<int> >("intColumn",kmer,randInt);
+        kframe->setKmerColumnValue<vectorColumn<double> >("doubleColumn",kmer,randDouble);
+        kframe->setKmerColumnValue<vectorColumn<bool> >("boolColumn",kmer,randBool);
         it++;
     }
 
-    kframeMQF=new kDataFrameMQF(kframe);
+    kframeMQF=kDataFrameFactory::createMQF(kframe);
     delete kframe;
     kframe= nullptr;
 
@@ -921,9 +942,9 @@ TEST_P(kDataFrameTest,convertTOMQF)
         double randDouble=get<1>(simRow.second);
         bool randBool=get<2>(simRow.second);
 
-        int retInt=kframeMQF->getKmerColumnValue<int, vectorColumn<int> >("intColumn",kmer);
-        double retDouble=kframeMQF->getKmerColumnValue<double, vectorColumn<double> >("doubleColumn",kmer);
-        bool retBool=kframeMQF->getKmerColumnValue<bool, vectorColumn<bool> >("boolColumn",kmer);
+        int retInt=kframeMQF->getKmerColumnValue<vectorColumn<int> >("intColumn",kmer);
+        double retDouble=kframeMQF->getKmerColumnValue<vectorColumn<double> >("doubleColumn",kmer);
+        bool retBool=kframeMQF->getKmerColumnValue<vectorColumn<bool> >("boolColumn",kmer);
 
         ASSERT_EQ(randInt,retInt);
         ASSERT_EQ(randDouble,retDouble);
@@ -933,7 +954,7 @@ TEST_P(kDataFrameTest,convertTOMQF)
     // test a alien kmer
     ASSERT_EQ(kframeMQF->kmerExist(NovelKmer),false);
     try{
-        int retInt=kframeMQF->getKmerColumnValue<int, vectorColumn<int> >("intColumn",NovelKmer);
+        int retInt=kframeMQF->getKmerColumnValue<vectorColumn<int> >("intColumn",NovelKmer);
         FAIL();
     }
     catch(const std::exception & e)
@@ -975,13 +996,13 @@ TEST_P(kDataFrameTest,convertTOBMQF)
 
         simColumns[kmer]=make_tuple(randInt,randDouble,randBool);
 
-        kframe->setKmerColumnValue<int, vectorColumn<int> >("intColumn",kmer,randInt);
-        kframe->setKmerColumnValue<double, vectorColumn<double> >("doubleColumn",kmer,randDouble);
-        kframe->setKmerColumnValue<bool, vectorColumn<bool> >("boolColumn",kmer,randBool);
+        kframe->setKmerColumnValue< vectorColumn<int> >("intColumn",kmer,randInt);
+        kframe->setKmerColumnValue<vectorColumn<double> >("doubleColumn",kmer,randDouble);
+        kframe->setKmerColumnValue<vectorColumn<bool> >("boolColumn",kmer,randBool);
         it++;
     }
 
-    kDataFrameBMQF* kframeMQF=new kDataFrameBMQF(kframe,"tmp.bmqf."+ gen_random(10));
+    kDataFrame* kframeMQF=kDataFrameFactory::createBMQF(kframe,"tmp.bmqf."+ gen_random(10));
     delete kframe;
     kframe= nullptr;
     unsigned checkedKmers=0;
@@ -1003,9 +1024,9 @@ TEST_P(kDataFrameTest,convertTOBMQF)
 //
 //        bool kmerExists=kframeMQF->kmerExist(kmer);
 //        ASSERT_EQ(kmerExists, true);
-////        int retInt=kframeMQF->getKmerColumnValue<int, vectorColumn<int> >("intColumn",kmer);
-////        double retDouble=kframeMQF->getKmerColumnValue<double, vectorColumn<double> >("doubleColumn",kmer);
-////        bool retBool=kframeMQF->getKmerColumnValue<bool, vectorColumn<bool> >("boolColumn",kmer);
+////        int retInt=kframeMQF->getKmerColumnValue<vectorColumn<int> >("intColumn",kmer);
+////        double retDouble=kframeMQF->getKmerColumnValue<vectorColumn<double> >("doubleColumn",kmer);
+////        bool retBool=kframeMQF->getKmerColumnValue<vectorColumn<bool> >("boolColumn",kmer);
 ////
 ////        ASSERT_EQ(randInt,retInt);
 ////        ASSERT_EQ(randDouble,retDouble);
@@ -1048,9 +1069,9 @@ TEST_P(kDataFrameTest,saveAndLoadMultiColumns)
 
         simColumns[kmer]=make_tuple(randInt,randDouble,randBool);
 
-        kframe->setKmerColumnValue<int, vectorColumn<int> >("intColumn",kmer,randInt);
-        kframe->setKmerColumnValue<double, vectorColumn<double> >("doubleColumn",kmer,randDouble);
-        kframe->setKmerColumnValue<bool, vectorColumn<bool> >("boolColumn",kmer,randBool);
+        kframe->setKmerColumnValue< vectorColumn<int> >("intColumn",kmer,randInt);
+        kframe->setKmerColumnValue<vectorColumn<double> >("doubleColumn",kmer,randDouble);
+        kframe->setKmerColumnValue<vectorColumn<bool> >("boolColumn",kmer,randBool);
         it++;
     }
 
@@ -1065,9 +1086,9 @@ TEST_P(kDataFrameTest,saveAndLoadMultiColumns)
         double randDouble=get<1>(simRow.second);
         bool randBool=get<2>(simRow.second);
 
-        int retInt=kframeLoaded->getKmerColumnValue<int, vectorColumn<int> >("intColumn",kmer);
-        double retDouble=kframeLoaded->getKmerColumnValue<double, vectorColumn<double> >("doubleColumn",kmer);
-        bool retBool=kframeLoaded->getKmerColumnValue<bool, vectorColumn<bool> >("boolColumn",kmer);
+        int retInt=kframeLoaded->getKmerColumnValue<vectorColumn<int> >("intColumn",kmer);
+        double retDouble=kframeLoaded->getKmerColumnValue<vectorColumn<double> >("doubleColumn",kmer);
+        bool retBool=kframeLoaded->getKmerColumnValue<vectorColumn<bool> >("boolColumn",kmer);
 
         ASSERT_EQ(randInt,retInt);
         ASSERT_EQ(randDouble,retDouble);
@@ -1152,8 +1173,8 @@ TEST_P(kDataFrameTest,transformPlus10)
     kframe2=kProcessor::transform(kframe,[](kDataFrameIterator& it)
     {
         uint32_t count0;
-        it.getColumnValue<uint32_t, vectorColumn<uint32_t> >("count", count0);
-        it.setColumnValue<uint32_t, vectorColumn<uint32_t> >("count", count0+10);
+        it.getColumnValue<vectorColumn<uint32_t> >("count", count0);
+        it.setColumnValue<vectorColumn<uint32_t> >("count", count0+10);
     });
     kDataFrameIterator it=kframe2->begin();
     int numCheckedKmers=0;
@@ -1203,27 +1224,27 @@ TEST_P(kDataFrameTest,transformMultiColumns)
 
         simColumns[kmer]=make_tuple(randInt*-1,ceil(randDouble),!randBool);
 
-        kframe->setKmerColumnValue<int, vectorColumn<int> >("intColumn",kmer,randInt);
-        kframe->setKmerColumnValue<double, vectorColumn<double> >("doubleColumn",kmer,randDouble);
-        kframe->setKmerColumnValue<bool, vectorColumn<bool> >("boolColumn",kmer,randBool);
+        kframe->setKmerColumnValue< vectorColumn<int> >("intColumn",kmer,randInt);
+        kframe->setKmerColumnValue<vectorColumn<double> >("doubleColumn",kmer,randDouble);
+        kframe->setKmerColumnValue<vectorColumn<bool> >("boolColumn",kmer,randBool);
         it++;
     }
     kframe2=kProcessor::transform(kframe,[](kDataFrameIterator& it)
     {
         int count0;
-        it.getColumnValue<int, vectorColumn<int> >("intColumn", count0);
-        it.setColumnValue<int, vectorColumn<int> >("intColumn", count0 *-1);
+        it.getColumnValue<vectorColumn<int> >("intColumn", count0);
+        it.setColumnValue<vectorColumn<int> >("intColumn", count0 *-1);
 
         double dV;
 
-        it.getColumnValue<double, vectorColumn<double> >("doubleColumn", dV);
-        it.setColumnValue<double, vectorColumn<double> >("doubleColumn", ceil(dV));
+        it.getColumnValue<vectorColumn<double> >("doubleColumn", dV);
+        it.setColumnValue<vectorColumn<double> >("doubleColumn", ceil(dV));
 
         bool bV;
 
 
-        it.getColumnValue<bool, vectorColumn<bool> >("boolColumn", bV);
-        it.setColumnValue<bool, vectorColumn<bool> >("boolColumn", !(bV));
+        it.getColumnValue<vectorColumn<bool> >("boolColumn", bV);
+        it.setColumnValue<vectorColumn<bool> >("boolColumn", !(bV));
 
 
     });
@@ -1236,9 +1257,9 @@ TEST_P(kDataFrameTest,transformMultiColumns)
         double randDouble=get<1>(simRow.second);
         bool randBool=get<2>(simRow.second);
 
-        int retInt=kframe2->getKmerColumnValue<int, vectorColumn<int> >("intColumn",kmer);
-        double retDouble=kframe2->getKmerColumnValue<double, vectorColumn<double> >("doubleColumn",kmer);
-        bool retBool=kframe2->getKmerColumnValue<bool, vectorColumn<bool>>("boolColumn",kmer);
+        int retInt=kframe2->getKmerColumnValue<vectorColumn<int> >("intColumn",kmer);
+        double retDouble=kframe2->getKmerColumnValue<vectorColumn<double> >("doubleColumn",kmer);
+        bool retBool=kframe2->getKmerColumnValue<vectorColumn<bool>>("boolColumn",kmer);
 
         ASSERT_EQ(randInt,retInt);
         ASSERT_EQ(randDouble,retDouble);
@@ -1287,27 +1308,27 @@ TEST_P(kDataFrameTest,transformInPlaceMultiColumns)
 
         simColumns[kmer]=make_tuple(randInt*-1,ceil(randDouble),!randBool);
 
-        kframe->setKmerColumnValue<int, vectorColumn<int> >("intColumn",kmer,randInt);
-        kframe->setKmerColumnValue<double, vectorColumn<double> >("doubleColumn",kmer,randDouble);
-        kframe->setKmerColumnValue<bool, vectorColumn<bool> >("boolColumn",kmer,randBool);
+        kframe->setKmerColumnValue< vectorColumn<int> >("intColumn",kmer,randInt);
+        kframe->setKmerColumnValue<vectorColumn<double> >("doubleColumn",kmer,randDouble);
+        kframe->setKmerColumnValue<vectorColumn<bool> >("boolColumn",kmer,randBool);
         it++;
     }
     kProcessor::transformInPlace(kframe,[](kDataFrameIterator& it)
     {
         int count0;
-        it.getColumnValue<int, vectorColumn<int> >("intColumn", count0);
-        it.setColumnValue<int, vectorColumn<int> >("intColumn", count0 *-1);
+        it.getColumnValue<vectorColumn<int> >("intColumn", count0);
+        it.setColumnValue<vectorColumn<int> >("intColumn", count0 *-1);
 
         double dV;
 
-        it.getColumnValue<double, vectorColumn<double> >("doubleColumn", dV);
-        it.setColumnValue<double, vectorColumn<double> >("doubleColumn", ceil(dV));
+        it.getColumnValue<vectorColumn<double> >("doubleColumn", dV);
+        it.setColumnValue<vectorColumn<double> >("doubleColumn", ceil(dV));
 
         bool bV;
 
 
-        it.getColumnValue<bool, vectorColumn<bool> >("boolColumn", bV);
-        it.setColumnValue<bool, vectorColumn<bool> >("boolColumn", !(bV));
+        it.getColumnValue<vectorColumn<bool> >("boolColumn", bV);
+        it.setColumnValue<vectorColumn<bool> >("boolColumn", !(bV));
 
 
     });
@@ -1318,9 +1339,9 @@ TEST_P(kDataFrameTest,transformInPlaceMultiColumns)
         double randDouble=get<1>(simRow.second);
         bool randBool=get<2>(simRow.second);
 
-        int retInt=kframe->getKmerColumnValue<int, vectorColumn<int> >("intColumn",kmer);
-        double retDouble=kframe->getKmerColumnValue<double, vectorColumn<double> >("doubleColumn",kmer);
-        bool retBool=kframe->getKmerColumnValue<bool, vectorColumn<bool>>("boolColumn",kmer);
+        int retInt=kframe->getKmerColumnValue<vectorColumn<int> >("intColumn",kmer);
+        double retDouble=kframe->getKmerColumnValue<vectorColumn<double> >("doubleColumn",kmer);
+        bool retBool=kframe->getKmerColumnValue<vectorColumn<bool>>("boolColumn",kmer);
 
         ASSERT_EQ(randInt,retInt);
         ASSERT_EQ(randDouble,retDouble);
@@ -1378,7 +1399,7 @@ TEST_P(kDataFrameTest,FilterLessThan5MultipleColumns)
     {
         uint32_t count=(k.second%9)+1;
         kframe->setCount(k.first,count);
-        kframe->setKmerColumnValue<bool, vectorColumn<bool> >("boolColumn",k.first,count%5==0);
+        kframe->setKmerColumnValue<vectorColumn<bool> >("boolColumn",k.first,count%5==0);
         if(kframe->load_factor()>=kframe->max_load_factor()*0.8){
             break;
         }
@@ -1387,7 +1408,7 @@ TEST_P(kDataFrameTest,FilterLessThan5MultipleColumns)
     kframe2=kProcessor::filter(kframe,[](kDataFrameIterator& k) -> bool
     {
         uint32_t count=0;
-        k.getColumnValue<uint32_t,vectorColumn<uint32_t> >("count",count);
+        k.getColumnValue<vectorColumn<uint32_t> >("count",count);
         return count>=5;
     });
     kDataFrameIterator it=kframe2->begin();
@@ -1395,9 +1416,9 @@ TEST_P(kDataFrameTest,FilterLessThan5MultipleColumns)
     {
         string kmer=it.getKmer();
         uint32_t count;
-        it.getColumnValue<uint32_t, vectorColumn<uint32_t> >("count",count);
+        it.getColumnValue<vectorColumn<uint32_t> >("count",count);
         bool boolvalue;
-        it.getColumnValue<bool, vectorColumn<bool> >("boolColumn",boolvalue);
+        it.getColumnValue<vectorColumn<bool> >("boolColumn",boolvalue);
 
         //ASSERT_EQ(count,((*kmers)[kmer]%9)+1);
         ASSERT_GE(count,5);
@@ -1448,7 +1469,7 @@ TEST_P(algorithmsTest,parsingTest)
   kProcessor::countKmersFromFile(kframe, {{"mode", 1}}, fileName, 1000); // Mode 1 : kmers, KmerSize will be cloned from the kFrame
 
   string db=fileName+"."+std::to_string(kSize);
-  kDataFrame* kmc= new kDataFrameMAP(kSize);
+  kDataFrame* kmc= kDataFrameFactory::createMAP(kSize);
   kProcessor::loadFromKMC(kmc,db);
 
   for(auto k:*kmc)
@@ -1498,12 +1519,12 @@ TEST_P(algorithmsTest,dbgIteratorTest)
     bool moreWork=true;
     while(moreWork)
     {
-        kframe->setKmerColumnValue<bool,vectorColumn<bool>>("visited",dbg.currentKmer,true);
+        kframe->setKmerColumnValue<vectorColumn<bool>>("visited",dbg.currentKmer,true);
         unsigned i=0;
         moreWork=false;
         for(auto s:dbg.nextFwdKmers)
         {
-            bool visited=kframe->getKmerColumnValue<bool,vectorColumn<bool>>("visited",s);
+            bool visited=kframe->getKmerColumnValue<vectorColumn<bool>>("visited",s);
             if(!visited){
                 dbg.nextFWD(i);
                 moreWork=true;
@@ -1514,7 +1535,7 @@ TEST_P(algorithmsTest,dbgIteratorTest)
     for(auto k:*kframe)
     {
         bool v;
-        k.getColumnValue<bool,vectorColumn<bool>>("visited",v);
+        k.getColumnValue<vectorColumn<bool>>("visited",v);
         ASSERT_EQ(v,true);
     }
 
@@ -1588,9 +1609,9 @@ TEST_P(setFunctionsTest,unioinTest)
     while(it!=kframe->end())
     {
       uint32_t countGold;
-      it.getColumnValue<uint32_t,vectorColumn<uint32_t>>("count",countGold);
+      it.getColumnValue<vectorColumn<uint32_t>>("count",countGold);
       uint32_t count;
-      count = result->getKmerColumnValue<uint32_t,vectorColumn<uint32_t>>("count"+ to_string(i),it.getHashedKmer());
+      count = result->getKmerColumnValue<vectorColumn<uint32_t>>("count"+ to_string(i),it.getHashedKmer());
       ASSERT_GE(count,countGold);
       it++;
     }
@@ -1615,9 +1636,9 @@ TEST_P(setFunctionsTest,intersectTest)
     for(int i=0;i<input.size()-1;i++)
     {
         auto kframe=input[i];
-        uint32_t countGold=kframe->getKmerColumnValue<uint32_t,vectorColumn<uint32_t>>("count",it.getHashedKmer());
+        uint32_t countGold=kframe->getKmerColumnValue<vectorColumn<uint32_t>>("count",it.getHashedKmer());
         uint32_t count;
-        it.getColumnValue<uint32_t,vectorColumn<uint32_t>>("count"+ to_string(i),count);
+        it.getColumnValue<vectorColumn<uint32_t>>("count"+ to_string(i),count);
         ASSERT_GE(count,countGold);
     }
     it++;
@@ -1685,19 +1706,29 @@ TEST_P(setFunctionsTest,innerJoinTest2)
     auto it=result->begin();
     while(it!=result->end())
     {
+        string currKmer=it.getKmer();
         for(unsigned i=0 ; i<2; i++){
             uint32_t countRes;
-            it.getColumnValue<uint32_t,vectorColumn<uint32_t> >("count"+to_string(i),countRes);
-            uint32_t countGold=input[i]->getCount(it.getHashedKmer());
+            it.getColumnValue<vectorColumn<uint32_t> >("count"+to_string(i),countRes);
+            uint32_t countGold=input[i]->getCount(currKmer);
             ASSERT_EQ(countRes,countGold);
         }
-        vector<uint32_t> colorsCorrect=input[2]->getKmerColumnValue<vector<uint32_t >, deduplicatedColumn<mixVectors> >("color",it.getHashedKmer());
+        vector<uint32_t> colorsCorrect=input[2]->getKmerColumnValue<deduplicatedColumn<mixVectors> >("color",currKmer);
         vector<uint32_t> colors;
-        it.getColumnValue<vector<uint32_t >, deduplicatedColumn<mixVectors> >("color2",colors);
+        it.getColumnValue<deduplicatedColumn<mixVectors> >("color2",colors);
+        if(colors!=colorsCorrect)
+        {
+            colors.clear();
+            colorsCorrect.clear();
+            it.getColumnValue<deduplicatedColumn<mixVectors> >("color2",colors);
+            colorsCorrect=input[2]->getKmerColumnValue<deduplicatedColumn<mixVectors> >("color",currKmer);
+
+
+        }
         ASSERT_EQ(colors,colorsCorrect);
         double dV;
-        it.getColumnValue<double, vectorColumn<double> >("double2",dV);
-        double dv2=input[2]->getKmerColumnValue<double, vectorColumn<double> >("double",it.getHashedKmer());
+        it.getColumnValue<vectorColumn<double> >("double2",dV);
+        double dv2=input[2]->getKmerColumnValue<vectorColumn<double> >("double",currKmer);
         ASSERT_EQ(dV,dv2);
         it++;
 
@@ -1728,7 +1759,7 @@ TEST_P(setFunctionsTest,parallelinnerJoinTest)
     {
         for(unsigned i=0 ; i<2; i++){
             uint32_t countRes;
-            it.getColumnValue<uint32_t,vectorColumn<uint32_t> >("count"+to_string(i),countRes);
+            it.getColumnValue<vectorColumn<uint32_t> >("count"+to_string(i),countRes);
             uint32_t countGold=input[i]->getCount(it.getHashedKmer());
             if(countRes!=countGold)
             {
@@ -1746,18 +1777,18 @@ TEST_P(setFunctionsTest,parallelinnerJoinTest)
             }
             ASSERT_EQ(countRes,countGold);
         }
-        vector<uint32_t> colorsCorrect=input[2]->getKmerColumnValue<vector<uint32_t >, deduplicatedColumn<mixVectors> >("color",it.getHashedKmer());
+        vector<uint32_t> colorsCorrect=input[2]->getKmerColumnValue<deduplicatedColumn<mixVectors> >("color",it.getHashedKmer());
         vector<uint32_t> colors;
-        it.getColumnValue<vector<uint32_t >, deduplicatedColumn<mixVectors> >("color2",colors);
+        it.getColumnValue<deduplicatedColumn<mixVectors> >("color2",colors);
         ASSERT_EQ(colors,colorsCorrect);
 
         colors.clear();
-        it.getColumnValue<vector<uint32_t >, deduplicatedColumn< prefixTrie,phmap::btree_map<uint32_t,uint32_t>> >("colorOptimized2",colors);
+        it.getColumnValue<deduplicatedColumn< prefixTrie,phmap::btree_map<uint32_t,uint32_t>> >("colorOptimized2",colors);
         ASSERT_EQ(colors,colorsCorrect);
 
         double dV;
-        it.getColumnValue<double, vectorColumn<double> >("double2",dV);
-        double dv2=input[2]->getKmerColumnValue<double, vectorColumn<double> >("double",it.getHashedKmer());
+        it.getColumnValue<vectorColumn<double> >("double2",dV);
+        double dv2=input[2]->getKmerColumnValue<vectorColumn<double> >("double",it.getHashedKmer());
         ASSERT_EQ(dV,dv2);
         it++;
 
@@ -1829,7 +1860,7 @@ TEST_P(indexingTest,index)
   int chunkSize = 1000;
   int q = 25;
  // kDataFrame *KF = new kDataFrameMQF(25, q, integer_hasher);
-  KF = new kDataFramePHMAP(25,integer_hasher);
+  KF = kDataFrameFactory::createPHMAP(25,integer_hasher);
   kmerDecoder *KD_KMERS = kProcessor::initialize_kmerDecoder(filename, chunkSize, "kmers", {{"k_size", 25}});
   kProcessor::index(KD_KMERS, filename+".names", KF);
 
@@ -1860,7 +1891,7 @@ TEST_P(indexingTest,index)
                 string readName = seq.first;
                 string groupName=namesMap[readName];
                 for (const auto &kmer : seq.second) {
-                    vector<string> colors=KF->getKmerColumnValue<vector<string> ,deduplicatedColumn<StringColorColumn>>("color",kmer.hash);
+                    vector<string> colors=KF->getKmerColumnValue<deduplicatedColumn<StringColorColumn>>("color",kmer.hash);
                     ASSERT_NE(colors.size(),0);
                     auto colorIt=find(colors.begin(),colors.end(),groupName);
                     ASSERT_NE(colorIt,colors.end());
@@ -1880,7 +1911,7 @@ TEST_P(indexingTest,indexPriorityQSaveAndLoad)
 
     int q = 25;
     //kDataFrame *KF = new kDataFrameMQF(25, q, integer_hasher);
-    KF = new kDataFramePHMAP(25,integer_hasher);
+    KF = kDataFrameFactory::createPHMAP(25,integer_hasher);
     kmerDecoder *KD_KMERS = kProcessor::initialize_kmerDecoder(filename, chunkSize, "kmers", {{"k_size", 25}});
 
 
@@ -1888,7 +1919,7 @@ TEST_P(indexingTest,indexPriorityQSaveAndLoad)
     while (!KD_KMERS->end()) {
         KD_KMERS->next_chunk();
         for (const auto &seq : *KD_KMERS->getKmers()) {
-            kDataFrame* curr=new kDataFrameMAP(KD_KMERS->get_kSize());
+            kDataFrame* curr=kDataFrameFactory::createMAP(KD_KMERS->get_kSize());
             for (const auto &kmer : seq.second) {
                 curr->insert(kmer.hash);
             }
@@ -1906,7 +1937,7 @@ TEST_P(indexingTest,indexPriorityQSaveAndLoad)
         kDataFrameIterator it=inputFrames[i]->begin();
         while(it!=inputFrames[i]->end())
         {
-            vector<uint32_t> colors=kframeLoaded->getKmerColumnValue<vector<uint32_t >, deduplicatedColumn<mixVectors> >("color",it.getHashedKmer());
+            vector<uint32_t> colors=kframeLoaded->getKmerColumnValue<deduplicatedColumn<mixVectors> >("color",it.getKmer());
             ASSERT_NE(colors.size(),0);
             auto colorIt=colors.end();
             colorIt=find(colors.begin(),colors.end(),i);
@@ -1928,7 +1959,7 @@ TEST_P(indexingTest,indexPriorityQ)
     int chunkSize = 1000;
     int q = 25;
 //    kDataFrame *KF = new kDataFrameMQF(25, q, integer_hasher);
-    KF = new kDataFramePHMAP(25,integer_hasher);
+    KF = kDataFrameFactory::createPHMAP(25);
 
     kmerDecoder *KD_KMERS = kProcessor::initialize_kmerDecoder(filename, chunkSize, "kmers", {{"k_size", 25}});
 
@@ -1937,7 +1968,7 @@ TEST_P(indexingTest,indexPriorityQ)
     while (!KD_KMERS->end()) {
         KD_KMERS->next_chunk();
         for (const auto &seq : *KD_KMERS->getKmers()) {
-            kDataFrame* curr=new kDataFrameMAP(KD_KMERS->get_kSize());
+            kDataFrame* curr=kDataFrameFactory::createMAP(KD_KMERS->get_kSize());
             for (const auto &kmer : seq.second) {
                 curr->insert(kmer.hash);
             }
@@ -1953,7 +1984,7 @@ TEST_P(indexingTest,indexPriorityQ)
         kDataFrameIterator it=inputFrames[i]->begin();
         while(it!=inputFrames[i]->end())
         {
-            vector<uint32_t> colors=KF->getKmerColumnValue<vector<uint32_t >, deduplicatedColumn<mixVectors> >("color",it.getHashedKmer());
+            vector<uint32_t> colors=KF->getKmerColumnValue<deduplicatedColumn<mixVectors> >("color",it.getKmer());
             ASSERT_NE(colors.size(),0);
             auto colorIt=colors.end();
             colorIt=find(colors.begin(),colors.end(),i);
@@ -1974,8 +2005,7 @@ TEST_P(indexingTest,indexPriorityQAndOptimize)
     string filename=GetParam();
     int chunkSize = 1000;
     int q = 25;
-    //    kDataFrame *KF = new kDataFrameMQF(25, q, integer_hasher);
-    KF = new kDataFramePHMAP(25,integer_hasher);
+    KF = kDataFrameFactory::createPHMAP(25,integer_hasher);
 
     kmerDecoder *KD_KMERS = kProcessor::initialize_kmerDecoder(filename, chunkSize, "kmers", {{"k_size", 25}});
 
@@ -1984,7 +2014,7 @@ TEST_P(indexingTest,indexPriorityQAndOptimize)
     while (!KD_KMERS->end()) {
         KD_KMERS->next_chunk();
         for (const auto &seq : *KD_KMERS->getKmers()) {
-            kDataFrame* curr=new kDataFrameMAP(KD_KMERS->get_kSize());
+            kDataFrame* curr=kDataFrameFactory::createMAP(KD_KMERS->get_kSize());
             for (const auto &kmer : seq.second) {
                 curr->insert(kmer.hash);
             }
@@ -2011,7 +2041,7 @@ TEST_P(indexingTest,indexPriorityQAndOptimize)
         kDataFrameIterator it=inputFrames[i]->begin();
         while(it!=inputFrames[i]->end())
         {
-            vector<uint32_t> colors=kframeLoaded->getKmerColumnValue<vector<uint32_t >, deduplicatedColumn<prefixTrie> >("color",it.getHashedKmer());
+            vector<uint32_t> colors=kframeLoaded->getKmerColumnValue<deduplicatedColumn<prefixTrie> >("color",it.getKmer());
             ASSERT_NE(colors.size(),0);
             auto colorIt=colors.end();
             colorIt=find(colors.begin(),colors.end(),i);
@@ -2099,7 +2129,7 @@ TEST_P(indexingTest,saveAndLoad)
 
 
     int q = 25;
-    KF = new kDataFramePHMAP(25, integer_hasher);
+    KF = kDataFrameFactory::createPHMAP(25, integer_hasher);
     kmerDecoder *KD_KMERS = kProcessor::initialize_kmerDecoder(filename, chunkSize, "kmers", {{"k_size", 25}});
     kProcessor::index(KD_KMERS, filename+".names", KF);
 
@@ -2136,7 +2166,7 @@ TEST_P(indexingTest,saveAndLoad)
             string readName = seq.first;
             string groupName=namesMap[readName];
             for (const auto &kmer : seq.second) {
-                vector<string> colors=kframeLoaded->getKmerColumnValue<vector<string> ,deduplicatedColumn<StringColorColumn>>("color",kmer.hash);
+                vector<string> colors=kframeLoaded->getKmerColumnValue<deduplicatedColumn<StringColorColumn>>("color",kmer.hash);
                 ASSERT_NE(colors.size(),0);
                 auto colorIt=colors.end();
                 colorIt=find(colors.begin(),colors.end(),groupName);
@@ -2480,11 +2510,11 @@ TEST_P(prefixColumnTest,optimizeAndCheck)
 
 }
 
-TEST_P(kDataFrameBlightTest, DISABLED_parsingTest)
+TEST_P(kDataFrameBlightTest, parsingTest)
 {
-    int kSize=get<0>(GetParam());
+    kDataFrame* kframe =getBCALMFrame(GetParam());
     string fileName=get<1>(GetParam());
-    kDataFrame* kframe =new kDataFrameBlight(kSize,fileName);
+    uint32_t kSize=bcalmKsize[fileName];
     int chunkSize=1000;
  // Mode 1 : kmers, KmerSize will be cloned from the kFrame
     kmerDecoder *KD_KMERS = kmerDecoder::getInstance(fileName, chunkSize, KMERS, TwoBits_hasher, {{"kSize", kSize}});
@@ -2505,3 +2535,263 @@ TEST_P(kDataFrameBlightTest, DISABLED_parsingTest)
 
 }
 
+TEST_P(kDataFrameBlightTest,multiColumns)
+{
+    kDataFrame* kframe =getBCALMFrame(GetParam());
+    string fileName=get<1>(GetParam());
+    uint32_t kSize=bcalmKsize[fileName];
+
+    int insertedKmers=kframe->size();
+
+    int checkedKmers=0;
+    kframe->addColumn("intColumn",new vectorColumn<int>(kframe->size()));
+    kframe->addColumn("doubleColumn",new vectorColumn<double>(kframe->size()));
+    kframe->addColumn("boolColumn",new vectorColumn<bool>(kframe->size()));
+
+    map<string,tuple<int,double,bool> > simColumns;
+    kDataFrameIterator it=kframe->begin();
+    while(it!=kframe->end())
+    {
+        string kmer=it.getKmer();
+        int randInt=rand()%1000000;
+        double randDouble=(double)(rand()%1000000);
+        bool randBool=rand()%2==0;
+
+        simColumns[kmer]=make_tuple(randInt,randDouble,randBool);
+
+        kframe->setKmerColumnValue< vectorColumn<int> >("intColumn",kmer,randInt);
+        kframe->setKmerColumnValue<vectorColumn<double> >("doubleColumn",kmer,randDouble);
+        kframe->setKmerColumnValue<vectorColumn<bool> >("boolColumn",kmer,randBool);
+        it++;
+    }
+    for(auto simRow:simColumns)
+    {
+        string kmer=simRow.first;
+        int randInt=get<0>(simRow.second);
+        double randDouble=get<1>(simRow.second);
+        bool randBool=get<2>(simRow.second);
+
+        int retInt=kframe->getKmerColumnValue<vectorColumn<int> >("intColumn",kmer);
+        double retDouble=kframe->getKmerColumnValue<vectorColumn<double> >("doubleColumn",kmer);
+        bool retBool=kframe->getKmerColumnValue<vectorColumn<bool>>("boolColumn",kmer);
+
+        ASSERT_EQ(randInt,retInt);
+        ASSERT_EQ(randDouble,retDouble);
+        ASSERT_EQ(randBool,retBool);
+
+    }
+
+    vector<string> correctColumNames={"intColumn","doubleColumn","boolColumn"};
+    sort(correctColumNames.begin(),correctColumNames.end());
+    vector<string> columnNames=kframe->getColumnNames();
+    sort(columnNames.begin(),columnNames.end());
+    ASSERT_EQ(columnNames,correctColumNames);
+    delete kframe;
+    kframe= nullptr;
+
+}
+
+TEST_P(kDataFrameBlightTest,transformInPlaceMultiColumns)
+{
+    kDataFrame* kframe =getBCALMFrame(GetParam());
+    string fileName=get<1>(GetParam());
+    uint32_t kSize=bcalmKsize[fileName];
+
+    int insertedKmers=kframe->size();
+
+
+    int checkedKmers=0;
+    kframe->addColumn("intColumn",new vectorColumn<int>(kframe->size()));
+    kframe->addColumn("doubleColumn",new vectorColumn<double>(kframe->size()));
+    kframe->addColumn("boolColumn",new vectorColumn<bool>(kframe->size()));
+
+    map<string,tuple<int,double,bool> > simColumns;
+    kDataFrameIterator it=kframe->begin();
+    while(it!=kframe->end())
+    {
+        string kmer=it.getKmer();
+
+        int randInt=rand()%1000000;
+        double randDouble=(double)(rand()%1000000);
+        bool randBool=rand()%2==0;
+
+        simColumns[kmer]=make_tuple(randInt*-1,ceil(randDouble),!randBool);
+
+        kframe->setKmerColumnValue< vectorColumn<int> >("intColumn",kmer,randInt);
+        kframe->setKmerColumnValue<vectorColumn<double> >("doubleColumn",kmer,randDouble);
+        kframe->setKmerColumnValue<vectorColumn<bool> >("boolColumn",kmer,randBool);
+        it++;
+    }
+    kProcessor::transformInPlace(kframe,[](kDataFrameIterator& it)
+    {
+        int count0;
+        it.getColumnValue<vectorColumn<int> >("intColumn", count0);
+        it.setColumnValue<vectorColumn<int> >("intColumn", count0 *-1);
+
+        double dV;
+
+        it.getColumnValue<vectorColumn<double> >("doubleColumn", dV);
+        it.setColumnValue<vectorColumn<double> >("doubleColumn", ceil(dV));
+
+        bool bV;
+
+
+        it.getColumnValue<vectorColumn<bool> >("boolColumn", bV);
+        it.setColumnValue<vectorColumn<bool> >("boolColumn", !(bV));
+
+
+    });
+    for(auto simRow:simColumns)
+    {
+        string kmer=simRow.first;
+        int randInt=get<0>(simRow.second);
+        double randDouble=get<1>(simRow.second);
+        bool randBool=get<2>(simRow.second);
+
+        int retInt=kframe->getKmerColumnValue<vectorColumn<int> >("intColumn",kmer);
+        double retDouble=kframe->getKmerColumnValue<vectorColumn<double> >("doubleColumn",kmer);
+        bool retBool=kframe->getKmerColumnValue<vectorColumn<bool>>("boolColumn",kmer);
+
+        ASSERT_EQ(randInt,retInt);
+        ASSERT_EQ(randDouble,retDouble);
+        ASSERT_EQ(randBool,retBool);
+
+    }
+
+    vector<string> correctColumNames={"intColumn","doubleColumn","boolColumn"};
+    sort(correctColumNames.begin(),correctColumNames.end());
+    vector<string> columnNames=kframe->getColumnNames();
+    sort(columnNames.begin(),columnNames.end());
+    ASSERT_EQ(columnNames,correctColumNames);
+    delete kframe;
+    kframe= nullptr;
+
+}
+
+TEST_P(kDataFrameBlightTest,convertTOMQF)
+{
+    kDataFrame* kframe =getBCALMFrame(GetParam());
+    string fileName=get<1>(GetParam());
+    uint32_t kSize=bcalmKsize[fileName];
+
+    int insertedKmers=kframe->size();
+
+
+    int checkedKmers=0;
+    kframe->addColumn("boolColumn",new vectorColumn<bool>(kframe->size()));
+    kframe->addColumn("intColumn",new vectorColumn<int>(kframe->size()));
+    kframe->addColumn("doubleColumn",new vectorColumn<double>(kframe->size()));
+
+
+    unordered_map<string,tuple<int,double,bool> > simColumns;
+    kDataFrameIterator it=kframe->begin();
+    while(it!=kframe->end())
+    {
+        string kmer=it.getKmer();
+
+        int randInt=rand()%1000000;
+        double randDouble=(double)(rand()%1000000);
+        bool randBool=rand()%2==0;
+
+        simColumns[kmer]=make_tuple(randInt,randDouble,randBool);
+
+        kframe->setKmerColumnValue< vectorColumn<int> >("intColumn",kmer,randInt);
+        kframe->setKmerColumnValue<vectorColumn<double> >("doubleColumn",kmer,randDouble);
+        kframe->setKmerColumnValue<vectorColumn<bool> >("boolColumn",kmer,randBool);
+        it++;
+    }
+
+    kDataFrame* kframeMQF=kDataFrameFactory::createMQF(kframe);
+    delete kframe;
+    kframe= nullptr;
+
+    for(auto simRow:simColumns)
+    {
+        string kmer=simRow.first;
+        int randInt=get<0>(simRow.second);
+        double randDouble=get<1>(simRow.second);
+        bool randBool=get<2>(simRow.second);
+
+        int retInt=kframeMQF->getKmerColumnValue<vectorColumn<int> >("intColumn",kmer);
+        double retDouble=kframeMQF->getKmerColumnValue<vectorColumn<double> >("doubleColumn",kmer);
+        bool retBool=kframeMQF->getKmerColumnValue<vectorColumn<bool> >("boolColumn",kmer);
+
+        ASSERT_EQ(randInt,retInt);
+        ASSERT_EQ(randDouble,retDouble);
+        EXPECT_EQ(randBool,retBool);
+
+    }
+//    // test a alien kmer
+//    ASSERT_EQ(kframeMQF->kmerExist(NovelKmer),false);
+//    try{
+//        int retInt=kframeMQF->getKmerColumnValue<vectorColumn<int> >("intColumn",NovelKmer);
+//        FAIL();
+//    }
+//    catch(const std::exception & e)
+//    {
+//        EXPECT_STREQ( "item not found!", e.what() );
+//    }
+}
+
+
+TEST_P(kDataFrameBlightTest,saveAndLoadMultiColumns)
+{
+    kDataFrame* kframe =getBCALMFrame(GetParam());
+    string fileName=get<1>(GetParam());
+    uint32_t kSize=bcalmKsize[fileName];
+
+    int insertedKmers=kframe->size();
+
+    int checkedKmers=0;
+    kframe->addColumn("boolColumn",new vectorColumn<bool>(kframe->size()));
+    kframe->addColumn("intColumn",new vectorColumn<int>(kframe->size()));
+    kframe->addColumn("doubleColumn",new vectorColumn<double>(kframe->size()));
+
+
+    map<string,tuple<int,double,bool> > simColumns;
+    kDataFrameIterator it=kframe->begin();
+    while(it!=kframe->end())
+    {
+        string kmer=it.getKmer();
+        int randInt=rand()%1000000;
+        double randDouble=(double)(rand()%1000000);
+        bool randBool=rand()%2==0;
+
+        simColumns[kmer]=make_tuple(randInt,randDouble,randBool);
+
+        kframe->setKmerColumnValue< vectorColumn<int> >("intColumn",kmer,randInt);
+        kframe->setKmerColumnValue<vectorColumn<double> >("doubleColumn",kmer,randDouble);
+        kframe->setKmerColumnValue<vectorColumn<bool> >("boolColumn",kmer,randBool);
+        it++;
+    }
+
+    kframe->save(fileName);
+    delete kframe;
+    kframe=nullptr;
+    kDataFrame* kframeLoaded=kDataFrame::load(fileName);
+    for(auto simRow:simColumns)
+    {
+        string kmer=simRow.first;
+        int randInt=get<0>(simRow.second);
+        double randDouble=get<1>(simRow.second);
+        bool randBool=get<2>(simRow.second);
+        int retInt=kframeLoaded->getKmerColumnValue<vectorColumn<int> >("intColumn",kmer);
+        double retDouble=kframeLoaded->getKmerColumnValue<vectorColumn<double> >("doubleColumn",kmer);
+        bool retBool=kframeLoaded->getKmerColumnValue<vectorColumn<bool> >("boolColumn",kmer);
+
+        ASSERT_EQ(randInt,retInt);
+        ASSERT_EQ(randDouble,retDouble);
+        EXPECT_EQ(randBool,retBool);
+
+    }
+
+    vector<string> correctColumNames={"intColumn","doubleColumn","boolColumn"};
+    sort(correctColumNames.begin(),correctColumNames.end());
+    vector<string> columnNames=kframeLoaded->getColumnNames();
+    sort(columnNames.begin(),columnNames.end());
+    ASSERT_EQ(columnNames,correctColumNames);
+
+    delete kframeLoaded;
+    kframeLoaded=nullptr;
+
+}
