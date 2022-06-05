@@ -1,4 +1,3 @@
-
 class kDataFrameMQF : public kDataFrame {
 public:
         kDataFrameMQF();
@@ -17,11 +16,19 @@ public:
         kDataFrameMQF(std::uint64_t kSize, uint64_t nKmers);
         kDataFrameMQF(kDataFrame* frame);
 
+
+        kDataFrame* clone() override;
+
+        ~kDataFrameMQF() {
+                qf_destroy(mqf);
+                delete mqf;
+        }
         void _reserve(std::uint64_t n);
         void _reserve(vector<std::uint64_t> countHistogram);
         kDataFrame* getTwin();
 
         bool _insert(std::uint64_t kmer);
+        bool _insert(string kmer);
 
 
         static std::uint64_t estimateMemory(std::uint64_t nslots, std::uint64_t slotSize,
@@ -33,11 +40,11 @@ public:
                 std::uint64_t* res_noSlots, std::uint64_t* res_fixedSizeCounter, std::uint64_t* res_memory);
 
 
-        bool setOrder(string& kmer, std::uint64_t count);
+        bool setOrder(const string& kmer, std::uint64_t count);
         bool setOrder(std::uint64_t kmer, std::uint64_t count);
 
-        bool insert(const string& kmer);
-        bool insert(std::uint64_t kmer);
+        uint32_t insert(const string& kmer);
+        uint32_t insert(std::uint64_t kmer) override;
         std::uint64_t getkmerOrder(const string& kmer);
         std::uint64_t getkmerOrder(std::uint64_t kmer);
 

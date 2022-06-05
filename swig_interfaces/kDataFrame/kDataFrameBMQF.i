@@ -10,6 +10,13 @@ public:
         kDataFrameBMQF(std::uint64_t ksize, vector<std::uint64_t> countHistogram, uint8_t tagSize
                 , double falsePositiveRate);
 
+        kDataFrame* clone() override;
+
+        kDataFrameBMQF(kDataFrame* frame, string filename);
+
+        ~kDataFrameBMQF() {
+                delete bufferedmqf;
+        }
         void _reserve(std::uint64_t n);
         void _reserve(vector<std::uint64_t> countHistogram);
 
@@ -23,11 +30,13 @@ public:
                 std::uint64_t numHashBits, std::uint64_t tagSize,
                 std::uint64_t* res_noSlots, std::uint64_t* res_fixedSizeCounter, std::uint64_t* res_memory);
 
+        bool _insert(std::uint64_t kmer);
+        bool _insert(const string& kmer);
 
 
-        bool insert(const string& kmer);
-        bool insert(std::uint64_t kmer);
-        bool setOrder(string& kmer, std::uint64_t count);
+        uint32_t insert(const string& kmer) override;
+        uint32_t insert(std::uint64_t kmer) override;
+        bool setOrder(const string& kmer, std::uint64_t count);
         bool setOrder(std::uint64_t kmer, std::uint64_t count);
 
 
@@ -69,3 +78,4 @@ public:
         bool kmerExist(string kmer);
         bool kmerExist(uint64_t kmer);
 };
+

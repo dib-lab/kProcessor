@@ -48,25 +48,27 @@ typedef unsigned long int 	uint64_t;
 %{
 #include "algorithms.hpp" // including algorithms
 #include "kDataframes/kDataFrameBlight.hpp"
+#include "kDataframes/kDataFrameMQF.hpp"
+#include "kDataframes/kDataFrameSTL.hpp"
+#include "kDataframes/kDataFrameBMQF.hpp"
+#include "defaultColumn.hpp"
 %}
+
 %include "swig_interfaces/kDataFrame/kmerRow.i"
 %include "swig_interfaces/algorithms/algorithms.i"
 
 /******** kDataFrame Interface ************/
-// %include "swig_interfaces/kDataFrame/kDataFrameIterator.i"
+%include "swig_interfaces/kDataFrame/kDataFrameIterator.i"
 %include "swig_interfaces/kDataFrame/kDataFrame.i"
-// %include "swig_interfaces/kDataFrame/kDataFrameMQF.i"
-// %include "swig_interfaces/kDataFrame/kDataFrameMAP.i"
-// %include "swig_interfaces/kDataFrame/kDataFramePHMAP.i"
+%include "swig_interfaces/kDataFrame/kDataFrameFactory.i"
+%include "swig_interfaces/kDataFrame/kDataFrameMQF.i"
+%include "swig_interfaces/kDataFrame/kDataFrameSTL.i"
 %include "swig_interfaces/kDataFrame/kDataFrameBlight.i"
-// %include "swig_interfaces/kDataFrame/kDataFrameBMQF.i"
-// %include "swig_interfaces/kDataFrame/dbgIterator.i"
-// %include "swig_interfaces/kDataFrame/defaultColumn.i"
+%include "swig_interfaces/kDataFrame/kDataFrameBMQF.i"
+%include "swig_interfaces/kDataFrame/dbgIterator.i"
+%include "swig_interfaces/kDataFrame/defaultColumn.i"
 
 /******** kDataFrame Interface ************/
-
-
-
 
 %template(kFramesVector) vector<kDataFrame*>; /*vector to tuple conversion*/
 
@@ -80,17 +82,5 @@ typedef unsigned long int 	uint64_t;
 // %include "swig_interfaces/algorithms/extend_algorithms.i"
 
 /******** HashUtils Interface ************/
-
-//%{
-//#include "HashUtils/hashutil.hpp" // including HashUtils
-//%}
-
-//%include "swig_interfaces/HashUtils/hashutil.i"
-
-//%{
-//#include "Utils/kmer.h" // including Kmer
-//%}
-
-//%include "swig_interfaces/Utils/kmer.i"
 
 /******** END kDataFrame ************/

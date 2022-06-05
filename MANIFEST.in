@@ -6,6 +6,7 @@ include LICENSE
 
 # Include the headers files
 recursive-include include *
+recursive-include include/kProcessor *
 recursive-include ThirdParty/MQF/include *
 recursive-include ThirdParty/MQF/include *
 recursive-include ThirdParty/json *
