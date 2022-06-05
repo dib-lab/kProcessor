@@ -5,7 +5,12 @@
  *
  */
 
+
 namespace kProcessor {
+    
+    // TO BE REMOVED TODO V2
+    // void loadIntoMQF(std::string sequenceFilename, int k, int noThreads, Hasher *hasher, QF *memoryMQF, QF *diskMQF = NULL);
+
     void dumpMQF(QF* memoryMQF, int ksize, std::string outputFilename);
 
     void estimateMemRequirement(std::string ntcardFilename,
@@ -24,9 +29,6 @@ namespace kProcessor {
 
     vector<uint64_t> estimateKmersHistogram(string fileName, int kSize, int threads);
 
-    // Load the kmers in the input file into the output kDataframe. Input File can be of formats: fastq,fasta, sam, and bam.
-    // void parseSequences(string seqFileName, int nThreads, kDataFrame *output);
-
     /// Load the kmers in the input file into the output kDataframe. Input File can be of formats: fastq,fasta.
     void countKmersFromFile(kDataFrame* kframe, std::map<std::string, int> parse_params, string filename,
         int chunk_size = 1000);
@@ -40,6 +42,25 @@ namespace kProcessor {
     /// Load the kmers in the input string into the output kDataframe.
     void countKmersFromString(kDataFrame* frame, std::map<std::string, int> parse_params, string sequence);
 
+    /// Applies a function on each row in the input kDataframe. The output is another kDataframe with the same kmers and new columns defined based on the user defined function.
+    kDataFrame* transform(kDataFrame* input, function<void(kDataFrameIterator& i)>);
+
+    /// Applies a function on each row in the input kDataframe. the function updates one or more columns in the input kdataframe based on the user defined function.
+    void transformInPlace(kDataFrame* input, function<void(kDataFrameIterator& i)>);
+
+    /// filter the kmers in the kdataframe. The output is another kDataframe with the filtered kmers.
+    kDataFrame* filter(kDataFrame* input, function<bool(kDataFrameIterator& i)>);
+
+    /// aggregate all the kmers in the kdataframe into a single value. The output is one value.
+    any aggregate(kDataFrame* input, any initial, function<any(kDataFrameIterator& i, any v)>);
+
+    /*! Merge the a list of kDataframes into a one.
+     *
+     * The Input is a list of kDataframes and a function to decide how to merge the kmers. The merged kmers will be inserted into the result kDataframe.
+     * The function to decide the merging behavior takes a list of kmerRows,all have the same kmer hashedKmer, as an input and output one kmer row to be inserted in the result kDataFrame. If the returned kmer row has count equal zero nothing to be inserted.
+     * The function will be called repeatedly through merging. This function is used to implement the set functions.
+     */
+    void merge(const vector<kDataFrame*>& input, kDataFrame* result, function<kmerRow(vector<kDataFrameIterator*>& i)>);
 
     /// Calculate the union of the kDataFrames. The result kDataframe will have all the kmers in the input list of kDataframes. The count of the kmers equals to the sum of the kmer count in the input list.
     kDataFrame* kFrameUnion(const vector<kDataFrame*>& input);
@@ -72,7 +93,7 @@ namespace kProcessor {
 
     /// Perform indexing to a sequences file with predefined kmers decoding mode, returns a colored kDataframe.
     void index(kmerDecoder* KD, string names_fileName, kDataFrame* frame);
-    void indexMega(string fastaFileName, string tmpFolder, kDataFrame* frame);
+    // void indexMega(string fastaFileName, string tmpFolder, kDataFrame* frame);
 
     /// Index function without needing the kmerDecoder
     void
@@ -87,15 +108,59 @@ namespace kProcessor {
 
     void mergeIndexes(vector<kDataFrame*>& input, string tmpFolder, kDataFrame* output);
 
+    /* create a prefix forest from an kdataframe index. kdataframe should have columns of type deduplicatedColumn<prefixTrie,phmap::flat_hash_map<uint32_t,uint32_t>.
+     * the name of the columns are in the form of color<id>. I am using the id to sort the prefix tries in the forest.
+     * the index is updated by the new forest and the prefix tries are deleted.
+    */
+    void createPrefixForest(kDataFrame* index, string tmpFolder, uint32_t num_vectors, uint32_t vector_size);
+
+    /* Joins the input kdataframes into one kDataframe. All the columns in the input kdataframes will be copied to the output kdataframe and they will have new name in the format of "<inputColumnName><index in the input>".
+     * kmersToKeep range is from 0-input.size() and it should be unique. kmers from kDataframes whose index exists in kmersToKeep will be inserted in the output dataframe.
+     *  please note that the kdataframe are expected to be ordered. If you want to join unordered kdataframe then use parallelJoin
+     *  example:
+     *  kdataframe 0:                           kdataframe 1:               kdataframe 2:
+     *  +-------+-------+-------+------------+  +-------+-------+-------+  +-------+----------+----------+
+     *  |       | count | color | foldChange |  |       | count | color |  |       | isCoding | isRepeat |
+     *  +-------+-------+-------+------------+  +-------+-------+-------+  +-------+----------+----------+
+     *  | ACGAT | 10    | [1]   | 0.2        |  | ACGAT | 20    | [1]   |  | ACGAT | 0        | 1        |
+     *  +-------+-------+-------+------------+  +-------+-------+-------+  +-------+----------+----------+
+     *  | AGCAC | 15    | [1,3] | 0.1        |  | ATTTC | 117   | [2]   |  | ACCCC | 0        | 0        |
+     *  +-------+-------+-------+------------+  +-------+-------+-------+  +-------+----------+----------+
+     *  | ATCAC | 14    | [2]   | 0.5        |                             | AGCAC | 1        | 1        |
+     *  +-------+-------+-------+------------+                             +-------+----------+----------+
+     *                                                                     | ATTTC | 0        | 0        |
+     *                                                                     +-------+----------+----------+
+     *
+     *  kmersToKeep = [0,1]
+     *
+     *  Output KDataframe
+     * +-------+--------+--------+-------------+--------+--------+-----------+----------+
+     * |       | count0 | color0 | foldChange0 | count1 | color1 | isCoding2 | isRepeat |
+     * +-------+--------+--------+-------------+--------+--------+-----------+----------+
+     * | ACGAT | 10     | [1]    | 0.2         | 20     | [1]    | 0         | 1        |
+     * +-------+--------+--------+-------------+--------+--------+-----------+----------+
+     * | AGCAC | 15     | [1,3]  | 0.1         | 0      | []     | 1         | 1        |
+     * +-------+--------+--------+-------------+--------+--------+-----------+----------+
+     * | ATCAC | 14     | [2]    | 0.5         | 0      | []     | 0         | 0        |
+     * +-------+--------+--------+-------------+--------+--------+-----------+----------+
+     * | ATTTC | 0      | []     | 0.0         | 117    | [2]    | 0         | 0        |
+     * +-------+--------+--------+-------------+--------+--------+-----------+----------+
+    */
     kDataFrame* innerJoin(vector<kDataFrame*> input, vector<uint32_t> kmersToKeep);
+    //colored_kDataFrame * indexPriorityQueue(kmerDecoder *KD, string names_fileName, kDataFrame *frame);
+    //colored_kDataFrame * indexPriorityQueue2(kmerDecoder *KD, string names_fileName, kDataFrame *frame);
 
 
     // Extended functions
-    uint64_t aggregate_count(kDataFrame* kf, const string& countColName);
-    void transform_normalize(kDataFrame* kf, const string& countColName, uint64_t totalCount);
-    kDataFrame* filter_zeroCounts(kDataFrame* res, uint32_t allDatasets);
-    void transform_foldchange(kDataFrame* res, uint32_t nSamples, uint32_t nControl, uint32_t allDatasets, const string& foldChangeColName);
-    unordered_map<string, vector<double>> aggregate_foldChangeByGene(kDataFrame* res, const string foldChangeColName, const string colorColumnName);
-    
+    // uint64_t aggregate_count(kDataFrame* kf, const string& countColName);
+    // void transform_normalize(kDataFrame* kf, const string& countColName, uint64_t totalCount);
+    // kDataFrame* filter_zeroCounts(kDataFrame* res, uint32_t allDatasets);
+    // void transform_foldchange(kDataFrame* res, uint32_t nSamples, uint32_t nControl, uint32_t allDatasets, const string& foldChangeColName);
+    // unordered_map<string, vector<double>> aggregate_foldChangeByGene(kDataFrame* res, const string foldChangeColName, const string colorColumnName);
+
+    /*
+     * Exact same behavior as innerJoin with two modifications: input kDataframes are not required to be sorted, and multithreaded implementation is provided.
+     */
+    kDataFrame* parallelJoin(vector<string>& kdataframeFileNames, vector<uint32_t> kmersToKeep, uint64_t numThreads = 1);
 
 }

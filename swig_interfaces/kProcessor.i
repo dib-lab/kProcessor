@@ -45,28 +45,31 @@ typedef unsigned long int 	uint64_t;
 
 // no need to include subclasses if all their methods (that we are interested in) are defined in the superclass
 
-/******** kDataFrame Interface ************/
-%include "swig_interfaces/kDataFrame/kDataFrameIterator.i"
-%include "swig_interfaces/kDataFrame/kmerRow.i"
-%include "swig_interfaces/kDataFrame/kDataFrame.i"
-%include "swig_interfaces/kDataFrame/kDataFrameMQF.i"
-%include "swig_interfaces/kDataFrame/kDataFrameMAP.i"
-%include "swig_interfaces/kDataFrame/kDataFramePHMAP.i"
-%include "swig_interfaces/kDataFrame/kDataFrameBlight.i"
-%include "swig_interfaces/kDataFrame/kDataFrameBMQF.i"
-%include "swig_interfaces/kDataFrame/dbgIterator.i"
-%include "swig_interfaces/kDataFrame/defaultColumn.i"
-
-/******** kDataFrame Interface ************/
-
-
 %{
 #include "algorithms.hpp" // including algorithms
+#include "kDataframes/kDataFrameBlight.hpp"
 %}
+%include "swig_interfaces/kDataFrame/kmerRow.i"
+%include "swig_interfaces/algorithms/algorithms.i"
+
+/******** kDataFrame Interface ************/
+// %include "swig_interfaces/kDataFrame/kDataFrameIterator.i"
+%include "swig_interfaces/kDataFrame/kDataFrame.i"
+// %include "swig_interfaces/kDataFrame/kDataFrameMQF.i"
+// %include "swig_interfaces/kDataFrame/kDataFrameMAP.i"
+// %include "swig_interfaces/kDataFrame/kDataFramePHMAP.i"
+%include "swig_interfaces/kDataFrame/kDataFrameBlight.i"
+// %include "swig_interfaces/kDataFrame/kDataFrameBMQF.i"
+// %include "swig_interfaces/kDataFrame/dbgIterator.i"
+// %include "swig_interfaces/kDataFrame/defaultColumn.i"
+
+/******** kDataFrame Interface ************/
+
+
+
 
 %template(kFramesVector) vector<kDataFrame*>; /*vector to tuple conversion*/
 
-%include "swig_interfaces/algorithms/algorithms.i"
 
 // extend_algorithms
 
