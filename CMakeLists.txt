@@ -55,10 +55,10 @@ add_subdirectory(ThirdParty/kmerDecoder)
 
 set (CMAKE_CXX_FLAGS_PROFILE "${CMAKE_CXX_FLAGS} -Wall -Wextra -std=c++17 -fPIC  -W -Wall -pedantic -O0 -g -lprofiler")
 
-set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -std=c++17 -fPIC   -pedantic  -O3 -Ofast -march=native -mbmi2 -msse4.2")
-set (CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS} -Wall -Wextra -std=c++17 -fPIC  -W -Wall -pedantic -O0 -g -march=native")
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -std=c++17 -fPIC   -pedantic  -O3 -Ofast -mbmi2 -msse4.2")
+set (CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS} -Wall -Wextra -std=c++17 -fPIC  -W -Wall -pedantic -O0 -g")
 
-set (CMAKE_CXX_FLAGS_RELEASE  "${CMAKE_CXX_FLAGS}  -w -std=c++17 -fPIC   -pedantic -O3 -Ofast -march=native")
+set (CMAKE_CXX_FLAGS_RELEASE  "${CMAKE_CXX_FLAGS}  -w -std=c++17 -fPIC   -pedantic -O3 -Ofast")
 
 set (CMAKE_EXE_LINKER_FLAGS_DEBUG "${CMAKE_EXE_LINKER_FLAGS_DEBUG}")
 set (CMAKE_EXE_LINKER_FLAGS_PROFILE "${CMAKE_EXE_LINKER_FLAGS_DEBUG} -lprofiler")
@@ -114,7 +114,7 @@ set(LIBRARY_NAME
 file(GLOB kProcessorLibSrc
         ${CMAKE_CURRENT_SOURCE_DIR}/src/algorithms.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/dbgUtils.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/extend_algorithms.cpp
+        # ${CMAKE_CURRENT_SOURCE_DIR}/src/extend_algorithms.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/kDataFrames/defaultColumn.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/kDataFrames/kDataFrameBMQF.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/kDataFrames/kDataFrame.cpp
@@ -122,7 +122,7 @@ file(GLOB kProcessorLibSrc
         ${CMAKE_CURRENT_SOURCE_DIR}/src/kDataFrames/kDataFrameSTL.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/kDataFrames/kDataFrame_sshash.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/Utils/utils.cpp
-
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/kDataFrames/kDataFrameBlight.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/KMC/kmc_api/*cpp
 
         )
