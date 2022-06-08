@@ -22,13 +22,11 @@ def increment_patch_version(patch_version):
     modified_version = f"{patch_version[0]}.{patch_version[1]}.{int(patch_version[2]) + 1}"
     if len(patch_version) == 4:
         modified_version += f".{patch_version[3]}"
-    else:
-        modified_version += f".dev0"
     return modified_version
 
 MAJOR = 2
 MINOR = 0
-PATCH = 3
+PATCH = 4
 
 
 def get_version():
