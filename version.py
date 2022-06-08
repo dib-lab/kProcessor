@@ -33,7 +33,7 @@ PATCH = 3
 
 def get_version():
     
-    dev_version = f"{MAJOR}.{MINOR}.{PATCH}.dev0"
+    dev_version = f"{MAJOR}.{MINOR}.{PATCH}"
     release_version = f"{MAJOR}.{MINOR}.{PATCH}"
     
     version_tag = str()

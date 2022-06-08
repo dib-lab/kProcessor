@@ -29,17 +29,15 @@ typedef unsigned long int 	uint64_t;
 /*  ~~~~WORKS ONLY IN SWIG4.0 ~~~~  */
 %include std_unordered_map.i
 
-/*
 %template(MAPsi) unordered_map<int, std::string>;
 %template(MAPis) unordered_map<std::string, int>;
-*/
 
 %include "swig_interfaces/modules/custom_typemaps.i"
 
 %template(colorsList) vector<uint32_t>;
 %template(kmerDecoderParams) map<string, int>;
 %template(DoubleVector) vector<double>; /*vector to tuple conversion*/
-%template(batchQuery_counts) std::unordered_map<std::string, std::vector<double>>;
+// %template(map_str_dbl_bec) std::unordered_map<std::string, std::vector<double>>;
 
 /*Just copy/paste the snippet I'm interested in to be wrapped!*/
 
