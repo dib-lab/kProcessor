@@ -42,6 +42,9 @@ class deduplicatedColumn<mixVectors>;
 
 
 template
+class deduplicatedColumn<queryColorColumn>;
+
+template
 class deduplicatedColumn<prefixTrie>;
 
 template
@@ -77,6 +80,8 @@ Column *Column::getContainerByName(std::size_t hash) {
         return new prefixTrie();
     } else if (hash == typeid(deduplicatedColumn<mixVectors>).hash_code()) {
         return new deduplicatedColumn<mixVectors>();
+    } else if (hash == typeid(deduplicatedColumn<queryColorColumn>).hash_code()) {
+        return new deduplicatedColumn<queryColorColumn>();
     } else if (hash == typeid(deduplicatedColumn<StringColorColumn>).hash_code()) {
         return new deduplicatedColumn<StringColorColumn>();
     }else if (hash == typeid(deduplicatedColumn<prefixTrie>).hash_code()) {
@@ -288,7 +293,7 @@ uint32_t StringColorColumn::insertAndGetIndex(vector<string> item) {
 
 }
 vector<string> StringColorColumn::getWithIndex(uint32_t index) {
-    vector<uint32_t> c=colors->getWithIndex(index);
+    vector<uint32_t> c=colors->get(index);
     vector<string> res(c.size());
     for (unsigned int i = 0; i < c.size(); i++)
         res[i] = namesMap[c[i]];
@@ -297,7 +302,7 @@ vector<string> StringColorColumn::getWithIndex(uint32_t index) {
 }
 
 vector<string> StringColorColumn::get(uint32_t index) {
-    vector<uint32_t> c=colors->getWithIndex(index);
+    vector<uint32_t> c=colors->get(index);
     vector<string> res(c.size());
     for (unsigned int i = 0; i < c.size(); i++)
         res[i] = namesMap[c[i]];
@@ -340,7 +345,7 @@ Column *StringColorColumn::getTwin() {
 
 
 void StringColorColumn::resize(uint32_t size) {
-
+    colors->resize(size);
 }
 
 Column *StringColorColumn::clone() {
@@ -352,7 +357,8 @@ Column *StringColorColumn::clone() {
 
 StringColorColumn::StringColorColumn(flat_hash_map<uint64_t, std::vector<uint32_t>>* colorsIN, uint32_t noSamples, uint32_t num_vectors,
                                      uint32_t vector_size) {
-    colors=new mixVectors(*colorsIN,noSamples,num_vectors,vector_size);
+    colors= new deduplicatedColumn<queryColorColumn>();
+    colors->values=new mixVectors(*colorsIN,noSamples,num_vectors,vector_size);
 }
 
 bool inExactColorIndex::hasColorID(vector<uint32_t> &v) {
@@ -1631,11 +1637,17 @@ template<typename ColumnType,typename indexType>
 void deduplicatedColumn<ColumnType,indexType>::serialize(string filename) {
     string indexFilename = filename + ".index";
     string containerFilename = filename + ".container";
+    string extraFilename = filename + ".dedup.extra";
+    std::ofstream extra(extraFilename);
     std::ofstream os(indexFilename, std::ios::binary);
     cereal::BinaryOutputArchive archive(os);
     archive(index);
     os.close();
     values->serialize(containerFilename);
+    size_t columnType=typeid(*(values)).hash_code();
+    extra<<"container\t"<<columnType<<endl;
+    extra.close();
+
 }
 
 
@@ -1643,11 +1655,16 @@ template<typename ColumnType,typename indexType>
 void deduplicatedColumn<ColumnType,indexType>::deserialize(string filename) {
     string indexFilename = filename + ".index";
     string containerFilename = filename + ".container";
+    string extraFilename = filename + ".dedup.extra";
     std::ifstream os(indexFilename, std::ios::binary);
     cereal::BinaryInputArchive iarchive(os);
     iarchive(index);
     os.close();
-    values = new ColumnType();
+    ifstream extra(extraFilename);
+    uint64_t type;
+    string tmp;
+    extra>>tmp>>type;
+    values = (ColumnType*)Column::getContainerByName(type);
     values->deserialize(containerFilename);
 }
 

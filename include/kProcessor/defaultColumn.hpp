@@ -82,6 +82,38 @@ public:
 
 
 
+template<typename ColumnType,typename indexType = vector<uint32_t> >
+class deduplicatedColumn: public Column{
+public:
+    typedef typename ColumnType::dataType dataType;
+    indexType index;
+    ColumnType* values;
+    deduplicatedColumn(){
+    }
+    deduplicatedColumn(uint32_t size);
+    ~deduplicatedColumn(){
+        delete values;
+    }
+
+    uint32_t  size()
+    {
+        return index.size();
+    }
+    void insert(dataType item,uint32_t index);
+    dataType get(uint32_t index);
+
+    void serialize(string filename);
+    void deserialize(string filename);
+    Column* getTwin();
+    void resize(uint32_t size);
+    void setValueFromColumn(Column* Container, uint32_t inputOrder,uint32_t outputOrder);
+
+    Column *clone() override;
+
+
+};
+
+
 
 class inExactColorIndex{
 public:
@@ -792,11 +824,11 @@ public:
 class StringColorColumn: public Column{
 public:
     typedef vector<string> dataType;
-    queryColorColumn* colors;
+    deduplicatedColumn<queryColorColumn>* colors;
     flat_hash_map<uint32_t,string> namesMap;
 
     StringColorColumn(){
-        colors=new mixVectors();
+        colors=new deduplicatedColumn<queryColorColumn>();
     }
     StringColorColumn(flat_hash_map<uint64_t, std::vector<uint32_t>>* colors,
                       uint32_t noSamples,
@@ -933,38 +965,6 @@ public:
             return true;
         }
     }
-
-
-};
-
-
-template<typename ColumnType,typename indexType = vector<uint32_t> >
-class deduplicatedColumn: public Column{
-public:
-    typedef typename ColumnType::dataType dataType;
-    indexType index;
-    ColumnType* values;
-    deduplicatedColumn(){
-    }
-    deduplicatedColumn(uint32_t size);
-    ~deduplicatedColumn(){
-        delete values;
-    }
-
-    uint32_t  size()
-    {
-        return index.size();
-    }
-    void insert(dataType item,uint32_t index);
-    dataType get(uint32_t index);
-
-    void serialize(string filename);
-    void deserialize(string filename);
-    Column* getTwin();
-    void resize(uint32_t size);
-    void setValueFromColumn(Column* Container, uint32_t inputOrder,uint32_t outputOrder);
-
-    Column *clone() override;
 
 
 };

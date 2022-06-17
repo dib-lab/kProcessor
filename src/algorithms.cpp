@@ -745,8 +745,8 @@ namespace kProcessor {
         }
 
 
-        auto *colors =new deduplicatedColumn< StringColorColumn>();
-        frame->addColumn("color",(Column *) colors);
+        auto *colors =new StringColorColumn();
+        frame->addColumn("colorString",(Column *) colors);
         flat_hash_map<string, string> namesMap;
         flat_hash_map<string, uint64_t> tagsMap;
         flat_hash_map<string, uint64_t> groupNameMap;
@@ -825,7 +825,7 @@ namespace kProcessor {
                     uint64_t kmerOrder =frame->getkmerOrder(kmer.hash);
                     if(colors->size()<frame->size()+1)
                         colors->resize(frame->size()+1);
-                    uint64_t currentTag = colors->index[kmerOrder];
+                    uint64_t currentTag = colors->colors->index[kmerOrder];
                     auto itc = convertMap.find(currentTag);
                     if (itc == convertMap.end()) {
                         vector<uint32_t> colors = legend->find(currentTag)->second;
@@ -889,7 +889,7 @@ namespace kProcessor {
                         colorsCount[itc->second]++;
                     }
 
-                    colors->index[kmerOrder]=itc->second;
+                    colors->colors->index[kmerOrder]=itc->second;
 
                 }
                 readID += 1;
@@ -903,11 +903,11 @@ namespace kProcessor {
             }
         }
 
-        colors->values = new StringColorColumn(legend,groupCounter.size());
+        colors->colors->values = new mixVectors(*legend,groupCounter.size());
         delete legend;
         for (auto & iit : namesMap) {
             uint32_t sampleID = groupNameMap[iit.second];
-            colors->values->namesMap[sampleID] = iit.second;
+            colors->namesMap[sampleID] = iit.second;
         }
 
     }
@@ -1024,7 +1024,7 @@ namespace kProcessor {
         cout << noColors << " colors created" << endl;
 
 
-        auto colorColumn= new deduplicatedColumn<mixVectors>();
+        auto colorColumn= new deduplicatedColumn<queryColorColumn>();
         colorColumn->values=new mixVectors(colors->values);
         colorColumn->values->explainSize();
         colorColumn->index=colors->index;
