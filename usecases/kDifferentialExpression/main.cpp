@@ -61,33 +61,34 @@ void differntialExpression(string genes_file,
      allSamples.insert(allSamples.end(),samplesInput.begin(),samplesInput.end());
      allSamples.insert(allSamples.end(),controlInput.begin(),controlInput.end());
      vector<uint32_t> requiredIndices;
-    
+    const string countColName="count";
+
 // //load kmers,count from kmc DB for sample and control
      for(const auto& filename:allSamples) {
          kDataFrame* currentFrame=kDataFrame::load(filename);
-         cout<<"Load "<<filename<< " kmers: "<<currentFrame->size()<<endl;
-         const string countColName="count";
-         any totalCountAny=kProcessor::aggregate(currentFrame,(uint64_t)0,  [countColName](kDataFrameIterator& it, any v) -> any {
+         any totalCountAny=kProcessor::aggregate(currentFrame,(uint64_t)0,
+                                                 [countColName](kDataFrameIterator& it, any v) -> any {
                  uint32_t count0;
-
                  it.getColumnValue<vectorColumn<uint32_t> >(countColName,count0);
                  return (any)(any_cast<uint64_t>(v) + (uint64_t)count0);
          });
-
          uint64_t totalCount=  any_cast<uint64_t>(totalCountAny);
-         cout <<"Total count = "<<totalCount<<endl;
+
          kProcessor::transformInPlace(currentFrame,  [=](kDataFrameIterator& it) -> void {
              uint32_t count0;
              it.getColumnValue<vectorColumn<uint32_t> >(countColName,count0);
              double normalized = (double)count0*(100000000.0) / totalCount;
              it.setColumnValue<vectorColumn<uint32_t> >(countColName,(uint32_t)normalized);
          });
+
          kFrames.push_back(currentFrame);
     }
 
 
 
      uint64_t kSize=kFrames.back()->getkSize();
+
+
      int chunkSize = 1000;
      kDataFrame * genesFrame = kDataFrameFactory::createBtree(kSize);
      kmerDecoder * KMERS = new Kmers(genes_file, chunkSize, kSize,genesFrame->KD->hash_mode);
@@ -98,6 +99,7 @@ void differntialExpression(string genes_file,
      requiredIndices={kFrames.size()-1};
      string colorColumn="color"+to_string(kFrames.size()-1);
      cout<<"Load "<<genes_file<< " kmers: "<<kFrames.back()->size()<<endl;
+
      kDataFrame* res= kProcessor::innerJoin(kFrames, requiredIndices);
 
      cout<<"Joined "<<res->size()<<" kmers"<<endl;
@@ -113,16 +115,18 @@ void differntialExpression(string genes_file,
          }
          return false;
      });
-     cout<<"Filtered "<<res->size()<<endl;
-     const string ttestColName="t-test";
-     res->addColumn(ttestColName, new vectorColumn<float>(res->size()));
 
+
+     cout<<"Filtered "<<res->size()<<endl;
 
      vector<uint32_t> samplesCounts;
      vector<uint32_t> controlCounts;
      samplesCounts.reserve(samplesInput.size());
      controlCounts.reserve(controlInput.size());
      // calculate pvalues for kmers
+
+    const string ttestColName="t-test";
+    res->addColumn(ttestColName, new vectorColumn<float>(res->size()));
      kProcessor::transformInPlace(res,  [&](kDataFrameIterator& it) -> void {
          samplesCounts.clear();
          controlCounts.clear();
@@ -134,7 +138,6 @@ void differntialExpression(string genes_file,
              it.getColumnValue<vectorColumn<uint32_t> >(colName,count);
              samplesCounts.push_back(count);
          }
-
          for(;i < allDatasets ; i++)
          {
              uint32_t count;
@@ -142,14 +145,12 @@ void differntialExpression(string genes_file,
              it.getColumnValue<vectorColumn<uint32_t> >(colName,count);
              controlCounts.push_back(count);
          }
-
-
          float ttest= tTest(samplesCounts,controlCounts);
          it.setColumnValue<vectorColumn<float> >(ttestColName, ttest);
-
      });
 
      // if we calculate average we dont need to save all the kmers
+
      auto ttestByGene=new unordered_map<string ,vector<float> >();
      any genesGatherAny=kProcessor::aggregate(res, ttestByGene, [=](kDataFrameIterator& it, any v) -> any {
          auto dict=any_cast<unordered_map<string ,vector<float>>*>(v);
@@ -163,6 +164,8 @@ void differntialExpression(string genes_file,
          }
          return (any)(dict);
      });
+
+
      ofstream output(outputFilename.c_str());
 
      for(auto k:*ttestByGene)
