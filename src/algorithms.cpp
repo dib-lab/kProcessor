@@ -746,7 +746,7 @@ namespace kProcessor {
 
 
         auto *colors =new StringColorColumn();
-        frame->addColumn("colorString",(Column *) colors);
+        frame->addColumn("color",(Column *) colors);
         flat_hash_map<string, string> namesMap;
         flat_hash_map<string, uint64_t> tagsMap;
         flat_hash_map<string, uint64_t> groupNameMap;
@@ -909,6 +909,7 @@ namespace kProcessor {
             uint32_t sampleID = groupNameMap[iit.second];
             colors->namesMap[sampleID] = iit.second;
         }
+        frame->colorColumn=(colors->colors);
 
     }
 
@@ -1029,7 +1030,7 @@ namespace kProcessor {
         colorColumn->values->explainSize();
         colorColumn->index=colors->index;
         output->removeColumn("i");
-        output->addColumn("color",colorColumn);
+        output->addColorColumn(colorColumn);
     }
 
     void createPrefixForest(kDataFrame* index, string tmpFolder,uint32_t num_vectors,uint32_t vector_size){

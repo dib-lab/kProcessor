@@ -1891,8 +1891,12 @@ TEST_P(indexingTest,index)
                 string readName = seq.first;
                 string groupName=namesMap[readName];
                 for (const auto &kmer : seq.second) {
-                    vector<string> colors=KF->getKmerColumnValue<deduplicatedColumn<StringColorColumn>>("color",kmer.hash);
+                    vector<string> colors=KF->getKmerColumnValue<StringColorColumn>("color",kmer.hash);
                     ASSERT_NE(colors.size(),0);
+                    vector<uint32_t> colors2=KF->getColor(kmer.hash);
+                    ASSERT_EQ(colors.size(),colors2.size());
+
+
                     auto colorIt=find(colors.begin(),colors.end(),groupName);
                     ASSERT_NE(colorIt,colors.end());
                 }
@@ -1932,6 +1936,8 @@ TEST_P(indexingTest,indexPriorityQSaveAndLoad)
     delete KF;
     KF= nullptr;
     kframeLoaded=kDataFrame::load(fileName);
+
+    unordered_map<uint32_t,vector<uint32_t>> seenColors;
     for(int i=0;i<inputFrames.size();i++)
     {
         kDataFrameIterator it=inputFrames[i]->begin();
@@ -1939,9 +1945,21 @@ TEST_P(indexingTest,indexPriorityQSaveAndLoad)
         {
             vector<uint32_t> colors=kframeLoaded->getKmerColumnValue<deduplicatedColumn<mixVectors> >("color",it.getKmer());
             ASSERT_NE(colors.size(),0);
+            vector<uint32_t> colors2=kframeLoaded->getColor(it.getKmer());
+            ASSERT_EQ(colors,colors2);
             auto colorIt=colors.end();
             colorIt=find(colors.begin(),colors.end(),i);
             ASSERT_NE(colorIt,colors.end());
+
+            uint32_t colorID=kframeLoaded->getColorID(it.getKmer());
+            auto seenIT=seenColors.find(colorID);
+            if(seenIT==seenColors.end())
+            {
+                seenColors[colorID]=colors2;
+            }
+            ASSERT_EQ(seenColors[colorID],colors2);
+
+
             it.next();
         }
         delete inputFrames[i];
@@ -1978,7 +1996,7 @@ TEST_P(indexingTest,indexPriorityQ)
 
     kProcessor::indexPriorityQueue(inputFrames,"", KF);
 
-
+    unordered_map<uint32_t,vector<uint32_t>> seenColors;
     for(int i=0;i<inputFrames.size();i++)
     {
         kDataFrameIterator it=inputFrames[i]->begin();
@@ -1989,6 +2007,18 @@ TEST_P(indexingTest,indexPriorityQ)
             auto colorIt=colors.end();
             colorIt=find(colors.begin(),colors.end(),i);
             ASSERT_NE(colorIt,colors.end());
+            vector<uint32_t> colors2=KF->getColor(it.getKmer());
+            ASSERT_EQ(colors,colors2);
+
+            uint32_t colorID=KF->getColorID(it.getKmer());
+            auto seenIT=seenColors.find(colorID);
+            if(seenIT==seenColors.end())
+            {
+                seenColors[colorID]=colors2;
+            }
+            ASSERT_EQ(seenColors[colorID],colors2);
+
+
             it.next();
         }
         delete inputFrames[i];
@@ -2166,11 +2196,13 @@ TEST_P(indexingTest,saveAndLoad)
             string readName = seq.first;
             string groupName=namesMap[readName];
             for (const auto &kmer : seq.second) {
-                vector<string> colors=kframeLoaded->getKmerColumnValue<deduplicatedColumn<StringColorColumn>>("color",kmer.hash);
+                vector<string> colors=kframeLoaded->getKmerColumnValue<StringColorColumn>("color",kmer.hash);
                 ASSERT_NE(colors.size(),0);
                 auto colorIt=colors.end();
                 colorIt=find(colors.begin(),colors.end(),groupName);
                 ASSERT_NE(colorIt,colors.end());
+                vector<uint32_t> colors2=kframeLoaded->getColor(kmer.hash);
+                ASSERT_EQ(colors.size(),colors2.size());
             }
         }
     }

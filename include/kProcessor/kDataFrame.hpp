@@ -140,6 +140,9 @@ public:
   }
   /// Returns the count of the current kmer
   std::uint64_t getCount();
+  /// Returns the count of the current kmer
+  vector<std::uint32_t> getColor();
+  std::uint32_t getColorID();
   /// sets the count of the current kmer
   bool setCount(std::uint64_t count);
   
@@ -199,6 +202,7 @@ public:
     unordered_map<string, Column*> columns;
     typedef kDataFrameIterator iterator;
     kmerDecoder * KD;
+    deduplicatedColumn<queryColorColumn>* colorColumn;
   virtual string get_class_name(){ return class_name;}  // Temporary until resolving #17
   kDataFrame();
   explicit kDataFrame(uint8_t kSize);
@@ -233,7 +237,16 @@ The difference between setCount and insert is that setCount set the count to N n
   std::uint64_t getCount(std::uint64_t kmer);
   void incrementCount(std::uint64_t kmer);
   void incrementCount(const string kmer);
-/// returns the count of the kmer in the kDataFrame, i.e. the number of times the kmer is inserted in the kdataFrame.
+
+  void addColorColumn(deduplicatedColumn<queryColorColumn>* col);
+  std::uint32_t getColorID(const string &kmer);
+  std::uint32_t getColorID(std::uint64_t kmer);
+
+  vector<uint32_t> getColor(const string &kmer);
+  vector<uint32_t> getColor(std::uint64_t kmer);
+
+
+    /// returns the count of the kmer in the kDataFrame, i.e. the number of times the kmer is inserted in the kdataFrame.
   virtual std::uint64_t getkmerOrder(const string &kmer)=0;
   virtual std::uint64_t getkmerOrder(std::uint64_t kmer)=0;
   virtual bool setOrder(const string &kmer, std::uint64_t N)=0;

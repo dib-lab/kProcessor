@@ -90,6 +90,14 @@ kDataFrame * kDataFrame::load(string filePath) {
             res->columns[name] = c;
 	    if(name== "count")
 	      res->countColumn=(vectorColumn<unsigned int>*)c;
+        if(name== "color") {
+            if(type == typeid(StringColorColumn).hash_code() )
+            {
+                res->colorColumn = ((StringColorColumn *) c)->colors;
+            }
+            else
+                res->colorColumn = (deduplicatedColumn<queryColorColumn> *) c;
+        }
         }
         while(inp >> name >> type >> path)
         {
@@ -230,6 +238,37 @@ void kDataFrame::incrementCount(const string kmer)
     countColumn->insert(count+1,order);
 }
 
+void kDataFrame::addColorColumn(deduplicatedColumn<queryColorColumn>*  col){
+    columns["color"]=col;
+    colorColumn=col;
+}
+std::uint32_t kDataFrame::getColorID(const string &kmer){
+    std::uint64_t kmerOrder=getkmerOrder(kmer);
+    if(kmerOrder==0)
+        throw std::logic_error("kmer not found!");
+    return colorColumn->index[kmerOrder];
+}
+std::uint32_t kDataFrame::getColorID(std::uint64_t kmer){
+    std::uint64_t kmerOrder=getkmerOrder(kmer);
+    if(kmerOrder==0)
+        throw std::logic_error("kmer not found!");
+    return colorColumn->index[kmerOrder];
+}
+
+vector<uint32_t> kDataFrame::getColor(const string &kmer){
+    std::uint64_t kmerOrder=getkmerOrder(kmer);
+    if(kmerOrder==0)
+        throw std::logic_error("kmer not found!");
+    return colorColumn->get(kmerOrder);
+}
+vector<uint32_t> kDataFrame::getColor(std::uint64_t kmer){
+    std::uint64_t kmerOrder=getkmerOrder(kmer);
+    if(kmerOrder==0)
+        throw std::logic_error("kmer not found!");
+    return colorColumn->get(kmerOrder);
+}
+
+
 
 kDataFrameIterator kDataFrame::end(){
 //    kDataFrameBMQFIterator* it=new kDataFrameBMQFIterator(bufferedmqf,kSize,KD);
@@ -322,3 +361,14 @@ std::uint64_t kDataFrameIterator::getCount(){
     return origin->countColumn->get(o);
 }
 
+vector<std::uint32_t> kDataFrameIterator::getColor(){
+
+    uint32_t o = iterator->getOrder();
+    return origin->colorColumn->get(o);
+}
+std::uint32_t kDataFrameIterator::getColorID(){
+
+    uint32_t o = iterator->getOrder();
+    return origin->colorColumn->index[o];
+
+}
