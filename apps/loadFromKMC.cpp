@@ -16,11 +16,7 @@ int main(int argc, char *argv[])
     string outPath=argv[3];
 
     kDataFrame* kframe;
-    if(kdataframeType=="MQF") {
-        kProcessor::loadFromKMCTokDataframeMQF(kframe, db);
-        kframe->save(outPath);
-        return 0;
-    }
+
     if(kdataframeType=="PHMAP" || kdataframeType=="BMQF")
         kframe=kDataFrameFactory::createPHMAP(21);
     else if(kdataframeType=="MAP")

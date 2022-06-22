@@ -70,6 +70,8 @@ public:
     std::uint64_t getCount(const string &kmer)override;
     std::uint64_t getCount(std::uint64_t kmer)override;
 
+    bool setCount(const string &kmer, std::uint64_t N)override;
+    bool setCount(std::uint64_t kmer,std::uint64_t N)override;
     static std::uint64_t estimateMemory(std::uint64_t nslots,std::uint64_t slotSize,
                                         std::uint64_t fcounter, std::uint64_t tagSize);
 
