@@ -64,9 +64,11 @@ public:
     void _reserve (vector<std::uint64_t> countHistogram);
     kDataFrame* getTwin();
 
-    bool _insert(std::uint64_t kmer);
-    bool _insert(string kmer);
+    bool _insert(std::uint64_t kmer, uint32_t count=1);
+    bool _insert(string kmer, uint32_t count=1);
 
+    std::uint64_t getCount(const string &kmer)override;
+    std::uint64_t getCount(std::uint64_t kmer)override;
 
     static std::uint64_t estimateMemory(std::uint64_t nslots,std::uint64_t slotSize,
                                         std::uint64_t fcounter, std::uint64_t tagSize);

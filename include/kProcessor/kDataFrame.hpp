@@ -233,8 +233,8 @@ The difference between setCount and insert is that setCount set the count to N n
   void addCountColumn();
   virtual bool setCount(const string &kmer, std::uint64_t N);
   virtual bool setCount(std::uint64_t kmer,std::uint64_t N);
-  std::uint64_t getCount(const string &kmer);
-  std::uint64_t getCount(std::uint64_t kmer);
+  virtual std::uint64_t getCount(const string &kmer);
+  virtual  std::uint64_t getCount(std::uint64_t kmer);
   void incrementCount(std::uint64_t kmer);
   void incrementCount(const string kmer);
 
@@ -410,6 +410,7 @@ public:
     static kDataFrame* loadMQF(string filePath);
     static kDataFrame* createMQF(uint32_t kSize,uint32_t numKmers=10000);
     static kDataFrame* createMQF(kDataFrame* kframe);
+    static bool isMQF(kDataFrame* kframe);
 
     static kDataFrame* loadPHMAP(string filePath);
     static kDataFrame* createPHMAP(uint32_t kSize,uint32_t numKmers=10000);

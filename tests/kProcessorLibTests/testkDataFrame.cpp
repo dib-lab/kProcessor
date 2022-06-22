@@ -289,7 +289,7 @@ vector<string> fastqFiles={"test.noN.fastq"};
 INSTANTIATE_TEST_SUITE_P(testcounting,
                          algorithmsTest,
                         ::testing::Combine(
-                                ::testing::Values("MAP","PHMAP","Btree"),
+                                ::testing::Values("MAP","PHMAP","Btree","MQF"),
                                 ::testing::Values(21,31),
                              ::testing::ValuesIn(fastqFiles)
                       ));
@@ -1461,6 +1461,8 @@ TEST_P(kDataFrameTest,aggregateSum)
 TEST_P(algorithmsTest,parsingTest)
 {
   string kframeType=get<0>(GetParam());
+  if(kframeType=="MQF")
+      GTEST_SKIP();
   int kSize=get<1>(GetParam());
   kDataFrame* kframe=getFrame(make_tuple(kframeType,kSize));
   string fileName=get<2>(GetParam());
@@ -1503,6 +1505,8 @@ TEST_P(algorithmsTest,dbgIteratorTest)
 {
     string kframeType=get<0>(GetParam());
     int kSize=5;
+    if(kframeType=="MQF")
+        GTEST_SKIP();
     kDataFrame* kframe=getFrame(make_tuple(kframeType,kSize));
     string fileName=get<2>(GetParam());
     int chunkSize=1000;
@@ -1573,7 +1577,6 @@ TEST_P(algorithmsTest,loadingKMCTest)
 
 
 }
-
 
 TEST_P(estimateTest,estimateTestTest)
 {
@@ -2454,6 +2457,8 @@ TEST_P(indexingTest,saveAndLoad)
 TEST_P(algorithmsTest,parsingTest2)
 {
     string kframeType=get<0>(GetParam());
+    if(kframeType=="MQF")
+        GTEST_SKIP();
     int kSize=get<1>(GetParam());
     kDataFrame* kframe=getFrame(make_tuple(kframeType,kSize));
     string fileName=get<2>(GetParam());

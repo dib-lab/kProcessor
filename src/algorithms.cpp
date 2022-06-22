@@ -1237,6 +1237,11 @@ namespace kProcessor {
     }
 
     void loadFromKMC(kDataFrame *kframe, std::string KMC_DB_filename) {
+        if(kDataFrameFactory::isMQF(kframe))
+        {
+            loadFromKMCTokDataframeMQF(kframe,KMC_DB_filename);
+            return;
+        }
         uint32 _kmer_length;
         uint32 _mode;
         uint32 _counter_size;
