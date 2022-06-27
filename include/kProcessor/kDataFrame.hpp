@@ -244,6 +244,7 @@ The difference between setCount and insert is that setCount set the count to N n
 
   vector<uint32_t> getColor(const string &kmer);
   vector<uint32_t> getColor(std::uint64_t kmer);
+  vector<std::uint32_t> getColorByColorID(uint32_t colorID);
 
 
     /// returns the count of the kmer in the kDataFrame, i.e. the number of times the kmer is inserted in the kdataFrame.

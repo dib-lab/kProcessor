@@ -268,6 +268,9 @@ vector<uint32_t> kDataFrame::getColor(std::uint64_t kmer){
     return colorColumn->get(kmerOrder);
 }
 
+vector<std::uint32_t> kDataFrame::getColorByColorID(uint32_t colorID) {
+    return colorColumn->get(colorID);
+}
 
 
 kDataFrameIterator kDataFrame::end(){
