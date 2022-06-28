@@ -18,7 +18,8 @@ rule kUpsetPlot:
     log: "upset.log"
     shell:
        	"""
-        echo {input.refs} | sed -e 's/.map//g'|tr -s ' ' $'\n' > refs.lst   
+	echo {input.refs} | sed -e 's/.map//g'|sed -e 's/kDataframe/-g kDataframe/g'
+        echo {input.refs} | sed -e 's/.map//g'|sed -e 's/kDataframe/-g kDataframe/g' |parallel --gnu ./kUpsetPlot {{}} > upset.txt   
         """
 
 rule kmc:
@@ -32,7 +33,7 @@ rule kmc:
     log: "{ref}.kmc.log"
     shell:
        	"""
-	/usr/bin/time -v -o {output.time} kmc -ci1 -t{threads} -k{kSize} -m2 -fa {input} {wildcards.ref}  ./ &> {log}
+	/usr/bin/time -v -o {output.time} kmc -ci1 -t{threads} -k{kSize} -m2 -fm {input} {wildcards.ref}  ./ &> {log}
 	../../apps/loadFromKMC {wildcards.ref} MAP kDataframe.{wildcards.ref} 
         """
 

@@ -17,16 +17,18 @@ void upsetPlot(vector<string>& genomeFileNames)
     for(auto fileName: genomeFileNames)
     {
         genomes_kframes.push_back(kDataFrame::load(fileName));
+	cerr<<fileName<<" loaded"<<endl; 
     }
     uint32_t kSize=genomes_kframes[0]->getkSize();
     kDataFrame* kframe=kDataFrameFactory::createPHMAP(kSize);
     kProcessor::indexPriorityQueue(genomes_kframes, "", kframe);
-
+    cout<<"Indexing done"<<endl;
     auto colorsCounts=new unordered_map<uint32_t ,uint32_t >();
     kProcessor::aggregate(kframe, colorsCounts, [=](kDataFrameIterator& it, any v) -> any {
         auto dict=any_cast<unordered_map<uint32_t,uint32_t >*>(v);
         uint32_t colorID=it.getColorID();
-        (*dict)[colorID]++;
+	cerr<<colorID<<endl;
+        (*dict)[colorID]=1;
     });
 
 
@@ -55,7 +57,7 @@ int main(int argc, char *argv[]){
 
 
     CLI11_PARSE(app, argc, argv);
-
+    upsetPlot(genomesFileNames);
 
     //differntialExpression(genes_file,samples,control,outputFilename);
     return 0;
