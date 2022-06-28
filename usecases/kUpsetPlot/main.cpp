@@ -22,13 +22,13 @@ void upsetPlot(vector<string>& genomeFileNames)
     uint32_t kSize=genomes_kframes[0]->getkSize();
     kDataFrame* kframe=kDataFrameFactory::createPHMAP(kSize);
     kProcessor::indexPriorityQueue(genomes_kframes, "", kframe);
-    cout<<"Indexing done"<<endl;
+    cerr<<"Indexing done"<<endl;
     auto colorsCounts=new unordered_map<uint32_t ,uint32_t >();
-    kProcessor::aggregate(kframe, colorsCounts, [=](kDataFrameIterator& it, any v) -> any {
+    auto result=kProcessor::aggregate(kframe, colorsCounts, [=](kDataFrameIterator& it, any v) -> any {
         auto dict=any_cast<unordered_map<uint32_t,uint32_t >*>(v);
         uint32_t colorID=it.getColorID();
-	cerr<<colorID<<endl;
-        (*dict)[colorID]=1;
+        (*dict)[colorID]++;
+        return (any)(dict);
     });
 
 
@@ -40,8 +40,8 @@ void upsetPlot(vector<string>& genomeFileNames)
 
         cout<<genomeFileNames[color[0]];
         for(unsigned i=1; i<color.size(); i++ )
-            cout<<"&"<<genomeFileNames[color[0]];
-        cout<<"="<<colorCount<<",";
+            cout<<"&"<<genomeFileNames[color[i]];
+        cout<<"="<<colorCount/1000<<", ";
     }
     cout<<endl;
 }
