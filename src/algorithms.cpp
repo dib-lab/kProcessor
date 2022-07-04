@@ -1272,6 +1272,16 @@ namespace kProcessor {
 
     }
 
-    
+    template<typename ColumnType>
+    unordered_map<typename ColumnType::dataType, uint32_t> calculateHistogram(ColumnType *column) {
+        unordered_map<typename ColumnType::dataType, uint32_t> res;
+        for(unsigned i=1;i< column->size(); i++)
+        {
+            typename ColumnType::dataType item=column->getWithIndex(i);
+            res[item]++;
+        }
+        return res;
+    }
+
 
 } // End of namespace kProcessor

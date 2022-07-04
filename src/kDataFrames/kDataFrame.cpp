@@ -3,6 +3,7 @@
 #include <iostream>
 #include <math.h>
 #include "defaultColumn.hpp"
+#include "algorithms.hpp"
 
 using namespace std;
 
@@ -352,6 +353,27 @@ vector<string> kDataFrame::getColumnNames()
     for(auto c :columns)
         res[i++]=c.first;
     return res;
+}
+
+unordered_map<uint32_t, uint32_t> kDataFrame::getCountHistogram() {
+    unordered_map<uint32_t ,uint32_t > countsHistogram;
+    for(unsigned i=0; i< countColumn->size(); i++)
+    {
+        countsHistogram[countColumn->getWithIndex(i)]++;
+    }
+    return countsHistogram;
+}
+
+unordered_map<uint32_t, uint32_t> kDataFrame::getColorHistogram() {
+    auto colorsCounts=new unordered_map<uint32_t ,uint32_t >();
+    auto result=kProcessor::aggregate(this, colorsCounts, [=](kDataFrameIterator& it, any v) -> any {
+        auto dict=any_cast<unordered_map<uint32_t,uint32_t >*>(v);
+        uint32_t colorID=it.getColorID();
+        (*dict)[colorID]++;
+        return (any)(dict);
+    });
+
+    return *colorsCounts;
 }
 
 

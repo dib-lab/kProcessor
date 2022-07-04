@@ -235,6 +235,7 @@ The difference between setCount and insert is that setCount set the count to N n
   virtual bool setCount(std::uint64_t kmer,std::uint64_t N);
   virtual std::uint64_t getCount(const string &kmer);
   virtual  std::uint64_t getCount(std::uint64_t kmer);
+  unordered_map<uint32_t, uint32_t> getCountHistogram();
   void incrementCount(std::uint64_t kmer);
   void incrementCount(const string kmer);
 
@@ -245,7 +246,7 @@ The difference between setCount and insert is that setCount set the count to N n
   vector<uint32_t> getColor(const string &kmer);
   vector<uint32_t> getColor(std::uint64_t kmer);
   vector<std::uint32_t> getColorByColorID(uint32_t colorID);
-
+  unordered_map<uint32_t, uint32_t> getColorHistogram();
 
     /// returns the count of the kmer in the kDataFrame, i.e. the number of times the kmer is inserted in the kdataFrame.
   virtual std::uint64_t getkmerOrder(const string &kmer)=0;

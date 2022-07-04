@@ -236,6 +236,13 @@ namespace kProcessor {
      * Exact same behavior as innerJoin with two modifications: input kDataframes are not required to be sorted, and multithreaded implementation is provided.
      */
     kDataFrame* parallelJoin(vector<string>& kdataframeFileNames, vector<uint32_t> kmersToKeep,uint64_t numThreads=1);
-    
+
+
+    /*
+     * No need for interface.
+     */
+    template<typename ColumnType>
+    unordered_map<typename ColumnType::dataType, uint32_t> calculateHistogram(ColumnType* column);
+
 }
 #endif

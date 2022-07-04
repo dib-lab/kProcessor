@@ -23,16 +23,10 @@ void upsetPlot(vector<string>& genomeFileNames)
     kDataFrame* kframe=kDataFrameFactory::createPHMAP(kSize);
     kProcessor::indexPriorityQueue(genomes_kframes, "", kframe);
     cerr<<"Indexing done"<<endl;
-    auto colorsCounts=new unordered_map<uint32_t ,uint32_t >();
-    auto result=kProcessor::aggregate(kframe, colorsCounts, [=](kDataFrameIterator& it, any v) -> any {
-        auto dict=any_cast<unordered_map<uint32_t,uint32_t >*>(v);
-        uint32_t colorID=it.getColorID();
-        (*dict)[colorID]++;
-        return (any)(dict);
-    });
+    auto colorsCounts=kframe->getColorHistogram();
 
 
-    for(auto currColor: *colorsCounts)
+    for(auto currColor: colorsCounts)
     {
         uint32_t colorID=currColor.first;
         uint32_t colorCount=currColor.second;
