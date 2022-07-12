@@ -745,7 +745,7 @@ namespace kProcessor {
         }
 
 
-        auto *colors =new deduplicatedColumn< StringColorColumn>();
+        auto *colors =new StringColorColumn();
         frame->addColumn("color",(Column *) colors);
         flat_hash_map<string, string> namesMap;
         flat_hash_map<string, uint64_t> tagsMap;
@@ -825,7 +825,7 @@ namespace kProcessor {
                     uint64_t kmerOrder =frame->getkmerOrder(kmer.hash);
                     if(colors->size()<frame->size()+1)
                         colors->resize(frame->size()+1);
-                    uint64_t currentTag = colors->index[kmerOrder];
+                    uint64_t currentTag = colors->colors->index[kmerOrder];
                     auto itc = convertMap.find(currentTag);
                     if (itc == convertMap.end()) {
                         vector<uint32_t> colors = legend->find(currentTag)->second;
@@ -889,7 +889,7 @@ namespace kProcessor {
                         colorsCount[itc->second]++;
                     }
 
-                    colors->index[kmerOrder]=itc->second;
+                    colors->colors->index[kmerOrder]=itc->second;
 
                 }
                 readID += 1;
@@ -903,12 +903,13 @@ namespace kProcessor {
             }
         }
 
-        colors->values = new StringColorColumn(legend,groupCounter.size());
+        colors->colors->values = new mixVectors(*legend,groupCounter.size());
         delete legend;
         for (auto & iit : namesMap) {
             uint32_t sampleID = groupNameMap[iit.second];
-            colors->values->namesMap[sampleID] = iit.second;
+            colors->namesMap[sampleID] = iit.second;
         }
+        frame->colorColumn=(colors->colors);
 
     }
 
@@ -1024,12 +1025,12 @@ namespace kProcessor {
         cout << noColors << " colors created" << endl;
 
 
-        auto colorColumn= new deduplicatedColumn<mixVectors>();
+        auto colorColumn= new deduplicatedColumn<queryColorColumn>();
         colorColumn->values=new mixVectors(colors->values);
         colorColumn->values->explainSize();
         colorColumn->index=colors->index;
         output->removeColumn("i");
-        output->addColumn("color",colorColumn);
+        output->addColorColumn(colorColumn);
     }
 
     void createPrefixForest(kDataFrame* index, string tmpFolder,uint32_t num_vectors,uint32_t vector_size){
@@ -1236,6 +1237,11 @@ namespace kProcessor {
     }
 
     void loadFromKMC(kDataFrame *kframe, std::string KMC_DB_filename) {
+        if(kDataFrameFactory::isMQF(kframe))
+        {
+            loadFromKMCTokDataframeMQF(kframe,KMC_DB_filename);
+            return;
+        }
         uint32 _kmer_length;
         uint32 _mode;
         uint32 _counter_size;
@@ -1266,6 +1272,16 @@ namespace kProcessor {
 
     }
 
-    
+    template<typename ColumnType>
+    unordered_map<typename ColumnType::dataType, uint32_t> calculateHistogram(ColumnType *column) {
+        unordered_map<typename ColumnType::dataType, uint32_t> res;
+        for(unsigned i=1;i< column->size(); i++)
+        {
+            typename ColumnType::dataType item=column->getWithIndex(i);
+            res[item]++;
+        }
+        return res;
+    }
+
 
 } // End of namespace kProcessor

@@ -4,6 +4,8 @@
 #include <math.h>
 #include <limits>
 
+#include "kmc_file.h"
+
 
 
 
@@ -352,7 +354,7 @@ void kDataFrameMQF::_reserve(uint64_t n) {
     QF *old = mqf;
     mqf = new QF();
     uint64_t q = (uint64_t) ceil(log2((double) n));
-    qf_init(mqf, (1ULL << q), hashbits, 0, 1, 32, true, "", 2038074761);
+    qf_init(mqf, (1ULL << q), hashbits, 0, 2, 32, true, "", 2038074761);
     if (old != NULL) {
         qf_migrate(old, mqf);
         qf_destroy(old);
@@ -542,32 +544,52 @@ uint32_t kDataFrameMQF::insert(uint64_t kmer) {
     return true;
 }
 
-bool kDataFrameMQF::_insert(uint64_t kmer) {
+bool kDataFrameMQF::_insert(uint64_t kmer, uint32_t count) {
     if (load_factor() > 0.8)
         reserve(mqf->metadata->nslots*2);
     uint64_t hash = kmer % mqf->metadata->range;
     // cout << "Inserting kmer: " << kmer << ", Hash: " << hash << endl;
     try {
-        qf_insert(mqf, hash, 1, false, false);
+        qf_insert(mqf, hash, count, false, false);
     }
     catch (overflow_error &e) {
         reserve(mqf->metadata->nslots);
-        return _insert(kmer);
+        return _insert(kmer,count);
     }
     return true;
 }
-bool kDataFrameMQF::_insert(string kmer) {
+bool kDataFrameMQF::_insert(string kmer, uint32_t count) {
     if (load_factor() > 0.8)
         reserve(mqf->metadata->nslots*2);
     uint64_t hash = KD->hash_kmer(kmer) % mqf->metadata->range;
     // cout << "Inserting kmer: " << kmer << ", Hash: " << hash << endl;
     try {
-        qf_insert(mqf, hash, 1, false, false);
+        qf_insert(mqf, hash, count, false, false);
     }
     catch (overflow_error &e) {
         reserve(mqf->metadata->nslots);
-        return _insert(hash);
+        return _insert(hash,count);
     }
+    return true;
+}
+
+std::uint64_t kDataFrameMQF::getCount(const string &kmer){
+    uint64_t hash = KD->hash_kmer(kmer) % mqf->metadata->range;
+    return qf_count_key(mqf, hash);
+}
+std::uint64_t kDataFrameMQF::getCount(std::uint64_t kmer){
+    uint64_t hash = kmer % mqf->metadata->range;
+    return qf_count_key(mqf, hash);
+}
+
+bool kDataFrameMQF::setCount(const string &kmer, std::uint64_t N){
+    uint64_t hash = KD->hash_kmer(kmer) % mqf->metadata->range;
+    qf_setCounter(mqf,hash,N);
+    return true;
+}
+bool kDataFrameMQF::setCount(std::uint64_t kmer,std::uint64_t N) {
+    uint64_t hash = kmer % mqf->metadata->range;
+    qf_setCounter(mqf,hash,N);
     return true;
 }
 uint64_t kDataFrameMQF::getkmerOrder(const string &kmer) {
@@ -668,4 +690,44 @@ kDataFrame *kDataFrameFactory::createMQF(uint32_t kSize, uint32_t numKmers) {
 
 kDataFrame *kDataFrameFactory::createMQF(kDataFrame *kframe) {
     return new kDataFrameMQF(kframe);
+}
+bool kDataFrameFactory::isMQF(kDataFrame* kframe){
+    kDataFrameMQF* ptr=dynamic_cast<kDataFrameMQF*>(kframe);
+    return ptr!=nullptr;
+}
+namespace kProcessor {
+
+    void loadFromKMCTokDataframeMQF(kDataFrame *kframe, std::string KMC_DB_filename) {
+        uint32 _kmer_length;
+        uint32 _mode;
+        uint32 _counter_size;
+        uint32 _lut_prefix_length;
+        uint32 _signature_len;
+        uint32 _min_count;
+        uint64 _max_count;
+        uint64 _total_kmers;
+        CKMCFile kmer_data_base;
+        if (!kmer_data_base.OpenForListing(KMC_DB_filename)) {
+            throw std::logic_error("Cant open KMC DB");
+            return;
+        }
+        kmer_data_base.Info(_kmer_length, _mode, _counter_size, _lut_prefix_length, _signature_len, _min_count,
+                            _max_count, _total_kmers);
+        CKmerAPI kmer_object(_kmer_length);
+        uint32 counter;
+        std::string str;
+
+        kDataFrameMQF *kmqf = (kDataFrameMQF *) kframe;
+
+
+        kmqf->setkSize(_kmer_length);
+        kmqf->reserve(_total_kmers);
+        while (kmer_data_base.ReadNextKmer(kmer_object, counter)) {
+            kmer_object.to_string(str);
+            kmqf->_insert(str, counter);
+        }
+
+    }
+
+
 }

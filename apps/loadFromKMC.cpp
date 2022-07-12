@@ -16,12 +16,15 @@ int main(int argc, char *argv[])
     string outPath=argv[3];
 
     kDataFrame* kframe;
+
     if(kdataframeType=="PHMAP" || kdataframeType=="BMQF")
         kframe=kDataFrameFactory::createPHMAP(21);
     else if(kdataframeType=="MAP")
         kframe=kDataFrameFactory::createMAP(21);
     else if(kdataframeType=="BTREE")
         kframe=kDataFrameFactory::createBtree(21);
+    else if(kdataframeType=="MQF")
+        kframe=kDataFrameFactory::createMQF(21);
 
     kProcessor::loadFromKMC(kframe,inputPath);
 

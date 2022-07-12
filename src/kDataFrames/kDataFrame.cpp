@@ -3,6 +3,7 @@
 #include <iostream>
 #include <math.h>
 #include "defaultColumn.hpp"
+#include "algorithms.hpp"
 
 using namespace std;
 
@@ -90,6 +91,14 @@ kDataFrame * kDataFrame::load(string filePath) {
             res->columns[name] = c;
 	    if(name== "count")
 	      res->countColumn=(vectorColumn<unsigned int>*)c;
+        if(name== "color") {
+            if(type == typeid(StringColorColumn).hash_code() )
+            {
+                res->colorColumn = ((StringColorColumn *) c)->colors;
+            }
+            else
+                res->colorColumn = (deduplicatedColumn<queryColorColumn> *) c;
+        }
         }
         while(inp >> name >> type >> path)
         {
@@ -230,6 +239,40 @@ void kDataFrame::incrementCount(const string kmer)
     countColumn->insert(count+1,order);
 }
 
+void kDataFrame::addColorColumn(deduplicatedColumn<queryColorColumn>*  col){
+    columns["color"]=col;
+    colorColumn=col;
+}
+std::uint32_t kDataFrame::getColorID(const string &kmer){
+    std::uint64_t kmerOrder=getkmerOrder(kmer);
+    if(kmerOrder==0)
+        throw std::logic_error("kmer not found!");
+    return colorColumn->index[kmerOrder];
+}
+std::uint32_t kDataFrame::getColorID(std::uint64_t kmer){
+    std::uint64_t kmerOrder=getkmerOrder(kmer);
+    if(kmerOrder==0)
+        throw std::logic_error("kmer not found!");
+    return colorColumn->index[kmerOrder];
+}
+
+vector<uint32_t> kDataFrame::getColor(const string &kmer){
+    std::uint64_t kmerOrder=getkmerOrder(kmer);
+    if(kmerOrder==0)
+        throw std::logic_error("kmer not found!");
+    return colorColumn->get(kmerOrder);
+}
+vector<uint32_t> kDataFrame::getColor(std::uint64_t kmer){
+    std::uint64_t kmerOrder=getkmerOrder(kmer);
+    if(kmerOrder==0)
+        throw std::logic_error("kmer not found!");
+    return colorColumn->get(kmerOrder);
+}
+
+vector<std::uint32_t> kDataFrame::getColorByColorID(uint32_t colorID) {
+    return colorColumn->values->get(colorID);
+}
+
 
 kDataFrameIterator kDataFrame::end(){
 //    kDataFrameBMQFIterator* it=new kDataFrameBMQFIterator(bufferedmqf,kSize,KD);
@@ -312,6 +355,27 @@ vector<string> kDataFrame::getColumnNames()
     return res;
 }
 
+unordered_map<uint32_t, uint32_t> kDataFrame::getCountHistogram() {
+    unordered_map<uint32_t ,uint32_t > countsHistogram;
+    for(unsigned i=0; i< countColumn->size(); i++)
+    {
+        countsHistogram[countColumn->getWithIndex(i)]++;
+    }
+    return countsHistogram;
+}
+
+unordered_map<uint32_t, uint32_t> kDataFrame::getColorHistogram() {
+    auto colorsCounts=new unordered_map<uint32_t ,uint32_t >();
+    auto result=kProcessor::aggregate(this, colorsCounts, [=](kDataFrameIterator& it, any v) -> any {
+        auto dict=any_cast<unordered_map<uint32_t,uint32_t >*>(v);
+        uint32_t colorID=it.getColorID();
+        (*dict)[colorID]++;
+        return (any)(dict);
+    });
+
+    return *colorsCounts;
+}
+
 
 bool kDataFrameIterator::setCount(std::uint64_t count){
     return origin->setCount(iterator->getHashedKmer(),count);
@@ -322,3 +386,14 @@ std::uint64_t kDataFrameIterator::getCount(){
     return origin->countColumn->get(o);
 }
 
+vector<std::uint32_t> kDataFrameIterator::getColor(){
+
+    uint32_t o = iterator->getOrder();
+    return origin->colorColumn->get(o);
+}
+std::uint32_t kDataFrameIterator::getColorID(){
+
+    uint32_t o = iterator->getOrder();
+    return origin->colorColumn->index[o];
+
+}

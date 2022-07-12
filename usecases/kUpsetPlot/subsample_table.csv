@@ -1,0 +1,7 @@
+sample_name,file
+Brown_Swiss,inputData/B_hicanu.fa
+Gaur,inputData/G_hicanu.fa
+Piedmontese,inputData/P_hicanu.fa
+Original_Braunvieh_Parental,inputData/H_hifiasm.fa
+Original_Braunvieh_Marental,inputData/O_hicanu.fa
+Nellore,inputData/N_hicanu.fa

@@ -1,0 +1,39 @@
+pepfile: "project_config.yaml"
+configfile: "config.yaml"
+
+kSize=config["kSize"]
+references=list(filter(lambda x:x.library=="reference",pep.samples))
+references=[x.sample_name for x in references]
+
+def getFasta(name):
+    return list(filter(lambda x:x.sample_name==name,pep.samples))[0].file
+
+rule all:
+    input: "upset.txt"
+
+rule kUpsetPlot:
+    input:
+         refs=expand("kDataframe.{ref}.map",ref=references)
+    output: "upset.txt"
+    log: "upset.log"
+    shell:
+       	"""
+	echo {input.refs} | sed -e 's/.map//g'|sed -e 's/kDataframe/-g kDataframe/g'
+        echo {input.refs} | sed -e 's/.map//g'|sed -e 's/kDataframe/-g kDataframe/g' |parallel --gnu ./kUpsetPlot {{}} > upset.txt   
+        """
+
+rule kmc:
+    input: lambda wildcards: getFasta(f"{wildcards.ref}"),
+    output:
+         kDataframe="kDataframe.{ref}.map",
+         time="{ref}.kmc.time"
+    conda:
+         "env.yaml"
+    threads: 4
+    log: "{ref}.kmc.log"
+    shell:
+       	"""
+	/usr/bin/time -v -o {output.time} kmc -ci1 -t{threads} -k{kSize} -m2 -fm {input} {wildcards.ref}  ./ &> {log}
+	../../apps/loadFromKMC {wildcards.ref} MAP kDataframe.{wildcards.ref} 
+        """
+

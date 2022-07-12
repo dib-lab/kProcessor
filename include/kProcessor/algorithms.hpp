@@ -112,7 +112,13 @@ namespace kProcessor {
 /// Load the kmers from KMC DB.
     void loadFromKMC(kDataFrame *kframe, std::string KMC_DB_filename);
 
-/// Load the kmers in the input string into the output kDataframe.
+/// Load the kmers from KMC DB to kDataframeMQF.
+    void loadFromKMCTokDataframeMQF(kDataFrame *kframe, std::string KMC_DB_filename);
+
+
+
+
+    /// Load the kmers in the input string into the output kDataframe.
     void countKmersFromString(kmerDecoder *KD, string sequence, kDataFrame *output);
 
 /// Load the kmers in the input string into the output kDataframe.
@@ -238,6 +244,13 @@ namespace kProcessor {
      * Exact same behavior as innerJoin with two modifications: input kDataframes are not required to be sorted, and multithreaded implementation is provided.
      */
     kDataFrame* parallelJoin(vector<string>& kdataframeFileNames, vector<uint32_t> kmersToKeep,uint64_t numThreads=1);
-    
+
+
+    /*
+     * No need for interface.
+     */
+    template<typename ColumnType>
+    unordered_map<typename ColumnType::dataType, uint32_t> calculateHistogram(ColumnType* column);
+
 }
 #endif
