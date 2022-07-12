@@ -105,6 +105,9 @@ public:
   }
   /// Returns the count of the current kmer
   std::uint64_t getCount();
+  /// Returns the count of the current kmer
+  vector<std::uint32_t> getColor();
+  std::uint32_t getColorID();
   /// sets the count of the current kmer
   bool setCount(std::uint64_t count);
 

@@ -4,6 +4,7 @@ public:
     unordered_map<string, Column*> columns;
     typedef kDataFrameIterator iterator;
     kmerDecoder* KD;
+    deduplicatedColumn<queryColorColumn>* colorColumn;
     virtual string get_class_name() { return class_name; }  // Temporary until resolving #17
     kDataFrame();
     explicit kDataFrame(uint8_t kSize);
@@ -34,10 +35,21 @@ public:
     void addCountColumn();
     virtual bool setCount(const string& kmer, std::uint64_t N);
     virtual bool setCount(std::uint64_t kmer, std::uint64_t N);
-    std::uint64_t getCount(const string& kmer);
-    std::uint64_t getCount(std::uint64_t kmer);
+    virtual std::uint64_t getCount(const string& kmer);
+    virtual  std::uint64_t getCount(std::uint64_t kmer);
+    unordered_map<uint32_t, uint32_t> getCountHistogram();
     void incrementCount(std::uint64_t kmer);
     void incrementCount(const string kmer);
+
+    void addColorColumn(deduplicatedColumn<queryColorColumn>* col);
+    std::uint32_t getColorID(const string& kmer);
+    std::uint32_t getColorID(std::uint64_t kmer);
+
+    vector<uint32_t> getColor(const string& kmer);
+    vector<uint32_t> getColor(std::uint64_t kmer);
+    vector<uint32_t> getColorByColorID(uint32_t colorID);
+    unordered_map<uint32_t, uint32_t> getColorHistogram();
+
     /// returns the count of the kmer in the kDataFrame, i.e. the number of times the kmer is inserted in the kdataFrame.
     virtual std::uint64_t getkmerOrder(const string& kmer) = 0;
     virtual std::uint64_t getkmerOrder(std::uint64_t kmer) = 0;
@@ -94,8 +106,8 @@ public:
             kmerDecoder* newKD = new Kmers(kSize, KD->hash_mode);
             delete KD;
             KD = newKD;
-        }        
-else {
+        }
+        else {
             KD = new Kmers(kSize);
         }
     }
