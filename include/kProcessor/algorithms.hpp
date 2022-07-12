@@ -47,13 +47,10 @@ void parseSequences(string seqFileName,int nThreads,kDataFrame* output);
 void parseSequences(kmerDecoder * KD, kDataFrame* output);
 
 /// Load the kmers in the input file into the output kDataframe. Input File can be of formats: fastq,fasta.
-void countKmersFromFile(kDataFrame * kframe, std::map<std::string, int> parse_params, string filename, int chunk_size = 1000);
+void countKmersFromFile(kDataFrame * kframe, string filename, int chunk_size = 1000);
 
 /// Load the kmers in the input string into the output kDataframe.
-void countKmersFromString(kmerDecoder *KD, string sequence,kDataFrame* output);
-
-/// Load the kmers in the input string into the output kDataframe.
-void countKmersFromString(kDataFrame * frame, std::map<std::string, int> parse_params, string sequence);
+void countKmersFromString(string sequence,kDataFrame* output);
 
 /// Applies a function on all the kmers in the input kDataframe. The output is another kDataframe with the transformed kmers.
 kDataFrame* transform(kDataFrame* input,kmerRow (*fn)(kmerRow i));
@@ -101,10 +98,7 @@ kmerDecoder* initialize_kmerDecoder(int kmer_size, int hash_mode = 1);
 colored_kDataFrame *index(kmerDecoder *KD, string names_fileName, kDataFrame *frame);
 
 /// Index function without needing the kmerDecoder
-    colored_kDataFrame *
-    index(kDataFrame *frame, std::map<std::string, int> parse_params, string filename, int chunks, string names_fileName);
-
-    colored_kDataFrame * index(kDataFrame *frame, string filename, int chunks, string names_fileName);
+  colored_kDataFrame * index(kDataFrame *frame, string filename, int chunks, string names_fileName);
 
 }
 #endif

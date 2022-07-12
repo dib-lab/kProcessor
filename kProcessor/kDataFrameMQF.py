@@ -5,35 +5,34 @@ class kDataFrameMQF(kDataFrame):
     """The abstract base class defining a kDataFrameMQF.
     """
 
-    def __init__(self, kSize, mode=1):
+    def __init__(self, kSize):
         """Instantiate a kDataFrameMQF object with predefined kmer size.
 
         :param kSize: Kmer Size
         :type kSize: integer
-        :param mode: Hashing mode for the kDataFrameMQF, default  = 1
-        :type mode: integer
         :return: :class:`kProcessor.kDataFrameMQF`
 
         Instantiation Example:
             >>> import kProcessor as kp
-            >>> KF_MQF = kp.kDataFrameMQF(31) # kSize = 31, Hashing Mode = 1
-            >>> KF2_MQF = kp.kDataFrameMQF(31, 0) # kSize = 31, Hashing Mode = 0
+            >>> KF_MQF_1 = kp.kDataFrameMQF(31) # kSize = 31
+            >>> KF_MQF_1 = kp.kDataFrameMQF(SKIPMERS, integer_hasher, {'m': 2, 'n': 3, 'k': 10}) # Reading mode = skipmers, hashing mode = integer hashing, (m, n, k) are the skipmers params.
+            >>> KF_MQF_2 = kp.kDataFrameMQF(PROTEIN, protein_hasher, {'kSize': 5}); # Reading/hashing mode = protein, kSize = 5
+            >>> KF_MQF_3 = kp.kDataFrameMQF(PROTEIN, proteinDayhoff_hasher, {'kSize': 11}); # Reading mode = protein, hashing mode = dayhoff encoding, kSize = 11
 
+            
         .. note:: Read more about hashing modes in the FAQ page.
 
         """
         pass
 
 
-    # Will publish it later after cloning kmerDecoder settings.
-    # def getTwin(self):
-    #     """creates a new ``kDataFrameMQF`` using the same parameters as the current ``kDataFrameMQF``.
-    #
-    #     :return: A shallow copy of the current ``kDataFrameMQF``.
-    #     :rtype: kDataFrameMQF
-    #
-    #     """
-    #     # pass
+    def getTwin(self):
+        """creates a new ``kDataFrameMQF`` using the same parameters as the current ``kDataFrameMQF``.
+    
+        :return: A shallow copy of the current ``kDataFrameMQF``.
+        :rtype: kDataFrameMQF
+    
+        """
 
     def reserve(self, n):
         """Request a capacity change so that the kDataFrameMQF can approximately hold at least n kmers

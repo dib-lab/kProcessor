@@ -159,7 +159,7 @@ kDataFrameMQF::kDataFrameMQF(uint64_t ksize, uint8_t q, hashingModes hash_mode) 
 }
 
 kDataFrameMQF::kDataFrameMQF(uint64_t ksize, uint8_t q, uint8_t fixedCounterSize, uint8_t tagSize,
-                             double falsePositiveRate) :
+                             double falsePositiveRate):
         kDataFrame(ksize) {
     this->class_name = "MQF"; // Temporary until resolving #17
     mqf = new QF();
@@ -245,10 +245,30 @@ kDataFrameMQF::kDataFrameMQF(QF *mqf, readingModes RM, hashingModes HM, map<stri
     range = (1ULL << hashbits);
 }
 
+
+kDataFrameMQF::kDataFrameMQF(uint8_t q, uint8_t fixedCounterSize, uint8_t tagSize, readingModes RM, hashingModes HM, map<string, int> params){
+    this->class_name = "MQF"; // Temporary until resolving #17
+    
+    int kSize;
+    
+    if(RM == KMERS || RM == PROTEIN){
+        kSize = params["kSize"];
+    }else{
+        kSize = params["k"];
+    }
+    mqf = new QF();
+    qf_init(mqf, (1ULL << q), 2 * kSize, tagSize, fixedCounterSize, 32, true, "", 2038074761);
+    KD = kmerDecoder::getInstance(RM, HM, params);
+    this->falsePositiveRate = falsePositiveRate;
+    hashbits = 2 * kSize;
+    range = (1ULL << hashbits);
+
+}
+
 kDataFrame *kDataFrameMQF::getTwin() {
     uint64_t q = log2(mqf->metadata->nslots);
-    return ((kDataFrame *) new kDataFrameMQF(kSize, q, mqf->metadata->fixed_counter_size,
-                                             mqf->metadata->label_bits, falsePositiveRate));
+    return ((kDataFrame *) new kDataFrameMQF(q, mqf->metadata->fixed_counter_size,
+                                             mqf->metadata->label_bits, KD->slicing_mode, KD->hash_mode, KD->string_to_params(KD->params_to_string())));
 }
 
 void kDataFrameMQF::reserve(uint64_t n) {

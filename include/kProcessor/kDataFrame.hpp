@@ -344,6 +344,7 @@ public:
   kDataFrameMQF(readingModes RM, hashingModes HM, map<string, int> params);
   kDataFrameMQF(uint64_t ksize,uint8_t q,uint8_t fixedCounterSize,uint8_t tagSize
     ,double falsePositiveRate);
+  kDataFrameMQF(uint8_t q, uint8_t fixedCounterSize, uint8_t tagSize, readingModes RM, hashingModes HM, map<string, int> params);
 
   kDataFrameMQF(uint64_t ksize, uint8_t q, hashingModes hash_mode = integer_hasher);
 

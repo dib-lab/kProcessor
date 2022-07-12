@@ -16,7 +16,7 @@ kDataframe is a virtual data structure that has multiple implementations to fit 
 kDataframes store the items as hash values which are unsigned integers. However they receive their inputs in different formats for convenience:
 
 a.    **Unsigned integers:** This option allows the users to encode their input items in their own way and enables easy integration in different software packages. 
-b.    **Kmers, sequences or sequence files:** Any kDataframe can parse ACGT sequences in different hashing modes (e.g. exact or approximate hashing), kmer orientations (canonical or non-canonical), and parsing modes (e.g. classical kmers, skipmers, or minimizers). Read more about these options at the kDataframe construction and sequence parsing functions.    
+b.    **Kmers, sequences or sequence files:** Any kDataframe can parse ACGT sequences in different hashing modes (e.g. exact or approximate hashing), kmer orientations (canonical or non-canonical), and parsing modes (e.g. classical kmers, skipmers, or minimizers). kProcessor also supports protein sequences parsing. Read more about these options at the kDataframe construction and sequence parsing functions.    
 
 
 .. image:: https://travis-ci.org/dib-lab/kProcessor.svg?branch=master
