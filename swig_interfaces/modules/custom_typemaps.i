@@ -9,6 +9,15 @@
 //     }
 // }
 
+%typemap(out) std::unordered_map<uint32_t, uint32_t> {
+    $result = PyDict_New();
+    std::unordered_map<uint32_t, uint32_t>::iterator iter;
+
+    for (iter = $1.begin(); iter != $1.end(); ++iter) {
+        PyDict_SetItem($result, PyInt_FromLong(iter->first), PyInt_FromLong(iter->second));
+    }
+}
+
 // /* unordered_map<std::string, int> */
 // %typemap(out) std::unordered_map<std::string, int> {
 //     $result = PyDict_New();
