@@ -68,18 +68,17 @@ void differntialExpression(string genes_file,
          kDataFrame* currentFrame=kDataFrame::load(filename);
          any totalCountAny=kProcessor::aggregate(currentFrame,(uint64_t)0,
                                                  [countColName](kDataFrameIterator& it, any v) -> any {
-                 uint32_t count0;
-                 it.getColumnValue<vectorColumn<uint32_t> >(countColName,count0);
+                 uint32_t count0=it.getCount();
                  return (any)(any_cast<uint64_t>(v) + (uint64_t)count0);
          });
          uint64_t totalCount=  any_cast<uint64_t>(totalCountAny);
 
          kProcessor::transformInPlace(currentFrame,  [=](kDataFrameIterator& it) -> void {
-             uint32_t count0;
-             it.getColumnValue<vectorColumn<uint32_t> >(countColName,count0);
+             uint32_t count0=it.getCount();
              double normalized = (double)count0*(100000000.0) / totalCount;
-             it.setColumnValue<vectorColumn<uint32_t> >(countColName,(uint32_t)normalized);
+             it.setCount((uint32_t)normalized);
          });
+         cout<< "Filename loaded "<<filename<<endl;
 
          kFrames.push_back(currentFrame);
     }

@@ -584,11 +584,13 @@ std::uint64_t kDataFrameMQF::getCount(std::uint64_t kmer){
 
 bool kDataFrameMQF::setCount(const string &kmer, std::uint64_t N){
     uint64_t hash = KD->hash_kmer(kmer) % mqf->metadata->range;
+    N=max(N,(uint64_t)1);
     qf_setCounter(mqf,hash,N);
     return true;
 }
 bool kDataFrameMQF::setCount(std::uint64_t kmer,std::uint64_t N) {
     uint64_t hash = kmer % mqf->metadata->range;
+    N=max(N,(uint64_t)1);
     qf_setCounter(mqf,hash,N);
     return true;
 }

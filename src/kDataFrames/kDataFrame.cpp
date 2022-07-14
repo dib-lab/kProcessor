@@ -360,8 +360,7 @@ bool kDataFrameIterator::setCount(std::uint64_t count){
   }
 std::uint64_t kDataFrameIterator::getCount(){
 
-    uint32_t o = iterator->getOrder();
-    return origin->countColumn->get(o);
+    return iterator->getCount();
 }
 
 vector<std::uint32_t> kDataFrameIterator::getColor(){
