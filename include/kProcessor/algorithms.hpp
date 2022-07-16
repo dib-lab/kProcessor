@@ -160,7 +160,7 @@ namespace kProcessor {
 /// Initialize kmerDecoder to decode kmers from a sequence string with predefined mode.
     kmerDecoder *initialize_kmerDecoder(std::string mode, std::map<std::string, int> parse_params);
 
-// Initialize kmerDecoder to hash and Ihash single kmer.
+/// Initialize kmerDecoder to decode single kmer.
     kmerDecoder *initialize_kmerDecoder(int kSize, hashingModes HM);
 
 /* set hashing mode for kmerDecoder object
