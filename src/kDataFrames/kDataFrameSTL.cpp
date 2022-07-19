@@ -75,7 +75,7 @@ string kDataFrameSTLIterator<MapType>::getKmer() {
 
 template<class MapType>
 uint64_t kDataFrameSTLIterator<MapType>::getCount() {
-    return iterator->second;
+    return origin->countColumn->get(iterator->second);
 }
 
 template<class MapType>

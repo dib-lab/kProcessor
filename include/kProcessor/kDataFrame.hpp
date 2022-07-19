@@ -194,7 +194,6 @@ protected:
 
   unordered_map<uint64_t,uint32_t> orderCheckpoints;
   uint32_t lastCheckpoint;
-  vectorColumn<uint32_t>* countColumn;
   kDataFrameIterator* endIterator;
   friend class kDataFrameIterator;
 public:
@@ -203,6 +202,7 @@ public:
     typedef kDataFrameIterator iterator;
     kmerDecoder * KD;
     deduplicatedColumn<queryColorColumn>* colorColumn;
+    vectorColumn<uint32_t>* countColumn;
   virtual string get_class_name(){ return class_name;}  // Temporary until resolving #17
   kDataFrame();
   explicit kDataFrame(uint8_t kSize);
