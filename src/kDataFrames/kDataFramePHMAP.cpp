@@ -10,7 +10,7 @@
  *****************************
  */
 
-kDataFramePHMAPIterator::kDataFramePHMAPIterator(flat_hash_map<uint64_t, uint64_t>::iterator it, kDataFramePHMAP *origin,
+kDataFramePHMAPIterator::kDataFramePHMAPIterator(KDATAFRAME_PHMAP::iterator it, kDataFramePHMAP *origin,
                                              uint64_t kSize)
         : _kDataFrameIterator(kSize) {
     iterator = it;
@@ -77,7 +77,7 @@ kDataFramePHMAP::kDataFramePHMAP(uint64_t ksize) {
     this->kSize = ksize;
     KD = new Kmers(kSize, TwoBits_hasher);
 //    hasher = new wrapperHasher<flat_hash_map<uint64_t, uint64_t>::hasher>(MAP.hash_function(), ksize);
-    this->MAP = flat_hash_map<uint64_t, uint64_t>(1000);
+    this->MAP = KDATAFRAME_PHMAP(1000);
     // this->hasher = (new IntegerHasher(ksize));
 }
 
@@ -86,7 +86,7 @@ kDataFramePHMAP::kDataFramePHMAP(uint64_t ksize, hashingModes hash_mode) {
     this->kSize = ksize;
     KD = new Kmers(kSize, hash_mode);
 //    hasher = new wrapperHasher<flat_hash_map<uint64_t, uint64_t>::hasher>(MAP.hash_function(), ksize);
-    this->MAP = flat_hash_map<uint64_t, uint64_t>(1000);
+    this->MAP = KDATAFRAME_PHMAP(1000);
     // this->hasher = (new IntegerHasher(ksize));
 }
 
@@ -94,7 +94,7 @@ kDataFramePHMAP::kDataFramePHMAP(readingModes RM, hashingModes hash_mode, map<st
     this->class_name = "PHMAP"; // Temporary until resolving #17
     KD = kmerDecoder::getInstance(RM, hash_mode, params);
     this->kSize = KD->get_kSize();
-    this->MAP = flat_hash_map<uint64_t, uint64_t>(1000);
+    this->MAP = KDATAFRAME_PHMAP(1000);
  }
 
 kDataFramePHMAP::kDataFramePHMAP(uint64_t ksize,vector<uint64_t> kmersHistogram) {
@@ -115,7 +115,7 @@ kDataFramePHMAP::kDataFramePHMAP(uint64_t ksize,vector<uint64_t> kmersHistogram)
 kDataFramePHMAP::kDataFramePHMAP() {
     this->class_name = "PHMAP"; // Temporary until resolving #17
     this->kSize = 23;
-    this->MAP = flat_hash_map<uint64_t, uint64_t>(1000);
+    this->MAP = KDATAFRAME_PHMAP(1000);
     KD = new Kmers(kSize, TwoBits_hasher);
     // hasher=new wrapperHasher<flat_hash_map<uint64_t,uint64_t>::hasher >(MAP.hash_function(),kSize);
     // this->hasher = (new IntegerHasher(23));
@@ -159,7 +159,7 @@ bool kDataFramePHMAP::setCount(uint64_t kmerS, uint64_t tag) {
 }
 
 uint64_t kDataFramePHMAP::getCount(string kmerS) {
-    phmap::flat_hash_map<uint64_t,uint64_t>::const_iterator got = this->MAP.find(KD->hash_kmer(kmerS));
+    KDATAFRAME_PHMAP::const_iterator got = this->MAP.find(KD->hash_kmer(kmerS));
     if ( got == this->MAP.end() )
         return 0;
     else
@@ -167,7 +167,7 @@ uint64_t kDataFramePHMAP::getCount(string kmerS) {
 }
 
 uint64_t kDataFramePHMAP::getCount(uint64_t kmerS) {
-    phmap::flat_hash_map<uint64_t,uint64_t>::const_iterator got = this->MAP.find(kmerS);
+    KDATAFRAME_PHMAP::const_iterator got = this->MAP.find(kmerS);
     if ( got == this->MAP.end() )
         return 0;
     else

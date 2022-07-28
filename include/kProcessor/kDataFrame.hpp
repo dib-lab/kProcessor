@@ -10,12 +10,20 @@
 #include <any>
 #include "bufferedMQF.h"
 
+// Min 1, Max 12^2 submaps. 12 Is the very good in handling LARGE number of kmers.
+#define PHMAP_SUBMAPS 12
+
 using phmap::flat_hash_map;
 using namespace std;
 
 class kDataFrame;
 class kDataFrameMAP;
 class kDataFramePHMAP;
+
+using KDATAFRAME_PHMAP = phmap::parallel_flat_hash_map<uint64_t, uint64_t,
+          std::hash<uint64_t>, std::equal_to<uint64_t>,
+          std::allocator<std::pair<const uint64_t, uint64_t>>,
+          PHMAP_SUBMAPS>;
 
 
 class kmerRow{
@@ -559,11 +567,11 @@ public:
 
 class kDataFramePHMAPIterator : public _kDataFrameIterator {
 private:
-    flat_hash_map<uint64_t, uint64_t>::iterator iterator;
+    KDATAFRAME_PHMAP::iterator iterator;
     kDataFramePHMAP *origin;
     kmerDecoder * KD;
 public:
-    kDataFramePHMAPIterator(flat_hash_map<uint64_t, uint64_t>::iterator, kDataFramePHMAP *origin, uint64_t kSize);
+    kDataFramePHMAPIterator(KDATAFRAME_PHMAP::iterator, kDataFramePHMAP *origin, uint64_t kSize);
 
     kDataFramePHMAPIterator(const kDataFramePHMAPIterator &);
 
@@ -593,7 +601,8 @@ public:
 
 class kDataFramePHMAP : public kDataFrame {
 private:
-    flat_hash_map<uint64_t, uint64_t> MAP;
+    // flat_hash_map<uint64_t, uint64_t> MAP;
+    KDATAFRAME_PHMAP MAP;
 public:
     kDataFramePHMAP();
     kDataFramePHMAP(uint64_t ksize);
