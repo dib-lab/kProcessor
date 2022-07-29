@@ -10,8 +10,8 @@
 #include <any>
 #include "bufferedMQF.h"
 
-// Min 1, Max 12^2 submaps. 12 Is the very good in handling LARGE number of kmers.
-#define PHMAP_SUBMAPS 12
+// Min 1, Max 12^2 submaps. The larger the better for handling LARGE number of kmers.
+#define PHMAP_SUBMAPS 6
 
 using phmap::flat_hash_map;
 using namespace std;
