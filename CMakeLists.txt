@@ -46,10 +46,10 @@ add_subdirectory(ThirdParty/kmerDecoder)
 
 #set (CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS}  -std=c++17 -fPIC  -pedantic -O0 -g -lprofiler")
 
-set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -std=c++17 -fPIC  -pedantic  -O3 -Ofast")
-set (CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS}  -std=c++17 -fPIC  -pedantic -O0 -g ")
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -std=c++17 -fPIC  -pedantic -Ofast")
+# set (CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS}  -std=c++17 -fPIC  -pedantic -g ")
 
-set (CMAKE_CXX_FLAGS_RELEASE  "${CMAKE_CXX_FLAGS}  -std=c++17 -fPIC  -pedantic -O3 -Ofast")
+# set (CMAKE_CXX_FLAGS_RELEASE  "${CMAKE_CXX_FLAGS}  -std=c++17 -fPIC  -pedantic -Ofast")
 
 set (CMAKE_EXE_LINKER_FLAGS_DEBUG "${CMAKE_EXE_LINKER_FLAGS_DEBUG}")
 #set (CMAKE_EXE_LINKER_FLAGS_DEBUG "${CMAKE_EXE_LINKER_FLAGS_DEBUG} -lprofiler")
