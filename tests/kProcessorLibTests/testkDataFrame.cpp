@@ -322,7 +322,7 @@ void setFunctionsTest::SetUp()
             // Mode 1 : kmers, KmerSize will be cloned from the kFrame
             kProcessor::countKmersFromFile(frames[i], {{"mode", 1}}, setFunctionsTestInput[0][i], 1000);
         }
-        kDataFrame* indexRes=kDataFrameFactory::createMAP(k);
+        kDataFrame* indexRes=kDataFrameFactory::createMAP(frames[0]->getkSize(),frames[0]->getkmerDecoder()->hash_mode);
         kProcessor::indexPriorityQueue(frames,"",indexRes);
 
         auto prevColor=(deduplicatedColumn< mixVectors>*)indexRes->columns["color"];
@@ -349,7 +349,7 @@ void setFunctionsTest::SetUp()
 }
 INSTANTIATE_TEST_SUITE_P(testSetFunctions,
                          setFunctionsTest,
-                        ::testing::ValuesIn({make_tuple(string("MAP"),21),make_tuple(string("MAP"),31)})
+                        ::testing::ValuesIn({make_tuple(string("MQF"),21),make_tuple(string("MAP"),31)})
                       );
 
 
@@ -1677,6 +1677,7 @@ TEST_P(setFunctionsTest,differenceTest)
 }
 TEST_P(setFunctionsTest,innerJoinTest)
 {
+    cout<<input[1]->getCount("AGTCTTATCACACTCAAGATG")<<endl;
     try {
         result=kProcessor::innerJoin(input,{1});
     }
@@ -1743,11 +1744,12 @@ TEST_P(setFunctionsTest,innerJoinTest2)
 
 TEST_P(setFunctionsTest,parallelinnerJoinTest)
 {
+    string kFrameType=get<0>(GetParam());
     try {
         vector<string> inputFileNames(input.size());
         for(unsigned i=0;i<input.size();i++)
         {
-            inputFileNames[i]="tmp.parrallelinerJoin."+to_string(i)+".";
+            inputFileNames[i]="tmp.parrallelinerJoin."+to_string(i)+"."+kFrameType+".";
             input[i]->save(inputFileNames[i]);
         }
         result=kProcessor::parallelJoin(inputFileNames,{0,1,2});

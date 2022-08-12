@@ -604,6 +604,12 @@ uint64_t kDataFrameMQF::getkmerOrder(uint64_t kmer) {
     return itemOrder(mqf, hash)+1;
 }
 
+void kDataFrameMQF::incrementCount(std::uint64_t kmer){
+    _insert(kmer,1);
+}
+void kDataFrameMQF::incrementCount(const string kmer){
+    _insert(kmer,1);
+}
 
 bool kDataFrameMQF::erase(const string &kmer) {
     uint64_t hash = KD->hash_kmer(kmer) % mqf->metadata->range;

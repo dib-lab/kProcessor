@@ -235,8 +235,8 @@ The difference between setCount and insert is that setCount set the count to N n
   virtual bool setCount(std::uint64_t kmer,std::uint64_t N);
   virtual std::uint64_t getCount(const string &kmer);
   virtual  std::uint64_t getCount(std::uint64_t kmer);
-  void incrementCount(std::uint64_t kmer);
-  void incrementCount(const string kmer);
+  virtual void incrementCount(std::uint64_t kmer);
+  virtual void incrementCount(const string kmer);
 
   void addColorColumn(deduplicatedColumn<queryColorColumn>* col);
   std::uint32_t getColorID(const string &kmer);
@@ -420,6 +420,7 @@ public:
 
     static kDataFrame* loadMAP(string filePath);
     static kDataFrame* createMAP(uint32_t kSize,uint32_t numKmers=10000);
+    static kDataFrame* createMAP(uint64_t ksize, hashingModes hash_mode);
 
     static kDataFrame* loadBtree(string filePath);
     static kDataFrame* createBtree(uint32_t kSize,uint32_t numKmers=10000);

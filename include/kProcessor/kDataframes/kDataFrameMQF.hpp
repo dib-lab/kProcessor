@@ -89,6 +89,8 @@ public:
     std::uint64_t getkmerOrder(const string &kmer);
     std::uint64_t getkmerOrder(std::uint64_t kmer);
 
+    void incrementCount(std::uint64_t kmer) override;
+    void incrementCount(const string kmer) override;
 
     bool erase(const string &kmer);
     bool erase(std::uint64_t kmer);

@@ -600,6 +600,10 @@ kDataFrame *kDataFrameFactory::createMAP(uint32_t kSize, uint32_t numKmers) {
     return new kDataFrameMAP(kSize,numKmers);
 }
 
+kDataFrame *kDataFrameFactory::createMAP(uint64_t ksize, hashingModes hash_mode) {
+    return new kDataFrameMAP(ksize,hash_mode);
+}
+
 kDataFrame *kDataFrameFactory::loadBtree(string filePath) {
     return kDataFrameBtree::load(filePath);
 }

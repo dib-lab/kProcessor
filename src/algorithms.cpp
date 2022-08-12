@@ -153,7 +153,14 @@ namespace kProcessor {
 
     }
     kDataFrame* innerJoin(vector<kDataFrame *> input, vector<uint32_t> kmersToKeep) {
-        kDataFrame *res = input[0]->getTwin();
+        kDataFrame *res;
+        if(kDataFrameFactory::isMQF(input[0]))
+        {
+            res= kDataFrameFactory::createPHMAP(input[0]->ksize(),input[0]->getkmerDecoder()->hash_mode);
+        }
+        else{
+            res= input[0]->getTwin();
+        }
         uint64_t numKmers = 0;
         for (auto kframe:input) {
             numKmers += kframe->size();
@@ -163,6 +170,8 @@ namespace kProcessor {
             bool exists=false;
             for (auto i : kmersToKeep ) {
                 if (input[i] != nullptr) {
+                    if(input[i]->getKmer()== "GGGGGGGGGGCGGGGGGGGGG")
+                        cout<<"Here"<<endl;
                     return kmerRow(input[i]->getHashedKmer(),1,0,nullptr);
                 }
             }
@@ -172,7 +181,15 @@ namespace kProcessor {
     }
 
     kDataFrame *filter(kDataFrame *input, function<bool (kDataFrameIterator& i)> fn) {
-        kDataFrame *res = input->getTwin();
+        kDataFrame *res;
+        if(kDataFrameFactory::isMQF(input))
+        {
+            res= kDataFrameFactory::createPHMAP(input->ksize(),input->getkmerDecoder()->hash_mode);
+
+        }
+        else{
+            res= input->getTwin();
+        }
         unordered_map<string,Column*> columns;
         for(auto col: input->columns)
         {
@@ -376,7 +393,16 @@ namespace kProcessor {
                             {
                                 columns[newColumnName]->resize(res->size());
                             }
-                            columns[newColumnName]->setValueFromColumn( col.second,iterators[i].getOrder(),res->getkmerOrder(newRow.hashedKmer));
+                            if(col.first == "count")
+                            {
+                                ((vectorColumn<uint32_t>*)columns[newColumnName])->insert(iterators[i].getCount(),
+                                                                                          res->getkmerOrder(newRow.hashedKmer));
+                            }
+                            else
+                            {
+                                columns[newColumnName]->setValueFromColumn(col.second, iterators[i].getOrder(),
+                                                                           res->getkmerOrder(newRow.hashedKmer));
+                            }
                         }
                     }
                 }
@@ -410,8 +436,15 @@ namespace kProcessor {
     }
 
     kDataFrame *kFrameIntersect(const vector<kDataFrame *> &input) {
-        kDataFrame *res = input[0]->getTwin();
+        kDataFrame *res;
+        if(kDataFrameFactory::isMQF(input[0]))
+        {
+            res= kDataFrameFactory::createPHMAP(input[0]->ksize(),input[0]->getkmerDecoder()->hash_mode);
 
+        }
+        else{
+            res= input[0]->getTwin();
+        }
         merge(input, res, [&](vector<kDataFrameIterator*> &input) -> kmerRow {
             bool existInAll=true;
             for(int i=0;i<input.size();i++) {
@@ -429,8 +462,15 @@ namespace kProcessor {
     }
 
     kDataFrame *kFrameDiff(const vector<kDataFrame *> &input) {
-        kDataFrame *res = input[0]->getTwin();
+        kDataFrame *res;
+        if(kDataFrameFactory::isMQF(input[0]))
+        {
+            res= kDataFrameFactory::createPHMAP(input[0]->ksize(),input[0]->getkmerDecoder()->hash_mode);
 
+        }
+        else{
+            res= input[0]->getTwin();
+        }
         merge(input, res, [&](vector<kDataFrameIterator*> &input) -> kmerRow {
             if(input[0] != nullptr){
                 bool exist=false;
@@ -561,8 +601,11 @@ namespace kProcessor {
     {
         kDataFrame* kf=kDataFrame::load(kdataframeFileNames[0]);
         uint64_t kSize=kf->ksize();
+
+
+        kDataFramePHMAP* output=(kDataFramePHMAP*)kDataFrameFactory::createPHMAP(kSize,kf->getkmerDecoder()->hash_mode);//this value should be estimated
         delete kf;
-        kDataFramePHMAP* output=(kDataFramePHMAP*)kDataFrameFactory::createPHMAP(kSize,10000000);//this value should be estimated
+        output->reserve(10000000);
         //kDataFrameMAP* output=new kDataFrameMAP(kSize);
         omp_set_num_threads(numThreads);
         cout<<"Number of threads = "<<omp_get_num_threads()<<endl;
@@ -610,7 +653,11 @@ namespace kProcessor {
                     {
 
                         output->addColumn(c.first+to_string(sampleID),c.second->getTwin());
-                        columns[t]= make_pair(c.second,output->columns[c.first+to_string(sampleID)]);
+                        auto inputColumn=c.second;
+                        if(c.first == "count")
+                            inputColumn= nullptr;
+
+                        columns[t]= make_pair(inputColumn,output->columns[c.first+to_string(sampleID)]);
                         t++;
                     }
                 }
@@ -654,7 +701,14 @@ namespace kProcessor {
                         {
                             c.second->resize(c.second->size()*2);
                         }
-                        c.second->setValueFromColumn( c.first,inputOrder,order);
+                        if(c.first == nullptr)
+                        {
+                            ((vectorColumn<uint32_t>*)c.second)->insert(k.getCount(), order);
+                        }
+                        else
+                        {
+                            c.second->setValueFromColumn( c.first,inputOrder,order);
+                        }
                     }
                 }
                 cout<<"Finished "<<fileName<<endl;
