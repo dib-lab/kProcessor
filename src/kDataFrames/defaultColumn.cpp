@@ -340,7 +340,10 @@ void StringColorColumn::deserialize(string filename) {
 }
 
 Column *StringColorColumn::getTwin() {
-    new StringColorColumn();
+    auto res=new StringColorColumn();
+    res->namesMap=namesMap;
+    res->colors=(deduplicatedColumn<queryColorColumn>*)colors->clone();
+    return res;
 }
 
 
@@ -359,6 +362,10 @@ StringColorColumn::StringColorColumn(flat_hash_map<uint64_t, std::vector<uint32_
                                      uint32_t vector_size) {
     colors= new deduplicatedColumn<queryColorColumn>();
     colors->values=new mixVectors(*colorsIN,noSamples,num_vectors,vector_size);
+}
+
+void StringColorColumn::setValueFromColumn(Column *Container, uint32_t inputOrder, uint32_t outputOrder) {
+    colors->setValueFromColumn(((StringColorColumn*) Container)->colors,inputOrder,outputOrder);
 }
 
 bool inExactColorIndex::hasColorID(vector<uint32_t> &v) {
@@ -828,11 +835,13 @@ vectorBase *fixedSizeVector::clone() {
 
 vectorOfVectors::vectorOfVectors() {
     endIterator = new vectorBaseIterator(new vectorOfVectorsIterator(this));
+    starts = vectype(sdsl::int_vector<>(1));
 }
 
 vectorOfVectors::vectorOfVectors(uint32_t beginId)
         : vectorBase(beginId) {
     endIterator = new vectorBaseIterator(new vectorOfVectorsIterator(this));
+    starts = vectype(sdsl::int_vector<>(1));
 }
 
 vectorOfVectors::vectorOfVectors(uint32_t beginId, uint32_t noColors)
@@ -843,8 +852,8 @@ vectorOfVectors::vectorOfVectors(uint32_t beginId, uint32_t noColors)
 
 vectorBase* vectorOfVectors::clone(){
     vectorOfVectors* res=new vectorOfVectors(beginID);
-    this->vecs=vecs;
-    this->starts=starts;
+    res->vecs=vecs;
+    res->starts=starts;
     return res;
 }
 vectorBaseIterator vectorOfVectors::begin() {

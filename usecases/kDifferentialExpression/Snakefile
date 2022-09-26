@@ -8,10 +8,12 @@ transpictome=list(filter(lambda x:x.library=="transpictome",pep.samples))[0].fil
 def getFastq(name):
     return list(filter(lambda x:x.sample_name==name,pep.samples))[0].file
 
+
+kFrameType="map"
 samplesKDataframe=list(filter(lambda x:x.library=="sample",pep.samples))
-samplesKDataframe=["kDataframe."+x.sample_name+".map" for x in samplesKDataframe]
+samplesKDataframe=["kDataframe."+x.sample_name+"."+kFrameType for x in samplesKDataframe]
 controlKDataframe=list(filter(lambda x:x.library=="control",pep.samples))
-controlKDataframe=["kDataframe."+x.sample_name+".map" for x in controlKDataframe]
+controlKDataframe=["kDataframe."+x.sample_name+"."+kFrameType for x in controlKDataframe]
 
 
 rule all:
@@ -26,15 +28,15 @@ rule kDifferntialExpression:
     log: "kDifferntialExpression.log"
     shell:
        	"""
-        echo {input.sample} | sed -e 's/.map//g'|tr -s ' ' $'\n' > sample
-        echo {input.control} | sed -e 's/.map//g'|tr -s ' ' $'\n' > control   	
+        echo {input.sample} | sed -e 's/.{kFrameType}//g'|tr -s ' ' $'\n' > sample
+        echo {input.control} | sed -e 's/.{kFrameType}//g'|tr -s ' ' $'\n' > control   	
 	./kDifferntialExpression -g {input.transpictome} -s sample -c control -o {output} &> {log}
-        """
+	    """
 
 rule kmc:
     input: lambda wildcards: getFastq(f"{wildcards.experiment}"),         
     output:
-         kDataframe="kDataframe.{experiment}.map",
+         kDataframe="kDataframe.{experiment}."+kFrameType,
          time="{experiment}.kmc.time"
     conda:
          "env.yaml"

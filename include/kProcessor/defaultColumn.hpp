@@ -854,6 +854,7 @@ public:
     uint32_t size(){
         return colors->size();
     }
+    void setValueFromColumn(Column* Container, uint32_t inputOrder,uint32_t outputOrder);
 
     Column *clone() override;
 

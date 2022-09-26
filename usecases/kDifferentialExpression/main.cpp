@@ -66,6 +66,7 @@ void differntialExpression(string genes_file,
 // //load kmers,count from kmc DB for sample and control
      for(const auto& filename:allSamples) {
          kDataFrame* currentFrame=kDataFrame::load(filename);
+
          any totalCountAny=kProcessor::aggregate(currentFrame,(uint64_t)0,
                                                  [countColName](kDataFrameIterator& it, any v) -> any {
                  uint32_t count0=it.getCount();
@@ -156,7 +157,7 @@ void differntialExpression(string genes_file,
          float ttest;
          it.getColumnValue<vectorColumn<float> >(ttestColName, ttest);
          vector<string> color;
-         it.getColumnValue<deduplicatedColumn<StringColorColumn>>(colorColumn,color);
+         it.getColumnValue<StringColorColumn>(colorColumn,color);
          for(auto c: color)
          {
              (*dict)[c].push_back(ttest);
