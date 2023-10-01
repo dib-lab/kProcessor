@@ -165,6 +165,8 @@ kDataFrameMQF::kDataFrameMQF() : kDataFrame() {
     kDataFrameMQFIterator *it = new kDataFrameMQFIterator(mqf, kSize, KD);
     it->endIterator();
     endIterator=new  kDataFrameIterator(it,(kDataFrame*)this);
+    countColumn=new vectorColumn<uint32_t>(1);
+    columns["count"]=countColumn;
 }
 
 kDataFrame *kDataFrameMQF::clone() {
@@ -216,7 +218,8 @@ kDataFrameMQF::kDataFrameMQF(uint64_t ksize, uint8_t q, hashingModes hash_mode) 
     kDataFrameMQFIterator *it = new kDataFrameMQFIterator(mqf, kSize, KD);
     it->endIterator();
     endIterator=new  kDataFrameIterator(it,(kDataFrame*)this);
-
+    countColumn=new vectorColumn<uint32_t>(1);
+    columns["count"]=countColumn;
 }
 
 kDataFrameMQF::kDataFrameMQF(uint64_t ksize, uint8_t q, uint8_t fixedCounterSize, uint8_t tagSize,
@@ -238,6 +241,8 @@ kDataFrameMQF::kDataFrameMQF(uint64_t ksize, uint8_t q, uint8_t fixedCounterSize
     kDataFrameMQFIterator *it = new kDataFrameMQFIterator(mqf, kSize, KD);
     it->endIterator();
     endIterator=new  kDataFrameIterator(it,(kDataFrame*)this);
+    countColumn=new vectorColumn<uint32_t>(1);
+    columns["count"]=countColumn;
 }
 
 kDataFrameMQF::kDataFrameMQF(uint64_t ksize, hashingModes hash_mode) :
@@ -250,6 +255,8 @@ kDataFrameMQF::kDataFrameMQF(uint64_t ksize, hashingModes hash_mode) :
     mqf = NULL;
     endIterator=NULL;
     reserve(1000000);
+    countColumn=new vectorColumn<uint32_t>(1);
+    columns["count"]=countColumn;
 
 }
 
@@ -263,6 +270,8 @@ kDataFrameMQF::kDataFrameMQF(uint64_t ksize) :
     mqf = NULL;
     endIterator=NULL;
     reserve(1000000);
+    countColumn=new vectorColumn<uint32_t>(1);
+    columns["count"]=countColumn;
 }
 
 kDataFrameMQF::kDataFrameMQF(QF *mqf, uint64_t ksize, double falsePositiveRate) :
@@ -281,6 +290,8 @@ kDataFrameMQF::kDataFrameMQF(QF *mqf, uint64_t ksize, double falsePositiveRate) 
     kDataFrameMQFIterator *it = new kDataFrameMQFIterator(mqf, kSize, KD);
     it->endIterator();
     endIterator=new  kDataFrameIterator(it,(kDataFrame*)this);
+    countColumn=new vectorColumn<uint32_t>(1);
+    columns["count"]=countColumn;
 }
 kDataFrameMQF::kDataFrameMQF(uint64_t ksize, vector<uint64_t> countHistogram, uint8_t tagSize, double falsePositiveRate)
         :
@@ -293,6 +304,9 @@ kDataFrameMQF::kDataFrameMQF(uint64_t ksize, vector<uint64_t> countHistogram, ui
     kDataFrameMQF::estimateParameters(countHistogram, 2 * ksize, tagSize,
                                       &nSlots, &fixedCounterSize, &memory);
     qf_init(mqf, nSlots, 2 * ksize, tagSize, fixedCounterSize, 32, true, "", 2038074761);
+
+    countColumn=new vectorColumn<uint32_t>(1);
+    columns["count"]=countColumn;
 }
 
 
@@ -326,6 +340,9 @@ kDataFrame(frame->ksize()){
             c.second->setValueFromColumn(frame->columns[c.first],order,k.getOrder());
         }
     }
+
+    countColumn=new vectorColumn<uint32_t>(1);
+    columns["count"]=countColumn;
 }
 
 kDataFrameMQF::kDataFrameMQF(uint64_t ksize, vector<uint64_t> countHistogram)
@@ -342,6 +359,9 @@ kDataFrameMQF::kDataFrameMQF(uint64_t ksize,uint64_t nKmers) :
     mqf = NULL;
     endIterator=NULL;
     reserve(nKmers);
+
+    countColumn=new vectorColumn<uint32_t>(1);
+    columns["count"]=countColumn;
 }
 
 kDataFrame *kDataFrameMQF::getTwin() {
@@ -729,7 +749,7 @@ namespace kProcessor {
 
 
         kmqf->setkSize(_kmer_length);
-        kmqf->reserve(_total_kmers);
+        kmqf->reserve(_total_kmers*2);
         while (kmer_data_base.ReadNextKmer(kmer_object, counter)) {
             kmer_object.to_string(str);
             kmqf->_insert(str, counter);

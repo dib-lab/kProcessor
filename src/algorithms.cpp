@@ -170,8 +170,6 @@ namespace kProcessor {
             bool exists=false;
             for (auto i : kmersToKeep ) {
                 if (input[i] != nullptr) {
-                    if(input[i]->getKmer()== "GGGGGGGGGGCGGGGGGGGGG")
-                        cout<<"Here"<<endl;
                     return kmerRow(input[i]->getHashedKmer(),1,0,nullptr);
                 }
             }
@@ -345,6 +343,11 @@ namespace kProcessor {
                 string newColumnName=col.first+to_string(i);
                 columns[newColumnName]=col.second->getTwin();
                 columns[newColumnName]->resize(res->size());
+            }
+            string newColumnName="count"+to_string(i);
+            if(columns.find(newColumnName)==columns.end())
+            {
+                columns[newColumnName]=new vectorColumn<uint32_t>(res->size());
             }
             iterators[i] = input[i]->begin();
             if (iterators[i] != input[i]->end()) {

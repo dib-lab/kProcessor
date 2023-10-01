@@ -73,7 +73,6 @@ void differntialExpression(string genes_file,
                  return (any)(any_cast<uint64_t>(v) + (uint64_t)count0);
          });
          uint64_t totalCount=  any_cast<uint64_t>(totalCountAny);
-
          kProcessor::transformInPlace(currentFrame,  [=](kDataFrameIterator& it) -> void {
              uint32_t count0=it.getCount();
              double normalized = (double)count0*(100000000.0) / totalCount;
@@ -90,10 +89,10 @@ void differntialExpression(string genes_file,
 
 
      int chunkSize = 1000;
-     kDataFrame * genesFrame = kDataFrameFactory::createBtree(kSize);
+     kDataFrame * genesFrame = kDataFrameFactory::createMAP(kSize,kFrames[0]->getkmerDecoder()->hash_mode);
      kmerDecoder * KMERS = new Kmers(genes_file, chunkSize, kSize,genesFrame->KD->hash_mode);
      kProcessor::index(KMERS, genes_file+".names", genesFrame);
-
+    cout<<"Hash "<<genesFrame->getkmerDecoder()->hash_mode<<endl;
      //   kProcessor::createColorColumn(genesFrame);
      kFrames.push_back(genesFrame);
      requiredIndices={kFrames.size()-1};
@@ -110,6 +109,7 @@ void differntialExpression(string genes_file,
          for(unsigned i=0; i < allDatasets ;i++ ){
              uint32_t count;
              r.getColumnValue<vectorColumn<uint32_t> >("count"+ to_string(i),count);
+         //    cout<<count<<"\n";
              if(count>0)
                  return true;
          }
@@ -174,6 +174,7 @@ void differntialExpression(string genes_file,
              sort(k.second.begin(), k.second.end());
              float median = k.second[k.second.size() / 2];
              output<<k.first<<"\t"<<median<<"\n";
+             cout<<k.first<<"\t"<<median<<"\n";
          }
 
      }
